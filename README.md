@@ -1,5 +1,7 @@
 # Artillery 3
 
+**Warning: This repository is private. If you're reading this, you're in the wrong place. Check back once it's actually been cleaned of typos.**
+
 by mikanwolfe, 03-2019, mikanwolfe@nekox.net.
 
 ---
@@ -36,8 +38,19 @@ The terrain in Artillery 3 will be generated based on various algorithms using t
     * [ ] Restricted firing angles
     * [ ] Restricted firing power
 * [ ] NPC/AI/""CPU"" enemies
+* [ ] Effects (Mirror, Power, Duplicate/Cut)
+* [ ] Support Modules (Satellite attacks)
+* [ ] Environmental Effects
 
 ---
+
+
+
+http://blog.nuclex-games.com/tutorials/cxx/game-state-management/
+
+https://gamedev.stackexchange.com/questions/13244/game-state-management-techniques
+
+http://gameprogrammingpatterns.com/flyweight.html
 
 
 
