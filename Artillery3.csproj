@@ -36,7 +36,8 @@
     <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyLibsToOut</PrepareForRunDependsOn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="src\Artillery3.cs" />
+    <Compile Include="src\GameMain.cs" />
+    <Compile Include="src\ArtilleryGame.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="SwinGame">
