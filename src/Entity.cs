@@ -6,14 +6,16 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-    class ArtilleryGame
+    abstract class Entity : DrawableObject
     {
-        public ArtilleryGame()
+        // PhysicsComponent _physicsComponent
+
+        public Entity()
         {
-            LoadResources();
+
         }
 
-        private void LoadResources()
+        public override void Draw()
         {
 
         }

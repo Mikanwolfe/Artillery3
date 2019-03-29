@@ -1,7 +1,7 @@
 using System;
 using SwinGameSDK;
 
-namespace Artillery3
+namespace ArtillerySeries.src
 {
     public class GameMain
     {

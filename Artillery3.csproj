@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug-Windows</Configuration>
     <ProjectGuid>{2127FE68-7227-40EA-A85F-DDE575159B2D}</ProjectGuid>
-    <RootNamespace>Artillery3</RootNamespace>
+    <RootNamespace>ArtillerySeries</RootNamespace>
     <MonoMacResourcePrefix>Resources</MonoMacResourcePrefix>
     <AssemblyName>Artillery3</AssemblyName>
     <SuppressXamMacUpsell>True</SuppressXamMacUpsell>
@@ -36,8 +36,11 @@
     <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyLibsToOut</PrepareForRunDependsOn>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="src\DrawableObject.cs" />
+    <Compile Include="src\Entity.cs" />
     <Compile Include="src\GameMain.cs" />
     <Compile Include="src\ArtilleryGame.cs" />
+    <Compile Include="src\UpdatableObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="SwinGame">
