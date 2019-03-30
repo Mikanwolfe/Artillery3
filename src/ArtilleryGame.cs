@@ -3,19 +3,69 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
     class ArtilleryGame
     {
-        public ArtilleryGame()
+        Rectangle _windowRect;
+        World _world;
+        
+
+        public ArtilleryGame(Rectangle windowRect)
         {
             LoadResources();
+
+            _windowRect = windowRect;
+            _world = new World(_windowRect);
         }
+
 
         private void LoadResources()
         {
 
         }
+
+        private void CreateCharacter(string name)
+        {
+            Console.WriteLine("Creating Character " + name);
+        }
+
+        public void Run(Rectangle _windowRect)
+        {
+            Terrain _terrain;
+
+
+            SwinGame.OpenAudio();
+            //Open the game window
+            SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
+
+            TerrainGenerator _terrainFactory = new TerrainGeneratorRandom(_windowRect);
+            _terrain = _terrainFactory.Generate();
+
+            CreateCharacter("Innocentia");
+
+
+            while (!SwinGame.WindowCloseRequested())
+            {
+                //Fetch the next batch of UI interaction
+                SwinGame.ProcessEvents();
+
+                //Clear the screen and draw the framerate
+                SwinGame.ClearScreen(Color.White);
+
+                SwinGame.DrawFramerate(0, 0);
+
+                _terrain.Draw();
+
+                //Draw onto the screen
+                SwinGame.RefreshScreen(60);
+            }
+
+            SwinGame.CloseAudio();
+            SwinGame.ReleaseAllResources();
+        }
+
     }
 }

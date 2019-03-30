@@ -3,22 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
 
-    interface IUpdatable
+    class World
     {
-        void Update();
-    }
+        Rectangle _windowRect;
 
-
-    abstract class UpdatableObject : IUpdatable
-    {
-        public UpdatableObject()
+        public World(Rectangle windowRect)
         {
+            _windowRect = windowRect;
+
+
         }
-        public abstract void Update();
+
+
 
 
     }

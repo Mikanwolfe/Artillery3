@@ -18,5 +18,7 @@ namespace ArtillerySeries.src
         public bool Visible { get => _visible; set => _visible = value; }
 
         public abstract void Draw();
+
+        public abstract override void Update();
     }
 }
