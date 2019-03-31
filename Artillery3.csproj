@@ -37,6 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="src\Character.cs" />
+    <Compile Include="src\Command.cs" />
     <Compile Include="src\DrawableObject.cs" />
     <Compile Include="src\Entity.cs" />
     <Compile Include="src\EntityAssembly.cs" />
@@ -44,6 +45,10 @@
     <Compile Include="src\GameMain.cs" />
     <Compile Include="src\ArtilleryGame.cs" />
     <Compile Include="src\Hull.cs" />
+    <Compile Include="src\InputHandler.cs" />
+    <Compile Include="src\MoveLeftCommand.cs" />
+    <Compile Include="src\MoveRightCommand.cs" />
+    <Compile Include="src\Player.cs" />
     <Compile Include="src\Terrain.cs" />
     <Compile Include="src\TerrainGenerator.cs" />
     <Compile Include="src\TerrainGeneratorMidpoint.cs" />

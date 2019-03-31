@@ -43,12 +43,10 @@ namespace ArtillerySeries.src
 
         public override void Draw()
         {
-            Console.WriteLine("Drawing Vehicle!");
         }
 
         public override void Update()
         {
-            Console.WriteLine("Updating Vehicle!");
         }
 
 

@@ -58,6 +58,10 @@ Lots of development as thrown out the original UML docs since I'm quite unskille
 
 
 
+### Singleton Design Pattern
+
+As there should only be one instance of the entity manager, I decided to go for the singleton design pattern here. I am justifying the use of this since it will always be a small program. It took a little bit to implement since a minor bug caused some oversight in some areas but it works since the newest commit.
+
 
 
 ---

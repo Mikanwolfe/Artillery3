@@ -11,7 +11,9 @@ namespace ArtillerySeries.src
     {
         Rectangle _windowRect;
         World _world;
-        
+        InputHandler _inputHandler;
+        Command PlayerCommand;
+
 
         public ArtilleryGame(Rectangle windowRect)
         {
@@ -19,6 +21,7 @@ namespace ArtillerySeries.src
 
             _windowRect = windowRect;
             _world = new World(_windowRect);
+            _inputHandler = new InputHandler();
         }
 
 
@@ -34,20 +37,25 @@ namespace ArtillerySeries.src
         {
             Terrain _terrain;
 
+            
+
 
             SwinGame.OpenAudio();
             //Open the game window
-            //SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
+            SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
 
             TerrainGenerator _terrainFactory = new TerrainGeneratorRandom(_windowRect);
             _terrain = _terrainFactory.Generate();
 
-            Character Innocentia = new Character("Innocentia");
+            Character Innocentia = new Character("Innocentia")
+            {
+                X = 800,
+                Y = _terrain.Map[800]
+            };
             EntityManager.Instance.Add(Innocentia);
             
 
-            EntityManager.Instance.Update();
-            EntityManager.Instance.Draw();
+            
 
 
             while (!SwinGame.WindowCloseRequested())
@@ -60,7 +68,17 @@ namespace ArtillerySeries.src
 
                 SwinGame.DrawFramerate(0, 0);
 
-                //_terrain.Draw();
+
+
+                PlayerCommand = _inputHandler.HandleInput();
+                if (PlayerCommand != null)
+                    PlayerCommand.Execute(Innocentia);
+
+
+
+                _terrain.Draw();
+                EntityManager.Instance.Update();
+                EntityManager.Instance.Draw();
 
                 //Draw onto the screen
                 SwinGame.RefreshScreen(60);

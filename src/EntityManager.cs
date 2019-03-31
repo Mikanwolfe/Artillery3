@@ -26,9 +26,7 @@ namespace ArtillerySeries.src
             get
             {
                 if (instance == null)
-                {
                     instance = new EntityManager();
-                } 
                 return instance;
             }
         }
