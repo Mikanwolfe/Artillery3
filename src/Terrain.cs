@@ -9,7 +9,7 @@ namespace ArtillerySeries.src
 {
     public class Terrain : IDrawable
     {
-        int[] _terrainMap;
+        float[] _terrainMap;
         Rectangle _windowRect;
 
         public Terrain(Rectangle windowRect)
@@ -17,13 +17,13 @@ namespace ArtillerySeries.src
            _windowRect = windowRect;
         }
 
-        public int[] Map { get => _terrainMap; set => _terrainMap = value; }
+        public float[] Map { get => _terrainMap; set => _terrainMap = value; }
 
         public void Draw()
         {
             for(int i = 0; i < _terrainMap.Length; i++)
             {
-                SwinGame.DrawLine(Color.Green, i, _windowRect.Height, i, _terrainMap[i]);
+                SwinGame.DrawLine(Color.Green, i, _windowRect.Height, i, (int)Math.Round(_terrainMap[i]));
             }
         }
     }

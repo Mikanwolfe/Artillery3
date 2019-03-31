@@ -12,7 +12,8 @@ namespace ArtillerySeries.src
         Rectangle _windowRect;
         World _world;
         InputHandler _inputHandler;
-        Command PlayerCommand;
+        Command _playerCommand;
+        PhysicsEngine _physicsEngine;
 
 
         public ArtilleryGame(Rectangle windowRect)
@@ -22,6 +23,7 @@ namespace ArtillerySeries.src
             _windowRect = windowRect;
             _world = new World(_windowRect);
             _inputHandler = new InputHandler();
+            _physicsEngine = new PhysicsEngine();
         }
 
 
@@ -46,15 +48,10 @@ namespace ArtillerySeries.src
 
             TerrainGenerator _terrainFactory = new TerrainGeneratorMidpoint(_windowRect);
             _terrain = _terrainFactory.Generate();
+            _physicsEngine.Terrain = _terrain;
 
-            _terrainFactory = new TerrainGeneratorRandom(_windowRect);
-            _terrain = _terrainFactory.Generate();
-
-            Character Innocentia = new Character("Innocentia")
-            {
-                X = 800,
-                Y = _terrain.Map[800]
-            };
+            Character Innocentia = new Character("Innocentia");
+            _physicsEngine.AddComponent(Innocentia);
             EntityManager.Instance.Add(Innocentia);
             
 
@@ -66,24 +63,21 @@ namespace ArtillerySeries.src
                 //Fetch the next batch of UI interaction
                 SwinGame.ProcessEvents();
 
-                //Clear the screen and draw the framerate
-                SwinGame.ClearScreen(Color.White);
-
-                SwinGame.DrawFramerate(0, 0);
-
-
-
-                PlayerCommand = _inputHandler.HandleInput();
-                if (PlayerCommand != null)
-                    PlayerCommand.Execute(Innocentia);
+                _playerCommand = _inputHandler.HandleInput();
+                if (_playerCommand != null)
+                    _playerCommand.Execute(Innocentia);
 
 
 
-                _terrain.Draw();
+                _physicsEngine.Simulate();
                 EntityManager.Instance.Update();
-                EntityManager.Instance.Draw();
+                
 
-                //Draw onto the screen
+
+                SwinGame.ClearScreen(Color.White);
+                SwinGame.DrawFramerate(0, 0);
+                _terrain.Draw();
+                EntityManager.Instance.Draw();
                 SwinGame.RefreshScreen(60);
             }
 

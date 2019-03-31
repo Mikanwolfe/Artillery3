@@ -20,9 +20,9 @@ namespace ArtillerySeries.src
         public Rectangle WindowRect { get => _windowRect; }
         public Random Random { get => _random; set => _random = value; }
 
-        protected int PowerCeiling(float baseExp, float exp)
+        protected int PowerCeiling( float baseValue, float exp)
         {
-            return (int)Math.Ceiling(Math.Log(exp, baseExp));
+            return (int)Math.Ceiling(Math.Log(exp, baseValue));
         }
 
 

@@ -19,13 +19,12 @@ namespace ArtillerySeries.src
             Console.WriteLine("Generating random terrain!");
             Terrain _terrain = new Terrain(WindowRect)
             {
-                Map = new int[(int)WindowRect.Width]
+                Map = new float[(int)WindowRect.Width]
             };
 
             for (int i = 0; i < (int)WindowRect.Width; i++)
             {
                 _terrain.Map[i] = 500 + Random.Next(-20, 20);
-                Console.WriteLine(i + " : " + _terrain.Map[i]);
             }
 
 

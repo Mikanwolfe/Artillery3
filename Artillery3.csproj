@@ -48,6 +48,8 @@
     <Compile Include="src\InputHandler.cs" />
     <Compile Include="src\MoveLeftCommand.cs" />
     <Compile Include="src\MoveRightCommand.cs" />
+    <Compile Include="src\PhysicsComponent.cs" />
+    <Compile Include="src\PhysicsEngine.cs" />
     <Compile Include="src\Player.cs" />
     <Compile Include="src\Terrain.cs" />
     <Compile Include="src\TerrainGenerator.cs" />
