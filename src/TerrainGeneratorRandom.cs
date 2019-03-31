@@ -9,7 +9,6 @@ namespace ArtillerySeries.src
 {
     public class TerrainGeneratorRandom : TerrainGenerator
     {
-        Random _random = new Random();
 
         public TerrainGeneratorRandom(Rectangle windowSize) : base(windowSize)
         {
@@ -25,7 +24,7 @@ namespace ArtillerySeries.src
 
             for (int i = 0; i < (int)WindowRect.Width; i++)
             {
-                _terrain.Map[i] = 500 + _random.Next(-20, 20);
+                _terrain.Map[i] = 500 + Random.Next(-20, 20);
                 Console.WriteLine(i + " : " + _terrain.Map[i]);
             }
 

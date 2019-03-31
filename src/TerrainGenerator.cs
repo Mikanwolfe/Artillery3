@@ -10,6 +10,7 @@ namespace ArtillerySeries.src
     public abstract class TerrainGenerator
     {
         Rectangle _windowRect;
+        Random _random = new Random();
 
         public TerrainGenerator(Rectangle windowRect)
         {
@@ -17,6 +18,13 @@ namespace ArtillerySeries.src
         }
 
         public Rectangle WindowRect { get => _windowRect; }
+        public Random Random { get => _random; set => _random = value; }
+
+        protected int PowerCeiling(float baseExp, float exp)
+        {
+            return (int)Math.Ceiling(Math.Log(exp, baseExp));
+        }
+
 
         public abstract Terrain Generate();
 

@@ -44,7 +44,10 @@ namespace ArtillerySeries.src
             //Open the game window
             SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
 
-            TerrainGenerator _terrainFactory = new TerrainGeneratorRandom(_windowRect);
+            TerrainGenerator _terrainFactory = new TerrainGeneratorMidpoint(_windowRect);
+            _terrain = _terrainFactory.Generate();
+
+            _terrainFactory = new TerrainGeneratorRandom(_windowRect);
             _terrain = _terrainFactory.Generate();
 
             Character Innocentia = new Character("Innocentia")
