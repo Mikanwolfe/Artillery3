@@ -23,12 +23,15 @@ namespace ArtillerySeries.src
 
         public override void Draw()
         {
-            throw new NotImplementedException();
+            
+            Console.WriteLine("Drawing " + Name);
+            base.Draw();
         }
 
         public override void Update()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("Updating " + Name);
+            base.Update();
         }
     }
 }

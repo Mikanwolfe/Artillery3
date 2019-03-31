@@ -43,12 +43,12 @@ namespace ArtillerySeries.src
 
         public override void Draw()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("Drawing Vehicle!");
         }
 
         public override void Update()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("Updating Vehicle!");
         }
 
 

@@ -26,11 +26,9 @@ namespace ArtillerySeries.src
         {
 
         }
+      
 
-        private void CreateCharacter(string name)
-        {
-            Console.WriteLine("Creating Character " + name);
-        }
+
 
         public void Run(Rectangle _windowRect)
         {
@@ -39,12 +37,17 @@ namespace ArtillerySeries.src
 
             SwinGame.OpenAudio();
             //Open the game window
-            SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
+            //SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
 
             TerrainGenerator _terrainFactory = new TerrainGeneratorRandom(_windowRect);
             _terrain = _terrainFactory.Generate();
 
-            CreateCharacter("Innocentia");
+            Character Innocentia = new Character("Innocentia");
+            EntityManager.Instance.Add(Innocentia);
+            
+
+            EntityManager.Instance.Update();
+            EntityManager.Instance.Draw();
 
 
             while (!SwinGame.WindowCloseRequested())
@@ -57,7 +60,7 @@ namespace ArtillerySeries.src
 
                 SwinGame.DrawFramerate(0, 0);
 
-                _terrain.Draw();
+                //_terrain.Draw();
 
                 //Draw onto the screen
                 SwinGame.RefreshScreen(60);
