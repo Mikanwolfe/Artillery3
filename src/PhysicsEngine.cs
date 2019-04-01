@@ -8,14 +8,32 @@ using static ArtillerySeries.src.GameMain;
 
 namespace ArtillerySeries.src
 {
+    /*
+    * A singleton for physics calculations and simulations.
+    * Being a singleton allows components to self-register themselves
+    * as components of the physics engine.
+    */
     class PhysicsEngine
     {
+        
+        private static PhysicsEngine instance;
         List<IPhysicsComponent> _components;
         Terrain _terrain;
 
-        public PhysicsEngine()
+        private PhysicsEngine()
         {
+            instance = this;
             _components = new List<IPhysicsComponent>();
+        }
+
+        public static PhysicsEngine Instance
+        {
+            get
+            {
+                if (instance == null)
+                    instance = new PhysicsEngine();
+                return instance;
+            }
         }
 
         public Terrain Terrain { get => _terrain; set => _terrain = value; }
@@ -43,53 +61,55 @@ namespace ArtillerySeries.src
         {
             foreach(IPhysicsComponent p in _components)
             {
-                
-                if (p.Physics.GravityEnabled)
+                if (p != null)
                 {
-                    p.Physics.VelY += Constants.Gravity;
+                    if (p.Physics.GravityEnabled)
+                    {
+                        p.Physics.VelY += Constants.Gravity;
+                    }
+                    if (p.Physics.Position.Y >= _terrain.Map[(int)p.Physics.Position.X])
+                    {
+                        p.Physics.VelY = 0;
+                        p.Physics.Y = _terrain.Map[(int)p.Physics.Position.X];
+                        p.Physics.OnGround = true;
+
+                    }
+                    else
+                    {
+                        p.Physics.OnGround = false;
+                    }
+
+                    if (p.Physics.OnGround)
+                    {
+                        int x = (int)p.Physics.X;
+
+                        float p1 = _terrain.Map[Clamp((int)(x - 1), 0, _terrain.Map.Length - 1)];
+                        float p2 = _terrain.Map[Clamp((int)(x + 1), 0, _terrain.Map.Length - 1)];
+
+                        p.Physics.VelX *= (float)Math.Cos(p.Physics.RelAngleToGround);
+                        p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
+
+
+                        p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
+                    }
+
+                    //p.Physics.Position.Add(p.Physics.Velocity);
+                    //p.Physics.Velocity.Add(p.Physics.Acceleration);
+                    p.Physics.X += p.Physics.VelX;
+                    p.Physics.Y += p.Physics.VelY;
+
+
+
+                    p.Physics.X = Clamp(p.Physics.X, 0, _terrain.Map.Length - 1);
+                    p.Physics.VelX += p.Physics.AccX;
+                    p.Physics.VelY += p.Physics.AccY;
+                    p.Physics.VelX *= Constants.VelocityLoss;
+
+                    p.Physics.Simulate();
+
+
+
                 }
-                if (p.Physics.Position.Y >= _terrain.Map[(int)p.Physics.Position.X])
-                {
-                    p.Physics.VelY = 0;
-                    p.Physics.Y = _terrain.Map[(int)p.Physics.Position.X];
-                    p.Physics.OnGround = true;
-
-                } else
-                {
-                    p.Physics.OnGround = false;
-                }
-
-                if (p.Physics.OnGround)
-                {
-                    int x = (int)p.Physics.X;
-
-                    float p1 = _terrain.Map[Clamp((int)(x - 1),0,_terrain.Map.Length - 1)];
-                    float p2 = _terrain.Map[Clamp((int)(x + 1), 0, _terrain.Map.Length - 1)];
-
-                    p.Physics.VelX *= (float)Math.Cos(p.Physics.RelAngleToGround);
-                    p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
-
-
-                    p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
-                }
-
-                //p.Physics.Position.Add(p.Physics.Velocity);
-                //p.Physics.Velocity.Add(p.Physics.Acceleration);
-                p.Physics.X += p.Physics.VelX;
-                p.Physics.Y += p.Physics.VelY;
-
-
-
-                p.Physics.X = Clamp(p.Physics.X, 0, _terrain.Map.Length - 1);
-                p.Physics.VelX += p.Physics.AccX;
-                p.Physics.VelY += p.Physics.AccY;
-                p.Physics.VelX *= Constants.VelocityLoss;
-
-                p.Simulate();
-
-                
-
-
             }
         }
 

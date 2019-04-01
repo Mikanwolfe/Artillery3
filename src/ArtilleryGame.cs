@@ -23,7 +23,6 @@ namespace ArtillerySeries.src
             _windowRect = windowRect;
             _world = new World(_windowRect);
             _inputHandler = new InputHandler();
-            _physicsEngine = new PhysicsEngine();
         }
 
 
@@ -48,11 +47,10 @@ namespace ArtillerySeries.src
 
             TerrainGenerator _terrainFactory = new TerrainGeneratorMidpoint(_windowRect);
             _terrain = _terrainFactory.Generate();
-            _physicsEngine.Terrain = _terrain;
+            PhysicsEngine.Instance.Terrain = _terrain;
 
             Character Innocentia = new Character("Innocentia");
-            _physicsEngine.AddComponent(Innocentia);
-            EntityManager.Instance.Add(Innocentia);
+           // EntityManager.Instance.Add(Innocentia);
             
 
             
@@ -69,7 +67,7 @@ namespace ArtillerySeries.src
 
 
 
-                _physicsEngine.Simulate();
+                PhysicsEngine.Instance.Simulate();
                 EntityManager.Instance.Update();
                 
 

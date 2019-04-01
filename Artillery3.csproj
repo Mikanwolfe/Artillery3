@@ -51,12 +51,15 @@
     <Compile Include="src\PhysicsComponent.cs" />
     <Compile Include="src\PhysicsEngine.cs" />
     <Compile Include="src\Player.cs" />
+    <Compile Include="src\Projectile.cs" />
+    <Compile Include="src\SightComponent.cs" />
     <Compile Include="src\Terrain.cs" />
     <Compile Include="src\TerrainGenerator.cs" />
     <Compile Include="src\TerrainGeneratorMidpoint.cs" />
     <Compile Include="src\TerrainGeneratorRandom.cs" />
     <Compile Include="src\UpdatableObject.cs" />
     <Compile Include="src\Vehicle.cs" />
+    <Compile Include="src\Weapon.cs" />
     <Compile Include="src\World.cs" />
   </ItemGroup>
   <ItemGroup>

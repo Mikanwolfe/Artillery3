@@ -33,7 +33,7 @@ namespace ArtillerySeries.src
 
         public List<Entity> Entities { get => _entities; }
 
-        public void Add(Entity e)
+        public void AddEntity(Entity e)
         {
             Entities.Add(e);
         }

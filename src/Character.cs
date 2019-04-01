@@ -16,15 +16,20 @@ namespace ArtillerySeries.src
         Vehicle _vehicle;
         Point2D _pos;
         Bitmap _charBitmap;
-
         PhysicsComponent _physics;
+        bool _selected;
+
 
         public Character(string name) 
             : base(name)
         {
             _physics = new PhysicsComponent(this);
             _vehicle = new Vehicle(name);
+            _selected = false;
+            _pos = new Point2D();
+
             Entities.Add(_vehicle);
+            EntityManager.Instance.AddEntity(this);
         }
 
         public void MoveLeft()
@@ -36,9 +41,9 @@ namespace ArtillerySeries.src
             Move(Constants.PlayerSpeed);
         }
 
-        void Move(float speed) //TODO: Change to accel
+        void Move(float acc) //TODO: Change to accel
         {
-            _physics.AccX = speed;
+            _physics.AccX = acc;
         }
 
         public Point2D Pos { get => _pos; set => _pos = value; } //TODO remove ext pos setting. Should be physcomponent only.
@@ -78,11 +83,6 @@ namespace ArtillerySeries.src
             _pos.X = _physics.X;
             _pos.Y = _physics.Y;
             base.Update(); // Updates the sub-entities
-        }
-
-        public void Simulate()
-        {
-            _physics.Simulate();
         }
     }
 }

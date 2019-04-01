@@ -11,8 +11,9 @@ namespace ArtillerySeries.src
 
     interface IPhysicsComponent
     {
-        void Simulate();
         PhysicsComponent Physics { get; set; }
+        float X { get; set; }
+        float Y { get; set; }
     }
     
     enum FacingDirection
@@ -24,7 +25,7 @@ namespace ArtillerySeries.src
 
     class PhysicsComponent
     {
-        Entity _entity;
+        IPhysicsComponent _entity;
         Point2D _pos, _vel, _acc;
         //PHYSICS!!
         float _mass, _momentum;
@@ -51,7 +52,7 @@ namespace ArtillerySeries.src
             return point;
         }
 
-        private PhysicsComponent()
+        PhysicsComponent()
         {
             _gravityEnabled = true;
             _vel = ZeroPoint2D();
@@ -59,17 +60,20 @@ namespace ArtillerySeries.src
             _facing = FacingDirection.Right;
         }
 
-        public PhysicsComponent(Entity entity)
+        public PhysicsComponent(IPhysicsComponent entity)
             : this()
         {
             _entity = entity;
+            PhysicsEngine.Instance.AddComponent(_entity);
             _pos = ZeroPoint2D();
+
         }
 
-        public PhysicsComponent(Entity entity, Point2D pos)
+        public PhysicsComponent(IPhysicsComponent entity, Point2D pos)
             : this()
         {
             _entity = entity;
+            PhysicsEngine.Instance.AddComponent(_entity);
             _pos = pos;
 
         }
@@ -88,7 +92,7 @@ namespace ArtillerySeries.src
             if (_facing == FacingDirection.Right)
                 _relativeAngleToGround = _absAngleToGround;
             else
-                _relativeAngleToGround = (float)((2 * Math.PI) / 180 - _absAngleToGround);
+                _relativeAngleToGround = _absAngleToGround * -1 ;
 
             _acc.X = 0;
             _acc.Y = 0;
