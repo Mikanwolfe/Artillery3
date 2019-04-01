@@ -20,12 +20,22 @@ namespace ArtillerySeries.src
 
         public Terrain Terrain { get => _terrain; set => _terrain = value; }
 
-        public void Clamp(float value, float min, float max)
+        public float Clamp(float value, float min, float max)
         {
             if (value < min)
-                value = min;
+                return value = min;
             if (value > max)
-                value = max;
+                return value = max;
+            return value;
+        }
+
+        public int Clamp(int value, int min, int max)
+        {
+            if (value < min)
+                return value = min;
+            if (value > max)
+                return value = max;
+            return value;
         }
 
 
@@ -38,21 +48,39 @@ namespace ArtillerySeries.src
                 {
                     p.Physics.VelY += Constants.Gravity;
                 }
-                if (p.Physics.Position.Y > _terrain.Map[(int)p.Physics.Position.X])
+                if (p.Physics.Position.Y >= _terrain.Map[(int)p.Physics.Position.X])
                 {
                     p.Physics.VelY = 0;
                     p.Physics.Y = _terrain.Map[(int)p.Physics.Position.X];
+                    p.Physics.OnGround = true;
+
+                } else
+                {
+                    p.Physics.OnGround = false;
+                }
+
+                if (p.Physics.OnGround)
+                {
+                    int x = (int)p.Physics.X;
+
+                    float p1 = _terrain.Map[Clamp((int)(x - 1),0,_terrain.Map.Length - 1)];
+                    float p2 = _terrain.Map[Clamp((int)(x + 1), 0, _terrain.Map.Length - 1)];
+
+                    p.Physics.VelX *= (float)Math.Cos(p.Physics.RelAngleToGround);
+                    p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
+
+
+                    p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
                 }
 
                 //p.Physics.Position.Add(p.Physics.Velocity);
                 //p.Physics.Velocity.Add(p.Physics.Acceleration);
                 p.Physics.X += p.Physics.VelX;
                 p.Physics.Y += p.Physics.VelY;
-                Clamp(p.Physics.X, 0, _terrain.Map.Length - 1); // clamp aint working
-                if (p.Physics.X < 0)
-                    p.Physics.X = 0;
-                if (p.Physics.X > _terrain.Map.Length-1)
-                    p.Physics.X = _terrain.Map.Length-1;
+
+
+
+                p.Physics.X = Clamp(p.Physics.X, 0, _terrain.Map.Length - 1);
                 p.Physics.VelX += p.Physics.AccX;
                 p.Physics.VelY += p.Physics.AccY;
                 p.Physics.VelX *= Constants.VelocityLoss;

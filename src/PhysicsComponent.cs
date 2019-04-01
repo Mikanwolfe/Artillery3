@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.GameMain;
 
 namespace ArtillerySeries.src
 {
@@ -13,12 +14,26 @@ namespace ArtillerySeries.src
         void Simulate();
         PhysicsComponent Physics { get; set; }
     }
+    
+    enum FacingDirection
+    {
+        Left,
+        Right
+    }
+
 
     class PhysicsComponent
     {
         Entity _entity;
         Point2D _pos, _vel, _acc;
-        bool _gravityEnabled;
+        //PHYSICS!!
+        float _mass, _momentum;
+        float _fricCoefficient;
+        float _absAngleToGround;
+        float _relativeAngleToGround;
+        bool _gravityEnabled, _onGround;
+        FacingDirection _facing;
+
 
         void ZeroPoint2D(Point2D point)
         {
@@ -41,6 +56,7 @@ namespace ArtillerySeries.src
             _gravityEnabled = true;
             _vel = ZeroPoint2D();
             _acc = ZeroPoint2D();
+            _facing = FacingDirection.Right;
         }
 
         public PhysicsComponent(Entity entity)
@@ -57,6 +73,26 @@ namespace ArtillerySeries.src
             _pos = pos;
 
         }
+        public void Simulate()
+        {
+            if (_vel.X > 0)
+                _facing = FacingDirection.Right;
+            if (_vel.X < 0)
+                _facing = FacingDirection.Left;
+
+            if (Math.Abs(_vel.X) < Constants.BaseFrictionStaticError)
+                _fricCoefficient = Constants.BaseFrictionCoefStatic;
+            else
+                _fricCoefficient = Constants.BaseFrictionCoefKinetic;
+
+            if (_facing == FacingDirection.Right)
+                _relativeAngleToGround = _absAngleToGround;
+            else
+                _relativeAngleToGround = (float)((2 * Math.PI) / 180 - _absAngleToGround);
+
+            _acc.X = 0;
+            _acc.Y = 0;
+        }
 
         public Point2D Position { get => _pos; set => _pos = value; }
         public Point2D Velocity { get => _vel; set => _vel = value; }
@@ -68,12 +104,9 @@ namespace ArtillerySeries.src
         public float VelY { get => _vel.Y; set => _vel.Y = value; }
         public float AccX { get => _acc.X; set => _acc.X = value; }
         public float AccY { get => _acc.Y; set => _acc.Y = value; }
-        public void Simulate()
-        {
-            _acc.X = 0;
-            _acc.Y = 0;
-        }
-
-
+        public bool OnGround { get => _onGround; set => _onGround = value; }
+        public float AbsAngleToGround { get => _absAngleToGround; set => _absAngleToGround = value; }
+        public float RelAngleToGround { get => _relativeAngleToGround; set => _relativeAngleToGround = value; }
+        internal FacingDirection Facing { get => _facing; }
     }
 }

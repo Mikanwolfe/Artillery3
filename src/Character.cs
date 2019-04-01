@@ -51,10 +51,25 @@ namespace ArtillerySeries.src
             
             if (_charBitmap == null)
             {
-                SwinGame.FillCircle(Color.IndianRed, _pos.X, _pos.Y, Constants.InvalidPlayerCircleRadius);
+                if (_physics.OnGround)
+                    SwinGame.FillCircle(Color.IndianRed, _pos.X, _pos.Y, Constants.InvalidPlayerCircleRadius);
+                else
+                    SwinGame.FillCircle(Color.Purple, _pos.X, _pos.Y, Constants.InvalidPlayerCircleRadius);
+
+                if (_physics.Facing == FacingDirection.Left)
+                    SwinGame.FillCircle(Color.Aquamarine, _pos.X-3, _pos.Y, Constants.InvalidPlayerCircleRadius);
+                else
+                    SwinGame.FillCircle(Color.Aquamarine, _pos.X+3, _pos.Y, Constants.InvalidPlayerCircleRadius);
+
             }
 
-            
+
+
+            float angle = (float)(_physics.AbsAngleToGround * 180 / Math.PI);
+            SwinGame.DrawText("Absolute Angle: " + angle.ToString(), Color.Black, 50, 50);
+            angle = (float)(_physics.RelAngleToGround * 180 / Math.PI);
+            SwinGame.DrawText("Relative Angle: " + angle.ToString(), Color.Black, 50, 70);
+
             base.Draw(); // Draws the sub-entities
         }
 

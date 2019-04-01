@@ -7,15 +7,19 @@ namespace ArtillerySeries.src
     {
         public static class Constants
         {
-            public const float Gravity = 0.5f;
+            public const float Gravity = 0.6f;
             public const float VelocityLoss = 0.8f;
             public const string Data = "data.json";
 
             //For now we'll have consts inside here, i'll incorporate json support later.
 
 
-            public const int InvalidPlayerCircleRadius = 5;
-            public const float PlayerSpeed = 8.0f; //TODO: Change to Accel
+            public const int InvalidPlayerCircleRadius = 3;
+            public const float PlayerSpeed = 0.1f; //TODO: Change to Accel
+            public const float BaseFrictionCoefKinetic = 0.5f;
+            public const float BaseFrictionCoefStatic = 0.8f;
+            public const float BaseFrictionStaticError = 0.2f;
+            public const float BaseVehicleWeight = 1000f; //Arbitrary units
         }
 
         public static void Main()
