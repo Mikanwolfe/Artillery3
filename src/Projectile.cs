@@ -6,21 +6,15 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-
-    class SightComponent : Entity
+    class Projectile : Entity
     {
-        public SightComponent(string name) 
-            : base(name)
+        public Projectile(string name) : base(name)
         {
-
         }
-
-        public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
-        public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
 
         public override void Draw()
         {
-            // Draw angles!
+            throw new NotImplementedException();
         }
 
         public override void Update()
