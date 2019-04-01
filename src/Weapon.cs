@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
@@ -18,8 +19,12 @@ namespace ArtillerySeries.src
 
     class Weapon : Entity
     {
-        public Weapon(string name) : base(name)
+        FacingDirection _parentDirection;
+        Point2D _parentPos;
+        public Weapon(string name, FacingDirection parentDirection, Point2D parentPos) : base(name)
         {
+            _parentDirection = parentDirection; //These should pass as references, I hope.
+            _parentPos = parentPos; // it doesn't
         }
 
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
@@ -27,12 +32,20 @@ namespace ArtillerySeries.src
 
         public override void Draw()
         {
-            throw new NotImplementedException();
+            if(_parentDirection == FacingDirection.Right)
+            {
+                SwinGame.DrawLine(Color.Black, _parentPos.X, _parentPos.Y, _parentPos.X + 10, _parentPos.Y);
+            } else
+            {
+                SwinGame.DrawLine(Color.Black, _parentPos.X, _parentPos.Y, _parentPos.X - 10, _parentPos.Y);
+            }
+
+            Console.WriteLine("Parent Direction: " + _parentDirection);
+            Console.WriteLine("Parent Pos: " + _parentPos);
         }
 
         public override void Update()
         {
-            throw new NotImplementedException();
         }
     }
 }

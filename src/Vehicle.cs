@@ -15,11 +15,9 @@ namespace ArtillerySeries.src
     class Vehicle : EntityAssembly
     {
         private float _fuel;
-        
 
         public Vehicle(string name) : base(name)
         {
-
         }
 
         public int Health

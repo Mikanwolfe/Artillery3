@@ -38,7 +38,7 @@ namespace ArtillerySeries.src
 
         public Terrain Terrain { get => _terrain; set => _terrain = value; }
 
-        public float Clamp(float value, float min, float max)
+        float Clamp(float value, float min, float max)
         {
             if (value < min)
                 return value = min;
@@ -47,7 +47,7 @@ namespace ArtillerySeries.src
             return value;
         }
 
-        public int Clamp(int value, int min, int max)
+        int Clamp(int value, int min, int max)
         {
             if (value < min)
                 return value = min;
@@ -59,6 +59,8 @@ namespace ArtillerySeries.src
 
         public void Simulate()
         {
+            if (_terrain == null)
+                throw new MissingMemberException("No terrain to simulate with! Nothing to stop falls!");
             foreach(IPhysicsComponent p in _components)
             {
                 if (p != null)
