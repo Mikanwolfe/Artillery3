@@ -19,7 +19,17 @@ namespace ArtillerySeries.src
         PhysicsComponent _physics;
         bool _selected;
 
+        //Weapons should be seperate list.
+        //they are treated seperately as base.draw() will draw all the sights, which isn't required...
+        // OR, they can be in the same list with a known selected weaopn who's sight will be drawn.
+        // Weapons are selected by iterating through known weapons by iterating through the list
+        // and checking if the entity implements the IWeapon interface, or having a seperate list that
+        // is updated every time a new entity is added to the list.
+
+        Weapon _selectedWeapon;
         Weapon _weapon;
+        Weapon _weapon2;
+        List<Weapon> _weapons;
 
 
         public Character(string name) 
@@ -28,14 +38,20 @@ namespace ArtillerySeries.src
             _physics = new PhysicsComponent(this);
             _vehicle = new Vehicle(name);
             _selected = false;
-            //_pos = new Point2D();
+            _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f);
+            _weapon2 = new Weapon("Base Weapon 2 -- Remove asap.", 50f, 120f);
+            _weapons = new List<Weapon>();
 
             Entities.Add(_vehicle);
+            Entities.Add(_weapon);
+            Entities.Add(_weapon2);
             EntityManager.Instance.AddEntity(this);
 
-            _weapon = new Weapon("weapon");
-            Entities.Add(_weapon);
+            
+            _selectedWeapon = _weapon;
 
+            
+            UpdateWeaponList();
 
         }
 
@@ -48,13 +64,46 @@ namespace ArtillerySeries.src
             Move(Constants.PlayerSpeed);
         }
 
-        void Move(float acc) //TODO: Change to accel
+        void Move(float acc)
         {
             _physics.AccX = acc;
         }
 
-        public bool Selectecd { get => _selected; set => _selected = value; }
+        public bool Selected { get => _selected; set => _selected = value; }
+        
         PhysicsComponent IPhysicsComponent.Physics { get => _physics; set => _physics = value; }
+
+        void UpdateWeaponList()
+        {
+            _weapons = new List<Weapon>();
+            foreach (Entity e in Entities)
+            {
+                if (e is Weapon)
+                {
+                    _weapons.Add(e as Weapon);
+                }
+            }
+        }
+
+        void SwitchWeapon()
+        {
+            if (_weapons.Count != 1)
+            {
+                _selectedWeapon = _weapons[(_weapons.IndexOf(_selectedWeapon) + 1)  % _weapons.Count];
+            }
+        }
+
+        public void AddEntity(Entity entity)
+        {
+            Entities.Add(entity);
+            UpdateWeaponList();
+        }
+
+        public void RemoveEntity(Entity entity)
+        {
+            Entities.Remove(entity);
+            UpdateWeaponList();
+        }
 
         public override void Draw()
         {
@@ -80,12 +129,22 @@ namespace ArtillerySeries.src
             angle = (float)(_physics.RelAngleToGround * 180 / Math.PI);
             SwinGame.DrawText("Relative Angle: " + angle.ToString(), Color.Black, 50, 70);
 
+            _selectedWeapon.DrawSight();
+
             base.Draw(); // Draws the sub-entities
         }
 
 
+
+
         public override void Update()
         {
+
+            if (SwinGame.KeyTyped(KeyCode.SKey))
+            {
+                SwitchWeapon();
+            }
+                
 
             Direction = _physics.Facing;
             Pos = _physics.Position;

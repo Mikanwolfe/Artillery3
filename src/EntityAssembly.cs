@@ -11,7 +11,7 @@ namespace ArtillerySeries.src
     {
 
         List<Entity> _entities;
-        protected List<Entity> Entities { get => _entities; }
+        protected List<Entity> Entities { get => _entities; set => _entities = value; }
 
         public EntityAssembly(string name)
             :base(name)

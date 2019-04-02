@@ -12,6 +12,7 @@ namespace ArtillerySeries.src
     {
         List<Projectile> Ammunition { get; set; }
         void Fire();
+        void DrawSight();
 
     }
 
@@ -47,8 +48,8 @@ namespace ArtillerySeries.src
             :base(name)
         {
             _ammunition = new List<Projectile>();
-            _minWepAngleRad = minWepAngleDeg;
-            _maxWepAngleRad = maxWepAngleDeg;
+            _minWepAngleRad = Rad(minWepAngleDeg);
+            _maxWepAngleRad = Rad(maxWepAngleDeg);
             _weaponAngle = _minWepAngleRad;
         }
         
@@ -58,15 +59,23 @@ namespace ArtillerySeries.src
         
         public override void Draw()
         {
-            if(Direction == FacingDirection.Right)
+
+        }
+
+        public void DrawSight()
+        {
+            if (Direction == FacingDirection.Right)
             {
-                SwinGame.DrawLine(Color.Black, Pos.X + 10 * (float) Math.Cos(_relativeAngle), Pos.Y - 10 * (float)Math.Sin(_relativeAngle), Pos.X + 30 * (float)Math.Cos(_relativeAngle), Pos.Y - 30 * (float)Math.Sin(_relativeAngle));
-            } else
+                SwinGame.DrawLine(Color.Black, Pos.X + 10 * (float)Math.Cos(_minWepAngleRad + _relativeAngle), Pos.Y - 10 * (float)Math.Sin(_minWepAngleRad + _relativeAngle), Pos.X + 30 * (float)Math.Cos(_minWepAngleRad + _relativeAngle), Pos.Y - 30 * (float)Math.Sin(_minWepAngleRad + _relativeAngle));
+                SwinGame.DrawLine(Color.Black, Pos.X + 10 * (float)Math.Cos(_maxWepAngleRad + _relativeAngle), Pos.Y - 10 * (float)Math.Sin(_maxWepAngleRad + _relativeAngle), Pos.X + 30 * (float)Math.Cos(_maxWepAngleRad + _relativeAngle), Pos.Y - 30 * (float)Math.Sin(_maxWepAngleRad + _relativeAngle));
+            }
+            else
             {
-                SwinGame.DrawLine(Color.Black, Pos.X + 10, Pos.Y, Pos.X - 10, Pos.Y);
+                SwinGame.DrawLine(Color.Black, Pos.X - 10 * (float)Math.Cos(_relativeAngle), Pos.Y - 10 * (float)Math.Sin(_relativeAngle), Pos.X - 30 * (float)Math.Cos(_relativeAngle), Pos.Y - 30 * (float)Math.Sin(_relativeAngle));
+                //SwinGame.DrawLine(Color.Black, Pos.X + 10, Pos.Y, Pos.X - 10, Pos.Y);
             }
 
-            SwinGame.DrawText("Weapon direction: " + Deg(_relativeAngle),Color.Black, 50, 90);
+            SwinGame.DrawText("Weapon direction: " + Deg(_relativeAngle), Color.Black, 50, 90);
         }
 
         public void Fire()

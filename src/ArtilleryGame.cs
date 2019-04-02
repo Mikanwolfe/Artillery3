@@ -75,6 +75,7 @@ namespace ArtillerySeries.src
             PhysicsEngine.Instance.Terrain = _terrain;
 
             Character Innocentia = new Character("Innocentia");
+            
            // EntityManager.Instance.Add(Innocentia);
             
 
