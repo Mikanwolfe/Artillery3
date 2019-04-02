@@ -38,7 +38,7 @@ namespace ArtillerySeries.src
 
         public Terrain Terrain { get => _terrain; set => _terrain = value; }
 
-        float Clamp(float value, float min, float max)
+        public float Clamp(float value, float min, float max)
         {
             if (value < min)
                 return value = min;
@@ -47,7 +47,7 @@ namespace ArtillerySeries.src
             return value;
         }
 
-        int Clamp(int value, int min, int max)
+        public int Clamp(int value, int min, int max)
         {
             if (value < min)
                 return value = min;

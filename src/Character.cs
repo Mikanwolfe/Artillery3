@@ -144,7 +144,16 @@ namespace ArtillerySeries.src
             {
                 SwitchWeapon();
             }
-                
+            if (SwinGame.KeyDown(KeyCode.UpKey))
+            {
+                _selectedWeapon.ElevateWeapon();
+
+            }
+            if (SwinGame.KeyDown(KeyCode.DownKey))
+            {
+                _selectedWeapon.DepressWeapon();
+            }
+
 
             Direction = _physics.Facing;
             Pos = _physics.Position;

@@ -13,7 +13,8 @@ namespace ArtillerySeries.src
         List<Projectile> Ammunition { get; set; }
         void Fire();
         void DrawSight();
-
+        void ElevateWeapon();
+        void DepressWeapon();
     }
 
     /*
@@ -56,7 +57,16 @@ namespace ArtillerySeries.src
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
         public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
         List<Projectile> IWeapon.Ammunition { get => _ammunition; set => _ammunition = value; }
-        
+
+        public void DepressWeapon()
+        {
+            _weaponAngle = PhysicsEngine.Instance.Clamp(_weaponAngle - Rad(1f), _minWepAngleRad, _maxWepAngleRad);
+        }
+        public void ElevateWeapon()
+        {
+            _weaponAngle = PhysicsEngine.Instance.Clamp(_weaponAngle + Rad(1f), _minWepAngleRad, _maxWepAngleRad);
+        }
+
         public override void Draw()
         {
 
@@ -75,8 +85,11 @@ namespace ArtillerySeries.src
                 //SwinGame.DrawLine(Color.Black, Pos.X + 10, Pos.Y, Pos.X - 10, Pos.Y);
             }
 
+            SwinGame.DrawLine(Color.Red, Pos.X + 10 * (float)Math.Cos(_weaponAngle + _relativeAngle), Pos.Y - 10 * (float)Math.Sin(_weaponAngle + _relativeAngle), Pos.X + 30 * (float)Math.Cos(_weaponAngle + _relativeAngle), Pos.Y - 30 * (float)Math.Sin(_weaponAngle + _relativeAngle));
+
             SwinGame.DrawText("Weapon direction: " + Deg(_relativeAngle), Color.Black, 50, 90);
         }
+
 
         public void Fire()
         {
