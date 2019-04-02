@@ -12,40 +12,59 @@ namespace ArtillerySeries.src
     {
         List<Projectile> Ammunition { get; set; }
         SightComponent Sight { get; set; }
-        void Fire(float power, float relativeAngle, FacingDirection direction);
+        void Fire(float relativeAngle);
 
     }
 
+    /*
+     * Normally Weapon should be an EntityAssembly since it contains
+     * entities but here, it contains only one entity. It *must* contain one SightComponent entity.
+     * Hence, a special kind of entity called Weapon contains only one SightComponent entity with
+     *  manaual implementation to update the position and direction of sight.
+     * 
+     */
 
-    class Weapon : Entity
+    class Weapon : Entity, IWeapon
     {
-        FacingDirection _parentDirection;
-        Point2D _parentPos;
-        public Weapon(string name, FacingDirection parentDirection, Point2D parentPos) : base(name)
-        {
-            _parentDirection = parentDirection; //These should pass as references, I hope.
-            _parentPos = parentPos; // it doesn't
-        }
+        SightComponent _sight;
+        List<Projectile> _ammunition;
 
+        public Weapon(string name) : base(name)
+        {
+            _ammunition = new List<Projectile>();
+            _sight = new SightComponent(name + " sight");
+        }
+        
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
         public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
-
+        SightComponent IWeapon.Sight { get => _sight; set => _sight = value; }
+        List<Projectile> IWeapon.Ammunition { get => _ammunition; set => _ammunition = value; }
+        
         public override void Draw()
         {
-            if(_parentDirection == FacingDirection.Right)
+            if(Direction == FacingDirection.Right)
             {
-                SwinGame.DrawLine(Color.Black, _parentPos.X, _parentPos.Y, _parentPos.X + 10, _parentPos.Y);
+                SwinGame.DrawLine(Color.Black, Pos.X, Pos.Y, Pos.X + 10, Pos.Y);
             } else
             {
-                SwinGame.DrawLine(Color.Black, _parentPos.X, _parentPos.Y, _parentPos.X - 10, _parentPos.Y);
+                SwinGame.DrawLine(Color.Black, Pos.X, Pos.Y, Pos.X - 10, Pos.Y);
             }
+        }
 
-            Console.WriteLine("Parent Direction: " + _parentDirection);
-            Console.WriteLine("Parent Pos: " + _parentPos);
+        public void Fire(float relativeAngle)
+        {
+            throw new NotImplementedException();
         }
 
         public override void Update()
         {
+        }
+
+        public override void UpdatePosition(Point2D pos, FacingDirection direction)
+        {
+            _sight.Direction = direction;
+            _sight.Pos = pos;
+            base.UpdatePosition(pos, direction);
         }
     }
 }

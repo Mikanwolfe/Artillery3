@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.GameMain; // Constants
+using static ArtillerySeries.src.ArtilleryGame; // Constants
 
 namespace ArtillerySeries.src
 {
@@ -14,7 +14,7 @@ namespace ArtillerySeries.src
     class Character : EntityAssembly, IPhysicsComponent
     {
         Vehicle _vehicle;
-        Point2D _pos;
+        //Point2D _pos;
         Bitmap _charBitmap;
         PhysicsComponent _physics;
         bool _selected;
@@ -28,12 +28,12 @@ namespace ArtillerySeries.src
             _physics = new PhysicsComponent(this);
             _vehicle = new Vehicle(name);
             _selected = false;
-            _pos = new Point2D();
+            //_pos = new Point2D();
 
             Entities.Add(_vehicle);
             EntityManager.Instance.AddEntity(this);
 
-            _weapon = new Weapon("weapon", _physics.Facing, _pos);
+            _weapon = new Weapon("weapon");
             Entities.Add(_weapon);
 
 
@@ -53,9 +53,6 @@ namespace ArtillerySeries.src
             _physics.AccX = acc;
         }
 
-        public Point2D Pos { get => _pos; set => _pos = value; } //TODO remove ext pos setting. Should be physcomponent only.
-        public float X { get => _pos.X; set => _pos.X = value; }
-        public float Y { get => _pos.Y; set => _pos.Y = value; }
         public bool Selectecd { get => _selected; set => _selected = value; }
         PhysicsComponent IPhysicsComponent.Physics { get => _physics; set => _physics = value; }
 
@@ -65,14 +62,14 @@ namespace ArtillerySeries.src
             if (_charBitmap == null)
             {
                 if (_physics.OnGround)
-                    SwinGame.FillCircle(Color.IndianRed, _pos.X, _pos.Y, Constants.InvalidPlayerCircleRadius);
+                    SwinGame.FillCircle(Color.IndianRed, Pos.X, Pos.Y, Constants.InvalidPlayerCircleRadius);
                 else
-                    SwinGame.FillCircle(Color.Purple, _pos.X, _pos.Y, Constants.InvalidPlayerCircleRadius);
+                    SwinGame.FillCircle(Color.Purple, Pos.X, Pos.Y, Constants.InvalidPlayerCircleRadius);
 
                 if (_physics.Facing == FacingDirection.Left)
-                    SwinGame.FillCircle(Color.Aquamarine, _pos.X - 3, _pos.Y, Constants.InvalidPlayerCircleRadius);
+                    SwinGame.FillCircle(Color.Aquamarine, Pos.X - 3, Pos.Y, Constants.InvalidPlayerCircleRadius);
                 else
-                    SwinGame.FillCircle(Color.Aquamarine, _pos.X + 3, _pos.Y, Constants.InvalidPlayerCircleRadius);
+                    SwinGame.FillCircle(Color.Aquamarine, Pos.X + 3, Pos.Y, Constants.InvalidPlayerCircleRadius);
 
             }
 
@@ -89,8 +86,9 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
-            _pos.X = _physics.X;
-            _pos.Y = _physics.Y;
+            Direction = _physics.Facing;
+            Pos = _physics.Position;
+            UpdatePosition(_physics.Position, _physics.Facing);
             base.Update(); // Updates the sub-entities
         }
     }

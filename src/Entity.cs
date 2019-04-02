@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
@@ -16,19 +17,41 @@ namespace ArtillerySeries.src
         string _name;
         string _shortDesc;
         string _longDesc;
+        Point2D _pos;
+        FacingDirection _direction;
 
         public Entity(string name)
         {
             _name = name;
+            _pos = new Point2D();
+            _direction = FacingDirection.Left;
         }
 
         public string Name { get => _name; set => _name = value; }
+        public Point2D Pos { get => _pos; set => _pos = value; }
         public virtual string ShortDesc { get => _name; set => _shortDesc = value; }
         public virtual string LongDesc { get => "A " + _name; set => _longDesc = value; }
+        internal FacingDirection Direction { get => _direction; set => _direction = value; }
 
         public abstract override void Draw();
 
         public abstract override void Update();
+
+        public virtual void UpdatePosition(Point2D pos, FacingDirection direction)
+        {
+            _pos = pos;
+            _direction = direction;
+        }
+
+        protected float Rad(float deg)
+        {
+            return deg * (float)Math.PI / 180;
+        }
+
+        protected float Deg(float rad)
+        {
+            return rad * 180 / (float)Math.PI;
+        }
 
 
 

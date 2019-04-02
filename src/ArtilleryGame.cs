@@ -7,20 +7,49 @@ using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
+
+    public static class Constants
+    {
+        public const float Gravity = 0.6f;
+        public const float VelocityLoss = 0.8f;
+        public const string Data = "data.xml";
+
+        public const int WindowHeight = 900;
+        public const int WindowWidth = WindowHeight * 16 / 9;
+
+
+        //For now we'll have consts inside here, i'll incorporate xml support later.
+
+
+        public const int InvalidPlayerCircleRadius = 3;
+        public const float PlayerSpeed = 0.1f; //TODO: Change to Accel
+        public const float BaseFrictionCoefKinetic = 0.5f;
+        public const float BaseFrictionCoefStatic = 0.8f;
+        public const float BaseFrictionStaticError = 0.2f;
+        public const float BaseVehicleWeight = 1000f; //Arbitrary units
+        public const int VectorSightSize = 20;
+    }
     class ArtilleryGame
     {
         Rectangle _windowRect;
         World _world;
         InputHandler _inputHandler;
         Command _playerCommand;
-        PhysicsEngine _physicsEngine;
+        Terrain _terrain;
 
 
-        public ArtilleryGame(Rectangle windowRect)
+
+        public ArtilleryGame()
         {
             LoadResources();
 
-            _windowRect = windowRect;
+            _windowRect = new Rectangle
+            {
+                Width = Constants.WindowWidth,
+                Height = Constants.WindowHeight
+            };
+
+            _terrain = new Terrain(_windowRect);
             _world = new World(_windowRect);
             _inputHandler = new InputHandler();
         }
@@ -34,12 +63,8 @@ namespace ArtillerySeries.src
 
 
 
-        public void Run(Rectangle _windowRect)
+        public void Run()
         {
-            Terrain _terrain;
-
-            
-
 
             SwinGame.OpenAudio();
             //Open the game window

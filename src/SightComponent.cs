@@ -10,21 +10,39 @@ namespace ArtillerySeries.src
 
     class SightComponent : Entity
     {
-        FacingDirection _parentDirection;
-        Point2D _parentPos;
-        public SightComponent(string name, FacingDirection parentDirection, Point2D parentPos) 
+        float _minAngleRad, _maxAngleRad;
+        Bitmap _bitMap;
+
+        public SightComponent(string name):
+            base(name)
+        {
+            _minAngleRad = 0;
+            _maxAngleRad = 0;
+        }
+        public SightComponent(string name, float minAngleDeg, float maxAngleDeg)
             : base(name)
         {
-            _parentDirection = parentDirection; //These should pass as references, I hope.
-            _parentPos = parentPos;
+            _minAngleRad = Rad(minAngleDeg);
+            _maxAngleRad = Rad(maxAngleDeg);
+
         }
 
-        public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
-        public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
+        public override string ShortDesc { get => base.ShortDesc; }
+        public override string LongDesc { get => base.LongDesc; }
+        public float MinAngleDeg { get => Deg(_minAngleRad); }
+        public float MaxAngleDeg { get => Deg(_maxAngleRad); }
+        public float MinAngleRad { get => _minAngleRad; }
+        public float MaxAngleRad { get => _maxAngleRad; }
 
         public override void Draw()
         {
-            // Draw angles!
+            if (_bitMap == null)
+            {
+                Point2D p1 = new Point2D();
+                Point2D p2 = new Point2D();
+
+                
+            }
 
         }
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.GameMain;
+using static ArtillerySeries.src.ArtilleryGame;
 
 namespace ArtillerySeries.src
 {

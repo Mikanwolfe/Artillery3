@@ -34,6 +34,7 @@ namespace ArtillerySeries.src
             foreach (Entity e in Entities)
             {
                 e.Update();
+                e.UpdatePosition(Pos, Direction);
             }
         }
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.GameMain;
+using static ArtillerySeries.src.ArtilleryGame;
 
 namespace ArtillerySeries.src
 {
@@ -12,8 +12,6 @@ namespace ArtillerySeries.src
     interface IPhysicsComponent
     {
         PhysicsComponent Physics { get; set; }
-        float X { get; set; }
-        float Y { get; set; }
     }
     
     enum FacingDirection
