@@ -53,7 +53,6 @@
     <Compile Include="src\PhysicsEngine.cs" />
     <Compile Include="src\Player.cs" />
     <Compile Include="src\Projectile.cs" />
-    <Compile Include="src\SightComponent.cs" />
     <Compile Include="src\Terrain.cs" />
     <Compile Include="src\TerrainGenerator.cs" />
     <Compile Include="src\TerrainGeneratorMidpoint.cs" />

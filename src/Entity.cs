@@ -10,6 +10,7 @@ namespace ArtillerySeries.src
     // A leaf node of the composite pattern used for entities.
     // Entities are defined as any game thing that is not the UI.
     // That should have its own composite tree or will be integrated here slowly.
+    // Entities have a position and angle, and face a certain direction, though they don't need to be utilised.
     abstract class Entity : DrawableObject
     {
         // PhysicsComponent _physicsComponent
@@ -19,12 +20,14 @@ namespace ArtillerySeries.src
         string _longDesc;
         Point2D _pos;
         FacingDirection _direction;
+        float _absAngle;
 
         public Entity(string name)
         {
             _name = name;
             _pos = new Point2D();
             _direction = FacingDirection.Left;
+            _absAngle = 0;
         }
 
         public string Name { get => _name; set => _name = value; }
@@ -32,13 +35,15 @@ namespace ArtillerySeries.src
         public virtual string ShortDesc { get => _name; set => _shortDesc = value; }
         public virtual string LongDesc { get => "A " + _name; set => _longDesc = value; }
         internal FacingDirection Direction { get => _direction; set => _direction = value; }
+        public float AbsoluteAngle { get => _absAngle; set => _absAngle = value; }
 
         public abstract override void Draw();
 
         public abstract override void Update();
 
-        public virtual void UpdatePosition(Point2D pos, FacingDirection direction)
+        public virtual void UpdatePosition(Point2D pos, FacingDirection direction, float absoluteAngle)
         {
+            _absAngle = absoluteAngle;
             _pos = pos;
             _direction = direction;
         }

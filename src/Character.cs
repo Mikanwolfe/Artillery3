@@ -86,9 +86,11 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
+
             Direction = _physics.Facing;
             Pos = _physics.Position;
-            UpdatePosition(_physics.Position, _physics.Facing);
+            AbsoluteAngle = _physics.AbsAngleToGround;
+            
             base.Update(); // Updates the sub-entities
         }
     }
