@@ -56,7 +56,7 @@ namespace ArtillerySeries.src
         Point2D _offsetPosition;    //Used to calculate relative position to character.
         Point2D _relativePosition;
 
-        float _weaponAngle;
+        float _weaponAngle = 0;
         float _minWepAngleRad = 0;
         float _maxWepAngleRad = 0;
         float _relativeAngle = 0 ;
@@ -65,7 +65,6 @@ namespace ArtillerySeries.src
         public Weapon(string name) : base(name)
         {
             _ammunition = new List<Projectile>();
-            _weaponAngle = _minWepAngleRad;
             _weaponCharge = 0;
             _state = WeaponState.IdleState;
         }
@@ -75,6 +74,7 @@ namespace ArtillerySeries.src
         {
             _minWepAngleRad = Rad(minWepAngleDeg);
             _maxWepAngleRad = Rad(maxWepAngleDeg);
+            _weaponAngle = _minWepAngleRad;
         }
         
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
@@ -100,6 +100,22 @@ namespace ArtillerySeries.src
         {
             _state = WeaponState.FireState;
             Console.WriteLine("FIIIIRIIINNNG!!!! "+Name+" -- *boom*");
+
+            Point2D projectilePos = new Point2D()
+            {
+                X = Pos.X,
+                Y = Pos.Y-5
+            };
+            Point2D projectileVel = new Point2D()
+            {
+                X = (float)(_weaponCharge * Math.Cos(_weaponAngle + _relativeAngle)),
+                Y = -1 * (float)(_weaponCharge * Math.Sin(_weaponAngle + _relativeAngle)),
+            };
+
+            Projectile projectile = new Projectile(Name + " Projectile", this, projectilePos, projectileVel);
+
+
+
             _weaponCharge = 0;
 
             _state = WeaponState.IdleState;
@@ -115,7 +131,7 @@ namespace ArtillerySeries.src
         public void DrawSight()
         {
             SwinGame.DrawText("  Weapon State: " + _state, Color.Black, 320, 50);
-            SwinGame.DrawText("Prev. W. State: " + _previousState, Color.Black, 320, 70);
+            SwinGame.DrawText("  Weapon Angle: " + Deg(_weaponAngle + _relativeAngle), Color.Black, 320, 70);
             SwinGame.DrawText(" Weapon Charge: " + _weaponCharge, Color.Black, 320, 90);
 
             if (Direction == FacingDirection.Right)

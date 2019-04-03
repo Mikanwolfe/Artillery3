@@ -91,6 +91,7 @@ namespace ArtillerySeries.src
                         p.Physics.VelX *= (float)Math.Cos(p.Physics.RelAngleToGround);
                         p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
 
+                        p.Physics.VelX *= Constants.BaseFrictionCoefKinetic;
 
                         p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
                     }
@@ -105,7 +106,7 @@ namespace ArtillerySeries.src
                     p.Physics.X = Clamp(p.Physics.X, 0, _terrain.Map.Length - 1);
                     p.Physics.VelX += p.Physics.AccX;
                     p.Physics.VelY += p.Physics.AccY;
-                    p.Physics.VelX *= Constants.VelocityLoss;
+                    //p.Physics.VelX *= Constants.VelocityLoss;
 
                     p.Physics.Simulate();
 

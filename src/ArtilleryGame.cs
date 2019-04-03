@@ -11,7 +11,7 @@ namespace ArtillerySeries.src
     public static class Constants
     {
         public const float Gravity = 0.6f;
-        public const float VelocityLoss = 0.8f;
+        public const float VelocityLoss = 1f;
         public const string Data = "data.xml";
 
         public const int WindowHeight = 900;
