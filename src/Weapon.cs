@@ -46,6 +46,16 @@ namespace ArtillerySeries.src
         WeaponState _state;
         WeaponState _previousState;
 
+        /*
+         * Concept of Offset Position:
+         * 
+         * <-  O    X <-- Weapon drawn behind character.
+         *    /I/           Relative is calculated using offset, changes depending on Physics.Facing
+         *    / \           Need to define base position for offset.
+         */
+        Point2D _offsetPosition;    //Used to calculate relative position to character.
+        Point2D _relativePosition;
+
         float _weaponAngle;
         float _minWepAngleRad = 0;
         float _maxWepAngleRad = 0;
