@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="src\Camera.cs" />
     <Compile Include="src\Character.cs" />
+    <Compile Include="src\ChargeWeaponCommand.cs" />
     <Compile Include="src\Command.cs" />
     <Compile Include="src\DrawableObject.cs" />
     <Compile Include="src\Entity.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="src\UpdatableObject.cs" />
     <Compile Include="src\Vehicle.cs" />
     <Compile Include="src\Weapon.cs" />
+    <Compile Include="src\FireWeaponCommand.cs" />
     <Compile Include="src\World.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -12,6 +12,8 @@ namespace ArtillerySeries.src
 
         MoveLeftCommand MoveLeft = new MoveLeftCommand();
         MoveRightCommand MoveRight = new MoveRightCommand();
+        ChargeWeaponCommand ChargeWeapon = new ChargeWeaponCommand();
+        FireWeaponCommand FireWeapon = new FireWeaponCommand();
         public InputHandler()
         {
             //Change for specific controllers maybe.
@@ -23,6 +25,8 @@ namespace ArtillerySeries.src
             if (SwinGame.KeyDown(KeyCode.DKey)) return MoveRight;
             if (SwinGame.KeyDown(KeyCode.LeftKey)) return MoveLeft;
             if (SwinGame.KeyDown(KeyCode.RightKey)) return MoveRight;
+            if (SwinGame.KeyDown(KeyCode.SpaceKey)) return ChargeWeapon;
+            if (SwinGame.KeyReleased(KeyCode.SpaceKey)) return FireWeapon;
 
             return null;
         }

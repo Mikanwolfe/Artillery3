@@ -64,6 +64,16 @@ namespace ArtillerySeries.src
             Move(Constants.PlayerSpeed);
         }
 
+        public void ChargeWeapon()
+        {
+            _selectedWeapon.Charge();
+        }
+
+        public void FireWeapon()
+        {
+            _selectedWeapon.Fire();
+        }
+
         void Move(float acc)
         {
             _physics.AccX = acc;
