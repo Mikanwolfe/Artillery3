@@ -20,7 +20,7 @@ namespace ArtillerySeries.src
 
         //For now we'll have consts inside here, i'll incorporate xml support later.
 
-
+        public const int BaseCollisionRadius = 5;
         public const int InvalidPlayerCircleRadius = 3;
         public const float PlayerSpeed = 0.1f; //TODO: Change to Accel
         public const float BaseFrictionCoefKinetic = 0.5f;
