@@ -8,6 +8,14 @@ using static ArtillerySeries.src.ArtilleryGame; // Constants
 
 namespace ArtillerySeries.src
 {
+
+    enum CharacterStates
+    {
+        Idle,
+        Walking,
+        Firing,
+        Damage
+    }
     // Players use a single Character per game and they are pre-defined in the system (e.g. Innocentia/Object 261)
     //  but they can also be added to and customized on the fly.
     //  I don't know if this will work well but hey, let's hope for the best!
@@ -17,6 +25,7 @@ namespace ArtillerySeries.src
         //Point2D _pos;
         Bitmap _charBitmap;
         PhysicsComponent _physics;
+        StateComponent<CharacterStates> _characterState;
         bool _selected;
 
         //Weapons should be seperate list.
@@ -170,6 +179,45 @@ namespace ArtillerySeries.src
             AbsoluteAngle = _physics.AbsAngleToGround;
             
             base.Update(); // Updates the sub-entities
+        }
+
+        public void SwitchState(CharacterStates state)
+        {
+            switch(_characterState.Peek())
+            {
+                case CharacterStates.Idle:
+                    if (state == CharacterStates.Firing)
+                    {
+
+                    }
+                        //Play firing animation
+
+                    break;
+
+
+                default:
+                    break;
+            }
+
+
+            _characterState.Switch(state);
+
+
+        }
+
+        CharacterStates PeekState()
+        {
+            return _characterState.Peek();
+        }
+
+        void PushState(CharacterStates state)
+        {
+            throw new NotImplementedException();
+        }
+
+        CharacterStates PopState()
+        {
+            throw new NotImplementedException();
         }
     }
 }

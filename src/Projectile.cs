@@ -14,6 +14,7 @@ namespace ArtillerySeries.src
         Exploding,
         Dead
     }
+
     class Projectile : Entity, IPhysicsComponent
     {
         /*
@@ -26,14 +27,26 @@ namespace ArtillerySeries.src
          * This is 'cause the projectiles will probably get quite complex, and therefore it would make sense.
          * 
          * In the end, there's a lot of things to do here and the important thing to remember
-         * is that each weapon fires a different projectile. Time to clone it.
+         * is that each weapon fires a different projectile. Time to clone it.4
+         * 
+         * 
+         * 
+         * What about polymorphism/composition for states?
+         * Should i include a state component that's Projectile.State<T>? 
+         * That would allow me to write one State.Switch(State State) method each time
+         * though it would be dependant on the specific enum for the state...
+         * Then again, that only matters to external observers, hence, the StateComponent
+         * should be private only.
          */
         PhysicsComponent _physics;
         Bitmap _bitmap;
         Point2D _pos;
         Weapon _parentWeapon;
 
-        ProjectileState _state;
+        StateComponent<ProjectileState> _state;
+
+        float _explRad = Constants.BaseExplosionRadius;
+
 
         public Projectile(string name, Weapon parentWeapon, Point2D pos, Point2D vel) : base(name)
         {
@@ -41,7 +54,7 @@ namespace ArtillerySeries.src
             _physics = new PhysicsComponent(this);
             _physics.Velocity = vel;
             _physics.Position = pos;
-            _state = ProjectileState.Alive;
+            _state = new StateComponent<ProjectileState>(ProjectileState.Alive);
 
             EntityManager.Instance.AddEntity(this);
         }
@@ -52,22 +65,78 @@ namespace ArtillerySeries.src
 
         public override void Draw()
         {
-            if (_bitmap == null)
+            if (Visible)
             {
-                SwinGame.FillCircle(Color.DarkMagenta, _pos, 3);
+                if (_bitmap == null)
+                {
+                    SwinGame.FillCircle(Color.DarkMagenta, _pos, 3);
 
 
+
+                }
 
             }
+            
         }
 
         public override void Update()
         {
+            if (Enabled)
+            {
+                if (_physics.OnGround)
+                {
+                    SwitchState(ProjectileState.Exploding);
+                }
 
-            if (_physics.OnGround)
-                Console.WriteLine("Explosion!!");
-            _pos.X = _physics.X;
-            _pos.Y = _physics.Y;
+
+                _pos.X = _physics.X;
+                _pos.Y = _physics.Y;
+
+                if ((_pos.X <= 0) || (_pos.X >= PhysicsEngine.Instance.Terrain.Map.Length - 1))
+                    SwitchState(ProjectileState.Dead);
+            } else
+            {
+                Visible = false;
+                EntityManager.Instance.RemoveEntity(this);
+                PhysicsEngine.Instance.RemoveComponent(this);
+            }
+            
+        }
+
+        void Explode()
+        {
+            int width = (int)_explRad * 5-1;
+            float[] _crater = new float[(int)width];
+            float _period = (float)Math.PI * 2 / width;
+
+            for(int i = 0; i< width; i++)
+            {
+                _crater[i] = _explRad * (float)(-1 *Math.Cos(_period * (i - Math.PI*2)) + 1);
+            }
+
+            PhysicsEngine.Instance.BlowUpTerrain(_crater, _pos);
+        }
+
+        void SwitchState(ProjectileState nextState)
+        {
+            switch (nextState)
+            {
+
+                case ProjectileState.Exploding:
+                    if (_state.Peek() == ProjectileState.Alive)
+                    {
+                        Explode();
+                        SwitchState(ProjectileState.Dead);
+                    }
+                    break;
+
+                case ProjectileState.Dead:
+                    Enabled = false;
+
+                    break;
+
+            }
+            _state.Switch(nextState);
         }
     }
 }

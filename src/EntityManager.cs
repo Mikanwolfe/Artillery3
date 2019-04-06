@@ -14,11 +14,13 @@ namespace ArtillerySeries.src
     {
         private static EntityManager instance;
         private static List<Entity> _entities;
+        private static List<Entity> _entitiesToRemove;
         private EntityManager()
             : base("Entity Manager")
         {
             instance = this;
             _entities = new List<Entity>();
+            _entitiesToRemove = new List<Entity>();
         }
 
         public static EntityManager Instance
@@ -36,6 +38,11 @@ namespace ArtillerySeries.src
         public void AddEntity(Entity e)
         {
             Entities.Add(e);
+        }
+
+        public void RemoveEntity(Entity e)
+        {
+            _entitiesToRemove.Add(e);
         }
         public int Count
         {
@@ -59,6 +66,14 @@ namespace ArtillerySeries.src
             {
                 e.Update();
             }
+
+            foreach (Entity e in _entitiesToRemove)
+            {
+                Entities.Remove(e);
+                
+            }
+            _entitiesToRemove.Clear();
+
         }
     }
 }

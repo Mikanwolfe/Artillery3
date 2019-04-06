@@ -13,6 +13,12 @@ namespace ArtillerySeries.src
     }
     abstract class DrawableObject : UpdatableObject, IDrawable
     {
+
+        public DrawableObject()
+        {
+            _visible = true;
+        }
+
         bool _visible;
 
         public bool Visible { get => _visible; set => _visible = value; }

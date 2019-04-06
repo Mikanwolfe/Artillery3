@@ -54,10 +54,12 @@
     <Compile Include="src\PhysicsEngine.cs" />
     <Compile Include="src\Player.cs" />
     <Compile Include="src\Projectile.cs" />
+    <Compile Include="src\StateComponent.cs" />
     <Compile Include="src\Terrain.cs" />
     <Compile Include="src\TerrainGenerator.cs" />
     <Compile Include="src\TerrainGeneratorMidpoint.cs" />
     <Compile Include="src\TerrainGeneratorRandom.cs" />
+    <Compile Include="src\UI_Button.cs" />
     <Compile Include="src\UpdatableObject.cs" />
     <Compile Include="src\Vehicle.cs" />
     <Compile Include="src\Weapon.cs" />

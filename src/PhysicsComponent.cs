@@ -32,6 +32,7 @@ namespace ArtillerySeries.src
         float _relativeAngleToGround;
         bool _gravityEnabled, _onGround;
         FacingDirection _facing;
+        
 
 
         void ZeroPoint2D(Point2D point)

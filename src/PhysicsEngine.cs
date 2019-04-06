@@ -108,17 +108,30 @@ namespace ArtillerySeries.src
                     p.Physics.VelY += p.Physics.AccY;
                     //p.Physics.VelX *= Constants.VelocityLoss;
 
-                    p.Physics.Simulate();
-
-
-
-                }
+                    p.Physics.Simulate();                }
             }
         }
+
+        public void BlowUpTerrain(float[] crater, Point2D pos)
+        {
+            int xPos;
+            for(int i = 0; i < crater.Length -1; i++)
+            {
+                xPos = (int)pos.X - (crater.Length / 2) + i;
+                xPos = Clamp(xPos, 0, _terrain.Map.Length - 1);
+                _terrain.Map[xPos] += crater[i];
+            }
+        }
+
 
         public void AddComponent(IPhysicsComponent component)
         {
             _components.Add(component);
+        }
+
+        public void RemoveComponent(IPhysicsComponent component)
+        {
+            _components.Remove(component);
         }
     }
 }

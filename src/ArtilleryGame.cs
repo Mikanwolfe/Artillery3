@@ -20,9 +20,12 @@ namespace ArtillerySeries.src
 
         //For now we'll have consts inside here, i'll incorporate xml support later.
 
-        public const int BaseCollisionRadius = 5;
+        
         public const int InvalidPlayerCircleRadius = 3;
         public const float PlayerSpeed = 0.1f; //TODO: Change to Accel
+        public const float BaseExplosionRadius = 20;
+        public const int BaseExplosionDiaScaling = 15;
+        public const int BaseCollisionRadius = 5;
         public const float BaseFrictionCoefKinetic = 0.5f;
         public const float BaseFrictionCoefStatic = 0.8f;
         public const float BaseFrictionStaticError = 0.2f;
@@ -75,6 +78,8 @@ namespace ArtillerySeries.src
             PhysicsEngine.Instance.Terrain = _terrain;
 
             Character Innocentia = new Character("Innocentia");
+
+            //UI_Button _uiButton = new UI_Button(600, 200);
             
            // EntityManager.Instance.Add(Innocentia);
             
