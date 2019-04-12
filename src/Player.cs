@@ -38,6 +38,8 @@ namespace ArtillerySeries.src
             // State machine transition code goes here
 
 
+            _state.Switch(state);
+
         }
 
         public override void Update()

@@ -8,7 +8,15 @@ using SwinGameSDK;
 namespace ArtillerySeries.src
 {
 
-    class World
+    enum WorldState
+    {
+        Loading,
+        TrackingPlayer,
+        TrackingProjectile,
+        TrackingEntity
+    }
+
+    class World : IStateComponent<WorldState>
     {
 
         /*
@@ -22,6 +30,7 @@ namespace ArtillerySeries.src
         Terrain _terrain;
         Command _playerCommand;
         InputHandler _inputHandler;
+        StateComponent<WorldState> _state;
 
         List<Player> _players;
         Player _selectedPlayer;
@@ -33,6 +42,7 @@ namespace ArtillerySeries.src
             _inputHandler = inputHandler;
             _players = new List<Player>();
             _selectedPlayer = null;
+            _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
 
         }
 
@@ -75,7 +85,13 @@ namespace ArtillerySeries.src
 
         public void Update()
         {
+            switch (PeekState())
+            {
+                case WorldState.TrackingPlayer:
 
+
+                    break;
+            }
         }
 
         public void Draw()
@@ -83,6 +99,26 @@ namespace ArtillerySeries.src
             _terrain.Draw();
         }
 
+        public void SwitchState(WorldState state)
+        {
+            // State machine transition code goes here
 
+            _state.Switch(state);
+        }
+
+        public WorldState PeekState()
+        {
+            return _state.Peek();
+        }
+
+        public void PushState(WorldState state)
+        {
+            _state.Push(state);
+        }
+
+        public WorldState PopState()
+        {
+            return _state.Pop();
+        }
     }
 }

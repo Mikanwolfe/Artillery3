@@ -77,11 +77,13 @@ namespace ArtillerySeries.src
         public void ChargeWeapon()
         {
             _selectedWeapon.Charge();
+            SwitchState(CharacterState.Firing);
         }
 
         public void FireWeapon()
         {
             _selectedWeapon.Fire();
+            SwitchState(CharacterState.Finished); // Can only fire each weapon once
         }
 
         void Move(float acc)
@@ -197,13 +199,20 @@ namespace ArtillerySeries.src
 
                     break;
 
+                case CharacterState.Firing:
+                    if(state == CharacterState.Finished)
+                    {
+                        //get camera to mvoe?
+                        Console.WriteLine("Camera move should go here!");
+                    }
+                    break;
 
                 default:
                     break;
             }
 
 
-            SwitchState(state);
+            _state.Switch(state);
 
 
         }
