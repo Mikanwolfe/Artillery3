@@ -31,6 +31,7 @@ namespace ArtillerySeries.src
         Command _playerCommand;
         InputHandler _inputHandler;
         StateComponent<WorldState> _state;
+        Random _random;
         Observer _observer;
 
         List<Player> _players;
@@ -45,6 +46,7 @@ namespace ArtillerySeries.src
             _selectedPlayer = null;
             _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
             _observer = new WorldObserver(this);
+            _random = new Random();
 
         }
 
@@ -58,6 +60,11 @@ namespace ArtillerySeries.src
             TerrainGenerator _terrainFactory = new TerrainGeneratorMidpoint(_windowRect);
             _terrain = _terrainFactory.Generate();
             PhysicsEngine.Instance.Terrain = _terrain;
+
+            foreach (Player p in _players)
+            {
+                //p)
+            }
 
             //Character Innocentia = new Character("Innocentia");
         }

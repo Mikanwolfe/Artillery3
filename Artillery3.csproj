@@ -54,6 +54,8 @@
     <Compile Include="src\MoveRightCommand.cs" />
     <Compile Include="src\Observer.cs" />
     <Compile Include="src\ObserverComponent.cs" />
+    <Compile Include="src\Particle.cs" />
+    <Compile Include="src\ParticleEngine.cs" />
     <Compile Include="src\PhysicsComponent.cs" />
     <Compile Include="src\PhysicsEngine.cs" />
     <Compile Include="src\Player.cs" />

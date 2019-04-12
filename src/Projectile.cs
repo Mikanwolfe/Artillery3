@@ -40,7 +40,6 @@ namespace ArtillerySeries.src
          */
         PhysicsComponent _physics;
         Bitmap _bitmap;
-        Point2D _pos;
         Weapon _parentWeapon;
 
         StateComponent<ProjectileState> _state;
@@ -55,13 +54,14 @@ namespace ArtillerySeries.src
             _physics.Velocity = vel;
             _physics.Position = pos;
             _state = new StateComponent<ProjectileState>(ProjectileState.Alive);
-
+            
             EntityManager.Instance.AddEntity(this);
         }
 
-        public float X { get => _pos.X; set => _pos.X = value; }
-        public float Y { get => _pos.Y; set => _pos.Y = value; }
-        PhysicsComponent IPhysicsComponent.Physics { get => _physics; set => _physics = value; }
+        public float X { get => Pos.X; }
+        public float Y { get => Pos.Y; }
+
+        public PhysicsComponent Physics { get => _physics; set => _physics = value; }
 
         public override void Draw()
         {
@@ -69,7 +69,7 @@ namespace ArtillerySeries.src
             {
                 if (_bitmap == null)
                 {
-                    SwinGame.FillCircle(Color.DarkMagenta, _pos, 3);
+                    SwinGame.FillCircle(Color.DarkMagenta, Pos, 3);
 
 
 
@@ -89,10 +89,9 @@ namespace ArtillerySeries.src
                 }
 
 
-                _pos.X = _physics.X;
-                _pos.Y = _physics.Y;
+                Pos = _physics.Position;
 
-                if ((_pos.X <= 0) || (_pos.X >= PhysicsEngine.Instance.Terrain.Map.Length - 1))
+                if ((Pos.X <= 0) || (Pos.X >= PhysicsEngine.Instance.Terrain.Map.Length - 1))
                     SwitchState(ProjectileState.Dead);
             } else
             {
@@ -114,7 +113,8 @@ namespace ArtillerySeries.src
                 _crater[i] = _explRad * (float)(-1 *Math.Cos(_period * (i - Math.PI*2)) + 1);
             }
 
-            PhysicsEngine.Instance.BlowUpTerrain(_crater, _pos);
+            PhysicsEngine.Instance.BlowUpTerrain(_crater, Pos);
+            ParticleEngine.Instance.CreateExplosion(Pos, 50);
         }
 
         void SwitchState(ProjectileState nextState)

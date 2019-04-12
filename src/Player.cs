@@ -74,7 +74,7 @@ namespace ArtillerySeries.src
             if (_character.PeekState() == CharacterState.Finished)
             {
                 SwitchState(PlayerState.Finished);
-                Console.WriteLine("Player " + Name + " is switching states to finished");
+                
                 
             } else
             {

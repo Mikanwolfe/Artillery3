@@ -90,7 +90,8 @@ namespace ArtillerySeries.src
 
         void Move(float acc)
         {
-            _physics.AccX = acc;
+            if (_physics.OnGround)
+                _physics.AccX = acc;
         }
 
         public bool Selected { get => _selected; set => _selected = value; }
@@ -158,6 +159,8 @@ namespace ArtillerySeries.src
                     SwinGame.FillCircle(Color.Aquamarine, Pos.X - 3, Pos.Y, Constants.InvalidPlayerCircleRadius);
                 else
                     SwinGame.FillCircle(Color.Aquamarine, Pos.X + 3, Pos.Y, Constants.InvalidPlayerCircleRadius);
+
+
 
             }
 

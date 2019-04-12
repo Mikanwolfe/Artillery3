@@ -17,6 +17,8 @@ namespace ArtillerySeries.src
         public const int WindowHeight = 900;
         public const int WindowWidth = WindowHeight * 16 / 9;
 
+        public const double ParticleLifeDispersion = 0.05;
+
 
         //For now we'll have consts inside here, i'll incorporate xml support later.
 
@@ -98,7 +100,7 @@ namespace ArtillerySeries.src
                 _world.HandleInput();
 
 
-
+                ParticleEngine.Instance.Update();
                 PhysicsEngine.Instance.Simulate();
                 EntityManager.Instance.Update();
                 _world.Update();
@@ -110,6 +112,7 @@ namespace ArtillerySeries.src
 
 
                 _world.Draw();
+                ParticleEngine.Instance.Draw();
                 EntityManager.Instance.Draw();
                 SwinGame.RefreshScreen(60);
             }
