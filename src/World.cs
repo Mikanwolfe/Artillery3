@@ -85,6 +85,8 @@ namespace ArtillerySeries.src
 
         public void Update()
         {
+
+            /*
             switch (PeekState())
             {
                 case WorldState.TrackingPlayer:
@@ -92,6 +94,8 @@ namespace ArtillerySeries.src
 
                     break;
             }
+
+        */
         }
 
         public void Draw()
