@@ -74,12 +74,12 @@ namespace ArtillerySeries.src
             SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
 
 
-            Player player1 = new Player("2B");
+            Player player1 = new Player("2B", _world);
             Character Innocentia = new Character("Innocentia");
             player1.Character = Innocentia;
 
 
-            Player player2 = new Player("Sam");
+            Player player2 = new Player("Sam", _world);
             Character char2 = new Character("char2");
             player2.Character = char2;
 
@@ -101,6 +101,7 @@ namespace ArtillerySeries.src
 
                 PhysicsEngine.Instance.Simulate();
                 EntityManager.Instance.Update();
+                _world.Update();
                 
 
 

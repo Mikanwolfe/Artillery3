@@ -40,7 +40,9 @@
     <Compile Include="src\Character.cs" />
     <Compile Include="src\ChargeWeaponCommand.cs" />
     <Compile Include="src\Command.cs" />
+    <Compile Include="src\DepressWeaponCommand.cs" />
     <Compile Include="src\DrawableObject.cs" />
+    <Compile Include="src\ElevateWeaponCommand.cs" />
     <Compile Include="src\Entity.cs" />
     <Compile Include="src\EntityAssembly.cs" />
     <Compile Include="src\EntityManager.cs" />
@@ -50,11 +52,14 @@
     <Compile Include="src\InputHandler.cs" />
     <Compile Include="src\MoveLeftCommand.cs" />
     <Compile Include="src\MoveRightCommand.cs" />
+    <Compile Include="src\Observer.cs" />
+    <Compile Include="src\ObserverComponent.cs" />
     <Compile Include="src\PhysicsComponent.cs" />
     <Compile Include="src\PhysicsEngine.cs" />
     <Compile Include="src\Player.cs" />
     <Compile Include="src\Projectile.cs" />
     <Compile Include="src\StateComponent.cs" />
+    <Compile Include="src\SwitchWeaponCommand.cs" />
     <Compile Include="src\Terrain.cs" />
     <Compile Include="src\TerrainGenerator.cs" />
     <Compile Include="src\TerrainGeneratorMidpoint.cs" />
@@ -65,6 +70,7 @@
     <Compile Include="src\Weapon.cs" />
     <Compile Include="src\FireWeaponCommand.cs" />
     <Compile Include="src\World.cs" />
+    <Compile Include="src\WorldObserver.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="SwinGame">

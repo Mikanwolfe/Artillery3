@@ -57,6 +57,8 @@ namespace ArtillerySeries.src
             Entities.Add(_weapon2);
             EntityManager.Instance.AddEntity(this);
 
+            _state = new StateComponent<CharacterState>(CharacterState.Idle);
+
 
             _selectedWeapon = _weapon;
 
@@ -107,7 +109,17 @@ namespace ArtillerySeries.src
             }
         }
 
-        void SwitchWeapon()
+        public void ElevateWeapon()
+        {
+            _selectedWeapon.ElevateWeapon();
+        }
+
+        public void DepressWeapon()
+        {
+            _selectedWeapon.DepressWeapon();
+        }
+
+        public void SwitchWeapon()
         {
             if (_weapons.Count != 1)
             {
@@ -127,6 +139,11 @@ namespace ArtillerySeries.src
             UpdateWeaponList();
         }
 
+        public void DrawSight()
+        {
+            _selectedWeapon.DrawSight();
+        }
+
         public override void Draw()
         {
 
@@ -144,14 +161,15 @@ namespace ArtillerySeries.src
 
             }
 
+            SwinGame.DrawText(Name, Color.DarkGray, Pos.X, Pos.Y - 30);
 
 
             float angle = (float)(_physics.AbsAngleToGround * 180 / Math.PI);
-            SwinGame.DrawText("Absolute Angle: " + angle.ToString(), Color.Black, 50, 50);
+            //SwinGame.DrawText("Absolute Angle: " + angle.ToString(), Color.Black, 50, 50);
             angle = (float)(_physics.RelAngleToGround * 180 / Math.PI);
-            SwinGame.DrawText("Relative Angle: " + angle.ToString(), Color.Black, 50, 70);
+            //SwinGame.DrawText("Relative Angle: " + angle.ToString(), Color.Black, 50, 70);
 
-            _selectedWeapon.DrawSight();
+            
 
             base.Draw(); // Draws the sub-entities
         }
@@ -161,21 +179,6 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
-
-            if (SwinGame.KeyTyped(KeyCode.SKey))
-            {
-                SwitchWeapon();
-            }
-            if (SwinGame.KeyDown(KeyCode.UpKey))
-            {
-                _selectedWeapon.ElevateWeapon();
-
-            }
-            if (SwinGame.KeyDown(KeyCode.DownKey))
-            {
-                _selectedWeapon.DepressWeapon();
-            }
-
 
             Direction = _physics.Facing;
             Pos = _physics.Position;
@@ -213,6 +216,7 @@ namespace ArtillerySeries.src
 
 
             _state.Switch(state);
+            Console.WriteLine(Name + " switched states to " + state);
 
 
         }

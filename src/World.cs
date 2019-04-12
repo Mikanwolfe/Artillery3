@@ -31,6 +31,7 @@ namespace ArtillerySeries.src
         Command _playerCommand;
         InputHandler _inputHandler;
         StateComponent<WorldState> _state;
+        Observer _observer;
 
         List<Player> _players;
         Player _selectedPlayer;
@@ -43,6 +44,7 @@ namespace ArtillerySeries.src
             _players = new List<Player>();
             _selectedPlayer = null;
             _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
+            _observer = new WorldObserver(this);
 
         }
 
@@ -68,8 +70,10 @@ namespace ArtillerySeries.src
             }
             else
             {
+
                 int nextPlayer = _players.IndexOf(_selectedPlayer) + 1;
-                nextPlayer = PhysicsEngine.Instance.Clamp(nextPlayer, 0, _players.Count - 1);
+                if (nextPlayer > _players.Count - 1)
+                    nextPlayer = 0;
                 _selectedPlayer = _players[nextPlayer];
             }
         }
@@ -82,25 +86,30 @@ namespace ArtillerySeries.src
 
         }
 
+        public void EndPlayerTurn()
+        {
+            CyclePlayers();
+        }
+
 
         public void Update()
         {
-
-            /*
-            switch (PeekState())
+            foreach(Player p in _players)
             {
-                case WorldState.TrackingPlayer:
-
-
-                    break;
+                p.Update();
             }
-
-        */
         }
 
         public void Draw()
         {
             _terrain.Draw();
+            SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
+            _selectedPlayer.Draw();
+        }
+
+        public Observer ObserverInstance
+        {
+            get => _observer;
         }
 
         public void SwitchState(WorldState state)

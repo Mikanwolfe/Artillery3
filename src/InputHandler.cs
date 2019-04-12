@@ -10,10 +10,7 @@ namespace ArtillerySeries.src
     class InputHandler
     {
 
-        MoveLeftCommand MoveLeft = new MoveLeftCommand();
-        MoveRightCommand MoveRight = new MoveRightCommand();
-        ChargeWeaponCommand ChargeWeapon = new ChargeWeaponCommand();
-        FireWeaponCommand FireWeapon = new FireWeaponCommand();
+
         public InputHandler()
         {
             //Change for specific controllers maybe.
@@ -21,12 +18,16 @@ namespace ArtillerySeries.src
         public Command HandleInput()
         {
 
-            if (SwinGame.KeyDown(KeyCode.AKey)) return MoveLeft;
-            if (SwinGame.KeyDown(KeyCode.DKey)) return MoveRight;
-            if (SwinGame.KeyDown(KeyCode.LeftKey)) return MoveLeft;
-            if (SwinGame.KeyDown(KeyCode.RightKey)) return MoveRight;
-            if (SwinGame.KeyDown(KeyCode.SpaceKey)) return ChargeWeapon;
-            if (SwinGame.KeyReleased(KeyCode.SpaceKey)) return FireWeapon;
+            if (SwinGame.KeyDown(KeyCode.AKey)) return new MoveLeftCommand();
+            if (SwinGame.KeyDown(KeyCode.DKey)) return new MoveRightCommand();
+            if (SwinGame.KeyDown(KeyCode.LeftKey)) return new MoveLeftCommand();
+            if (SwinGame.KeyDown(KeyCode.RightKey)) return new MoveRightCommand();
+            if (SwinGame.KeyDown(KeyCode.SpaceKey)) return new ChargeWeaponCommand();
+            if (SwinGame.KeyReleased(KeyCode.SpaceKey)) return new FireWeaponCommand();
+            if (SwinGame.KeyTyped(KeyCode.SKey)) return new SwitchWeaponCommand();
+            if (SwinGame.KeyDown(KeyCode.UpKey)) return new ElevateWeaponCommand();
+            if (SwinGame.KeyDown(KeyCode.DownKey)) return new DepressWeaponCommand();
+            
 
             return null;
         }

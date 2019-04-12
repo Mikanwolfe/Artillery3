@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
@@ -12,22 +13,25 @@ namespace ArtillerySeries.src
         Idle,
         Finished
     }
-    class Player : UpdatableObject, IStateComponent<PlayerState>
+    class Player : Entity, IStateComponent<PlayerState>
     {
-        string _name;
         Character _character; //This may expand to include mutliple characters
         StateComponent<PlayerState> _state;
+        ObserverComponent _observerComponent;
 
         public Player(string name)
+            :base(name)
         {
-            _name = name;
             _state = new StateComponent<PlayerState>(PlayerState.Idle);
+
         }
 
-        public Player(string name, Character character)
-            :this(name)
+        public Player(string name, World world)
+            : this(name)
         {
-            _character = character;
+            //The world is always an observer for the player.
+            _observerComponent = new ObserverComponent();
+            _observerComponent.AddObserver(world.ObserverInstance);
         }
 
         //Make this into SelectedCharacter with AddCharacter later? should i have AddCharacter now?
@@ -37,17 +41,41 @@ namespace ArtillerySeries.src
         {
             // State machine transition code goes here
 
+            
+            switch (_state.Peek())
+            {
+                case PlayerState.Idle:
+                    if(state == PlayerState.Finished)
+                    {
+                        if(_observerComponent != null)
+                            _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
+
+                    }
+
+                    break;
+            }
+
 
             _state.Switch(state);
 
         }
 
+        public override void Draw()
+        {
+            _character.DrawSight();
+            SwinGame.DrawText("PlayerState: " + _state.Peek(), Color.Black, 50, 50);
+            SwinGame.DrawText("CharacterState: " + _character.PeekState(), Color.Black, 50, 60);
+        }
+
         public override void Update()
         {
+
             //change this to reflect mutliple chars later
-            if (Character.PeekState() == CharacterState.Finished)
+            if (_character.PeekState() == CharacterState.Finished)
             {
                 SwitchState(PlayerState.Finished);
+                Console.WriteLine("Player " + Name + " is switching states to finished");
+                
             } else
             {
                 SwitchState(PlayerState.Idle);
@@ -68,5 +96,7 @@ namespace ArtillerySeries.src
         {
             _state.Push(state);
         }
+
+
     }
 }
