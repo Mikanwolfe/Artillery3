@@ -61,6 +61,7 @@ namespace ArtillerySeries.src
         {
             if (_terrain == null)
                 throw new MissingMemberException("No terrain to simulate with! Nothing to stop falls!");
+                //make this not an exception!!
             foreach(IPhysicsComponent p in _components)
             {
                 if (p != null)
@@ -91,7 +92,8 @@ namespace ArtillerySeries.src
                         p.Physics.VelX *= (float)Math.Cos(p.Physics.RelAngleToGround);
                         p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
 
-                        p.Physics.VelX *= Constants.BaseFrictionCoefKinetic;
+                        if (p.Physics.HasGroundFriction)
+                            p.Physics.VelX *= Constants.BaseFrictionCoefKinetic;
 
                         p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
                     }

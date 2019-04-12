@@ -18,19 +18,16 @@ namespace ArtillerySeries.src
      * 
      */
 
+
     interface IStateComponent<T>
     {
-        
-        void Switch(T state);
-        T Peek(); //Peek at state
-        void Push(T state);
-        T Pop();
-
-        
-        
+        void SwitchState(T state);
+        T PeekState(); //Peek at state
+        void PushState(T state);
+        T PopState();
     }
 
-    class StateComponent<T> : IStateComponent<T>
+    class StateComponent<T>
     {
         Stack<T> _stateStack;
         // T should refer to the enum used for the state.

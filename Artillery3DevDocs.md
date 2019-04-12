@@ -48,6 +48,24 @@ The terrain in Artillery 3 will be generated based on various algorithms using t
 
 I've always found a development document that I can constantly write in to be rather useful when making something though the limitations of MarkDown often slow this down a little. On the other hand, it does make it easier to keep track of where ideas go. This will be the development docs for Artillery 3 ater 31/03/2019. The earlier docs can be found at nekox.net/posts, though I don't know if the page has been able to render properly.
 
+## To do
+
+Next up would be:
+
+* Connecting players to characters
+* Having multiple players
+* Possibly a menu state to intialise players
+* Handling moving between players
+* Camera movement between players
+* Health and damage for players
+* Basic animations for now?
+
+Started basic work on migrating stuff over to world, next is player management -- id assume they're created by the menu and then sent over? Either way, they need to be added in manually for now.
+
+
+
+
+
 
 
 ## 31/03/19: Lots Of Classes I Don't Take
@@ -61,6 +79,10 @@ Lots of development as thrown out the original UML docs since I'm quite unskille
 ### Singleton Design Pattern
 
 As there should only be one instance of the entity manager, I decided to go for the singleton design pattern here. I am justifying the use of this since it will always be a small program. It took a little bit to implement since a minor bug caused some oversight in some areas but it works since the newest commit.
+
+
+
+
 
 
 

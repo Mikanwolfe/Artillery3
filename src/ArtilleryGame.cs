@@ -22,9 +22,9 @@ namespace ArtillerySeries.src
 
         
         public const int InvalidPlayerCircleRadius = 3;
-        public const float PlayerSpeed = 0.1f; //TODO: Change to Accel
+        public const float PlayerSpeed = 0.5f; //TODO: Change to Accel
         public const float BaseExplosionRadius = 20;
-        public const int BaseExplosionDiaScaling = 15;
+        public const int BaseExplosionDiaScaling = 35;
         public const int BaseCollisionRadius = 5;
         public const float BaseFrictionCoefKinetic = 0.5f;
         public const float BaseFrictionCoefStatic = 0.8f;
@@ -37,8 +37,8 @@ namespace ArtillerySeries.src
         Rectangle _windowRect;
         World _world;
         InputHandler _inputHandler;
-        Command _playerCommand;
-        Terrain _terrain;
+
+
 
 
 
@@ -52,9 +52,9 @@ namespace ArtillerySeries.src
                 Height = Constants.WindowHeight
             };
 
-            _terrain = new Terrain(_windowRect);
-            _world = new World(_windowRect);
             _inputHandler = new InputHandler();
+            _world = new World(_windowRect, _inputHandler);
+            
         }
 
 
@@ -73,18 +73,21 @@ namespace ArtillerySeries.src
             //Open the game window
             SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
 
-            TerrainGenerator _terrainFactory = new TerrainGeneratorMidpoint(_windowRect);
-            _terrain = _terrainFactory.Generate();
-            PhysicsEngine.Instance.Terrain = _terrain;
 
+            Player player1 = new Player("2B");
             Character Innocentia = new Character("Innocentia");
+            player1.Character = Innocentia;
 
-            //UI_Button _uiButton = new UI_Button(600, 200);
-            
-           // EntityManager.Instance.Add(Innocentia);
-            
 
-            
+            Player player2 = new Player("Sam");
+            Character char2 = new Character("char2");
+            player2.Character = char2;
+
+            _world.AddPlayer(player1);
+            _world.AddPlayer(player2);
+
+            _world.CyclePlayers();
+            _world.NewSession();
 
 
             while (!SwinGame.WindowCloseRequested())
@@ -92,9 +95,7 @@ namespace ArtillerySeries.src
                 //Fetch the next batch of UI interaction
                 SwinGame.ProcessEvents();
 
-                _playerCommand = _inputHandler.HandleInput();
-                if (_playerCommand != null)
-                    _playerCommand.Execute(Innocentia);
+                _world.HandleInput();
 
 
 
@@ -105,7 +106,9 @@ namespace ArtillerySeries.src
 
                 SwinGame.ClearScreen(Color.White);
                 SwinGame.DrawFramerate(0, 0);
-                _terrain.Draw();
+
+
+                _world.Draw();
                 EntityManager.Instance.Draw();
                 SwinGame.RefreshScreen(60);
             }
