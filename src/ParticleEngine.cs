@@ -29,38 +29,128 @@ namespace ArtillerySeries.src
             {
                 if (instance == null)
                     instance = new ParticleEngine();
-                return instance;
+                return instance; 
             }
         }
 
+        /* ----------------------------------------------
+         *          Maff and Particle methods
+           ---------------------------------------------- */
+
+        public Color RandColorBetween(float RMin, float RMax, float GMin, float GMax, float BMin, float BMax, float AMin, float AMax)
+        {
+            return SwinGame.RGBAFloatColor(
+                RandFloatBetween(RMin, RMax),
+                RandFloatBetween(GMin, GMax),
+                RandFloatBetween(BMin, BMax),
+                RandFloatBetween(AMin, AMax)
+                );
+        }
+
+        float Clamp(float value, float min, float max)
+        {
+            return PhysicsEngine.Instance.Clamp(value, min, max);
+        }
+
+        Point2D Normalise(Point2D vector)
+        {
+            float x = vector.X;
+            float y = vector.Y;
+            float magnitude = (float)Math.Sqrt(x * x + y * y);
+            vector.X /= magnitude;
+            vector.Y /= magnitude;
+            return vector;
+        }
+
+        public Color Roughly(Color color, float var)
+        {
+            float r = color.R / 255;
+            float g = color.G / 255;
+            float b = color.B / 255;
+            float a = color.A / 255;
+            return SwinGame.RGBAFloatColor(
+                RandFloatBetween(Clamp(r - var, 0, 1), Clamp(r + var, 0, 1)),
+                RandFloatBetween(Clamp(g - var, 0, 1), Clamp(g + var, 0, 1)),
+                RandFloatBetween(Clamp(b - var, 0, 1), Clamp(b + var, 0, 1)),
+                a
+                );
+        }
+
+        public Color RoughlyValued(Color color, float var)
+        {
+            float r = color.R / 255;
+            float g = color.G / 255;
+            float b = color.B / 255;
+            float a = color.A / 255;
+            float deviation = RandFloatBetween(-var, var);
+            return SwinGame.RGBAFloatColor(
+                Clamp(r + deviation, 0, 1),
+                Clamp(g + deviation, 0, 1),
+                Clamp(b + deviation, 0, 1),
+                a
+                );
+        }
         public double RandDoubleBetween(double min, double max)
         {
             return _random.NextDouble() * (max - min) + min;
         }
 
+        public float RandFloatBetween(float min, float max)
+        {
+            return (float)RandDoubleBetween(min, max);
+        }
+
         public void CreateSimpleParticle(Point2D pos, Color color)
         {
+            CreateSimpleParticle(pos, color, 1f, 1f, 0f);
+        }
+        public void CreateSimpleParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight)
+        {
+            Point2D velocity = Normalise(new Point2D()
+            {
+                X = (float)RandDoubleBetween(-1, 1),
+                Y = (float)RandDoubleBetween(-1, 1)
+            });
+            velocity.X *= speedMult * RandFloatBetween(-1, 1);
+            velocity.Y *= speedMult * RandFloatBetween(-1, 1);
+
             _particles.Add(new Particle(
-                RandDoubleBetween(0.5, 1),
+                RandDoubleBetween(0.5, 1) * lifeMult,
                 pos,
-                new Point2D()
-                {
-                    X = (float)RandDoubleBetween(-1, 1),
-                    Y = (float)RandDoubleBetween(-1, 1)
-                },
+                velocity,
                 _random.Next(2, 10),
                 color,
-                false));
+                weight));
         }
+
+        /* ----------------------------------------------
+         *           Effect creation methods
+           ---------------------------------------------- */
 
         public void CreateExplosion(Point2D pos, int numParticles)
         {
             for (int i = 0; i < numParticles; i++)
             {
-                CreateSimpleParticle(pos, Color.OrangeRed);
-                CreateSimpleParticle(pos, Color.Yellow);
+                CreateSimpleParticle(pos, Roughly(Color.OrangeRed, 0.2f));
+                CreateSimpleParticle(pos, Roughly(Color.Yellow, 0.2f));
             }
         }
+        public void CreateFastExplosion(Point2D pos, int numParticles)
+        {
+            for (int i = 0; i < numParticles; i++)
+            {
+                CreateSimpleParticle(pos, Roughly(Color.Orange, 0.2f),10,2, 0.1f);
+                CreateSimpleParticle(pos, RoughlyValued(Color.Black, 0.5f),10,4, 0.05f);
+                CreateSimpleParticle(pos, Roughly(Color.Yellow, 0.2f),10,2, 0.1f);
+            }
+        }
+
+
+
+        /* ----------------------------------------------
+         *                Normal stuff
+           ---------------------------------------------- */
+
 
         public void Update()
         {

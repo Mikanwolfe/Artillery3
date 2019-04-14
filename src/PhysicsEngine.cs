@@ -68,7 +68,7 @@ namespace ArtillerySeries.src
                 {
                     if (p.Physics.GravityEnabled)
                     {
-                        p.Physics.VelY += Constants.Gravity;
+                        p.Physics.VelY += Constants.Gravity * p.Physics.Weight;
                     }
                     if (p.Physics.Position.Y >= _terrain.Map[(int)p.Physics.Position.X])
                     {

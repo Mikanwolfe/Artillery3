@@ -26,12 +26,19 @@ namespace ArtillerySeries.src
         IPhysicsComponent _entity;
         Point2D _pos, _vel, _acc;
         //PHYSICS!!
-        float _mass, _momentum;
+        float _weight;
         float _fricCoefficient;
         float _absAngleToGround;
         float _relativeAngleToGround;
         bool _gravityEnabled, _onGround, _hasGroundFriction;
         FacingDirection _facing;
+
+        /*
+         * Explained:
+         *  Weight--> weight of 1 means normal gravity (F = mg * weight)
+         *            weight of 0.5 means 1/2 gravity, etc.
+         * 
+         */ 
         
 
 
@@ -58,6 +65,7 @@ namespace ArtillerySeries.src
             _acc = ZeroPoint2D();
             _facing = FacingDirection.Right;
             _hasGroundFriction = true;
+            _weight = 1f;
         }
 
         public PhysicsComponent(IPhysicsComponent entity)
@@ -102,6 +110,7 @@ namespace ArtillerySeries.src
         public Point2D Velocity { get => _vel; set => _vel = value; }
         public Point2D Acceleration { get => _acc; set => _acc = value; }
         public bool GravityEnabled { get => _gravityEnabled; set => _gravityEnabled = value; }
+        public float Weight { get => _weight; set => _weight = value; }
         public float Y { get => _pos.Y; set => _pos.Y = value; }
         public float X { get => _pos.X; set => _pos.X = value; }
         public float VelX { get => _vel.X; set => _vel.X = value; }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SwinGameSDK;
+﻿using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
@@ -19,20 +14,33 @@ namespace ArtillerySeries.src
         Bitmap _bitmap;
         PhysicsComponent _physics;
         double _life;
+        double _maxLife;
         Color _color;
         double _radius;
 
-        public Particle(double life, Point2D pos, Point2D vel, double radius, Color color, bool hasGravity)
-            :base("particle")
+        public Particle(double life, Point2D pos, Point2D vel, double radius, Color color, float weight)
+            : base("particle")
         {
             _physics = new PhysicsComponent(this);
             _physics.Velocity = vel;
             _physics.Position = pos;
-            _physics.GravityEnabled = hasGravity;
+
+            _maxLife = life;
             _life = life;
             _radius = radius;
 
             _color = color;
+
+            if (weight == 0f)
+            {
+                _physics.GravityEnabled = false;
+                _physics.Weight = 0f;
+            }
+            else
+            {
+                _physics.GravityEnabled = true;
+                _physics.Weight = weight;
+            }
         }
 
         public override void Draw()
@@ -44,7 +52,7 @@ namespace ArtillerySeries.src
                     SwinGame.FillCircle(_color, Pos, (int)_radius);
                 }
             }
-            
+
         }
 
         public override void Update()
@@ -60,13 +68,11 @@ namespace ArtillerySeries.src
                     PhysicsEngine.Instance.RemoveComponent(this);
                 }
 
-                _color = SwinGame.RGBAColor(_color.R, _color.G, _color.B, (byte)(256 * _life));
+                _color = SwinGame.RGBAColor(_color.R, _color.G, _color.B, (byte)(255 * _life / _maxLife));
 
 
                 Pos = _physics.Position;
             }
-            
-
         }
 
         public void SetGravity(bool hasGravity)
