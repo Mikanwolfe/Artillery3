@@ -28,6 +28,7 @@ namespace ArtillerySeries.src
         //PHYSICS!!
         float _weight;
         float _fricCoefficient;
+        float _windFrictionMult;
         float _absAngleToGround;
         float _relativeAngleToGround;
         bool _gravityEnabled, _onGround, _hasGroundFriction;

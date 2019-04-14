@@ -34,6 +34,9 @@ namespace ArtillerySeries.src
         Random _random;
         Observer _observer;
 
+        Camera _camera;
+
+
         List<Player> _players;
         Player _selectedPlayer;
 
@@ -47,6 +50,7 @@ namespace ArtillerySeries.src
             _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
             _observer = new WorldObserver(this);
             _random = new Random();
+            _camera = new Camera(windowRect);
 
         }
 
@@ -74,7 +78,7 @@ namespace ArtillerySeries.src
             }
 
             PhysicsEngine.Instance.Settle();
-
+            SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
             //Character Innocentia = new Character("Innocentia");
         }
 
@@ -105,11 +109,14 @@ namespace ArtillerySeries.src
         public void EndPlayerTurn()
         {
             CyclePlayers();
+            SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
         }
 
 
         public void Update()
         {
+            _camera.Update();
+
             foreach(Player p in _players)
             {
                 p.Update();
@@ -126,6 +133,11 @@ namespace ArtillerySeries.src
         public Observer ObserverInstance
         {
             get => _observer;
+        }
+
+        public void SwitchCameraFocus(ICameraCanFocus focusPoint)
+        {
+            _camera.FocusCamera(focusPoint);
         }
 
         public void SwitchState(WorldState state)

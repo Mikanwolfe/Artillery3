@@ -9,7 +9,7 @@ namespace ArtillerySeries.src
 {
     public class Terrain : IDrawable
     {
-        float[] _terrainMap;
+        float[] _terrainMap; 
         Rectangle _windowRect;
 
         public Terrain(Rectangle windowRect)

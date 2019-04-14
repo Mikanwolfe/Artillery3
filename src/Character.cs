@@ -20,7 +20,8 @@ namespace ArtillerySeries.src
     // Players use a single Character per game and they are pre-defined in the system (e.g. Innocentia/Object 261)
     //  but they can also be added to and customized on the fly.
     //  I don't know if this will work well but hey, let's hope for the best!
-    class Character : EntityAssembly, IPhysicsComponent, IStateComponent<CharacterState>
+    class Character : EntityAssembly, 
+        IPhysicsComponent, IStateComponent<CharacterState>
     {
         Vehicle _vehicle;
         //Point2D _pos;
