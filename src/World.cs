@@ -50,6 +50,12 @@ namespace ArtillerySeries.src
 
         }
 
+        public double RandBetween(double min, double max)
+        {
+            return ParticleEngine.Instance.RandDoubleBetween(min, max);
+        }
+
+
         public void AddPlayer(Player p)
         {
             _players.Add(p);
@@ -60,11 +66,14 @@ namespace ArtillerySeries.src
             TerrainGenerator _terrainFactory = new TerrainGeneratorMidpoint(_windowRect);
             _terrain = _terrainFactory.Generate();
             PhysicsEngine.Instance.Terrain = _terrain;
+        
 
             foreach (Player p in _players)
             {
-                //p)
+                p.Character.SetXPosition((int)RandBetween(0, _terrain.Map.Length - 1));
             }
+
+            PhysicsEngine.Instance.Settle();
 
             //Character Innocentia = new Character("Innocentia");
         }

@@ -224,6 +224,10 @@ namespace ArtillerySeries.src
 
         }
 
+        public void SetXPosition(int x)
+        {
+            _physics.X = x;
+        }
 
         public void PushState(CharacterState state)
         {

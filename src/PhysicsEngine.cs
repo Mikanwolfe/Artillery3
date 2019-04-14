@@ -114,6 +114,14 @@ namespace ArtillerySeries.src
             }
         }
 
+        public void Settle()
+        {
+            foreach(IPhysicsComponent p in _components)
+            {
+                p.Physics.Y = _terrain.Map[(int)p.Physics.X];
+            }
+        }
+
         public void BlowUpTerrain(float[] crater, Point2D pos)
         {
             int xPos;
