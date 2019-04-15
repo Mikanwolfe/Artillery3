@@ -11,6 +11,7 @@ namespace ArtillerySeries.src
     enum PlayerState
     {
         Idle,
+        ObserveProjectile,
         Finished
     }
     class Player : Entity, IStateComponent<PlayerState>
@@ -18,11 +19,13 @@ namespace ArtillerySeries.src
         Character _character; //This may expand to include mutliple characters
         StateComponent<PlayerState> _state;
         ObserverComponent _observerComponent;
+        double _observeDelay;
 
         public Player(string name)
             :base(name)
         {
             _state = new StateComponent<PlayerState>(PlayerState.Idle);
+            _observeDelay = 0;
 
         }
 
@@ -56,14 +59,19 @@ namespace ArtillerySeries.src
             switch (_state.Peek())
             {
                 case PlayerState.Idle:
-                    if(state == PlayerState.Finished)
+                    
+                    
+                    if(state == PlayerState.ObserveProjectile)
                     {
-                        if(_observerComponent != null)
-                            _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
-                        //switch to wait for projectile
-                        // then count down
-                        // then notify that turn has ended
+                        _observeDelay = Constants.CameraAfterExplosionDelay;
                     }
+
+                    break;
+                case PlayerState.ObserveProjectile:
+
+                    
+
+                    
 
                     break;
             }
@@ -87,18 +95,28 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
+            if ((PeekState() == PlayerState.ObserveProjectile) && !_character.MainProjectile.Enabled)
+                _observeDelay -= 0.1;
+
+
+            switch (PeekState())
+            {
+                case PlayerState.ObserveProjectile:
+                    if (_observeDelay < 0)
+                    {
+                        if (_observerComponent != null)
+                            _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
+                        _character.SwitchState(CharacterState.Idle);
+                        SwitchState(PlayerState.Finished);
+                    }
+                    break;
+            }
 
             //change this to reflect mutliple chars later
             if (_character.PeekState() == CharacterState.Finished)
             {
-                if (!_character.MainProjectile.Enabled)
-                    SwitchState(PlayerState.Finished);
-                
-                
-            } else
-            {
-                SwitchState(PlayerState.Idle);
-            }
+                SwitchState(PlayerState.ObserveProjectile);
+            }            
         }
 
         public PlayerState PeekState()

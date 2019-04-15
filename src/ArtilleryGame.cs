@@ -17,7 +17,7 @@ namespace ArtillerySeries.src
         public const int WindowHeight = 900;
         public const int WindowWidth = WindowHeight * 16 / 9;
         public const int CameraEaseSpeed = 10;
-        public const double CameraAfterExplosionDelay = 3;
+        public const double CameraAfterExplosionDelay = 6;
 
         public const int TerrainDepth = 1800;
                

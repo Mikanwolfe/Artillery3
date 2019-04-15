@@ -236,12 +236,8 @@ namespace ArtillerySeries.src
                 default:
                     break;
             }
-
-
             _state.Switch(state);
             Console.WriteLine(Name + " switched states to " + state);
-
-
         }
 
         public Projectile MainProjectile

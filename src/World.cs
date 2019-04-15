@@ -95,6 +95,7 @@ namespace ArtillerySeries.src
                 if (nextPlayer > _players.Count - 1)
                     nextPlayer = 0;
                 _selectedPlayer = _players[nextPlayer];
+                _selectedPlayer.SwitchState(PlayerState.Idle);
             }
         }
 
