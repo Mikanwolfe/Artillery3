@@ -140,7 +140,7 @@ namespace ArtillerySeries.src
             for (int i = 0; i < numParticles; i++)
             {
                 CreateSimpleParticle(pos, Roughly(Color.Orange, 0.2f),10,2, 0.1f);
-                CreateSimpleParticle(pos, RoughlyValued(Color.Black, 0.5f),10,4, 0.05f);
+                CreateSimpleParticle(pos, RoughlyValued(Color.Black, 0.5f),10,4, 0.1f);
                 CreateSimpleParticle(pos, Roughly(Color.Yellow, 0.2f),10,2, 0.1f);
             }
         }

@@ -112,6 +112,12 @@ namespace ArtillerySeries.src
             SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
         }
 
+        public void CharacterFiredProjectile(Entity projectile)
+        {
+            _camera.FocusCamera(projectile);
+            SwitchState(WorldState.TrackingProjectile);
+        }
+
 
         public void Update()
         {

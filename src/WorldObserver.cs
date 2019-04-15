@@ -23,6 +23,10 @@ namespace ArtillerySeries.src
                     _world.EndPlayerTurn();
                     break;
 
+                case ObserverEvent.PlayerFiredProjectile:
+                    _world.CharacterFiredProjectile(entity);
+                    break;
+
             }
         }
     }

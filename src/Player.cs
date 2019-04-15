@@ -34,6 +34,17 @@ namespace ArtillerySeries.src
             _observerComponent.AddObserver(world.ObserverInstance);
         }
 
+        public void CharacterFired(Projectile projectile, Character parent)
+        {
+            Console.WriteLine("Character has been fired -- Message from the Player class");
+            _observerComponent.Notify(projectile, ObserverEvent.PlayerFiredProjectile);
+        }
+
+        public void Initiallise()
+        {
+            _character.SetFiringNotif(CharacterFired);
+        }
+
         //Make this into SelectedCharacter with AddCharacter later? should i have AddCharacter now?
         public Character Character { get => _character; set => _character = value; }
 
@@ -49,7 +60,9 @@ namespace ArtillerySeries.src
                     {
                         if(_observerComponent != null)
                             _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
-
+                        //switch to wait for projectile
+                        // then count down
+                        // then notify that turn has ended
                     }
 
                     break;
@@ -58,6 +71,11 @@ namespace ArtillerySeries.src
 
             _state.Switch(state);
 
+        }
+
+        public void CharacterFired()
+        {
+            Console.WriteLine("Player {0} has just been notified that {1} has fired!", Name, _character.Name);
         }
 
         public override void Draw()
@@ -73,7 +91,8 @@ namespace ArtillerySeries.src
             //change this to reflect mutliple chars later
             if (_character.PeekState() == CharacterState.Finished)
             {
-                SwitchState(PlayerState.Finished);
+                if (!_character.MainProjectile.Enabled)
+                    SwitchState(PlayerState.Finished);
                 
                 
             } else

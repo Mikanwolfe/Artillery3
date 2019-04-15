@@ -17,6 +17,7 @@ namespace ArtillerySeries.src
         public const int WindowHeight = 900;
         public const int WindowWidth = WindowHeight * 16 / 9;
         public const int CameraEaseSpeed = 10;
+        public const double CameraAfterExplosionDelay = 3;
 
         public const int TerrainDepth = 1800;
                
@@ -77,7 +78,7 @@ namespace ArtillerySeries.src
             SwinGame.OpenAudio();
             //Open the game window
             SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
-
+            SwinGame.SetIcon("H:\\repos\\Artillery3\\Resources\\images\\logoArtillery3LogoIcon.ico");
 
             Player player1 = new Player("2B", _world);
             Character Innocentia = new Character("Innocentia");
@@ -87,6 +88,9 @@ namespace ArtillerySeries.src
             Player player2 = new Player("Sam", _world);
             Character char2 = new Character("char2");
             player2.Character = char2;
+
+            player1.Initiallise();
+            player2.Initiallise();
 
             _world.AddPlayer(player1);
             _world.AddPlayer(player2);

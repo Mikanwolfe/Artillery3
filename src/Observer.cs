@@ -11,7 +11,9 @@ namespace ArtillerySeries.src
     {
         //No idea for now so this will do
         PlayerEndedTurn,
-        PlayerFiredProjectile
+        PlayerFiredProjectile,
+        PlayerProjectileExploded
+
     }
 
     abstract class Observer

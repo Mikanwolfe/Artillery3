@@ -43,6 +43,8 @@ namespace ArtillerySeries.src
         Bitmap _bitmap;
         List<Projectile> _ammunition;
 
+        Projectile _mainProjectile;
+
         WeaponState _state;
         WeaponState _previousState;
 
@@ -77,6 +79,11 @@ namespace ArtillerySeries.src
             _weaponAngle = _minWepAngleRad;
         }
         
+        public Projectile MainProjectile
+        {
+            get => _mainProjectile;
+        }
+
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
         public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
         List<Projectile> IWeapon.Ammunition { get => _ammunition; set => _ammunition = value; }
@@ -99,7 +106,6 @@ namespace ArtillerySeries.src
         public void Fire()
         {
             _state = WeaponState.FireState;
-            Console.WriteLine("FIIIIRIIINNNG!!!! "+Name+" -- *boom*");
 
             Point2D projectilePos = new Point2D()
             {
@@ -116,7 +122,7 @@ namespace ArtillerySeries.src
 
 
             Projectile projectile = new Projectile(Name + " Projectile", this, projectilePos, projectileVel);
-
+            _mainProjectile = projectile;
 
 
             _weaponCharge = 0;
@@ -124,7 +130,7 @@ namespace ArtillerySeries.src
             _state = WeaponState.IdleState;
         }
 
-
+        
 
         public override void Draw()
         {

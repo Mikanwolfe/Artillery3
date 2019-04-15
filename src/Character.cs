@@ -20,9 +20,15 @@ namespace ArtillerySeries.src
     // Players use a single Character per game and they are pre-defined in the system (e.g. Innocentia/Object 261)
     //  but they can also be added to and customized on the fly.
     //  I don't know if this will work well but hey, let's hope for the best!
+
+    
+
     class Character : EntityAssembly, 
         IPhysicsComponent, IStateComponent<CharacterState>
     {
+
+        
+
         Vehicle _vehicle;
         //Point2D _pos;
         Bitmap _charBitmap;
@@ -41,6 +47,12 @@ namespace ArtillerySeries.src
         Weapon _weapon;
         Weapon _weapon2;
         List<Weapon> _weapons;
+
+        public delegate void NotifyFiring(Projectile projectile, Character parent);
+
+        NotifyFiring notifyFiring;
+
+        
 
 
         public Character(string name)
@@ -68,6 +80,11 @@ namespace ArtillerySeries.src
 
         }
 
+        public void SetFiringNotif(NotifyFiring parentFunction)
+        {
+            notifyFiring = new NotifyFiring(parentFunction);
+        }
+
         public void MoveLeft()
         {
             Move(Constants.PlayerSpeed * -1);
@@ -86,6 +103,8 @@ namespace ArtillerySeries.src
         public void FireWeapon()
         {
             _selectedWeapon.Fire();
+            if (notifyFiring != null)
+                notifyFiring(_selectedWeapon.MainProjectile, this);
             SwitchState(CharacterState.Finished); // Can only fire each weapon once
         }
 
@@ -223,6 +242,11 @@ namespace ArtillerySeries.src
             Console.WriteLine(Name + " switched states to " + state);
 
 
+        }
+
+        public Projectile MainProjectile
+        {
+            get => _selectedWeapon.MainProjectile;
         }
 
         public void SetXPosition(int x)

@@ -94,9 +94,9 @@ namespace ArtillerySeries.src
                 _facing = FacingDirection.Left;
 
             if (Math.Abs(_vel.X) < Constants.BaseFrictionStaticError)
-                _fricCoefficient = Constants.BaseFrictionCoefStatic;
+                _fricCoefficient = Constants.BaseFrictionCoefStatic * _weight;
             else
-                _fricCoefficient = Constants.BaseFrictionCoefKinetic;
+                _fricCoefficient = Constants.BaseFrictionCoefKinetic * _weight;
 
             if (_facing == FacingDirection.Right)
                 _relativeAngleToGround = _absAngleToGround;
