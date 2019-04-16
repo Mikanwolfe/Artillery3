@@ -43,20 +43,14 @@ namespace ArtillerySeries.src
 
         public void CenterCameraAtFocus()
         {
-
-
             int destinationX = (int)_focus.Pos.X + OffsetX;
-            destinationX = Clamp(destinationX, 0, 10000);
+            destinationX = Clamp(destinationX, 0, Constants.TerrainWidth - (int)_windowRect.Width);
 
             int destinationY = (int)_focus.Pos.Y + OffsetY;
-            destinationY = Clamp(destinationY, 0, 10000);
+            destinationY = Clamp(destinationY, -Constants.CameraMaxHeight, (int)_windowRect.Height + Constants.TerrainDepth);
 
             _pos.X += (destinationX - _pos.X) / Constants.CameraEaseSpeed;
             _pos.Y += (destinationY - _pos.Y) / Constants.CameraEaseSpeed;
-
-
-
-
 
         }
 

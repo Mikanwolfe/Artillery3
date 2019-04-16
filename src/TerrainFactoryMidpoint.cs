@@ -9,13 +9,20 @@ namespace ArtillerySeries.src
 {
     //TODO: Currently limited by window size, will have to expand to accomodate for 
     //       Camera and camera movement.
-    public class TerrainGeneratorMidpoint : TerrainGenerator
+    public class TerrainFactoryMidpoint : TerrainFactory
     {
-        
 
-        public TerrainGeneratorMidpoint(Rectangle windowSize) : base(windowSize)
+
+        public TerrainFactoryMidpoint(Rectangle windowRect, Rectangle terrainBox) 
+            : base(windowRect, terrainBox)
         {
         }
+
+        public TerrainFactoryMidpoint(Rectangle windowRect, int terrainWidth, int terrainDepth)
+            : base(windowRect, new Rectangle() { Width = terrainWidth, Height = terrainDepth })
+        {
+        }
+
 
         float RandDisplacement(float displacement)
         {
@@ -33,9 +40,9 @@ namespace ArtillerySeries.src
              * These points will be the virtual line segments.
              */
 
-            int requiredExponent = PowerCeiling(2, WindowRect.Width);
-            int requiredWidth = (int)Math.Pow(2f,requiredExponent); //Should be 2^x - 1. e.g. 0..1024
-            float[] generatedMap = new float[requiredWidth+1];
+            int requiredExponent = PowerCeiling(2, TerrainBox.Width);
+            int requiredWidth = (int)Math.Pow(2f, requiredExponent); //Should be 2^x - 1. e.g. 0..1024
+            float[] generatedMap = new float[requiredWidth + 1];
             int numberOfSegments;
             int segmentLength;
             int xVal;
@@ -63,11 +70,16 @@ namespace ArtillerySeries.src
             }
 
 
-            //TODO: remove this.
-            Terrain _terrain = new Terrain(WindowRect);
-            _terrain.Map = new float[(int)WindowRect.Width];
+            /*Terrain _terrain = new Terrain(WindowRect)
+            {
+                Map = generatedMap
+            };
+            */
 
-            for (int i = 0; i < _terrain.Map.Length - 1; i++)
+            Terrain _terrain = new Terrain(WindowRect);
+            _terrain.Map = new float[(int)TerrainBox.Width];
+
+            for (int i = 0; i < _terrain.Map.Length; i++)
             {
                 _terrain.Map[i] = generatedMap[i];
             }

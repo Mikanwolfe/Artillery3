@@ -23,7 +23,7 @@ namespace ArtillerySeries.src
         {
             for(int i = 0; i < _terrainMap.Length; i++)
             {
-                SwinGame.DrawLine(Color.Green, i, _windowRect.Height, i, (int)Math.Round(_terrainMap[i]));
+                SwinGame.DrawLine(Color.Green, i, Constants.TerrainDepth, i, (int)Math.Round(_terrainMap[i]));
             }
         }
     }

@@ -63,9 +63,9 @@
     <Compile Include="src\StateComponent.cs" />
     <Compile Include="src\SwitchWeaponCommand.cs" />
     <Compile Include="src\Terrain.cs" />
-    <Compile Include="src\TerrainGenerator.cs" />
-    <Compile Include="src\TerrainGeneratorMidpoint.cs" />
-    <Compile Include="src\TerrainGeneratorRandom.cs" />
+    <Compile Include="src\TerrainFactory.cs" />
+    <Compile Include="src\TerrainFactoryMidpoint.cs" />
+    <Compile Include="src\TerrainFactoryRandom.cs" />
     <Compile Include="src\UI_Button.cs" />
     <Compile Include="src\UpdatableObject.cs" />
     <Compile Include="src\Vehicle.cs" />

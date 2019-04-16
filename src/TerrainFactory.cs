@@ -7,18 +7,22 @@ using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
-    public abstract class TerrainGenerator
+    public abstract class TerrainFactory
     {
         Rectangle _windowRect;
+        Rectangle _terrainBox;
         Random _random = new Random();
 
-        public TerrainGenerator(Rectangle windowRect)
+        public TerrainFactory(Rectangle windowRect, Rectangle terrainBox)
         {
             _windowRect = windowRect;
+            _terrainBox = terrainBox;
         }
 
         public Rectangle WindowRect { get => _windowRect; }
         public Random Random { get => _random; set => _random = value; }
+
+        public Rectangle TerrainBox { get => _terrainBox; }
 
         protected int PowerCeiling( float baseValue, float exp)
         {

@@ -57,6 +57,7 @@ namespace ArtillerySeries.src
         {
             if (!_stateStack.Peek().Equals(state))
             {
+                Console.WriteLine("A state was switched to: " + state);
                 _stateStack.Pop();
                 _stateStack.Push(state);
             }

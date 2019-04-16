@@ -67,7 +67,7 @@ namespace ArtillerySeries.src
 
         public void NewSession()
         {
-            TerrainGenerator _terrainFactory = new TerrainGeneratorMidpoint(_windowRect);
+            TerrainFactory _terrainFactory = new TerrainFactoryMidpoint(_windowRect, Constants.TerrainWidth, Constants.TerrainDepth);
             _terrain = _terrainFactory.Generate();
             PhysicsEngine.Instance.Terrain = _terrain;
         

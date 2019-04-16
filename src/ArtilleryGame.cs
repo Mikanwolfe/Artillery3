@@ -18,10 +18,14 @@ namespace ArtillerySeries.src
         public const int WindowWidth = WindowHeight * 16 / 9;
         public const int CameraEaseSpeed = 10;
         public const double CameraAfterExplosionDelay = 6;
+        public const int CameraMaxHeight = 2000;
 
         public const int TerrainDepth = 1800;
+        public const int TerrainWidth = 3000;
                
         public const double ParticleLifeDispersion = 0.05;
+
+        public const int NumberParallaxBackgrounds = 3;
 
 
         //For now we'll have consts inside here, i'll incorporate xml support later.

@@ -96,16 +96,23 @@ namespace ArtillerySeries.src
 
         public void ChargeWeapon()
         {
-            _selectedWeapon.Charge();
-            SwitchState(CharacterState.Firing);
+            if (PeekState() != CharacterState.Finished)
+            {
+                _selectedWeapon.Charge();
+                SwitchState(CharacterState.Firing);
+            }
         }
 
         public void FireWeapon()
         {
-            _selectedWeapon.Fire();
-            if (notifyFiring != null)
-                notifyFiring(_selectedWeapon.MainProjectile, this);
-            SwitchState(CharacterState.Finished); // Can only fire each weapon once
+            if (PeekState() != CharacterState.Finished)
+            {
+
+                _selectedWeapon.Fire();
+                if (notifyFiring != null)
+                    notifyFiring(_selectedWeapon.MainProjectile, this);
+                SwitchState(CharacterState.Finished); // Can only fire each weapon once
+            }
         }
 
         void Move(float acc)
@@ -224,20 +231,11 @@ namespace ArtillerySeries.src
                     //Play firing animation
 
                     break;
-
-                case CharacterState.Firing:
-                    if(state == CharacterState.Finished)
-                    {
-                        //get camera to mvoe?
-                        Console.WriteLine("Camera move should go here!");
-                    }
-                    break;
-
                 default:
                     break;
             }
             _state.Switch(state);
-            Console.WriteLine(Name + " switched states to " + state);
+            
         }
 
         public Projectile MainProjectile
