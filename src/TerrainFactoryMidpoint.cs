@@ -29,7 +29,7 @@ namespace ArtillerySeries.src
             return Random.Next((int)displacement * 2) - displacement;
         }
 
-        public override Terrain Generate()
+        public override Terrain Generate(Color color)
         {
             Console.WriteLine("Generating Midpoint terrain!");
             /*
@@ -83,6 +83,7 @@ namespace ArtillerySeries.src
             {
                 _terrain.Map[i] = generatedMap[i];
             }
+            _terrain.Color = color;
 
             return _terrain;
         }

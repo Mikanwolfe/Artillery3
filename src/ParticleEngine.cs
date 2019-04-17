@@ -7,7 +7,7 @@ using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
-    class ParticleEngine
+    public class ParticleEngine
     {
 
         private static ParticleEngine instance;

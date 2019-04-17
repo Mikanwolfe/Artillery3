@@ -14,7 +14,7 @@ namespace ArtillerySeries.src
         {
         }
 
-        public override Terrain Generate()
+        public override Terrain Generate(Color color)
         {
             Console.WriteLine("Generating random terrain!");
             Terrain _terrain = new Terrain(WindowRect)

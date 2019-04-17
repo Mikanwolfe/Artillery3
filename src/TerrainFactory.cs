@@ -30,7 +30,7 @@ namespace ArtillerySeries.src
         }
 
 
-        public abstract Terrain Generate();
+        public abstract Terrain Generate(Color color);
 
     }
 }

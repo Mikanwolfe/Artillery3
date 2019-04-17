@@ -28,6 +28,7 @@ namespace ArtillerySeries.src
          */
         Rectangle _windowRect;
         Terrain _terrain;
+        List<Terrain> _backgroundTerrain;
         Command _playerCommand;
         InputHandler _inputHandler;
         StateComponent<WorldState> _state;
@@ -44,6 +45,7 @@ namespace ArtillerySeries.src
         {
             _windowRect = windowRect;
             _terrain = new Terrain(_windowRect);
+            _backgroundTerrain = new List<Terrain>();
             _inputHandler = inputHandler;
             _players = new List<Player>();
             _selectedPlayer = null;
@@ -68,8 +70,13 @@ namespace ArtillerySeries.src
         public void NewSession()
         {
             TerrainFactory _terrainFactory = new TerrainFactoryMidpoint(_windowRect, Constants.TerrainWidth, Constants.TerrainDepth);
-            _terrain = _terrainFactory.Generate();
+            _terrain = _terrainFactory.Generate(Color.Green);
             PhysicsEngine.Instance.Terrain = _terrain;
+
+            for(int i = 0; i < Constants.NumberParallaxBackgrounds - 1; i++)
+            {
+                _backgroundTerrain.Add( _terrainFactory.Generate(ParticleEngine.Instance.Roughly(Color.Green,0.9f)));
+            }
         
 
             foreach (Player p in _players)
@@ -132,7 +139,15 @@ namespace ArtillerySeries.src
 
         public void Draw()
         {
+           
+
+            foreach (Terrain t in _backgroundTerrain)
+            {
+                t.Draw();
+            }
+
             _terrain.Draw();
+
             SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
             _selectedPlayer.Draw();
         }
