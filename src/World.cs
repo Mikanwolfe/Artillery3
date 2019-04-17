@@ -69,14 +69,18 @@ namespace ArtillerySeries.src
 
         public void NewSession()
         {
-            TerrainFactory _terrainFactory = new TerrainFactoryMidpoint(_windowRect, Constants.TerrainWidth, Constants.TerrainDepth);
+            TerrainFactory _terrainFactory = 
+                new TerrainFactoryMidpoint(_windowRect, Constants.TerrainWidth, Constants.TerrainDepth, _camera);
             _terrain = _terrainFactory.Generate(Color.Green);
             PhysicsEngine.Instance.Terrain = _terrain;
 
-            for(int i = 0; i < Constants.NumberParallaxBackgrounds - 1; i++)
+            for(int i = 0; i < Constants.NumberParallaxBackgrounds; i++)
             {
-                _backgroundTerrain.Add( _terrainFactory.Generate(ParticleEngine.Instance.Roughly(Color.Green,0.9f)));
+                _backgroundTerrain.Add( _terrainFactory.Generate(SwinGame.RGBAFloatColor(0.1f, 0.3f, 0.1f, 0.5f),
+                    Constants.AverageTerrainHeight - i * 100 - 100));
             }
+
+            
         
 
             foreach (Player p in _players)

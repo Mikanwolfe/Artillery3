@@ -21,7 +21,10 @@ namespace ArtillerySeries.src
         public const int CameraMaxHeight = 2000;
 
         public const int TerrainDepth = 1800;
-        public const int TerrainWidth = 3000;
+        public const int TerrainWidth = 2400;
+
+        public const int AverageTerrainHeight = (int)(TerrainDepth * 0.6);
+        public const int BaseTerrainInitialDisplacement = (int)(0.1 * TerrainDepth);
                
         public const double ParticleLifeDispersion = 0.05;
 

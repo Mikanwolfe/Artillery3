@@ -8,11 +8,11 @@ using SwinGameSDK;
 namespace ArtillerySeries.src
 {
 
-    interface ICameraCanFocus
+    public interface ICameraCanFocus
     {
         Point2D Pos { get; }
     }
-    class Camera : UpdatableObject
+    public class Camera : UpdatableObject
     {
         Rectangle _windowRect;
         Point2D _pos;
@@ -35,6 +35,7 @@ namespace ArtillerySeries.src
 
         public double EaseSpeed { get => _easeSpeed; set => _easeSpeed = value; }
         public Point2D Pos { get => _pos; }
+        public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
 
         public int Clamp(int value, int min, int max)
         {

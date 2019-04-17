@@ -11,6 +11,7 @@ namespace ArtillerySeries.src
     {
         Rectangle _windowRect;
         Rectangle _terrainBox;
+        Camera _camera;
         Random _random = new Random();
 
         public TerrainFactory(Rectangle windowRect, Rectangle terrainBox)
@@ -19,11 +20,18 @@ namespace ArtillerySeries.src
             _terrainBox = terrainBox;
         }
 
+        public TerrainFactory(Rectangle windowRect, Rectangle terrainBox, Camera camera)
+            : this(windowRect, terrainBox)
+        {
+            _camera = camera;
+        }
+
         public Rectangle WindowRect { get => _windowRect; }
         public Random Random { get => _random; set => _random = value; }
 
         public Rectangle TerrainBox { get => _terrainBox; }
 
+        public Camera CameraInstance { get => _camera; set => value = _camera; }
         protected int PowerCeiling( float baseValue, float exp)
         {
             return (int)Math.Ceiling(Math.Log(exp, baseValue));
@@ -31,6 +39,6 @@ namespace ArtillerySeries.src
 
 
         public abstract Terrain Generate(Color color);
-
+        public abstract Terrain Generate(Color color, int averageTerrainHeight);
     }
 }

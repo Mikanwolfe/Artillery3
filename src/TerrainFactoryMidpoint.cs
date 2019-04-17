@@ -12,6 +12,9 @@ namespace ArtillerySeries.src
     public class TerrainFactoryMidpoint : TerrainFactory
     {
 
+        int _averageTerrainHeight = Constants.AverageTerrainHeight;
+
+
 
         public TerrainFactoryMidpoint(Rectangle windowRect, Rectangle terrainBox) 
             : base(windowRect, terrainBox)
@@ -23,10 +26,22 @@ namespace ArtillerySeries.src
         {
         }
 
+        public TerrainFactoryMidpoint(Rectangle windowRect, int terrainWidth, int terrainDepth, Camera camera)
+            : base(windowRect, new Rectangle() { Width = terrainWidth, Height = terrainDepth }, camera)
+        {
+        }
+
+
 
         float RandDisplacement(float displacement)
         {
             return Random.Next((int)displacement * 2) - displacement;
+        }
+
+        public override Terrain Generate(Color color, int averageTerrainHeight)
+        {
+            _averageTerrainHeight = averageTerrainHeight;
+            return Generate(color);
         }
 
         public override Terrain Generate(Color color)
@@ -50,9 +65,17 @@ namespace ArtillerySeries.src
 
             /* -- Terrain Generation, Start! -- */
 
+            /* -- Generating the starting and the ending points -- */
+            /*
+             * Legacy:
             generatedMap[0] = WindowRect.Height * 2 / 3 + RandDisplacement(WindowRect.Height / 5);
             generatedMap[requiredWidth] = WindowRect.Height * 2 / 3 + RandDisplacement(WindowRect.Height / 5);
+            */
 
+            generatedMap[0] =
+                _averageTerrainHeight + RandDisplacement(Constants.BaseTerrainInitialDisplacement);
+            generatedMap[requiredWidth] =
+                _averageTerrainHeight + RandDisplacement(Constants.BaseTerrainInitialDisplacement);
 
             for (int step = 0; step <= requiredExponent; step++)
             {
@@ -66,7 +89,7 @@ namespace ArtillerySeries.src
                     generatedMap[xVal] = (generatedMap[xVal - (segmentLength / 2)] + generatedMap[xVal + (segmentLength / 2)]) / 2;
                     generatedMap[xVal] += RandDisplacement(displacement);
                 }
-                displacement *= 0.5f;
+                displacement *= 0.45f;
             }
 
 
@@ -84,6 +107,11 @@ namespace ArtillerySeries.src
                 _terrain.Map[i] = generatedMap[i];
             }
             _terrain.Color = color;
+
+            if (CameraInstance != null)
+            {
+                _terrain.CameraInstance = CameraInstance;
+            }
 
             return _terrain;
         }

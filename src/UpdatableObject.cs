@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 namespace ArtillerySeries.src
 {
 
-    interface IUpdatable
+    public interface IUpdatable
     {
         void Update();
     }
 
 
-    abstract class UpdatableObject : IUpdatable
+    public abstract class UpdatableObject : IUpdatable
     {
         public UpdatableObject()
         {

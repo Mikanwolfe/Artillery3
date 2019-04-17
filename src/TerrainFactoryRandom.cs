@@ -17,7 +17,7 @@ namespace ArtillerySeries.src
         public override Terrain Generate(Color color)
         {
             Console.WriteLine("Generating random terrain!");
-            Terrain _terrain = new Terrain(WindowRect)
+            Terrain _terrain = new Terrain(WindowRect, null)
             {
                 Map = new float[Constants.TerrainWidth]
             };
@@ -30,5 +30,11 @@ namespace ArtillerySeries.src
 
             return _terrain;
         }
+
+        public override Terrain Generate(Color color, int averageTerrainHeight)
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }
