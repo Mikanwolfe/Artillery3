@@ -15,7 +15,6 @@ namespace ArtillerySeries.src
         int _averageTerrainHeight = Constants.AverageTerrainHeight;
 
 
-
         public TerrainFactoryMidpoint(Rectangle windowRect, Rectangle terrainBox) 
             : base(windowRect, terrainBox)
         {
@@ -112,6 +111,8 @@ namespace ArtillerySeries.src
             {
                 _terrain.CameraInstance = CameraInstance;
             }
+
+
 
             return _terrain;
         }

@@ -22,6 +22,7 @@ namespace ArtillerySeries.src
 
         public const int TerrainDepth = 1800;
         public const int TerrainWidth = 2400;
+        public const int DistFromInfinity = 1000;
 
         public const int AverageTerrainHeight = (int)(TerrainDepth * 0.6);
         public const int BaseTerrainInitialDisplacement = (int)(0.1 * TerrainDepth);

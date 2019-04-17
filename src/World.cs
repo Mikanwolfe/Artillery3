@@ -76,8 +76,11 @@ namespace ArtillerySeries.src
 
             for(int i = 0; i < Constants.NumberParallaxBackgrounds; i++)
             {
-                _backgroundTerrain.Add( _terrainFactory.Generate(SwinGame.RGBAFloatColor(0.1f, 0.3f, 0.1f, 0.5f),
-                    Constants.AverageTerrainHeight - i * 100 - 100));
+                Terrain _generatedTerrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0.1f, 0.3f, 0.1f, 0.5f),
+                    Constants.AverageTerrainHeight - i * 100 - 100);
+                _generatedTerrain.TerrainDistance = Constants.DistFromInfinity / Constants.NumberParallaxBackgrounds * (i+1);
+                Console.WriteLine("Terrain distance: " + i + " : " + _generatedTerrain.TerrainDistance);
+                _backgroundTerrain.Add( _generatedTerrain);
             }
 
             
@@ -138,6 +141,11 @@ namespace ArtillerySeries.src
             foreach(Player p in _players)
             {
                 p.Update();
+            }
+
+            foreach(Terrain t in _backgroundTerrain)
+            {
+                t.Update();
             }
         }
 
