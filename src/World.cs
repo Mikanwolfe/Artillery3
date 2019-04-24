@@ -67,6 +67,11 @@ namespace ArtillerySeries.src
             _players.Add(p);
         }
 
+        public void GenerateEnvironment()
+        {
+            //Generates the terrain + sky
+        }
+
         public void NewSession()
         {
             TerrainFactory _terrainFactory = 

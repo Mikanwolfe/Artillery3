@@ -88,7 +88,7 @@ namespace ArtillerySeries.src
                     generatedMap[xVal] = (generatedMap[xVal - (segmentLength / 2)] + generatedMap[xVal + (segmentLength / 2)]) / 2;
                     generatedMap[xVal] += RandDisplacement(displacement);
                 }
-                displacement *= 0.65f;
+                displacement *= ReductionCoef;
             }
 
 

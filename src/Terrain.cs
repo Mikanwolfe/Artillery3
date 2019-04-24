@@ -62,6 +62,21 @@ namespace ArtillerySeries.src
 
                 Console.WriteLine("Distance : {0}, Pos: {1}, CameraPos: {2}, Distance from Infty: {3}",
                     _terrainDistance, _pos.X, CameraInstance.Pos.X, Constants.DistFromInfinity);
+
+                /*
+                 * when terrain is one day drawn with height...
+                cameraDistanceFromZero = (int)(CameraInstance.Pos.Y - _pos.Y);
+                distanceFromInfty = _terrainDistance;
+
+                proportionalDistance = (int)Math.Round(cameraDistanceFromZero * (distanceFromInfty / (double)Constants.DistFromInfinity));
+                _pos.Y = proportionalDistance;
+
+                if (_terrainDistance == Constants.DistFromInfinity)
+                {
+                    _pos.Y = CameraInstance.Pos.Y;
+                }
+                */
+
             }
         }
 

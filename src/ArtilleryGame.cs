@@ -20,9 +20,12 @@ namespace ArtillerySeries.src
         public const double CameraAfterExplosionDelay = 6;
         public const int CameraMaxHeight = 2000;
 
+        public const string TerrainPreset = "Twilight Sun";
+
         public const int TerrainDepth = 1800;
         public const int TerrainWidth = 2400;
         public const int DistFromInfinity = 900;
+        public const float TerrainReductionCoefficient = 0.45f;
 
         public const int AverageTerrainHeight = (int)(TerrainDepth * 0.6);
         public const int BaseTerrainInitialDisplacement = (int)(0.1 * TerrainDepth);

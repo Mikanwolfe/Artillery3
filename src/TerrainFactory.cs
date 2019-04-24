@@ -13,6 +13,7 @@ namespace ArtillerySeries.src
         Rectangle _terrainBox;
         Camera _camera;
         Random _random = new Random();
+        float _reductionCoef = Constants.TerrainReductionCoefficient;
 
         public TerrainFactory(Rectangle windowRect, Rectangle terrainBox)
         {
@@ -28,6 +29,7 @@ namespace ArtillerySeries.src
 
         public Rectangle WindowRect { get => _windowRect; }
         public Random Random { get => _random; set => _random = value; }
+        public float ReductionCoef { get => _reductionCoef; set => _reductionCoef = value; }
 
         public Rectangle TerrainBox { get => _terrainBox; }
 
@@ -40,5 +42,6 @@ namespace ArtillerySeries.src
 
         public abstract Terrain Generate(Color color);
         public abstract Terrain Generate(Color color, int averageTerrainHeight);
+
     }
 }
