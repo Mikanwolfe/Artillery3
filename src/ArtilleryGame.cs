@@ -20,7 +20,7 @@ namespace ArtillerySeries.src
         public const double CameraAfterExplosionDelay = 6;
         public const int CameraMaxHeight = 2000;
 
-        public const string TerrainPreset = "Twilight Sun";
+        public const string EnvironmentPreset = "Twilight Sun";
 
         public const int TerrainDepth = 1800;
         public const int TerrainWidth = 2400;
