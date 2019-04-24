@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
@@ -53,6 +52,15 @@ namespace ArtillerySeries.src
             return PhysicsEngine.Instance.Clamp(value, min, max);
         }
 
+        Point2D Normalise(Point2D vector)
+        {
+            float x = vector.X;
+            float y = vector.Y;
+            float magnitude = (float)Math.Sqrt(x * x + y * y);
+            vector.X /= magnitude;
+            vector.Y /= magnitude;
+            return vector;
+        }
 
         public Color Roughly(Color color, float var)
         {
