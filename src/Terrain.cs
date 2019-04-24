@@ -46,14 +46,22 @@ namespace ArtillerySeries.src
              * Distance from infty?
              * 
              */
-            //Console.WriteLine("Distance : {0}, Pos: {1}", _terrainDistance, _pos.X);
+            
             if (_terrainDistance != 0)
             {
                 int cameraDistanceFromZero = (int)(CameraInstance.Pos.X - _pos.X);
-                int distanceFromInfty = Constants.DistFromInfinity - _terrainDistance;
+                int distanceFromInfty =  _terrainDistance;
 
-                int proportionalDistance = cameraDistanceFromZero * (distanceFromInfty / Constants.DistFromInfinity);
+                int proportionalDistance = (int)Math.Round(cameraDistanceFromZero * (distanceFromInfty / (double)Constants.DistFromInfinity));
                 _pos.X = proportionalDistance;
+
+                if (_terrainDistance == Constants.DistFromInfinity)
+                {
+                    _pos.X = CameraInstance.Pos.X;
+                }
+
+                Console.WriteLine("Distance : {0}, Pos: {1}, CameraPos: {2}, Distance from Infty: {3}",
+                    _terrainDistance, _pos.X, CameraInstance.Pos.X, Constants.DistFromInfinity);
             }
         }
 

@@ -71,14 +71,14 @@ namespace ArtillerySeries.src
         {
             TerrainFactory _terrainFactory = 
                 new TerrainFactoryMidpoint(_windowRect, Constants.TerrainWidth, Constants.TerrainDepth, _camera);
-            _terrain = _terrainFactory.Generate(Color.Green);
+            _terrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0.4f, 0.6f, 0.4f, 1f));
             PhysicsEngine.Instance.Terrain = _terrain;
 
             for(int i = 0; i < Constants.NumberParallaxBackgrounds; i++)
             {
-                Terrain _generatedTerrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0.1f, 0.3f, 0.1f, 0.5f),
-                    Constants.AverageTerrainHeight - i * 100 - 100);
-                _generatedTerrain.TerrainDistance = Constants.DistFromInfinity / Constants.NumberParallaxBackgrounds * (i+1);
+                Terrain _generatedTerrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0f + (i*0.1f), 0.2f + (i * 0.1f), 0f + (i * 0.1f), 1f),
+                    Constants.AverageTerrainHeight + i * 150 - 300);
+                _generatedTerrain.TerrainDistance = Constants.DistFromInfinity / Constants.NumberParallaxBackgrounds * (Constants.NumberParallaxBackgrounds - i);
                 Console.WriteLine("Terrain distance: " + i + " : " + _generatedTerrain.TerrainDistance);
                 _backgroundTerrain.Add( _generatedTerrain);
             }
