@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
@@ -28,12 +29,13 @@ namespace ArtillerySeries.src
          */
         Rectangle _windowRect;
         Terrain _terrain;
-        List<Terrain> _backgroundTerrain;
+        
         Command _playerCommand;
         InputHandler _inputHandler;
         StateComponent<WorldState> _state;
         Random _random;
         Observer _observer;
+        Environment _environment;
 
         Camera _camera;
 
@@ -45,7 +47,7 @@ namespace ArtillerySeries.src
         {
             _windowRect = windowRect;
             _terrain = new Terrain(_windowRect);
-            _backgroundTerrain = new List<Terrain>();
+            _environment = new Environment(_windowRect, _camera);
             _inputHandler = inputHandler;
             _players = new List<Player>();
             _selectedPlayer = null;
@@ -55,12 +57,6 @@ namespace ArtillerySeries.src
             _camera = new Camera(windowRect);
 
         }
-
-        public double RandBetween(double min, double max)
-        {
-            return ParticleEngine.Instance.RandDoubleBetween(min, max);
-        }
-
 
         public void AddPlayer(Player p)
         {
@@ -79,14 +75,7 @@ namespace ArtillerySeries.src
             _terrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0.4f, 0.6f, 0.4f, 1f));
             PhysicsEngine.Instance.Terrain = _terrain;
 
-            for(int i = 0; i < Constants.NumberParallaxBackgrounds; i++)
-            {
-                Terrain _generatedTerrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0f + (i*0.1f), 0.2f + (i * 0.1f), 0f + (i * 0.1f), 1f),
-                    Constants.AverageTerrainHeight + i * 150 - 300);
-                _generatedTerrain.TerrainDistance = Constants.DistFromInfinity / Constants.NumberParallaxBackgrounds * (Constants.NumberParallaxBackgrounds - i);
-                Console.WriteLine("Terrain distance: " + i + " : " + _generatedTerrain.TerrainDistance);
-                _backgroundTerrain.Add( _generatedTerrain);
-            }
+
 
             
         
