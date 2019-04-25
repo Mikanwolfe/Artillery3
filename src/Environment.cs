@@ -30,6 +30,8 @@ namespace ArtillerySeries.src
         TerrainFactory _terrainFactory;
         Camera _camera;
 
+        Random _random = new Random();
+
         
 
         EnvironmentPreset _preset;
@@ -53,7 +55,7 @@ namespace ArtillerySeries.src
             for (int i = 0; i < Constants.NumberParallaxBackgrounds; i++)
             {
                 Terrain _generatedTerrain = _terrainFactory.Generate(_preset.ParallaxBgColor[i],
-                    Constants.AverageTerrainHeight + i * 150 - 300, _preset.ParallaxBgCoef[i]);
+                    Constants.AverageTerrainHeight + i * 50 - 400, _preset.ParallaxBgCoef[i]);
 
                 _generatedTerrain.TerrainDistance = Constants.DistFromInfinity / Constants.NumberParallaxBackgrounds * (Constants.NumberParallaxBackgrounds - i);
                 
@@ -73,6 +75,40 @@ namespace ArtillerySeries.src
             {
                 t.Update();
             }
+
+
+            int _particlePos = _random.Next(0, (int)(_windowRect.Width + _windowRect.Height * 2));
+            float _particleX;
+            float _particleY;
+
+            //fix. Also, wind mult for tracers = 0.
+            if (_particlePos > _windowRect.Height)
+            {
+                _particleX = _camera.Pos.X;
+                _particleY = _camera.Pos.Y + _windowRect.Height - _particlePos;
+            } else if (_particlePos > (_windowRect.Height + _windowRect.Width))
+            {
+                _particleX = _camera.Pos.X + _particlePos - _windowRect.Height;
+                _particleY = _camera.Pos.Y;
+            } else
+            {
+                _particleX = _camera.Pos.X + _windowRect.Width;
+                _particleY = _camera.Pos.Y + _particlePos - _windowRect.Height - _windowRect.Width;
+            }
+
+            //Console.WriteLine("particle pos: " + _particlePos);
+            Point2D _particleSpawnPoint = new Point2D()
+            {
+                X = _particleX,
+                Y = _particleY
+            };
+
+            ParticleEngine.Instance.CreateSimpleParticle(_particleSpawnPoint, Color.DarkGray,
+                0f, 2f, 0.2f);
+
+
+
+
         }
 
         public void Draw()

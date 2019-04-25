@@ -93,6 +93,14 @@ namespace ArtillerySeries.src
 
                 if ((Pos.X <= 0) || (Pos.X >= PhysicsEngine.Instance.Terrain.Map.Length - 1))
                     SwitchState(ProjectileState.Dead);
+
+                ParticleEngine.Instance.CreateTracer(
+                    Pos,
+                    Color.DarkMagenta,
+                    3,
+                    1,
+                    0);
+
             } else
             {
                 Visible = false;

@@ -74,6 +74,7 @@ namespace ArtillerySeries.src
 
 
             _selectedWeapon = _weapon;
+            _physics.WindFrictionMult = 0.01f;
 
 
             UpdateWeaponList();

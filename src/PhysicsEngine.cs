@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.ArtilleryGame;
+using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
@@ -20,10 +20,15 @@ namespace ArtillerySeries.src
         List<IPhysicsComponent> _components;
         Terrain _terrain;
 
+        Random _random = new Random();
+
+        Wind _wind;
+
         private PhysicsEngine()
         {
             instance = this;
             _components = new List<IPhysicsComponent>();
+            _wind = new Wind();
         }
 
         public static PhysicsEngine Instance
@@ -96,7 +101,15 @@ namespace ArtillerySeries.src
                             p.Physics.VelX *= Constants.BaseFrictionCoefKinetic;
 
                         p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
+                    } else
+                    {
+
+                        p.Physics.VelX += _wind.X * p.Physics.WindFrictionMult;
+                        p.Physics.VelY += _wind.Y * p.Physics.WindFrictionMult;
+
                     }
+
+                    
 
                     //p.Physics.Position.Add(p.Physics.Velocity);
                     //p.Physics.Velocity.Add(p.Physics.Acceleration);
@@ -110,7 +123,11 @@ namespace ArtillerySeries.src
                     p.Physics.VelY += p.Physics.AccY;
                     //p.Physics.VelX *= Constants.VelocityLoss;
 
-                    p.Physics.Simulate();                }
+                    p.Physics.Simulate();
+
+                    //Console.WriteLine("Wind: {0} at {1}*", _wind.Magnitude, Deg(_wind.Direction));
+
+                }
             }
         }
 
@@ -142,6 +159,16 @@ namespace ArtillerySeries.src
         public void RemoveComponent(IPhysicsComponent component)
         {
             _components.Remove(component);
+        }
+
+        public void SetWind()
+        {
+            _wind.SetWind(Deg(_random.Next(0, 360)), (float)_random.NextDouble() * 2);
+        }
+
+        public void SetWind(float direction, float magnitude)
+        {
+            _wind.SetWind(direction, magnitude);
         }
     }
 }

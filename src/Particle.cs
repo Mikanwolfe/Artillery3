@@ -18,6 +18,12 @@ namespace ArtillerySeries.src
         Color _color;
         double _radius;
 
+        public Particle(double life, Point2D pos, Point2D vel, double radius, Color color, float weight, float windFricMult)
+            : this(life, pos, vel, radius, color, weight)
+        {
+            _physics.WindFrictionMult = windFricMult;
+        }
+
         public Particle(double life, Point2D pos, Point2D vel, double radius, Color color, float weight)
             : base("particle")
         {

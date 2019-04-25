@@ -55,17 +55,5 @@ namespace ArtillerySeries.src
 
         public bool Enabled { get => _enabled; set => _enabled = value; }
 
-        protected float Rad(float deg)
-        {
-            return deg * (float)Math.PI / 180;
-        }
-
-        protected float Deg(float rad)
-        {
-            return rad * 180 / (float)Math.PI;
-        }
-
-
-
     }
 }

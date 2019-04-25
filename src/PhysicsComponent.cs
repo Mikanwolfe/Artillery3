@@ -31,7 +31,7 @@ namespace ArtillerySeries.src
         float _windFrictionMult;
         float _absAngleToGround;
         float _relativeAngleToGround;
-        bool _gravityEnabled, _onGround, _hasGroundFriction;
+        bool _gravityEnabled, _onGround, _hasGroundFriction, _canCollideWithGround;
         FacingDirection _facing;
 
         /*
@@ -67,6 +67,7 @@ namespace ArtillerySeries.src
             _facing = FacingDirection.Right;
             _hasGroundFriction = true;
             _weight = 1f;
+            _windFrictionMult = 1f;
         }
 
         public PhysicsComponent(IPhysicsComponent entity)
@@ -123,5 +124,6 @@ namespace ArtillerySeries.src
         public float RelAngleToGround { get => _relativeAngleToGround; set => _relativeAngleToGround = value; }
         internal FacingDirection Facing { get => _facing; }
         public bool HasGroundFriction { get => _hasGroundFriction; set => _hasGroundFriction = value; }
+        public float WindFrictionMult { get => _windFrictionMult; set => _windFrictionMult = value; }
     }
 }

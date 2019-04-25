@@ -32,5 +32,25 @@ namespace ArtillerySeries.src
             vector.Y /= magnitude;
             return vector;
         }
+
+        public static Point2D ZeroPoint2D()
+        {
+            return new Point2D()
+            {
+                X = 0,
+                Y = 0
+            };
+        }
+
+
+        public static float Rad(float deg)
+        {
+            return deg * (float)Math.PI / 180;
+        }
+
+        public static float Deg(float rad)
+        {
+            return rad * 180 / (float)Math.PI;
+        }
     }
 }

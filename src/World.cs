@@ -39,6 +39,7 @@ namespace ArtillerySeries.src
 
         Camera _camera;
 
+        int _turnCount;
 
         List<Player> _players;
         Player _selectedPlayer;
@@ -55,6 +56,8 @@ namespace ArtillerySeries.src
             _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
             _observer = new WorldObserver(this);
             _random = new Random();
+
+            _turnCount = 0;
         }
 
         public void AddPlayer(Player p)
@@ -80,7 +83,8 @@ namespace ArtillerySeries.src
                                                             SwinGame.RGBAFloatColor(0.2f, 0.4f, 0.2f, 1) };
             _temporaryPreset.BgColor = Color.CadetBlue;
             _temporaryPreset.CloudColor = Color.Gray;
-                
+
+            _turnCount = 0;
 
 
             GenerateEnvironment(_temporaryPreset);
@@ -110,6 +114,13 @@ namespace ArtillerySeries.src
                     nextPlayer = 0;
                 _selectedPlayer = _players[nextPlayer];
                 _selectedPlayer.SwitchState(PlayerState.Idle);
+            }
+
+            _turnCount++;
+
+            if (_turnCount % 4 == 0)
+            {
+                PhysicsEngine.Instance.SetWind();
             }
         }
 

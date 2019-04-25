@@ -98,6 +98,11 @@ namespace ArtillerySeries.src
         }
         public void CreateSimpleParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight)
         {
+            CreateSimpleParticle(pos, color, speedMult, lifeMult, weight, 1);
+        }
+
+        public void CreateSimpleParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult)
+        {
             Point2D velocity = Normalise(new Point2D()
             {
                 X = (float)RandDoubleBetween(-1, 1),
@@ -113,6 +118,18 @@ namespace ArtillerySeries.src
                 _random.Next(2, 10),
                 color,
                 weight));
+        }
+
+        public void CreateTracer(Point2D pos, Color color, double radius, float lifeMult, float weight)
+        {
+            _particles.Add(new Particle(
+                lifeMult,
+                pos,
+                ZeroPoint2D(),
+                radius,
+                color,
+                weight,
+                0));
         }
 
         /* ----------------------------------------------
