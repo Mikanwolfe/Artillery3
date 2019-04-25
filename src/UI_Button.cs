@@ -30,7 +30,7 @@ namespace ArtillerySeries.src
      *  
      */
 
-    class UI_Button : Entity // Make sure this doesn't stay.
+    public class UI_Button : Entity // Make sure this doesn't stay.
     {
         Bitmap _bitmap;
 

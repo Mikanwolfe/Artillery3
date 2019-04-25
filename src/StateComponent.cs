@@ -19,7 +19,7 @@ namespace ArtillerySeries.src
      */
 
 
-    interface IStateComponent<T>
+    public interface IStateComponent<T>
     {
         void SwitchState(T state);
         T PeekState(); //Peek at state
@@ -27,7 +27,7 @@ namespace ArtillerySeries.src
         T PopState();
     }
 
-    class StateComponent<T>
+    public class StateComponent<T>
     {
         Stack<T> _stateStack;
         // T should refer to the enum used for the state.

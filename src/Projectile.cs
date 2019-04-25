@@ -15,7 +15,7 @@ namespace ArtillerySeries.src
         Dead
     }
 
-    class Projectile : Entity, IPhysicsComponent, ICameraCanFocus
+    public class Projectile : Entity, IPhysicsComponent, ICameraCanFocus
     {
         /*
          * Once again, more discussion.

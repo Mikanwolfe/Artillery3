@@ -11,7 +11,7 @@ namespace ArtillerySeries.src
     // Entities are defined as any game thing that is not the UI.
     // That should have its own composite tree or will be integrated here slowly.
     // Entities have a position and angle, and face a certain direction, though they don't need to be utilised.
-    abstract class Entity : DrawableObject, ICameraCanFocus
+    public abstract class Entity : DrawableObject, ICameraCanFocus
     {
         // PhysicsComponent _physicsComponent
 

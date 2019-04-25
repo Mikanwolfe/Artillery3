@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-    class ObserverComponent
+    public class ObserverComponent
     {
         // The subject in a observer pattern
         List<Observer> _observers;

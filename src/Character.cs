@@ -9,7 +9,7 @@ using static ArtillerySeries.src.ArtilleryGame; // Constants
 namespace ArtillerySeries.src
 {
 
-    enum CharacterState // Out of fuel state?
+    public enum CharacterState // Out of fuel state?
     {
         Idle,
         Walking,
@@ -23,7 +23,7 @@ namespace ArtillerySeries.src
 
     
 
-    class Character : EntityAssembly, 
+    public class Character : EntityAssembly, 
         IPhysicsComponent, IStateComponent<CharacterState>
     {
 

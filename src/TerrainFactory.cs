@@ -42,6 +42,7 @@ namespace ArtillerySeries.src
 
         public abstract Terrain Generate(Color color);
         public abstract Terrain Generate(Color color, int averageTerrainHeight);
+        public abstract Terrain Generate(Color color, int averageTerrainHeight, float reductionCoef);
 
     }
 }

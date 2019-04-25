@@ -9,7 +9,7 @@ namespace ArtillerySeries.src
         Rectangle
     }
 
-    class Particle : Entity, IPhysicsComponent
+    public class Particle : Entity, IPhysicsComponent
     {
         Bitmap _bitmap;
         PhysicsComponent _physics;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-    class WorldObserver : Observer
+    public class WorldObserver : Observer
     {
         World _world;
         public WorldObserver(World world)

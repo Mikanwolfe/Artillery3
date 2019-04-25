@@ -9,7 +9,7 @@ using static ArtillerySeries.src.ArtilleryFunctions;
 namespace ArtillerySeries.src
 {
 
-    enum WorldState
+    public enum WorldState
     {
         Loading,
         TrackingPlayer,
@@ -17,7 +17,7 @@ namespace ArtillerySeries.src
         TrackingEntity
     }
 
-    class World : IStateComponent<WorldState>
+    public class World : IStateComponent<WorldState>
     {
 
         /*
@@ -62,33 +62,29 @@ namespace ArtillerySeries.src
             _players.Add(p);
         }
 
-        public void GenerateEnvironment()
+        public void GenerateEnvironment(EnvironmentPreset preset)
         {
             //Generates the terrain + sky
-            _environment.Initialise();
+
+            _environment.Initialise(preset);
             _logicalTerrain = _environment.Generate();
             PhysicsEngine.Instance.Terrain = _logicalTerrain;
         }
 
         public void NewSession()
         {
-            GenerateEnvironment();
+            EnvironmentPreset _temporaryPreset = new EnvironmentPreset("Sad Day", 3);
+            _temporaryPreset.ParallaxBgCoef = new float[] { 0.70f, 0.65f, 0.55f };
+            _temporaryPreset.ParallaxBgColor = new Color[] {SwinGame.RGBAFloatColor(0f, 0.2f, 0f, 1),
+                                                            SwinGame.RGBAFloatColor(0.1f, 0.3f, 0.1f, 1),
+                                                            SwinGame.RGBAFloatColor(0.2f, 0.4f, 0.2f, 1) };
+            _temporaryPreset.BgColor = Color.CadetBlue;
+            _temporaryPreset.CloudColor = Color.Gray;
+                
 
 
+            GenerateEnvironment(_temporaryPreset);
 
-
-            /*
-            TerrainFactory _terrainFactory = 
-                new TerrainFactoryMidpoint(_windowRect, Constants.TerrainWidth, Constants.TerrainDepth, _camera);
-            _terrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0.4f, 0.6f, 0.4f, 1f));
-            PhysicsEngine.Instance.Terrain = _terrain;
-
-            _environment.Generate();
-
-
-    */
-            
-        
 
             foreach (Player p in _players)
             {
@@ -192,5 +188,7 @@ namespace ArtillerySeries.src
         {
             return _state.Pop();
         }
+
+        public Color SkyColor { get => _environment.Preset.BgColor; }
     }
 }

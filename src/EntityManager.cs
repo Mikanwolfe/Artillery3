@@ -10,7 +10,7 @@ namespace ArtillerySeries.src
      * A singleton for the purpose of keeping track of and being the topmost node
      *  in the entity composite tree.
     */
-    class EntityManager : Entity
+    public class EntityManager : Entity
     {
         private static EntityManager instance;
         private static List<Entity> _entities;

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ArtillerySeries.src
 {
 
-    enum ObserverEvent
+    public enum ObserverEvent
     {
         //No idea for now so this will do
         PlayerEndedTurn,
@@ -16,7 +16,7 @@ namespace ArtillerySeries.src
 
     }
 
-    abstract class Observer
+    public abstract class Observer
     {
 
         public Observer()

@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-    interface IHull
+    public interface IHull
     {
         void Damage(float Damage);
     }
 
-    class Hull : Entity, IHull
+    public class Hull : Entity, IHull
     {
 
         private float _health, _armour;

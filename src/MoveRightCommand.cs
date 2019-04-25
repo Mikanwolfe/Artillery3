@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-    class MoveRightCommand : Command
+    public class MoveRightCommand : Command
     {
         public MoveRightCommand()
         {

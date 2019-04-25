@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ArtillerySeries.src
 {
     // A branch/group of the composite pattern used for entities.
-    abstract class EntityAssembly : Entity
+    public abstract class EntityAssembly : Entity
     {
 
         List<Entity> _entities;

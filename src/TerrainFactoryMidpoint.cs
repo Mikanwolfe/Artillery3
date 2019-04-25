@@ -43,6 +43,13 @@ namespace ArtillerySeries.src
             return Generate(color);
         }
 
+        public override Terrain Generate(Color color, int averageTerrainHeight, float reductionCoef)
+        {
+            _averageTerrainHeight = averageTerrainHeight;
+            ReductionCoef = reductionCoef;
+            return Generate(color);
+        }
+
         public override Terrain Generate(Color color)
         {
             Console.WriteLine("Generating Midpoint terrain!");

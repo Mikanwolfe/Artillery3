@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-    class ChargeWeaponCommand
+    public class ChargeWeaponCommand
     : Command
     {
         public ChargeWeaponCommand()

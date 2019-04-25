@@ -8,7 +8,7 @@ using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
-    class ParticleEngine
+    public class ParticleEngine
     {
 
         private static ParticleEngine instance;

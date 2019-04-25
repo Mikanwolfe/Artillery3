@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-    class ElevateWeaponCommand
+    public class ElevateWeaponCommand
         : Command
     {
         public override void Execute(Character c)

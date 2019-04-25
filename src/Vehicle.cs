@@ -12,7 +12,7 @@ namespace ArtillerySeries.src
     //  Hulls contain all of the HP and Armour stats,
     //  Weapons are well... weapons. They originally meant "Gun" but now
     //   they can also refer to things like missiles and tachyon lances.
-    class Vehicle : EntityAssembly
+    public class Vehicle : EntityAssembly
     {
         private float _fuel;
 

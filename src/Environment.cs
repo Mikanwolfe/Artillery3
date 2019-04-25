@@ -7,6 +7,14 @@ using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
+
+    enum WeatherType
+    {
+        Normal,
+        Raining,
+        Snowing,
+        Thunder
+    }
     public class Environment
     {
         /*
@@ -22,7 +30,9 @@ namespace ArtillerySeries.src
         TerrainFactory _terrainFactory;
         Camera _camera;
 
-        string _presetEnvironment = Constants.EnvironmentPreset;
+        
+
+        EnvironmentPreset _preset;
 
         public Environment(Rectangle windowRect, Camera camera)
         {
@@ -31,16 +41,20 @@ namespace ArtillerySeries.src
             _camera = camera;
         }
 
-        public void Initialise()
+        public void Initialise(EnvironmentPreset preset)
         {
+
+            _preset = preset;
+
             _terrainFactory = new TerrainFactoryMidpoint(
                 _windowRect, Constants.TerrainWidth,
                 Constants.TerrainDepth, _camera);
 
             for (int i = 0; i < Constants.NumberParallaxBackgrounds; i++)
             {
-                Terrain _generatedTerrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0f + (i * 0.1f), 0.2f + (i * 0.1f), 0f + (i * 0.1f), 1f),
-                    Constants.AverageTerrainHeight + i * 150 - 300);
+                Terrain _generatedTerrain = _terrainFactory.Generate(_preset.ParallaxBgColor[i],
+                    Constants.AverageTerrainHeight + i * 150 - 300, _preset.ParallaxBgCoef[i]);
+
                 _generatedTerrain.TerrainDistance = Constants.DistFromInfinity / Constants.NumberParallaxBackgrounds * (Constants.NumberParallaxBackgrounds - i);
                 
                 _backgroundTerrain.Add(_generatedTerrain);
@@ -69,5 +83,7 @@ namespace ArtillerySeries.src
             }
         }
 
+        public Color SkyColor { get => _preset.BgColor; }
+        public EnvironmentPreset Preset { get => _preset; set => _preset = value; }
     }
 }

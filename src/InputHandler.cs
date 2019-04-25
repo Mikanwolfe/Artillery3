@@ -7,7 +7,7 @@ using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
-    class InputHandler
+    public class InputHandler
     {
 
 

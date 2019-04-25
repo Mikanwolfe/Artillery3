@@ -9,19 +9,19 @@ using static ArtillerySeries.src.ArtilleryGame;
 namespace ArtillerySeries.src
 {
 
-    interface IPhysicsComponent
+    public interface IPhysicsComponent
     {
         PhysicsComponent Physics { get; set; }
     }
     
-    enum FacingDirection
+    public enum FacingDirection
     {
         Left,
         Right
     }
 
 
-    class PhysicsComponent
+    public class PhysicsComponent
     {
         IPhysicsComponent _entity;
         Point2D _pos, _vel, _acc;

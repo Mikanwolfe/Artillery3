@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 namespace ArtillerySeries.src
 {
 
-    interface IDrawable
+    public interface IDrawable
     {
         void Draw();
     }
-    abstract class DrawableObject : UpdatableObject, IDrawable
+    public abstract class DrawableObject : UpdatableObject, IDrawable
     {
 
         public DrawableObject()

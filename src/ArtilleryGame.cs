@@ -125,7 +125,7 @@ namespace ArtillerySeries.src
                 
 
 
-                SwinGame.ClearScreen(Color.CadetBlue);
+                SwinGame.ClearScreen(_world.SkyColor);
                 SwinGame.DrawFramerate(0, 0);
 
 

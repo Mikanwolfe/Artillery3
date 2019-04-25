@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-    abstract class Command
+    public abstract class Command
     {
         public Command() { }
 

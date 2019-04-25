@@ -8,13 +8,13 @@ using SwinGameSDK;
 namespace ArtillerySeries.src
 {
 
-    enum PlayerState
+    public enum PlayerState
     {
         Idle,
         ObserveProjectile,
         Finished
     }
-    class Player : Entity, IStateComponent<PlayerState>
+    public class Player : Entity, IStateComponent<PlayerState>
     {
         Character _character; //This may expand to include mutliple characters
         StateComponent<PlayerState> _state;

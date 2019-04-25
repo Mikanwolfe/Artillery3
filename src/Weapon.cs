@@ -8,7 +8,7 @@ using SwinGameSDK;
 namespace ArtillerySeries.src
 {
 
-    interface IWeapon
+    public interface IWeapon
     {
         List<Projectile> Ammunition { get; set; }
         void Fire();
@@ -33,7 +33,7 @@ namespace ArtillerySeries.src
      * 
      */
 
-    class Weapon : Entity, IWeapon
+    public class Weapon : Entity, IWeapon
     {
         //Entity has position and direction, however
         // it needs to know the relative angle for drawing itself and the sight.

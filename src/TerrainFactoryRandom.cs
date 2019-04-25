@@ -36,5 +36,9 @@ namespace ArtillerySeries.src
             throw new NotImplementedException();
         }
 
+        public override Terrain Generate(Color color, int averageTerrainHeight, float reductionCoef)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

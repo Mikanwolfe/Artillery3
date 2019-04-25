@@ -48,6 +48,7 @@
     <Compile Include="src\EntityAssembly.cs" />
     <Compile Include="src\EntityManager.cs" />
     <Compile Include="src\Environment.cs" />
+    <Compile Include="src\EnvironmentPreset.cs" />
     <Compile Include="src\GameMain.cs" />
     <Compile Include="src\ArtilleryGame.cs" />
     <Compile Include="src\Hull.cs" />

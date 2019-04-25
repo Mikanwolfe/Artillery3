@@ -13,7 +13,7 @@ namespace ArtillerySeries.src
     * Being a singleton allows components to self-register themselves
     * as components of the physics engine.
     */
-    class PhysicsEngine
+    public class PhysicsEngine
     {
         
         private static PhysicsEngine instance;
