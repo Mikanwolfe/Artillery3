@@ -16,6 +16,7 @@ namespace ArtillerySeries.src
         private Camera _camera = null;
         private int _cameraMinLimitX, _cameraMaxLimitX;
         private int _terrainDistance = 0; //used for parallax
+        
 
         public Terrain(Rectangle windowRect)
         {

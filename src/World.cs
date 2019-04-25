@@ -24,18 +24,18 @@ namespace ArtillerySeries.src
          * Does the world need a player manager? I don't think so.
          * All the functions should be built here i reckon.
          * 
-         * 
-         * 
          */
         Rectangle _windowRect;
-        Terrain _terrain;
+        Terrain _logicalTerrain;
         
         Command _playerCommand;
         InputHandler _inputHandler;
         StateComponent<WorldState> _state;
         Random _random;
         Observer _observer;
+
         Environment _environment;
+        string _presetEnvironment = Constants.EnvironmentPreset;
 
         Camera _camera;
 
@@ -46,7 +46,8 @@ namespace ArtillerySeries.src
         public World(Rectangle windowRect, InputHandler inputHandler)
         {
             _windowRect = windowRect;
-            _terrain = new Terrain(_windowRect);
+            _camera = new Camera(windowRect);
+            _logicalTerrain = new Terrain(_windowRect);
             _environment = new Environment(_windowRect, _camera);
             _inputHandler = inputHandler;
             _players = new List<Player>();
@@ -54,8 +55,6 @@ namespace ArtillerySeries.src
             _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
             _observer = new WorldObserver(this);
             _random = new Random();
-            _camera = new Camera(windowRect);
-
         }
 
         public void AddPlayer(Player p)
@@ -66,23 +65,34 @@ namespace ArtillerySeries.src
         public void GenerateEnvironment()
         {
             //Generates the terrain + sky
+            _environment.Initialise();
+            _logicalTerrain = _environment.Generate();
+            PhysicsEngine.Instance.Terrain = _logicalTerrain;
         }
 
         public void NewSession()
         {
+            GenerateEnvironment();
+
+
+
+
+            /*
             TerrainFactory _terrainFactory = 
                 new TerrainFactoryMidpoint(_windowRect, Constants.TerrainWidth, Constants.TerrainDepth, _camera);
             _terrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0.4f, 0.6f, 0.4f, 1f));
             PhysicsEngine.Instance.Terrain = _terrain;
 
+            _environment.Generate();
 
 
+    */
             
         
 
             foreach (Player p in _players)
             {
-                p.Character.SetXPosition((int)RandBetween(0, _terrain.Map.Length - 1));
+                p.Character.SetXPosition((int)RandBetween(0, _logicalTerrain.Map.Length - 1));
             }
 
             PhysicsEngine.Instance.Settle();
@@ -131,28 +141,21 @@ namespace ArtillerySeries.src
         public void Update()
         {
             _camera.Update();
+            _environment.Update();
 
             foreach(Player p in _players)
             {
                 p.Update();
             }
 
-            foreach(Terrain t in _backgroundTerrain)
-            {
-                t.Update();
-            }
+            
         }
 
         public void Draw()
         {
-           
 
-            foreach (Terrain t in _backgroundTerrain)
-            {
-                t.Draw();
-            }
-
-            _terrain.Draw();
+            _environment.Draw();
+            _logicalTerrain.Draw();
 
             SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
             _selectedPlayer.Draw();
