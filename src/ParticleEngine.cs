@@ -140,6 +140,30 @@ namespace ArtillerySeries.src
             _particles.Add(_particleToAdd);
         }
 
+        public void CreateAcidParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult, float damage)
+        {
+            Point2D velocity = Normalise(new Point2D()
+            {
+                X = (float)RandDoubleBetween(-1, 1),
+                Y = (float)RandDoubleBetween(-1, 1)
+            });
+            velocity.X *= speedMult * RandFloatBetween(-1, 1);
+            velocity.Y *= speedMult * RandFloatBetween(-1, 1);
+
+            Particle _particleToAdd = new Particle(
+                RandDoubleBetween(0.5, 1) * lifeMult,
+                pos,
+                velocity,
+                _random.Next(2, 10),
+                color,
+                weight,
+                windFricMult);
+
+            _particleToAdd.SetDamage(damage);
+
+            _particles.Add(_particleToAdd);
+        }
+
         public void CreateTracer(Point2D pos, Color color, double radius, float lifeMult, float weight)
         {
             _particles.Add(new Particle(
@@ -171,6 +195,17 @@ namespace ArtillerySeries.src
                 CreateSimpleParticle(pos, Roughly(Color.Orange, 0.2f),10,2, 0.1f);
                 CreateSimpleParticle(pos, RoughlyValued(Color.Black, 0.5f),10,4, 0.1f);
                 CreateSimpleParticle(pos, Roughly(Color.Yellow, 0.2f),10,2, 0.1f);
+            }
+        }
+
+        public void CreateAcidExplosion(Point2D pos, int numParticles)
+        {
+            for (int i = 0; i < numParticles; i++)
+            {
+                CreateAcidParticle(pos, Color.Orange, 20, 7, 0.3f,1,0.08f);
+                CreateAcidParticle(pos, Color.Yellow, 20, 7, 0.3f,1,0.08f);
+                CreateAcidParticle(pos, Color.Green, 20, 10, 0.3f,1,0.08f);
+
             }
         }
 

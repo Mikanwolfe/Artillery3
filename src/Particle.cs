@@ -17,6 +17,7 @@ namespace ArtillerySeries.src
         double _maxLife;
         Color _color;
         double _radius;
+        float _damage = 0;
 
         public Particle(double life, Point2D pos, Point2D vel, double radius, Color color, float weight, float windFricMult)
             : this(life, pos, vel, radius, color, weight)
@@ -77,16 +78,27 @@ namespace ArtillerySeries.src
                 _color = SwinGame.RGBAColor(_color.R, _color.G, _color.B, (byte)(255 * _life / _maxLife));
 
 
+                if (_damage != 0f)
+                {
+                    EntityManager.Instance.DamageEntities(_damage, (int)_radius, Pos);
+                }
+
                 Pos = _physics.Position;
             } else
             {
                 PhysicsEngine.Instance.RemoveComponent(this as IPhysicsComponent);
+                ParticleEngine.Instance.RemoveParticle(this);
             }
         }
 
         public void SetGravity(bool hasGravity)
         {
             _physics.GravityEnabled = hasGravity;
+        }
+
+        public void SetDamage(float damage)
+        {
+            _damage = damage;
         }
 
         public PhysicsComponent Physics { get => _physics; set => _physics = value; }

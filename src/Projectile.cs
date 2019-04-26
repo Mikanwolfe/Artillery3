@@ -61,6 +61,8 @@ namespace ArtillerySeries.src
         public float X { get => Pos.X; }
         public float Y { get => Pos.Y; }
 
+        public float ExplRad { get => _explRad; }
+
         public PhysicsComponent Physics { get => _physics; set => _physics = value; }
 
         public override void Draw()
@@ -110,15 +112,15 @@ namespace ArtillerySeries.src
             
         }
 
-        void Explode()
+        public virtual void Explode()
         {
-            int width = (int)_explRad * 5-1;
+            int width = (int)_explRad * 5 - 1;
             float[] _crater = new float[(int)width];
             float _period = (float)Math.PI * 2 / width;
 
-            for(int i = 0; i< width; i++)
+            for (int i = 0; i < width; i++)
             {
-                _crater[i] = _explRad * (float)(-1 *Math.Cos(_period * (i - Math.PI*2)) + 1);
+                _crater[i] = _explRad * (float)(-1 * Math.Cos(_period * (i - Math.PI * 2)) + 1);
             }
 
             PhysicsEngine.Instance.BlowUpTerrain(_crater, Pos);

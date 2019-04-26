@@ -122,7 +122,7 @@ namespace ArtillerySeries.src
                 projectileVel.X *= -1;
 
 
-            Projectile projectile = new Projectile(Name + " Projectile", this, projectilePos, projectileVel);
+            Projectile projectile = new AcidProjectile(Name + " Projectile", this, projectilePos, projectileVel);
             _mainProjectile = projectile;
 
 
@@ -131,6 +131,10 @@ namespace ArtillerySeries.src
             _state = WeaponState.IdleState;
         }
 
+        public void SetProjectile(Projectile projectile)
+        {
+            _mainProjectile = projectile;
+        }
         
 
         public override void Draw()

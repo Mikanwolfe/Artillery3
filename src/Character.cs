@@ -62,6 +62,7 @@ namespace ArtillerySeries.src
             _selected = false;
             _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f);
             _weapon2 = new Weapon("Base Weapon 2 -- Remove asap.", 50f, 120f);
+            //_weapon2.SetProjectile();
             _weapons = new List<Weapon>();
 
             _maxArmour = armour;
