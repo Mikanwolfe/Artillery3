@@ -78,6 +78,9 @@ namespace ArtillerySeries.src
 
 
                 Pos = _physics.Position;
+            } else
+            {
+                PhysicsEngine.Instance.RemoveComponent(this as IPhysicsComponent);
             }
         }
 

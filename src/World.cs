@@ -150,6 +150,8 @@ namespace ArtillerySeries.src
             _camera.Update();
             _environment.Update();
 
+            PhysicsEngine.Instance.SetBoundaryBoxPos(_camera.Pos);
+
             foreach(Player p in _players)
             {
                 p.Update();

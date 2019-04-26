@@ -91,11 +91,11 @@ namespace ArtillerySeries.src
 
         public void DepressWeapon()
         {
-            _weaponAngle = PhysicsEngine.Instance.Clamp(_weaponAngle - Rad(1f), _minWepAngleRad, _maxWepAngleRad);
+            _weaponAngle = Clamp(_weaponAngle - Rad(1f), _minWepAngleRad, _maxWepAngleRad);
         }
         public void ElevateWeapon()
         {
-            _weaponAngle = PhysicsEngine.Instance.Clamp(_weaponAngle + Rad(1f), _minWepAngleRad, _maxWepAngleRad);
+            _weaponAngle = Clamp(_weaponAngle + Rad(1f), _minWepAngleRad, _maxWepAngleRad);
         }
 
         public void Charge()

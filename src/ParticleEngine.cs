@@ -48,11 +48,6 @@ namespace ArtillerySeries.src
                 );
         }
 
-        float Clamp(float value, float min, float max)
-        {
-            return PhysicsEngine.Instance.Clamp(value, min, max);
-        }
-
 
         public Color Roughly(Color color, float var)
         {
@@ -117,7 +112,32 @@ namespace ArtillerySeries.src
                 velocity,
                 _random.Next(2, 10),
                 color,
-                weight));
+                weight,
+                windFricMult));
+        }
+
+        public void CreateNonCollideParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult)
+        {
+            Point2D velocity = Normalise(new Point2D()
+            {
+                X = (float)RandDoubleBetween(-1, 1),
+                Y = (float)RandDoubleBetween(-1, 1)
+            });
+            velocity.X *= speedMult * RandFloatBetween(-1, 1);
+            velocity.Y *= speedMult * RandFloatBetween(-1, 1);
+
+            Particle _particleToAdd = new Particle(
+                RandDoubleBetween(0.5, 1) * lifeMult,
+                pos,
+                velocity,
+                _random.Next(2, 10),
+                color,
+                weight,
+                windFricMult);
+
+            _particleToAdd.Physics.CanCollideWithGround = false;
+
+            _particles.Add(_particleToAdd);
         }
 
         public void CreateTracer(Point2D pos, Color color, double radius, float lifeMult, float weight)
@@ -166,10 +186,14 @@ namespace ArtillerySeries.src
             foreach(Particle p in _particles)
             {
                 p.Update();
+
+                if (!WithinBoundary(p.Pos, PhysicsEngine.Instance.BoundaryBox))
+                    RemoveParticle(p);
             }
 
             foreach (Particle p in _particlesToRemove)
             {
+                p.Enabled = false;
                 _particles.Remove(p);
             }
             _particlesToRemove.Clear();

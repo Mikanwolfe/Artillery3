@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
@@ -27,11 +28,6 @@ namespace ArtillerySeries.src
             : this(windowRect)
         {
             _camera = camera;
-        }
-
-        public int Clamp(int value, int min, int max)
-        {
-            return PhysicsEngine.Instance.Clamp(value, min, max);
         }
 
         public float[] Map { get => _terrainMap; set => _terrainMap = value; }

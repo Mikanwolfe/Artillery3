@@ -27,7 +27,6 @@ namespace ArtillerySeries.src
         IPhysicsComponent, IStateComponent<CharacterState>
     {
 
-        
 
         Vehicle _vehicle;
         //Point2D _pos;
@@ -58,6 +57,7 @@ namespace ArtillerySeries.src
         public Character(string name)
             : base(name)
         {
+
             _physics = new PhysicsComponent(this);
             _vehicle = new Vehicle(name);
             _selected = false;

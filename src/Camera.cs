@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
@@ -36,11 +37,6 @@ namespace ArtillerySeries.src
         public double EaseSpeed { get => _easeSpeed; set => _easeSpeed = value; }
         public Point2D Pos { get => _pos; }
         public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
-
-        public int Clamp(int value, int min, int max)
-        {
-            return PhysicsEngine.Instance.Clamp(value, min, max);
-        }
 
         public void CenterCameraAtFocus()
         {

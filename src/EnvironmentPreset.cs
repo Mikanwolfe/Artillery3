@@ -16,6 +16,7 @@ namespace ArtillerySeries.src
         Color _bgColor;
         Color _cloudColor;
 
+
         public EnvironmentPreset(string name)
         {
             _name = name;

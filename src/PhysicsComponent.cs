@@ -20,6 +20,7 @@ namespace ArtillerySeries.src
         Right
     }
 
+    public delegate void RemoveCommand();
 
     public class PhysicsComponent
     {
@@ -32,6 +33,7 @@ namespace ArtillerySeries.src
         float _absAngleToGround;
         float _relativeAngleToGround;
         bool _gravityEnabled, _onGround, _hasGroundFriction, _canCollideWithGround;
+
         FacingDirection _facing;
 
         /*
@@ -68,6 +70,7 @@ namespace ArtillerySeries.src
             _hasGroundFriction = true;
             _weight = 1f;
             _windFrictionMult = 1f;
+            _canCollideWithGround = true;
         }
 
         public PhysicsComponent(IPhysicsComponent entity)
@@ -87,6 +90,7 @@ namespace ArtillerySeries.src
             _pos = pos;
 
         }
+
         public void Simulate()
         {
             if (_vel.X > 0)
@@ -125,5 +129,6 @@ namespace ArtillerySeries.src
         internal FacingDirection Facing { get => _facing; }
         public bool HasGroundFriction { get => _hasGroundFriction; set => _hasGroundFriction = value; }
         public float WindFrictionMult { get => _windFrictionMult; set => _windFrictionMult = value; }
+        public bool CanCollideWithGround { get => _canCollideWithGround; set => _canCollideWithGround = value; }
     }
 }

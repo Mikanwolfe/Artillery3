@@ -16,6 +16,7 @@ namespace ArtillerySeries.src
 
         public const int WindowHeight = 900;
         public const int WindowWidth = WindowHeight * 16 / 9;
+        public const int BoundaryBoxPadding = 20;
         public const int CameraEaseSpeed = 10;
         public const double CameraAfterExplosionDelay = 6;
         public const int CameraMaxHeight = 2000;
@@ -71,7 +72,9 @@ namespace ArtillerySeries.src
 
             _inputHandler = new InputHandler();
             _world = new World(_windowRect, _inputHandler);
-            
+            PhysicsEngine.Instance.SetWindowRect(_windowRect);
+
+
         }
 
 
@@ -91,6 +94,8 @@ namespace ArtillerySeries.src
             SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
             SwinGame.SetIcon("H:\\repos\\Artillery3\\Resources\\images\\logoArtillery3LogoIcon.ico");
 
+
+            
             Player player1 = new Player("2B", _world);
             Character Innocentia = new Character("Innocentia");
             player1.Character = Innocentia;

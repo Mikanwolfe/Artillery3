@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
@@ -32,6 +33,8 @@ namespace ArtillerySeries.src
 
         Random _random = new Random();
 
+        int _weatherParticlesDelay = 5;
+        int _weatherDelayCount;
         
 
         EnvironmentPreset _preset;
@@ -61,6 +64,8 @@ namespace ArtillerySeries.src
                 
                 _backgroundTerrain.Add(_generatedTerrain);
             }
+
+            _weatherDelayCount = 0;
         }
 
         public Terrain Generate()
@@ -76,35 +81,49 @@ namespace ArtillerySeries.src
                 t.Update();
             }
 
+            _weatherDelayCount++;
+            if (_weatherDelayCount > _weatherParticlesDelay)
+            {
+                _weatherDelayCount = 0;
+                int _particlePos = _random.Next(0, (int)(_windowRect.Width + _windowRect.Height * 2));
+                float _particleX;
+                float _particleY;
 
-            int _particlePos = _random.Next(0, (int)(_windowRect.Width + _windowRect.Height * 2));
-            float _particleX;
-            float _particleY;
+                //fix. Also, wind mult for tracers = 0.
+                if (_particlePos < _windowRect.Height)
+                {
+                    _particleX = Clamp(_camera.Pos.X - 5, 0, PhysicsEngine.Instance.Terrain.Map.Length - 1);
+                    _particleY = _camera.Pos.Y + _windowRect.Height - _particlePos;
+                }
+                else if (_particlePos < (_windowRect.Height + _windowRect.Width))
+                {
+                    _particleX = _camera.Pos.X + _particlePos - _windowRect.Height;
+                    _particleY = _camera.Pos.Y - 5;
+                }
+                else
+                {
+                    _particleX = Clamp(_camera.Pos.X + _windowRect.Width + 5, 0, PhysicsEngine.Instance.Terrain.Map.Length - 1);
+                    _particleY = _camera.Pos.Y + _particlePos - _windowRect.Height - _windowRect.Width;
+                }
 
-            //fix. Also, wind mult for tracers = 0.
-            if (_particlePos > _windowRect.Height)
-            {
-                _particleX = _camera.Pos.X;
-                _particleY = _camera.Pos.Y + _windowRect.Height - _particlePos;
-            } else if (_particlePos > (_windowRect.Height + _windowRect.Width))
-            {
-                _particleX = _camera.Pos.X + _particlePos - _windowRect.Height;
-                _particleY = _camera.Pos.Y;
-            } else
-            {
-                _particleX = _camera.Pos.X + _windowRect.Width;
-                _particleY = _camera.Pos.Y + _particlePos - _windowRect.Height - _windowRect.Width;
+                Point2D _particleSpawnPoint = new Point2D()
+                {
+                    X = _particleX,
+                    Y = _particleY
+                };
+
+                ParticleEngine.Instance.CreateNonCollideParticle(_particleSpawnPoint, Color.Black,
+                0f, 10f, 0.2f, 1);
+
             }
 
-            //Console.WriteLine("particle pos: " + _particlePos);
-            Point2D _particleSpawnPoint = new Point2D()
-            {
-                X = _particleX,
-                Y = _particleY
-            };
 
-            ParticleEngine.Instance.CreateSimpleParticle(_particleSpawnPoint, Color.DarkGray,
-                0f, 2f, 0.2f);
+
+
+
+            //Console.WriteLine("particle pos: " + _particlePos + " | point2D: "+ _particleSpawnPoint);
+
+            
 
 
 

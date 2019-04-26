@@ -52,5 +52,31 @@ namespace ArtillerySeries.src
         {
             return rad * 180 / (float)Math.PI;
         }
+
+        public static float Clamp(float value, float min, float max)
+        {
+            if (value < min)
+                return min;
+            if (value > max)
+                return max;
+            return value;
+        }
+
+        public static int Clamp(int value, int min, int max)
+        {
+            if (value < min)
+                return min;
+            if (value > max)
+                return max;
+            return value;
+        }
+
+        public static bool WithinBoundary(Point2D pos, Rectangle boundary)
+        {
+            if (SwinGame.PointInRect(pos, boundary))
+                return true;
+
+            return false;
+        }
     }
 }
