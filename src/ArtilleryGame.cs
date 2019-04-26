@@ -41,7 +41,7 @@ namespace ArtillerySeries.src
         
         public const int InvalidPlayerCircleRadius = 3;
         public const float PlayerSpeed = 0.5f; //TODO: Change to Accel
-        public const float BaseExplosionRadius = 20;
+        public const float BaseExplosionRadius = 10;
         public const int BaseExplosionDiaScaling = 35;
         public const int BaseCollisionRadius = 5;
         public const float BaseFrictionCoefKinetic = 0.5f;
@@ -101,13 +101,13 @@ namespace ArtillerySeries.src
             LoadResources();
 
             
-            Player player1 = new Player("2B", _world);
-            Character Innocentia = new Character("Innocentia");
+            Player player1 = new Player("Restia", _world);
+            Character Innocentia = new Character("Innocentia", 100, 200);
             player1.Character = Innocentia;
 
 
-            Player player2 = new Player("Sam", _world);
-            Character char2 = new Character("char2");
+            Player player2 = new Player("Est", _world);
+            Character char2 = new Character("Materia", 100, 150);
             player2.Character = char2;
 
             player1.Initiallise();

@@ -46,6 +46,11 @@ namespace ArtillerySeries.src
 
         public abstract override void Update();
 
+        public virtual void Damage(float damage)
+        {
+            //Base: Do nothing. Can't  be damaged.
+        }
+
         public virtual void UpdatePosition(Point2D pos, FacingDirection direction, float absoluteAngle)
         {
             _absAngle = absoluteAngle;

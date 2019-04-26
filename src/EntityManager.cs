@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
@@ -10,13 +11,12 @@ namespace ArtillerySeries.src
      * A singleton for the purpose of keeping track of and being the topmost node
      *  in the entity composite tree.
     */
-    public class EntityManager : Entity
+    public class EntityManager
     {
         private static EntityManager instance;
         private static List<Entity> _entities;
         private static List<Entity> _entitiesToRemove;
         private EntityManager()
-            : base("Entity Manager")
         {
             instance = this;
             _entities = new List<Entity>();
@@ -49,10 +49,7 @@ namespace ArtillerySeries.src
             get => Entities.Count();
         }
 
-        public override string ShortDesc { get => "Entity Manager" ; }
-        public override string LongDesc { get => "The topmost node in the Entity Tree."; }
-
-        public override void Draw()
+        public void Draw()
         {
             foreach(Entity e in Entities)
             {
@@ -60,7 +57,35 @@ namespace ArtillerySeries.src
             }
         }
 
-        public override void Update()
+        float DamageFromDistance(float damage, float damageDistance, float maxDistance)
+        {
+            return damage * (1 - damageDistance / maxDistance);
+        }
+
+        float DamageFromDistance(float damage, Point2D pt1, Point2D pt2, float maxDistance)
+        {
+            float dX = Math.Abs(pt1.X - pt2.X);
+            float dY = Math.Abs(pt1.Y - pt2.Y);
+            float distance = (float)Math.Sqrt(Math.Pow(dX, 2) + Math.Pow(dY, 2));
+
+            return DamageFromDistance(damage, distance, maxDistance);
+        }
+
+        public void DamageEntities(float damage, int radius, Point2D pt)
+        {
+            foreach(Entity e in _entities)
+            {
+                if (SwinGame.PointInCircle(e.Pos, pt.X, pt.Y, radius))
+                {
+
+                    e.Damage(DamageFromDistance(damage, pt, e.Pos, radius));
+
+                    Console.WriteLine("Damaging Entity: " + e.Name + " for " + DamageFromDistance(damage, pt, e.Pos, radius));
+                }
+            }
+        }
+
+        public void Update()
         {
             foreach(Entity e in Entities)
             {

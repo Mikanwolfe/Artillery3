@@ -123,6 +123,7 @@ namespace ArtillerySeries.src
 
             PhysicsEngine.Instance.BlowUpTerrain(_crater, Pos);
             ParticleEngine.Instance.CreateFastExplosion(Pos, 100);
+            EntityManager.Instance.DamageEntities(100, 70, Pos);
         }
 
         void SwitchState(ProjectileState nextState)

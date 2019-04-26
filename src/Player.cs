@@ -46,6 +46,7 @@ namespace ArtillerySeries.src
         public void Initiallise()
         {
             _character.SetFiringNotif(CharacterFired);
+            _character.Initialise();
         }
 
         //Make this into SelectedCharacter with AddCharacter later? should i have AddCharacter now?

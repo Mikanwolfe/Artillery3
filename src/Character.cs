@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.ArtilleryGame; // Constants
+using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
@@ -21,16 +21,17 @@ namespace ArtillerySeries.src
     //  but they can also be added to and customized on the fly.
     //  I don't know if this will work well but hey, let's hope for the best!
 
-    
 
     public class Character : EntityAssembly, 
         IPhysicsComponent, IStateComponent<CharacterState>
     {
 
+        float _health, _armour;
+        float _maxHealth = 100, _maxArmour = 100;
 
-        Vehicle _vehicle;
+        Vehicle _vehicle;  //throw this away
         //Point2D _pos;
-        Bitmap _charBitmap;
+        Bitmap _charBitmap; // use sprites
         PhysicsComponent _physics;
         StateComponent<CharacterState> _state;
         bool _selected;
@@ -51,10 +52,8 @@ namespace ArtillerySeries.src
 
         NotifyFiring notifyFiring;
 
-        
-
-
-        public Character(string name)
+       
+        public Character(string name, int health, int armour)
             : base(name)
         {
 
@@ -64,6 +63,9 @@ namespace ArtillerySeries.src
             _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f);
             _weapon2 = new Weapon("Base Weapon 2 -- Remove asap.", 50f, 120f);
             _weapons = new List<Weapon>();
+
+            _maxArmour = armour;
+            _maxHealth = health;            
 
             Entities.Add(_vehicle);
             Entities.Add(_weapon);
@@ -79,6 +81,12 @@ namespace ArtillerySeries.src
 
             UpdateWeaponList();
 
+        }
+
+        public void Initialise()
+        {
+            _armour = _maxArmour;
+            _health = _maxHealth;
         }
 
         public void SetFiringNotif(NotifyFiring parentFunction)
@@ -188,11 +196,13 @@ namespace ArtillerySeries.src
                 else
                     SwinGame.FillCircle(Color.Aquamarine, Pos.X + 3, Pos.Y, Constants.InvalidPlayerCircleRadius);
 
+                DrawTextCentre("Health: " + (int)_health, Color.DarkGray, Pos.X, Pos.Y - 50);
+                DrawTextCentre("Armour: " + (int)_armour, Color.DarkGray, Pos.X, Pos.Y - 40);
 
 
             }
 
-            SwinGame.DrawText(Name, Color.DarkGray, Pos.X, Pos.Y - 30);
+            DrawTextCentre(Name, Color.DarkGray, Pos.X, Pos.Y - 30);
 
 
             float angle = (float)(_physics.AbsAngleToGround * 180 / Math.PI);
@@ -262,6 +272,19 @@ namespace ArtillerySeries.src
         public CharacterState PopState()
         {
             return _state.Pop();
+        }
+
+        public override void Damage(float damage)
+        {
+            if (_armour > 0)
+            {
+                _armour -= damage;
+                _armour = Clamp(_armour, 0, _maxArmour);
+            } else
+            {
+                _health -= damage;
+                _health = Clamp(_health, 0, _maxHealth);
+            }
         }
     }
 }

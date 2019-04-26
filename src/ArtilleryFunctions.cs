@@ -42,6 +42,16 @@ namespace ArtillerySeries.src
             };
         }
 
+        public static void DrawTextCentre(string text, Color color, float x, float y)
+        {
+            SwinGame.DrawText(text, color, x - (text.Length * 3.5f), y);
+        }
+
+        public static void DrawTextCentre(string text, Color color, Point2D pt)
+        {
+            DrawTextCentre(text, color, pt.X, pt.Y);
+        }
+
 
         public static float Rad(float deg)
         {

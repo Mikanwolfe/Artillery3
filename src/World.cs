@@ -43,6 +43,7 @@ namespace ArtillerySeries.src
 
         List<Player> _players;
         Player _selectedPlayer;
+
         Sprite _windMarker;
 
         public World(Rectangle windowRect, InputHandler inputHandler)
@@ -98,6 +99,7 @@ namespace ArtillerySeries.src
             foreach (Player p in _players)
             {
                 p.Character.SetXPosition((int)RandBetween(0, _logicalTerrain.Map.Length - 1));
+                
             }
 
             PhysicsEngine.Instance.Settle();
