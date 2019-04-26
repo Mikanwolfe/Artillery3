@@ -81,7 +81,9 @@ namespace ArtillerySeries.src
         private void LoadResources()
         {
             SwinGame.LoadBitmapNamed("windMarker", "windmarker.png");
-            Console.WriteLine("Loaded Bitmap WindMarker!");
+            
+
+
 
         }
       

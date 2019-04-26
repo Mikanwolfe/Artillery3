@@ -117,7 +117,13 @@ namespace ArtillerySeries.src
 
                     //Console.WriteLine("Wind: {0} at {1}*", _wind.Magnitude, Deg(_wind.Direction));
 
+
+                    if (SwinGame.KeyTyped(KeyCode.BKey))
+                        _wind.SetWind();
+
                 }
+
+                _wind.Update();
             }
 
             foreach (IPhysicsComponent p in _componentsToRemove)
@@ -191,6 +197,9 @@ namespace ArtillerySeries.src
             _boundaryBox.X = x - Constants.BoundaryBoxPadding;
             _boundaryBox.Y = y - Constants.BoundaryBoxPadding;
         }
+
+        public float WindDirectionDeg { get => _wind.DirectionInDeg; }
+        public float WindMarkerDirection { get => _wind.MarkerDirection; }
 
     }
 }

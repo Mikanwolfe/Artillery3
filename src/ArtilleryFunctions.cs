@@ -50,7 +50,7 @@ namespace ArtillerySeries.src
 
         public static float Deg(float rad)
         {
-            return rad * 180 / (float)Math.PI;
+            return (rad * 180 / (float)Math.PI) % 360f;
         }
 
         public static float Clamp(float value, float min, float max)

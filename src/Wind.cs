@@ -12,6 +12,7 @@ namespace ArtillerySeries.src
     {
         float _direction;
         float _magnitude;
+        float _markerDirection;
 
         Random _random = new Random();
 
@@ -19,12 +20,18 @@ namespace ArtillerySeries.src
         {
             _direction = 0;
             _magnitude = 0;
+            _markerDirection = 0;
         }
 
         public void SetWind(float direction, float magnitude)
         {
             _direction = direction;
             _magnitude = magnitude;
+        }
+
+        public void Update()
+        {
+            _markerDirection += (_direction - _markerDirection) / 2000;
         }
 
         public void SetWind()
@@ -42,6 +49,8 @@ namespace ArtillerySeries.src
         public float X { get => _magnitude * (float)Math.Cos(_direction); }
         public float Y { get => _magnitude * (float)Math.Sin(_direction); }
         public float Direction { get => _direction; set => _direction = value; }
+        public float DirectionInDeg { get => Deg(_direction); }
+        public float MarkerDirection { get => Deg(_markerDirection); }
         public float Magnitude { get => _magnitude; set => _magnitude = value; }
     }
 }

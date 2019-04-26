@@ -43,6 +43,7 @@ namespace ArtillerySeries.src
 
         List<Player> _players;
         Player _selectedPlayer;
+        Sprite _windMarker;
 
         public World(Rectangle windowRect, InputHandler inputHandler)
         {
@@ -56,6 +57,10 @@ namespace ArtillerySeries.src
             _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
             _observer = new WorldObserver(this);
             _random = new Random();
+
+            _windMarker = SwinGame.CreateSprite(SwinGame.BitmapNamed("windMarker"));
+
+           
 
             _turnCount = 0;
         }
@@ -157,7 +162,13 @@ namespace ArtillerySeries.src
                 p.Update();
             }
 
-            
+            _windMarker.X = _camera.Pos.X + (_windowRect.Width / 2) - 50;
+            _windMarker.Y = _camera.Pos.Y + 50;
+
+            _windMarker.Rotation = PhysicsEngine.Instance.WindMarkerDirection + 180;
+
+
+
         }
 
         public void Draw()
@@ -166,7 +177,8 @@ namespace ArtillerySeries.src
             _environment.Draw();
             _logicalTerrain.Draw();
 
-            SwinGame.DrawBitmap("windMarker", _camera.Pos.X + (_windowRect.Width / 2), _camera.Pos.Y + 50);
+            //SwinGame.DrawBitmap("windMarker", _camera.Pos.X + (_windowRect.Width / 2), _camera.Pos.Y + 50);
+            _windMarker.Draw();
 
             SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
             _selectedPlayer.Draw();

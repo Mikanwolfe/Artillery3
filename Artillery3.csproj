@@ -91,6 +91,9 @@
     </None>
     <WinLibs Include="lib\win32\*.dll" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\images\windmarker.png" />
+  </ItemGroup>
   <Target Name="CopyLibsToOut">
     <Copy SourceFiles="@(WinLibs)" DestinationFolder="$(OutDir)" />
   </Target>
