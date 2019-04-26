@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static ArtillerySeries.src.ArtilleryFunctions;
+using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
@@ -10,6 +12,8 @@ namespace ArtillerySeries.src
     {
         float _direction;
         float _magnitude;
+
+        Random _random = new Random();
 
         public Wind()
         {
@@ -21,6 +25,18 @@ namespace ArtillerySeries.src
         {
             _direction = direction;
             _magnitude = magnitude;
+        }
+
+        public void SetWind()
+        {
+            int _directionInDeg = _random.Next(180);
+            if (_directionInDeg > 45)
+                _directionInDeg += 90;
+            if (_directionInDeg > 225)
+                _directionInDeg += 90;
+
+            _direction = Rad(_directionInDeg);
+            _magnitude = (float)_random.NextDouble();
         }
 
         public float X { get => _magnitude * (float)Math.Cos(_direction); }

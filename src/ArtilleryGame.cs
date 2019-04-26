@@ -80,6 +80,8 @@ namespace ArtillerySeries.src
 
         private void LoadResources()
         {
+            SwinGame.LoadBitmapNamed("windMarker", "windmarker.png");
+            Console.WriteLine("Loaded Bitmap WindMarker!");
 
         }
       
@@ -94,6 +96,7 @@ namespace ArtillerySeries.src
             SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
             SwinGame.SetIcon("H:\\repos\\Artillery3\\Resources\\images\\logoArtillery3LogoIcon.ico");
 
+            LoadResources();
 
             
             Player player1 = new Player("2B", _world);

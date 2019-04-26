@@ -166,6 +166,8 @@ namespace ArtillerySeries.src
             _environment.Draw();
             _logicalTerrain.Draw();
 
+            SwinGame.DrawBitmap("windMarker", _camera.Pos.X + (_windowRect.Width / 2), _camera.Pos.Y + 50);
+
             SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
             _selectedPlayer.Draw();
         }

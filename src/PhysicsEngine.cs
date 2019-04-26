@@ -161,7 +161,7 @@ namespace ArtillerySeries.src
 
         public void SetWind()
         {
-            _wind.SetWind(Deg(_random.Next(0, 360)), (float)_random.NextDouble() * 2);
+            _wind.SetWind();
         }
 
         public void SetWind(float direction, float magnitude)
@@ -191,5 +191,6 @@ namespace ArtillerySeries.src
             _boundaryBox.X = x - Constants.BoundaryBoxPadding;
             _boundaryBox.Y = y - Constants.BoundaryBoxPadding;
         }
+
     }
 }

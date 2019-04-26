@@ -117,17 +117,6 @@ namespace ArtillerySeries.src
 
             }
 
-
-
-
-
-            //Console.WriteLine("particle pos: " + _particlePos + " | point2D: "+ _particleSpawnPoint);
-
-            
-
-
-
-
         }
 
         public void Draw()
