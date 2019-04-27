@@ -3,12 +3,6 @@
 namespace ArtillerySeries.src
 {
 
-    enum ParticleType
-    {
-        Fire,
-        Rectangle
-    }
-
     public class Particle : Entity, IPhysicsComponent
     {
         Bitmap _bitmap;

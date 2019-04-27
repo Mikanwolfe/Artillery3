@@ -8,7 +8,7 @@ using SwinGameSDK;
 namespace ArtillerySeries.src
 {
 
-    enum ProjectileState
+    public enum ProjectileState
     {
         Alive,
         Exploding,
@@ -17,27 +17,6 @@ namespace ArtillerySeries.src
 
     public class Projectile : Entity, IPhysicsComponent, ICameraCanFocus
     {
-        /*
-         * Once again, more discussion.
-         * 
-         * I can make the projectile a FlyWeight, that is, the real object is being held by the charcter and it 
-         * simply creates references that fly around.
-         * 
-         * On the other hand, that makes things complicated, though it means the projile can be built easily every time.
-         * This is 'cause the projectiles will probably get quite complex, and therefore it would make sense.
-         * 
-         * In the end, there's a lot of things to do here and the important thing to remember
-         * is that each weapon fires a different projectile. Time to clone it.4
-         * 
-         * 
-         * 
-         * What about polymorphism/composition for states?
-         * Should i include a state component that's Projectile.State<T>? 
-         * That would allow me to write one State.Switch(State State) method each time
-         * though it would be dependant on the specific enum for the state...
-         * Then again, that only matters to external observers, hence, the StateComponent
-         * should be private only.
-         */
         PhysicsComponent _physics;
         Bitmap _bitmap;
         Weapon _parentWeapon;
@@ -72,8 +51,6 @@ namespace ArtillerySeries.src
                 if (_bitmap == null)
                 {
                     SwinGame.FillCircle(Color.DarkMagenta, Pos, 3);
-
-
 
                 }
 
@@ -112,7 +89,7 @@ namespace ArtillerySeries.src
             
         }
 
-        public virtual void Explode()
+        public virtual void BlowUpTerrain(Point2D pt)
         {
             int width = ((int)_explRad * Constants.BaseExplosionDiaScaling) - 1;
             float[] _crater = new float[(int)width];
@@ -123,12 +100,17 @@ namespace ArtillerySeries.src
                 _crater[i] = _explRad * (float)(-1 * Math.Cos(_period * (i - Math.PI * 2)) + 1);
             }
 
-            PhysicsEngine.Instance.BlowUpTerrain(_crater, Pos);
-            ParticleEngine.Instance.CreateFastExplosion(Pos, 100);
-            EntityManager.Instance.DamageEntities(100, 70, Pos);
+            PhysicsEngine.Instance.BlowUpTerrain(_crater, pt);
         }
 
-        void SwitchState(ProjectileState nextState)
+        public virtual void Explode(Point2D pt)
+        {
+            BlowUpTerrain(pt);
+            ParticleEngine.Instance.CreateFastExplosion(pt, 100);
+            EntityManager.Instance.DamageEntities(100, 70, pt);
+        }
+
+        public void SwitchState(ProjectileState nextState)
         {
             switch (nextState)
             {
@@ -136,14 +118,15 @@ namespace ArtillerySeries.src
                 case ProjectileState.Exploding:
                     if (_state.Peek() == ProjectileState.Alive)
                     {
-                        Explode();
+                        Explode(Pos);
                         SwitchState(ProjectileState.Dead);
                     }
                     break;
 
                 case ProjectileState.Dead:
+                    if (_parentWeapon != null)
+                        _parentWeapon.LastProjectilePosition(this, Pos);
                     Enabled = false;
-
                     break;
 
             }

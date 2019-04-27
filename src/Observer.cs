@@ -12,8 +12,10 @@ namespace ArtillerySeries.src
         //No idea for now so this will do
         PlayerEndedTurn,
         PlayerFiredProjectile,
-        FocusOnPlayer
-
+        FocusOnPlayer,
+        FocusOnSatellite,
+        FocusOnSatelliteStrike,
+        FireSatellite
     }
 
     public abstract class Observer

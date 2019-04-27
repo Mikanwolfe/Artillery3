@@ -30,6 +30,9 @@ namespace ArtillerySeries.src
         List<Terrain> _backgroundTerrain;
         TerrainFactory _terrainFactory;
         Camera _camera;
+        CelestialBody _moon;
+
+        List<Entity> _backgroundObjects; //Aesthetic
 
         Random _random = new Random();
 
@@ -44,10 +47,14 @@ namespace ArtillerySeries.src
             _windowRect = windowRect;
             _backgroundTerrain = new List<Terrain>();
             _camera = camera;
+
+            _backgroundObjects = new List<Entity>();
+            _moon = new CelestialBody("Moon", SwinGame.RGBAFloatColor(0.85f,0.85f,0.85f,1f), 20, 1000, -1000);
         }
 
         public void Initialise(EnvironmentPreset preset)
         {
+            _backgroundObjects.Add(_moon);
 
             _preset = preset;
 
@@ -74,13 +81,8 @@ namespace ArtillerySeries.src
             return _terrain;
         }
 
-        public void Update()
+        public void CreateDustEffect()
         {
-            foreach (Terrain t in _backgroundTerrain)
-            {
-                t.Update();
-            }
-
             _weatherDelayCount++;
             if (_weatherDelayCount > _weatherParticlesDelay)
             {
@@ -114,8 +116,23 @@ namespace ArtillerySeries.src
 
                 ParticleEngine.Instance.CreateNonCollideParticle(_particleSpawnPoint, Color.Black,
                 0f, 10f, 0.2f, 1);
-
             }
+        }
+
+        public void Update()
+        {
+            foreach (Terrain t in _backgroundTerrain)
+            {
+                t.Update();
+            }
+
+            foreach(Entity e in _backgroundObjects)
+            {
+                e.Update();
+            }
+
+            CreateDustEffect();
+           
 
         }
 
@@ -124,6 +141,11 @@ namespace ArtillerySeries.src
             foreach (Terrain t in _backgroundTerrain)
             {
                 t.Draw();
+            }
+
+            foreach (Entity e in _backgroundObjects)
+            {
+                e.Draw();
             }
         }
 

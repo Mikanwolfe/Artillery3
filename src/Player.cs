@@ -13,6 +13,8 @@ namespace ArtillerySeries.src
         NotSelected,
         Idle,
         ObserveProjectile,
+        ObserveSatellite,
+        ObserveSatelliteStrike,
         EndTurn
     }
     public class Player : Entity, IStateComponent<PlayerState>
@@ -65,7 +67,6 @@ namespace ArtillerySeries.src
             
             switch (_state.Peek())
             {
-
                 case PlayerState.Idle:
                     if(state == PlayerState.ObserveProjectile)
                     {
@@ -74,6 +75,21 @@ namespace ArtillerySeries.src
 
                     break;
                 case PlayerState.ObserveProjectile:
+                    if (state == PlayerState.ObserveSatellite)
+                        _observerComponent.Notify(this, ObserverEvent.FocusOnSatellite);
+                        _observeDelay = Constants.CameraAfterExplosionDelay * 1.2;
+                    if (state == PlayerState.EndTurn)
+                        _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
+                    break;
+
+                case PlayerState.ObserveSatellite:
+                    if (state == PlayerState.ObserveSatelliteStrike)
+                        _observerComponent.Notify(this, ObserverEvent.FocusOnSatelliteStrike);
+                        _observerComponent.Notify(this, ObserverEvent.FireSatellite);
+                        _observeDelay = Constants.CameraAfterExplosionDelay * 1.2;
+                    break;
+
+                case PlayerState.ObserveSatelliteStrike:
                     if (state == PlayerState.EndTurn)
                         _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
                     break;
@@ -94,6 +110,9 @@ namespace ArtillerySeries.src
             if ((PeekState() == PlayerState.ObserveProjectile) && !_character.MainProjectile.Enabled)
                 _observeDelay -= 0.1;
 
+            if ((PeekState() == PlayerState.ObserveSatellite) || (PeekState() == PlayerState.ObserveSatelliteStrike))
+                _observeDelay -= 0.1;
+
             switch (PeekState())
             {
                 //Idle --> ObvsProj is an event
@@ -104,7 +123,14 @@ namespace ArtillerySeries.src
                     {
                         if (_character.PeekState() == CharacterState.EndTurn)
                         {
-                            SwitchState(PlayerState.EndTurn);
+                            if (_character.UsesSatellite)
+                            {
+                                SwitchState(PlayerState.ObserveSatellite);
+                            } else
+                            {
+                                SwitchState(PlayerState.EndTurn);
+                            }
+                            
                         } else
                         {
                             _observerComponent.Notify(this, ObserverEvent.FocusOnPlayer);
@@ -113,7 +139,21 @@ namespace ArtillerySeries.src
                     }
                     break;
 
-                
+                case PlayerState.ObserveSatellite:
+                    if (_observeDelay < 0)
+                    {
+                        SwitchState(PlayerState.ObserveSatelliteStrike);
+                    }
+                    break;
+
+                case PlayerState.ObserveSatelliteStrike:
+                    if (_observeDelay < 0)
+                    {
+                        SwitchState(PlayerState.EndTurn);
+                    }
+                    break;
+
+
             }        
         }
 

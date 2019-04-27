@@ -160,7 +160,7 @@ namespace ArtillerySeries.src
                 windFricMult);
 
             _particleToAdd.SetDamage(damage);
-            _particleToAdd.SetFriction(0.2f);
+            _particleToAdd.SetFriction(0.15f);
 
             _particles.Add(_particleToAdd);
         }
@@ -199,13 +199,24 @@ namespace ArtillerySeries.src
             }
         }
 
+        public void CreateLaserExplosion(Point2D pos, int numParticles)
+        {
+            for (int i = 0; i < numParticles; i++)
+            {
+                CreateAcidParticle(pos, Color.Cyan, 15, 2, 0.3f, 1, 0.02f);
+                CreateAcidParticle(pos, Color.LightBlue, 15, 2, 0.3f, 1, 0.02f);
+                CreateAcidParticle(pos, Color.GhostWhite, 15, 3, 0.3f, 1, 0.02f);
+
+            }
+        }
+
         public void CreateAcidExplosion(Point2D pos, int numParticles)
         {
             for (int i = 0; i < numParticles; i++)
             {
-                CreateAcidParticle(pos, Color.Orange, 20, 7, 0.3f,1,0.08f);
-                CreateAcidParticle(pos, Color.Yellow, 20, 7, 0.3f,1,0.08f);
-                CreateAcidParticle(pos, Color.Green, 20, 10, 0.3f,1,0.08f);
+                CreateAcidParticle(pos, Color.Orange, 20, 7, 0.3f,1,0.12f);
+                CreateAcidParticle(pos, Color.Yellow, 20, 7, 0.3f,1,0.12f);
+                CreateAcidParticle(pos, Color.Green, 20, 10, 0.3f,1,0.12f);
 
             }
         }

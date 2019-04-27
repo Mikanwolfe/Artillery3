@@ -27,6 +27,7 @@ namespace ArtillerySeries.src
         IPhysicsComponent _entity;
         Point2D _pos, _vel, _acc;
         //PHYSICS!!
+        bool _enabled;
         float _weight;
         float _fricCoefficient;
         float _windFrictionMult;
@@ -63,6 +64,7 @@ namespace ArtillerySeries.src
 
         PhysicsComponent()
         {
+            _enabled = true;
             _gravityEnabled = true;
             _vel = ZeroPoint2D();
             _acc = ZeroPoint2D();
@@ -127,5 +129,6 @@ namespace ArtillerySeries.src
         public float WindFrictionMult { get => _windFrictionMult; set => _windFrictionMult = value; }
         public bool CanCollideWithGround { get => _canCollideWithGround; set => _canCollideWithGround = value; }
         public float FricCoefficient { get => _fricCoefficient; set => _fricCoefficient = value; }
+        public bool Enabled { get => _enabled; set => _enabled = value; }
     }
 }

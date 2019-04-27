@@ -35,6 +35,7 @@ namespace ArtillerySeries.src
         PhysicsComponent _physics;
         StateComponent<CharacterState> _state;
         bool _selected;
+        bool _usesSatellite;
 
         //Weapons should be seperate list.
         //they are treated seperately as base.draw() will draw all the sights, which isn't required...
@@ -64,6 +65,7 @@ namespace ArtillerySeries.src
             _weapon2 = new Weapon("Base Weapon 2 -- Remove asap.", 50f, 120f);
             //_weapon2.SetProjectile();
             _weapons = new List<Weapon>();
+            _usesSatellite = true;
 
             _maxArmour = armour;
             _maxHealth = health;            
@@ -264,6 +266,7 @@ namespace ArtillerySeries.src
         {
             get => _selectedWeapon.MainProjectile;
         }
+        public bool UsesSatellite { get => _usesSatellite; set => _usesSatellite = value; }
 
         public void SetXPosition(int x)
         {
@@ -283,6 +286,11 @@ namespace ArtillerySeries.src
         public CharacterState PopState()
         {
             return _state.Pop();
+        }
+
+        public Point2D LastProjectilePosition
+        {
+            get => _selectedWeapon.LastProjPos;
         }
 
         public override void Damage(float damage)

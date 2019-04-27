@@ -38,11 +38,14 @@ namespace ArtillerySeries.src
         string _presetEnvironment = Constants.EnvironmentPreset;
 
         Camera _camera;
+        CameraFocusPoint _cameraFocusPoint;
 
         int _turnCount;
 
         List<Player> _players;
         Player _selectedPlayer;
+
+        Satellite _satellite;
 
         Sprite _windMarker;
 
@@ -50,6 +53,7 @@ namespace ArtillerySeries.src
         {
             _windowRect = windowRect;
             _camera = new Camera(windowRect);
+            _cameraFocusPoint = new CameraFocusPoint();
             _logicalTerrain = new Terrain(_windowRect);
             _environment = new Environment(_windowRect, _camera);
             _inputHandler = inputHandler;
@@ -60,6 +64,8 @@ namespace ArtillerySeries.src
             _random = new Random();
 
             _windMarker = SwinGame.CreateSprite(SwinGame.BitmapNamed("windMarker"));
+
+            _satellite = new Satellite("Maia", Constants.TerrainWidth / 2, -300);
 
            
 
@@ -157,6 +163,22 @@ namespace ArtillerySeries.src
             SwitchState(WorldState.TrackingProjectile);
         }
 
+        public void FocusOnSatellite()
+        {
+            _camera.FocusCamera(_satellite);
+        }
+
+        public void FocusOnSatelliteStrike()
+        {
+            _cameraFocusPoint.Pos = _selectedPlayer.Character.LastProjectilePosition;
+            _camera.FocusCamera(_cameraFocusPoint);
+        }
+
+        public void FireSatellite()
+        {
+            _satellite.Fire(_selectedPlayer.Character.LastProjectilePosition);
+        }
+
 
         public void Update()
         {
@@ -174,7 +196,7 @@ namespace ArtillerySeries.src
             _windMarker.Y = _camera.Pos.Y + 50;
 
             _windMarker.Rotation = PhysicsEngine.Instance.WindMarkerDirection + 180;
-
+            _satellite.Update();
 
 
         }
@@ -184,6 +206,7 @@ namespace ArtillerySeries.src
 
             _environment.Draw();
             _logicalTerrain.Draw();
+            _satellite.Draw();
 
             //SwinGame.DrawBitmap("windMarker", _camera.Pos.X + (_windowRect.Width / 2), _camera.Pos.Y + 50);
             _windMarker.Draw();

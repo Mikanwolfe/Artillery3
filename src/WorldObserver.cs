@@ -31,6 +31,18 @@ namespace ArtillerySeries.src
                     _world.FocusOnPlayer();
                     break;
 
+                case ObserverEvent.FocusOnSatellite:
+                    _world.FocusOnSatellite();
+                    break;
+
+                case ObserverEvent.FocusOnSatelliteStrike:
+                    _world.FocusOnSatelliteStrike();
+                    break;
+
+                case ObserverEvent.FireSatellite:
+                    _world.FireSatellite();
+                    break;
+
             }
         }
     }

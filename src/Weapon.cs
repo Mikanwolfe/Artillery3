@@ -58,7 +58,7 @@ namespace ArtillerySeries.src
          *    / \           Need to define base position for offset.
          */
         Point2D _offsetPosition;    //Used to calculate relative position to character.
-        Point2D _relativePosition;
+        Point2D _projectileSpawnOffset; //directional, can be set.
 
 
         float _weaponAngle = 0;
@@ -69,12 +69,18 @@ namespace ArtillerySeries.src
         bool _isAutoloader = true; //Autoloader, not AutoLoader. Look it up.
         int _autoloaderClip = 2;
         int _autoloaderAmmoLeft;
+        Point2D _lastProjectilePosition;
 
         public Weapon(string name) : base(name)
         {
             _ammunition = new List<Projectile>();
             _weaponCharge = 0;
             _state = WeaponState.IdleState;
+            _projectileSpawnOffset = new Point2D()
+            {
+                X = 0,
+                Y = -5
+            };
         }
 
         public Weapon (string name, float minWepAngleDeg, float maxWepAngleDeg)
@@ -88,6 +94,12 @@ namespace ArtillerySeries.src
         public Projectile MainProjectile
         {
             get => _mainProjectile;
+        }
+
+        public void LastProjectilePosition(Projectile p, Point2D pos)
+        {
+            if (p == MainProjectile)
+                _lastProjectilePosition = pos;
         }
 
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
@@ -121,6 +133,8 @@ namespace ArtillerySeries.src
             }
         }
 
+        public Point2D LastProjPos { get => _lastProjectilePosition; set => _lastProjectilePosition = value; }
+
         public void DepressWeapon()
         {
             _weaponAngle = Clamp(_weaponAngle - Rad(1f), _minWepAngleRad, _maxWepAngleRad);
@@ -144,12 +158,6 @@ namespace ArtillerySeries.src
         public void Fire()
         {
             _state = WeaponState.FireState;
-
-            Point2D projectilePos = new Point2D()
-            {
-                X = Pos.X,
-                Y = Pos.Y-5
-            };
             Point2D projectileVel = new Point2D()
             {
                 X = (float)(_weaponCharge * Math.Cos(_weaponAngle + _relativeAngle)),
@@ -157,6 +165,12 @@ namespace ArtillerySeries.src
             };
             if (Direction == FacingDirection.Left)
                 projectileVel.X *= -1;
+
+            Point2D projectilePos = new Point2D()
+            {
+                X = _projectileSpawnOffset.X + Pos.X,
+                Y = _projectileSpawnOffset.Y + Pos.Y
+            };
 
 
             Projectile projectile = new AcidProjectile(Name + " Projectile", this, projectilePos, projectileVel);

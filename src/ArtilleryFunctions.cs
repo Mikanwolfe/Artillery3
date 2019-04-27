@@ -33,6 +33,22 @@ namespace ArtillerySeries.src
             return vector;
         }
 
+        public static float VectorDirection(Point2D to, Point2D from)
+        {
+            Point2D vector = new Point2D()
+            {
+                X = from.X - to.X,
+                Y = from.Y - to.Y
+            };
+
+            return VectorDirection(vector);
+        }
+
+        public static float VectorDirection(Point2D vector)
+        {
+            return (float)(Math.Tan((vector.Y / vector.X)) % (2*Math.PI));
+        }
+
         public static Point2D ZeroPoint2D()
         {
             return new Point2D()

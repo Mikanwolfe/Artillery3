@@ -23,6 +23,7 @@ namespace ArtillerySeries.src
         Wind _wind;
         Rectangle _windowRect;
         Rectangle _boundaryBox;
+        Rectangle _worldBox;
 
         Random _random = new Random();
         
@@ -46,7 +47,23 @@ namespace ArtillerySeries.src
             }
         }
 
-        public Terrain Terrain { get => _terrain; set => _terrain = value; }
+        public Terrain Terrain
+        {
+            get => _terrain;
+            set
+            {
+                _terrain = value;
+
+                _boundaryBox = new Rectangle()
+                {
+                    X = 0,
+                    Y = Constants.WorldMaxHeight + Constants.TerrainDepth - _windowRect.Height,
+                    Width = _terrain.Map.Length,
+                    Height = Constants.WorldMaxHeight + Constants.TerrainDepth
+                };
+
+            }
+        }
         public Rectangle BoundaryBox { get => _boundaryBox; }
 
         public void Simulate()
@@ -55,71 +72,74 @@ namespace ArtillerySeries.src
             //Console.WriteLine("BoundaryBox: X{0} y{1}", _boundaryBox.X, _boundaryBox.Y);
             if (_terrain == null)
                 throw new MissingMemberException("No terrain to simulate with! Nothing to stop falls!");
-                //make this not an exception!!
-            foreach(IPhysicsComponent p in _components)
+            //make this not an exception!!
+            foreach (IPhysicsComponent p in _components)
             {
                 if (p != null)
                 {
-                    if (p.Physics.GravityEnabled)
+                    if (p.Physics.Enabled)
                     {
-                        p.Physics.VelY += Constants.Gravity * p.Physics.Weight;
+                        if (p.Physics.GravityEnabled)
+                        {
+                            p.Physics.VelY += Constants.Gravity * p.Physics.Weight;
+                        }
+                        if ((p.Physics.Position.Y >= _terrain.Map[(int)p.Physics.Position.X]) && p.Physics.CanCollideWithGround)
+                        {
+                            p.Physics.VelY = 0;
+                            p.Physics.Y = _terrain.Map[(int)p.Physics.Position.X];
+                            p.Physics.OnGround = true;
+
+                        }
+                        else
+                        {
+                            p.Physics.OnGround = false;
+                        }
+
+                        if (p.Physics.OnGround)
+                        {
+                            int x = (int)p.Physics.X;
+
+                            float p1 = _terrain.Map[Clamp((int)(x - 1), 0, _terrain.Map.Length - 1)];
+                            float p2 = _terrain.Map[Clamp((int)(x + 1), 0, _terrain.Map.Length - 1)];
+
+                            p.Physics.VelX *= (float)Math.Cos(p.Physics.RelAngleToGround);
+                            p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
+
+                            if (p.Physics.HasGroundFriction)
+                                p.Physics.VelX *= (1 - p.Physics.FricCoefficient);
+
+                            p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
+                        } else
+                        {
+
+                            p.Physics.VelX += _wind.X * p.Physics.WindFrictionMult;
+                            p.Physics.VelY += _wind.Y * p.Physics.WindFrictionMult;
+
+                        }
+
+                        //p.Physics.Position.Add(p.Physics.Velocity);
+                        //p.Physics.Velocity.Add(p.Physics.Acceleration);
+                        p.Physics.X += p.Physics.VelX;
+                        p.Physics.Y += p.Physics.VelY;
+
+
+                        p.Physics.X = Clamp(p.Physics.X, 0, _terrain.Map.Length - 1);
+                        p.Physics.VelX += p.Physics.AccX;
+                        p.Physics.VelY += p.Physics.AccY;
+                        //p.Physics.VelX *= Constants.VelocityLoss;
+
+                        p.Physics.Simulate();
+
+                        //Console.WriteLine("Wind: {0} at {1}*", _wind.Magnitude, Deg(_wind.Direction));
+
+
+                        if (SwinGame.KeyTyped(KeyCode.BKey))
+                            _wind.SetWind();
+
                     }
-                    if ((p.Physics.Position.Y >= _terrain.Map[(int)p.Physics.Position.X]) && p.Physics.CanCollideWithGround)
-                    {
-                        p.Physics.VelY = 0;
-                        p.Physics.Y = _terrain.Map[(int)p.Physics.Position.X];
-                        p.Physics.OnGround = true;
 
-                    }
-                    else
-                    {
-                        p.Physics.OnGround = false;
-                    }
-
-                    if (p.Physics.OnGround)
-                    {
-                        int x = (int)p.Physics.X;
-
-                        float p1 = _terrain.Map[Clamp((int)(x - 1), 0, _terrain.Map.Length - 1)];
-                        float p2 = _terrain.Map[Clamp((int)(x + 1), 0, _terrain.Map.Length - 1)];
-
-                        p.Physics.VelX *= (float)Math.Cos(p.Physics.RelAngleToGround);
-                        p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
-
-                        if (p.Physics.HasGroundFriction)
-                            p.Physics.VelX *= (1 - p.Physics.FricCoefficient);
-
-                        p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
-                    } else
-                    {
-
-                        p.Physics.VelX += _wind.X * p.Physics.WindFrictionMult;
-                        p.Physics.VelY += _wind.Y * p.Physics.WindFrictionMult;
-
-                    }
-
-                    //p.Physics.Position.Add(p.Physics.Velocity);
-                    //p.Physics.Velocity.Add(p.Physics.Acceleration);
-                    p.Physics.X += p.Physics.VelX;
-                    p.Physics.Y += p.Physics.VelY;
-
-                    
-                    p.Physics.X = Clamp(p.Physics.X, 0, _terrain.Map.Length - 1);
-                    p.Physics.VelX += p.Physics.AccX;
-                    p.Physics.VelY += p.Physics.AccY;
-                    //p.Physics.VelX *= Constants.VelocityLoss;
-
-                    p.Physics.Simulate();
-
-                    //Console.WriteLine("Wind: {0} at {1}*", _wind.Magnitude, Deg(_wind.Direction));
-
-
-                    if (SwinGame.KeyTyped(KeyCode.BKey))
-                        _wind.SetWind();
-
+                    _wind.Update();
                 }
-
-                _wind.Update();
             }
 
             foreach (IPhysicsComponent p in _componentsToRemove)
@@ -128,6 +148,14 @@ namespace ArtillerySeries.src
             }
             _componentsToRemove.Clear();
 
+        }
+
+        public bool IsUnderTerrain(Point2D pt)
+        {
+            int x = (int)Clamp(pt.X, 0, Terrain.Map.Length - 1);
+            if (pt.Y < Terrain.Map[x])
+                return true;
+            return false;
         }
 
         public void Settle()

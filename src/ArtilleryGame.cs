@@ -18,9 +18,13 @@ namespace ArtillerySeries.src
         public const int WindowWidth = WindowHeight * 16 / 9;
         public const int BoundaryBoxPadding = 20;
         public const int CameraEaseSpeed = 10;
-        public const double CameraAfterExplosionDelay = 6;
+        public const double CameraAfterExplosionDelay = 7;
         public const int CameraMaxHeight = 2000;
         public const int CameraPadding = 100;
+
+        public const int RayCastStep = 10;
+
+        public const int WorldMaxHeight = 2200;
 
         public const string EnvironmentPreset = "Twilight Sun";
 
@@ -41,7 +45,7 @@ namespace ArtillerySeries.src
 
         
         public const int InvalidPlayerCircleRadius = 3;
-        public const float PlayerSpeed = 0.5f; //TODO: Change to Accel
+        public const float PlayerSpeed = 1.5f;
         public const float BaseExplosionRadius = 10;
         public const int BaseExplosionDiaScaling = 8;
         public const int BaseCollisionRadius = 5;
