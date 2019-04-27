@@ -11,11 +11,11 @@ namespace ArtillerySeries.src
 
     public enum CharacterState // Out of fuel state?
     {
+        NotSelected,
         Idle,
         Walking,
         Firing,
-        Damage,
-        Finished
+        EndTurn
     }
     // Players use a single Character per game and they are pre-defined in the system (e.g. Innocentia/Object 261)
     //  but they can also be added to and customized on the fly.
@@ -106,22 +106,25 @@ namespace ArtillerySeries.src
 
         public void ChargeWeapon()
         {
-            if (PeekState() != CharacterState.Finished)
+            if (PeekState() == CharacterState.Idle)
             {
                 _selectedWeapon.Charge();
                 SwitchState(CharacterState.Firing);
-            }
+            } else if (PeekState() == CharacterState.Firing)
+                _selectedWeapon.Charge();
         }
 
         public void FireWeapon()
         {
-            if (PeekState() != CharacterState.Finished)
+            if (PeekState() == CharacterState.Firing)
             {
-
                 _selectedWeapon.Fire();
-                if (notifyFiring != null)
-                    notifyFiring(_selectedWeapon.MainProjectile, this);
-                SwitchState(CharacterState.Finished); // Can only fire each weapon once
+                notifyFiring(_selectedWeapon.MainProjectile, this);
+
+                if (_selectedWeapon.AutoloaderFinishedFiring || !_selectedWeapon.IsAutoloader)
+                    SwitchState(CharacterState.EndTurn);
+                else
+                    SwitchState(CharacterState.Idle);
             }
         }
 
@@ -147,6 +150,15 @@ namespace ArtillerySeries.src
             }
         }
 
+        public void NewTurn()
+        {
+            foreach (Weapon w in _weapons)
+            {
+                w.Reload();
+            }
+            _state.Switch(CharacterState.Idle);
+        }
+
         public void ElevateWeapon()
         {
             _selectedWeapon.ElevateWeapon();
@@ -161,7 +173,8 @@ namespace ArtillerySeries.src
         {
             if (_weapons.Count != 1)
             {
-                _selectedWeapon = _weapons[(_weapons.IndexOf(_selectedWeapon) + 1) % _weapons.Count];
+                if(!_selectedWeapon.AutoloaderFired)
+                    _selectedWeapon = _weapons[(_weapons.IndexOf(_selectedWeapon) + 1) % _weapons.Count];
             }
         }
 
@@ -215,9 +228,6 @@ namespace ArtillerySeries.src
 
             base.Draw(); // Draws the sub-entities
         }
-
-
-
 
         public override void Update()
         {

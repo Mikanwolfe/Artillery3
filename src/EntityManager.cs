@@ -77,10 +77,7 @@ namespace ArtillerySeries.src
             {
                 if (SwinGame.PointInCircle(e.Pos, pt.X, pt.Y, radius))
                 {
-
                     e.Damage(DamageFromDistance(damage, pt, e.Pos, radius));
-
-                    Console.WriteLine("Damaging Entity: " + e.Name + " for " + DamageFromDistance(damage, pt, e.Pos, radius));
                 }
             }
         }

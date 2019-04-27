@@ -42,6 +42,7 @@ namespace ArtillerySeries.src
 
 
         Bitmap _bitmap;
+        Sprite _sprite;
         List<Projectile> _ammunition;
 
         Projectile _mainProjectile;
@@ -59,11 +60,15 @@ namespace ArtillerySeries.src
         Point2D _offsetPosition;    //Used to calculate relative position to character.
         Point2D _relativePosition;
 
+
         float _weaponAngle = 0;
         float _minWepAngleRad = 0;
         float _maxWepAngleRad = 0;
         float _relativeAngle = 0 ;
         float _weaponCharge = 0;
+        bool _isAutoloader = true; //Autoloader, not AutoLoader. Look it up.
+        int _autoloaderClip = 2;
+        int _autoloaderAmmoLeft;
 
         public Weapon(string name) : base(name)
         {
@@ -88,6 +93,33 @@ namespace ArtillerySeries.src
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
         public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
         List<Projectile> IWeapon.Ammunition { get => _ammunition; set => _ammunition = value; }
+        public bool IsAutoloader { get => _isAutoloader; }
+        public int AutoloaderClip { get => _autoloaderClip; }
+        public int AutoloaderAmmoLeft { get => _autoloaderAmmoLeft; }
+
+
+        public bool AutoloaderFired
+        {
+            get
+            {
+                if (_isAutoloader)
+                    if (_autoloaderAmmoLeft < _autoloaderClip)
+                        return true;
+
+                return false;
+            }
+        }
+        public bool AutoloaderFinishedFiring
+        {
+            get
+            {
+                if (_isAutoloader)
+                    if(_autoloaderAmmoLeft <= 0)
+                        return true;
+
+                return false;
+            }
+        }
 
         public void DepressWeapon()
         {
@@ -102,6 +134,11 @@ namespace ArtillerySeries.src
         {
             //Observation: void ChangeState(State state) could be used to change state + add a transition state/commands 
             _state = WeaponState.ChargingState;
+        }
+
+        public void Reload()
+        {
+            _autoloaderAmmoLeft = _autoloaderClip;
         }
 
         public void Fire()
@@ -125,8 +162,11 @@ namespace ArtillerySeries.src
             Projectile projectile = new AcidProjectile(Name + " Projectile", this, projectilePos, projectileVel);
             _mainProjectile = projectile;
 
-
             _weaponCharge = 0;
+            if (_isAutoloader)
+            {
+                _autoloaderAmmoLeft--;
+            }
 
             _state = WeaponState.IdleState;
         }
@@ -142,12 +182,33 @@ namespace ArtillerySeries.src
             
         }
 
+        public void DrawAutoloaderClip()
+        {
+            if(_isAutoloader)
+            {
+                if (_sprite == null)
+                {
+                    int xOffset = -30;
+                    if (Direction == FacingDirection.Left)
+                        xOffset *= -1;
+
+                    int yOffset = -10;
+
+                    for (int i = 0; i < _autoloaderClip; i++)
+                    {
+                        SwinGame.FillCircle(Color.Black, Pos.X + xOffset, Pos.Y + yOffset + 12 * i, 4);
+                    }
+
+                    for (int i = 0; i < _autoloaderAmmoLeft; i++)
+                    {
+                        SwinGame.FillCircle(Color.LightSkyBlue, Pos.X + xOffset, Pos.Y + yOffset + 12 * i, 3);
+                    }
+                }
+            }
+        }
+
         public void DrawSight()
         {
-            //SwinGame.DrawText("  Weapon State: " + _state, Color.Black, 320, 50);
-            //SwinGame.DrawText("  Weapon Angle: " + Deg(_weaponAngle + _relativeAngle), Color.Black, 320, 70);
-            //SwinGame.DrawText(" Weapon Charge: " + _weaponCharge, Color.Black, 320, 90);
-
             if (Direction == FacingDirection.Right)
             {
                 SwinGame.DrawLine(Color.Black, Pos.X + 10 * (float)Math.Cos(_minWepAngleRad + _relativeAngle), Pos.Y - 10 * (float)Math.Sin(_minWepAngleRad + _relativeAngle), Pos.X + 30 * (float)Math.Cos(_minWepAngleRad + _relativeAngle), Pos.Y - 30 * (float)Math.Sin(_minWepAngleRad + _relativeAngle));
@@ -163,9 +224,7 @@ namespace ArtillerySeries.src
                 SwinGame.DrawLine(Color.Red, Pos.X - 10 * (float)Math.Cos(_weaponAngle + _relativeAngle), Pos.Y - 10 * (float)Math.Sin(_weaponAngle + _relativeAngle), Pos.X - 30 * (float)Math.Cos(_weaponAngle + _relativeAngle), Pos.Y - 30 * (float)Math.Sin(_weaponAngle + _relativeAngle));
             }
 
-            
-
-            SwinGame.DrawText("Weapon direction: " + Deg(_relativeAngle), Color.Black, 50, 90);
+            DrawAutoloaderClip();
         }
 
 

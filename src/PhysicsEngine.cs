@@ -87,7 +87,7 @@ namespace ArtillerySeries.src
                         p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
 
                         if (p.Physics.HasGroundFriction)
-                            p.Physics.VelX *= Constants.BaseFrictionCoefKinetic;
+                            p.Physics.VelX *= (1 - p.Physics.FricCoefficient);
 
                         p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
                     } else
@@ -98,14 +98,10 @@ namespace ArtillerySeries.src
 
                     }
 
-                    
-
                     //p.Physics.Position.Add(p.Physics.Velocity);
                     //p.Physics.Velocity.Add(p.Physics.Acceleration);
                     p.Physics.X += p.Physics.VelX;
                     p.Physics.Y += p.Physics.VelY;
-
-
 
                     
                     p.Physics.X = Clamp(p.Physics.X, 0, _terrain.Map.Length - 1);
@@ -187,6 +183,7 @@ namespace ArtillerySeries.src
                 Height = windowRect.Height + Constants.BoundaryBoxPadding * 2
             };
         }
+
         public void SetBoundaryBoxPos(Point2D pt)
         {
             _boundaryBox.X = Clamp(pt.X - Constants.BoundaryBoxPadding, 0, PhysicsEngine.Instance.Terrain.Map.Length);
@@ -194,12 +191,11 @@ namespace ArtillerySeries.src
         }
         public void SetBoundaryBoxPos(int x, int y)
         {
-            _boundaryBox.X = x - Constants.BoundaryBoxPadding;
+            _boundaryBox.X = Clamp(x - Constants.BoundaryBoxPadding, 0, _terrain.Map.Length - 1);
             _boundaryBox.Y = y - Constants.BoundaryBoxPadding;
         }
 
         public float WindDirectionDeg { get => _wind.DirectionInDeg; }
         public float WindMarkerDirection { get => _wind.MarkerDirection; }
-
     }
 }

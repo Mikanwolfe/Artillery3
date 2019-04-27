@@ -12,7 +12,7 @@ namespace ArtillerySeries.src
         //No idea for now so this will do
         PlayerEndedTurn,
         PlayerFiredProjectile,
-        PlayerProjectileExploded
+        FocusOnPlayer
 
     }
 

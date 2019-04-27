@@ -10,9 +10,10 @@ namespace ArtillerySeries.src
 
     public enum PlayerState
     {
+        NotSelected,
         Idle,
         ObserveProjectile,
-        Finished
+        EndTurn
     }
     public class Player : Entity, IStateComponent<PlayerState>
     {
@@ -39,8 +40,13 @@ namespace ArtillerySeries.src
 
         public void CharacterFired(Projectile projectile, Character parent)
         {
-            Console.WriteLine("Character has been fired -- Message from the Player class");
+            SwitchState(PlayerState.ObserveProjectile);
             _observerComponent.Notify(projectile, ObserverEvent.PlayerFiredProjectile);
+        }
+
+        public void NewTurn()
+        {
+            _character.NewTurn();
         }
 
         public void Initiallise()
@@ -59,9 +65,8 @@ namespace ArtillerySeries.src
             
             switch (_state.Peek())
             {
+
                 case PlayerState.Idle:
-                    
-                    
                     if(state == PlayerState.ObserveProjectile)
                     {
                         _observeDelay = Constants.CameraAfterExplosionDelay;
@@ -69,11 +74,8 @@ namespace ArtillerySeries.src
 
                     break;
                 case PlayerState.ObserveProjectile:
-
-                    
-
-                    
-
+                    if (state == PlayerState.EndTurn)
+                        _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
                     break;
             }
 
@@ -82,16 +84,9 @@ namespace ArtillerySeries.src
 
         }
 
-        public void CharacterFired()
-        {
-            Console.WriteLine("Player {0} has just been notified that {1} has fired!", Name, _character.Name);
-        }
-
         public override void Draw()
         {
             _character.DrawSight();
-            SwinGame.DrawText("PlayerState: " + _state.Peek(), Color.Black, 50, 50);
-            SwinGame.DrawText("CharacterState: " + _character.PeekState(), Color.Black, 50, 60);
         }
 
         public override void Update()
@@ -99,25 +94,27 @@ namespace ArtillerySeries.src
             if ((PeekState() == PlayerState.ObserveProjectile) && !_character.MainProjectile.Enabled)
                 _observeDelay -= 0.1;
 
-
             switch (PeekState())
             {
+                //Idle --> ObvsProj is an event
+
+
                 case PlayerState.ObserveProjectile:
-                    if (_observeDelay < 0)
+                    if (_observeDelay < 0)                                                                                                                 
                     {
-                        if (_observerComponent != null)
-                            _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
-                        _character.SwitchState(CharacterState.Idle);
-                        SwitchState(PlayerState.Finished);
+                        if (_character.PeekState() == CharacterState.EndTurn)
+                        {
+                            SwitchState(PlayerState.EndTurn);
+                        } else
+                        {
+                            _observerComponent.Notify(this, ObserverEvent.FocusOnPlayer);
+                            SwitchState(PlayerState.Idle);
+                        }
                     }
                     break;
-            }
 
-            //change this to reflect mutliple chars later
-            if (_character.PeekState() == CharacterState.Finished)
-            {
-                SwitchState(PlayerState.ObserveProjectile);
-            }            
+                
+            }        
         }
 
         public PlayerState PeekState()

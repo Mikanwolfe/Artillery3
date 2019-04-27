@@ -160,6 +160,7 @@ namespace ArtillerySeries.src
                 windFricMult);
 
             _particleToAdd.SetDamage(damage);
+            _particleToAdd.SetFriction(0.2f);
 
             _particles.Add(_particleToAdd);
         }

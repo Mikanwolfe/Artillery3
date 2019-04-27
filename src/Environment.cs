@@ -92,17 +92,17 @@ namespace ArtillerySeries.src
                 //fix. Also, wind mult for tracers = 0.
                 if (_particlePos < _windowRect.Height)
                 {
-                    _particleX = Clamp(_camera.Pos.X - 5, 0, PhysicsEngine.Instance.Terrain.Map.Length - 1);
+                    _particleX = Clamp(_camera.Pos.X - 10, 0, PhysicsEngine.Instance.Terrain.Map.Length - 1);
                     _particleY = _camera.Pos.Y + _windowRect.Height - _particlePos;
                 }
                 else if (_particlePos < (_windowRect.Height + _windowRect.Width))
                 {
                     _particleX = _camera.Pos.X + _particlePos - _windowRect.Height;
-                    _particleY = _camera.Pos.Y - 5;
+                    _particleY = _camera.Pos.Y - 10;
                 }
                 else
                 {
-                    _particleX = Clamp(_camera.Pos.X + _windowRect.Width + 5, 0, PhysicsEngine.Instance.Terrain.Map.Length - 1);
+                    _particleX = Clamp(_camera.Pos.X + _windowRect.Width + 10, 0, PhysicsEngine.Instance.Terrain.Map.Length - 1);
                     _particleY = _camera.Pos.Y + _particlePos - _windowRect.Height - _windowRect.Width;
                 }
 

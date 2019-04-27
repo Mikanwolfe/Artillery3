@@ -70,6 +70,7 @@ namespace ArtillerySeries.src
             _hasGroundFriction = true;
             _weight = 1f;
             _windFrictionMult = 1f;
+            _fricCoefficient = Constants.BaseFrictionCoef;
             _canCollideWithGround = true;
         }
 
@@ -98,11 +99,6 @@ namespace ArtillerySeries.src
             if (_vel.X < 0)
                 _facing = FacingDirection.Left;
 
-            if (Math.Abs(_vel.X) < Constants.BaseFrictionStaticError)
-                _fricCoefficient = Constants.BaseFrictionCoefStatic * _weight;
-            else
-                _fricCoefficient = Constants.BaseFrictionCoefKinetic * _weight;
-
             if (_facing == FacingDirection.Right)
                 _relativeAngleToGround = _absAngleToGround;
             else
@@ -130,5 +126,6 @@ namespace ArtillerySeries.src
         public bool HasGroundFriction { get => _hasGroundFriction; set => _hasGroundFriction = value; }
         public float WindFrictionMult { get => _windFrictionMult; set => _windFrictionMult = value; }
         public bool CanCollideWithGround { get => _canCollideWithGround; set => _canCollideWithGround = value; }
+        public float FricCoefficient { get => _fricCoefficient; set => _fricCoefficient = value; }
     }
 }

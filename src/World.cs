@@ -107,7 +107,7 @@ namespace ArtillerySeries.src
             //Character Innocentia = new Character("Innocentia");
         }
 
-        public void CyclePlayers() //When do you cycle players? When is one round over?? Multiple weapons?
+        public void CyclePlayers()
         {
             if (_players.Count == 1)
             {
@@ -121,6 +121,7 @@ namespace ArtillerySeries.src
                     nextPlayer = 0;
                 _selectedPlayer = _players[nextPlayer];
                 _selectedPlayer.SwitchState(PlayerState.Idle);
+                _selectedPlayer.NewTurn();
             }
 
             _turnCount++;
@@ -137,6 +138,11 @@ namespace ArtillerySeries.src
             if (_playerCommand != null)
                 _playerCommand.Execute(_selectedPlayer.Character);
 
+        }
+
+        public void FocusOnPlayer()
+        {
+            SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
         }
 
         public void EndPlayerTurn()
@@ -184,6 +190,10 @@ namespace ArtillerySeries.src
 
             SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
             _selectedPlayer.Draw();
+
+            SwinGame.DrawText("World State: " + _state.Peek(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 40f);
+            SwinGame.DrawText("Player State: " + _selectedPlayer.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 50f);
+            SwinGame.DrawText("Character State: " + _selectedPlayer.Character.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 60f);
         }
 
         public Observer ObserverInstance

@@ -114,7 +114,7 @@ namespace ArtillerySeries.src
 
         public virtual void Explode()
         {
-            int width = (int)_explRad * 5 - 1;
+            int width = ((int)_explRad * Constants.BaseExplosionDiaScaling) - 1;
             float[] _crater = new float[(int)width];
             float _period = (float)Math.PI * 2 / width;
 

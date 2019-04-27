@@ -96,6 +96,11 @@ namespace ArtillerySeries.src
             _physics.GravityEnabled = hasGravity;
         }
 
+        public void SetFriction(float friction)
+        {
+            _physics.FricCoefficient = friction;
+        }
+
         public void SetDamage(float damage)
         {
             _damage = damage;

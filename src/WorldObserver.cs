@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
+
     public class WorldObserver : Observer
     {
         World _world;
@@ -15,7 +16,6 @@ namespace ArtillerySeries.src
         }
         public override void OnNotify(Entity entity, ObserverEvent observerEvent)
         {
-            Console.WriteLine("WorldObserver has been called!");
 
             switch (observerEvent)
             {
@@ -25,6 +25,10 @@ namespace ArtillerySeries.src
 
                 case ObserverEvent.PlayerFiredProjectile:
                     _world.CharacterFiredProjectile(entity);
+                    break;
+
+                case ObserverEvent.FocusOnPlayer:
+                    _world.FocusOnPlayer();
                     break;
 
             }

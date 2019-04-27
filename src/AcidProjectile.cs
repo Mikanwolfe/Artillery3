@@ -18,7 +18,7 @@ namespace ArtillerySeries.src
 
         public override void Explode()
         {
-            int width = (int)ExplRad * 5 - 1;
+            int width = ((int)ExplRad * Constants.BaseExplosionDiaScaling) - 1;
             float[] _crater = new float[(int)width];
             float _period = (float)Math.PI * 2 / width;
 
