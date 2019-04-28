@@ -58,15 +58,23 @@ namespace ArtillerySeries.src
         public const float BaseVehicleWeight = 1000f; //Arbitrary units
         public const int VectorSightSize = 20;
     }
-    class ArtilleryGame
+    
+    enum MenuState
+    {
+        MainMenu,
+        CombatStage,
+        ShopState,
+        //Unused:
+        OptionsMenu, //Will require pushdown
+        Credits
+    }
+
+    class ArtilleryGame : IStateComponent<MenuState>
     {
         Rectangle _windowRect;
         World _world;
         InputHandler _inputHandler;
-
-
-
-
+        StateComponent<MenuState> _stateComponent;
 
         public ArtilleryGame()
         {
@@ -80,9 +88,9 @@ namespace ArtillerySeries.src
 
             _inputHandler = new InputHandler();
             _world = new World(_windowRect, _inputHandler);
+            _stateComponent = new StateComponent<MenuState>(MenuState.MainMenu);
+
             PhysicsEngine.Instance.SetWindowRect(_windowRect);
-
-
         }
 
 
@@ -95,22 +103,72 @@ namespace ArtillerySeries.src
 
 
         }
-      
-
 
 
         public void Run()
         {
-
             SwinGame.OpenAudio();
-            //Open the game window
             SwinGame.OpenGraphicsWindow("Artillery3", (int)_windowRect.Width, (int)_windowRect.Height);
             SwinGame.SetIcon("H:\\repos\\Artillery3\\Resources\\images\\logoArtillery3LogoIcon.ico");
 
             LoadResources();
 
             UserInterface.Instance.Initialise();
-            
+
+            SwitchState(MenuState.MainMenu);
+
+            while (!SwinGame.WindowCloseRequested())
+            {
+
+                SwinGame.ProcessEvents();
+
+                switch (PeekState())
+                {
+                    case MenuState.MainMenu:
+
+
+                        SwinGame.ClearScreen(Color.White);
+                        SwinGame.DrawFramerate(0, 0);
+
+                        SwinGame.DrawText("A3 Menu",Color.Black,0,0);
+
+                        if (SwinGame.KeyTyped(KeyCode.KKey))
+                            SwitchState(MenuState.CombatStage);
+
+
+                        break;
+
+                    case MenuState.CombatStage:
+
+                        _world.HandleInput();
+
+
+                        ParticleEngine.Instance.Update();
+                        PhysicsEngine.Instance.Simulate();
+                        EntityManager.Instance.Update();
+                        UserInterface.Instance.Update();
+                        _world.Update();
+
+                        SwinGame.ClearScreen(_world.SkyColor);
+                        SwinGame.DrawFramerate(0, 0);
+
+                        _world.Draw();
+                        ParticleEngine.Instance.Draw();
+                        EntityManager.Instance.Draw();
+                        _world.DrawSatellite();
+                        UserInterface.Instance.Draw();
+
+                        break;
+                }
+                SwinGame.RefreshScreen(60);
+            }
+
+            SwinGame.CloseAudio();
+            SwinGame.ReleaseAllResources();
+        }
+
+        public void InitialiseCombatStage()
+        {
             Player player1 = new Player("Restia", _world);
             Character Innocentia = new Character("Innocentia", 100, 200);
             player1.Character = Innocentia;
@@ -128,41 +186,51 @@ namespace ArtillerySeries.src
 
             _world.CyclePlayers();
             _world.NewSession();
-
-
-            while (!SwinGame.WindowCloseRequested())
-            {
-                //Fetch the next batch of UI interaction
-                SwinGame.ProcessEvents();
-
-                _world.HandleInput();
-
-
-                ParticleEngine.Instance.Update();
-                PhysicsEngine.Instance.Simulate();
-                EntityManager.Instance.Update();
-                UserInterface.Instance.Update();
-                _world.Update();
-                
-
-
-                SwinGame.ClearScreen(_world.SkyColor);
-                SwinGame.DrawFramerate(0, 0);
-
-
-                _world.Draw();
-                ParticleEngine.Instance.Draw();
-                EntityManager.Instance.Draw();
-                _world.DrawSatellite();
-                UserInterface.Instance.Draw();
-                
-
-                SwinGame.RefreshScreen(60);
-            }
-
-            SwinGame.CloseAudio();
-            SwinGame.ReleaseAllResources();
         }
 
+        public void EndCombatStage()
+        {
+
+        }
+
+        public void SwitchState(MenuState nextState)
+        {
+            switch(PeekState())
+            {
+
+                case MenuState.MainMenu:
+                    if (nextState == MenuState.CombatStage)
+                    {
+                        InitialiseCombatStage();
+                    }
+                    break;
+
+                case MenuState.CombatStage:
+                    if (nextState == MenuState.ShopState)
+                    {
+                        EndCombatStage();
+                    }
+                    break;
+
+
+            }
+
+            _stateComponent.Switch(nextState);
+        }
+
+        public MenuState PeekState()
+        {
+            return _stateComponent.Peek();
+        }
+
+        public void PushState(MenuState state)
+        {
+            _stateComponent.Push(state);
+        }
+
+        public MenuState PopState()
+        {
+            return _stateComponent.Pop();
+        }
     }
 }
