@@ -25,7 +25,7 @@ namespace ArtillerySeries.src
         {
             Physics.Enabled = false;
             _destination = to;
-            _maxLife = 10f;
+            _maxLife = 25f;
             _lifeTime = _maxLife;
             Pos = from;
             Explode(to);
@@ -43,6 +43,7 @@ namespace ArtillerySeries.src
 
         public override void Explode(Point2D pt)
         {
+            
             BlowUpTerrain(pt);
             ParticleEngine.Instance.CreateLaserExplosion(pt, 100);
             EntityManager.Instance.DamageEntities(this,BaseDamage, (int)DamageRad, pt);

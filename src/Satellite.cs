@@ -16,7 +16,7 @@ namespace ArtillerySeries.src
         Color _accentColor = SwinGame.RGBColor(23, 23, 47);
         float _explRad;
         float _damage;
-        float _fireDelay;
+        float _fireDelay = -1;
 
         float _damageMultiplier = 1;
         float _damageRad;
@@ -31,7 +31,6 @@ namespace ArtillerySeries.src
         public Satellite(string name, float x, float y) 
             : base(name)
         {
-            _fireDelay = 0;
             _angleFacing = 0;
             _angleDestination = Rad(270f);
             _damage = 40;
@@ -46,6 +45,7 @@ namespace ArtillerySeries.src
 
         public void Fire(Point2D destination)
         {
+            SwinGame.PlaySoundEffect("laser_satellite");
             _fireDelay = 2f;
             _destination = destination;
         }
@@ -64,6 +64,7 @@ namespace ArtillerySeries.src
 
         public void LookAtPos(Point2D destination)
         {
+            SwinGame.PlaySoundEffect("satellite_prep");
             _angleDestination = VectorDirection(Pos, destination);
         }
 

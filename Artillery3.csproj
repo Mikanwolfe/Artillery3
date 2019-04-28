@@ -105,6 +105,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\images\windmarker.png" />
+    <Content Include="Resources\sounds\magicSorcery_Short1.wav" />
+    <Content Include="Resources\sounds\satellite_prep.wav" />
   </ItemGroup>
   <Target Name="CopyLibsToOut">
     <Copy SourceFiles="@(WinLibs)" DestinationFolder="$(OutDir)" />
