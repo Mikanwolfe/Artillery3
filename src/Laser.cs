@@ -45,7 +45,7 @@ namespace ArtillerySeries.src
         {
             BlowUpTerrain(pt);
             ParticleEngine.Instance.CreateLaserExplosion(pt, 100);
-            EntityManager.Instance.DamageEntities(this, DamageRad, 90, pt);
+            EntityManager.Instance.DamageEntities(this,BaseDamage, (int)DamageRad, pt);
         }
 
         public override void Update()

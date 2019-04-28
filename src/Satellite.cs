@@ -18,7 +18,7 @@ namespace ArtillerySeries.src
         float _damage;
         float _fireDelay;
 
-        float _damageMultiplier;
+        float _damageMultiplier = 1;
         float _damageRad;
 
 
@@ -34,7 +34,7 @@ namespace ArtillerySeries.src
             _fireDelay = 0;
             _angleFacing = 0;
             _angleDestination = Rad(270f);
-            _damage = 60;
+            _damage = 40;
             _explRad = 15;
             _damageRad = 90;
             Pos = new Point2D()
@@ -57,6 +57,7 @@ namespace ArtillerySeries.src
 
         void FireLaser(Point2D destination)
         {
+            Console.WriteLine("Satellite damage: {0}", _damage * _damageMultiplier);
             _laserProjectile = new Laser(Name + "'s Laser", null, Pos, destination, _damage * _damageMultiplier, _explRad, _damageRad);
             _angleDestination = VectorDirection(Pos, destination);
         }

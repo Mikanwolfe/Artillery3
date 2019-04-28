@@ -24,7 +24,7 @@ namespace ArtillerySeries.src
 
         public const float WeaponChargeSpeed = 0.5f;
 
-        public const float SatelliteDamageIncPerTurn = 0.05f;
+        public const float SatelliteDamageIncPerTurn = 0.15f;
 
         public const int RayCastStep = 10;
 
