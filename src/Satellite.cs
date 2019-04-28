@@ -27,6 +27,7 @@ namespace ArtillerySeries.src
 
         Laser _laserProjectile;
         Point2D _destination;
+        Sprite _sprite;
 
         public Satellite(string name, float x, float y) 
             : base(name)
@@ -73,6 +74,9 @@ namespace ArtillerySeries.src
             SwinGame.FillCircle(_mainColor, Pos, 50);
             SwinGame.FillCircle(_accentColor, Pos, 45);
             SwinGame.FillCircle(_mainColor, Pos, 40);
+            SwinGame.DrawText(Name + "-Class Low Orbit Ion Cannon", Color.White, Pos.X + 70, Pos.Y + 25); //Magic Numbers
+            SwinGame.DrawText("Level: " + ((int)(_damageMultiplier)).ToString(), Color.White, Pos.X + 70, Pos.Y + 45); //Magic Numbers
+           
 
             SwinGame.DrawLine(_mainColor, Pos.X, Pos.Y, 100 * (float)Math.Cos(_angleFacing) + Pos.X, 100 * (float)Math.Sin(_angleFacing) + Pos.Y);
         }
