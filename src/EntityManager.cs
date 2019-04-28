@@ -71,13 +71,23 @@ namespace ArtillerySeries.src
             return DamageFromDistance(damage, distance, maxDistance);
         }
 
-        public void DamageEntities(float damage, int radius, Point2D pt)
+        public void DamageEntities(Entity parent, float damage, int radius, Point2D pt)
         {
             foreach(Entity e in _entities)
             {
+               
                 if (SwinGame.PointInCircle(e.Pos, pt.X, pt.Y, radius))
                 {
-                    e.Damage(DamageFromDistance(damage, pt, e.Pos, radius));
+                    if (e != parent)
+                    {
+                        float dealtDamage = DamageFromDistance(damage, pt, e.Pos, radius);
+                        if (dealtDamage > 1)
+                        {
+                            int roundedDamage = (int)dealtDamage;
+                            ParticleEngine.Instance.CreateDamageText(e.Pos, Color.White, 6f, roundedDamage.ToString(), 0);
+                        }
+                        e.Damage(dealtDamage);
+                    }
                 }
             }
         }

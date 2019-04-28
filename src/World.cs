@@ -134,6 +134,7 @@ namespace ArtillerySeries.src
             }
 
             UserInterface.Instance.NewPlayerTurn();
+            _satellite.NewTurn();
 
             _turnCount++;
 
@@ -207,12 +208,17 @@ namespace ArtillerySeries.src
 
         }
 
+        public void DrawSatellite()
+        {
+            _satellite.Draw();
+        }
+
         public void Draw()
         {
 
             _environment.Draw();
             _logicalTerrain.Draw();
-            _satellite.Draw();
+            
 
             //SwinGame.DrawBitmap("windMarker", _camera.Pos.X + (_windowRect.Width / 2), _camera.Pos.Y + 50);
             _windMarker.Draw();
@@ -220,9 +226,9 @@ namespace ArtillerySeries.src
             SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
             _selectedPlayer.Draw();
 
-            SwinGame.DrawText("World State: " + _state.Peek(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 40f);
-            SwinGame.DrawText("Player State: " + _selectedPlayer.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 50f);
-            SwinGame.DrawText("Character State: " + _selectedPlayer.Character.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 60f);
+            //SwinGame.DrawText("World State: " + _state.Peek(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 40f);
+            //SwinGame.DrawText("Player State: " + _selectedPlayer.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 50f);
+            //SwinGame.DrawText("Character State: " + _selectedPlayer.Character.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 60f);
         }
 
         public Observer ObserverInstance

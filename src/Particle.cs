@@ -44,6 +44,12 @@ namespace ArtillerySeries.src
             }
         }
 
+        public Point2D Vel
+        {
+            get => _physics.Velocity;
+            set => _physics.Velocity = value;
+        }
+
         public override void Draw()
         {
             if (Visible)
@@ -74,7 +80,7 @@ namespace ArtillerySeries.src
 
                 if (_damage != 0f)
                 {
-                    EntityManager.Instance.DamageEntities(_damage, (int)_radius, Pos);
+                    EntityManager.Instance.DamageEntities(this, _damage, (int)_radius, Pos);
                 }
 
                 Pos = _physics.Position;
@@ -101,5 +107,7 @@ namespace ArtillerySeries.src
         }
 
         public PhysicsComponent Physics { get => _physics; set => _physics = value; }
+        public Color Color { get => _color; set => _color = value; }
+        public double Radius { get => _radius; set => _radius = value; }
     }
 }

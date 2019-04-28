@@ -35,7 +35,7 @@ namespace ArtillerySeries.src
         PhysicsComponent _physics;
         StateComponent<CharacterState> _state;
         bool _selected;
-        bool _usesSatellite;
+        
 
         //Weapons should be seperate list.
         //they are treated seperately as base.draw() will draw all the sights, which isn't required...
@@ -62,10 +62,9 @@ namespace ArtillerySeries.src
             _vehicle = new Vehicle(name);
             _selected = false;
             _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f);
-            _weapon2 = new Weapon("Base Weapon 2 -- Remove asap.", 50f, 120f);
+            _weapon2 = new WeaponAcidCannon(30f, 70f);
             //_weapon2.SetProjectile();
             _weaponList = new List<Weapon>();
-            _usesSatellite = true;
 
             _maxArmour = armour;
             _maxHealth = health;            
@@ -130,6 +129,7 @@ namespace ArtillerySeries.src
 
         void Move(float acc)
         {
+            if ((PeekState() == CharacterState.Idle) || (PeekState() == CharacterState.Walking))
             if (_physics.OnGround)
                 _physics.AccX = acc;
         }
@@ -256,7 +256,11 @@ namespace ArtillerySeries.src
         {
             get => _selectedWeapon.MainProjectile;
         }
-        public bool UsesSatellite { get => _usesSatellite; set => _usesSatellite = value; }
+
+        public bool UsesSatellite
+        {
+            get => _selectedWeapon.UsesSatellite;
+        }
 
         public void SetXPosition(int x)
         {

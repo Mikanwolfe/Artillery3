@@ -140,6 +140,17 @@ namespace ArtillerySeries.src
             _particles.Add(_particleToAdd);
         }
 
+        public void CreateDamageText(Point2D pos, Color color, float lifeMult, String text, float weight)
+        {
+            TextParticle _textParticle = new TextParticle(
+                text, lifeMult, pos, color, weight);
+            _textParticle.Physics.CanCollideWithGround = false;
+            _textParticle.SetFriction(0);
+            _textParticle.Physics.WindFrictionMult = 0;
+
+            _particles.Add(_textParticle);
+        }
+
         public void CreateAcidParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult, float damage)
         {
             Point2D velocity = Normalise(new Point2D()

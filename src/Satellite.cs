@@ -18,6 +18,10 @@ namespace ArtillerySeries.src
         float _damage;
         float _fireDelay;
 
+        float _damageMultiplier;
+        float _damageRad;
+
+
         float _angleFacing;
         float _angleDestination;
 
@@ -30,6 +34,9 @@ namespace ArtillerySeries.src
             _fireDelay = 0;
             _angleFacing = 0;
             _angleDestination = Rad(270f);
+            _damage = 60;
+            _explRad = 15;
+            _damageRad = 90;
             Pos = new Point2D()
             {
                 X = x,
@@ -43,9 +50,14 @@ namespace ArtillerySeries.src
             _destination = destination;
         }
 
+        public void NewTurn()
+        {
+            _damageMultiplier += Constants.SatelliteDamageIncPerTurn;
+        }
+
         void FireLaser(Point2D destination)
         {
-            _laserProjectile = new Laser(Name + "'s Laser", null, Pos, destination);
+            _laserProjectile = new Laser(Name + "'s Laser", null, Pos, destination, _damage * _damageMultiplier, _explRad, _damageRad);
             _angleDestination = VectorDirection(Pos, destination);
         }
 

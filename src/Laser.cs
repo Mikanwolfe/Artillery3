@@ -20,8 +20,8 @@ namespace ArtillerySeries.src
         float _lifeTime;
         float _maxLife;
 
-        public Laser(string name, Weapon parentWeapon, Point2D from, Point2D to)
-            : base(name, parentWeapon, from, ZeroPoint2D())
+        public Laser(string name, Weapon parentWeapon, Point2D from, Point2D to, float damage, float explRad, float damageRad)
+            : base(name, parentWeapon, from, ZeroPoint2D(), damage, explRad, damageRad)
         {
             Physics.Enabled = false;
             _destination = to;
@@ -45,7 +45,7 @@ namespace ArtillerySeries.src
         {
             BlowUpTerrain(pt);
             ParticleEngine.Instance.CreateLaserExplosion(pt, 100);
-            EntityManager.Instance.DamageEntities(70, 50, pt);
+            EntityManager.Instance.DamageEntities(this, DamageRad, 90, pt);
         }
 
         public override void Update()

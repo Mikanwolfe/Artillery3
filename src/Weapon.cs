@@ -69,6 +69,7 @@ namespace ArtillerySeries.src
         float _weaponMaxCharge = 50;
         float _previousCharge = 0;
         bool _isAutoloader = true; //Autoloader, not AutoLoader. Look it up.
+        bool _usesSatellite;
         int _autoloaderClip = 2;
         int _autoloaderAmmoLeft;
         Point2D _projectilePos;
@@ -93,6 +94,7 @@ namespace ArtillerySeries.src
             _minWepAngleRad = Rad(minWepAngleDeg);
             _maxWepAngleRad = Rad(maxWepAngleDeg);
             _weaponAngle = _minWepAngleRad;
+            _usesSatellite = false;
         }
         
         public Projectile MainProjectile
@@ -109,8 +111,8 @@ namespace ArtillerySeries.src
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
         public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
         List<Projectile> IWeapon.Ammunition { get => _ammunition; set => _ammunition = value; }
-        public bool IsAutoloader { get => _isAutoloader; }
-        public int AutoloaderClip { get => _autoloaderClip; }
+        public bool IsAutoloader { get => _isAutoloader; set => _isAutoloader = value; }
+        public int AutoloaderClip { get => _autoloaderClip; set => _autoloaderClip = value; }
         public int AutoloaderAmmoLeft { get => _autoloaderAmmoLeft; }
 
         public float WeaponChargePercentage
@@ -154,6 +156,9 @@ namespace ArtillerySeries.src
         }
 
         public Point2D LastProjPos { get => _lastProjectilePosition; set => _lastProjectilePosition = value; }
+        public Point2D ProjectilePos { get => _projectilePos; set => _projectilePos = value; }
+        public Point2D ProjectileVel { get => _projectileVel; set => _projectileVel = value; }
+        public bool UsesSatellite { get => _usesSatellite; set => _usesSatellite = value; }
 
         public void DepressWeapon()
         {
@@ -181,7 +186,7 @@ namespace ArtillerySeries.src
             FireProjectile();
         }
 
-        public void AimWeapon()
+        public virtual void AimWeapon()
         {
             _state = WeaponState.FireState;
             _projectileVel = new Point2D()
@@ -209,9 +214,9 @@ namespace ArtillerySeries.src
             _state = WeaponState.IdleState;
         }
 
-        public void FireProjectile()
+        public virtual void FireProjectile()
         {
-            Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel);
+            Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, 100, 15, 30);
             _mainProjectile = projectile;
         }
 

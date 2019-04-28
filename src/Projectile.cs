@@ -24,15 +24,21 @@ namespace ArtillerySeries.src
         StateComponent<ProjectileState> _state;
 
         float _explRad = Constants.BaseExplosionRadius;
+        float _baseDamage;
+        float _damageRad;
 
 
-        public Projectile(string name, Weapon parentWeapon, Point2D pos, Point2D vel) : base(name)
+        public Projectile(string name, Weapon parentWeapon, Point2D pos, Point2D vel, float damage, float explRad, float damageRad) : base(name)
         {
             _parentWeapon = parentWeapon;
             _physics = new PhysicsComponent(this);
             _physics.Velocity = vel;
             _physics.Position = pos;
             _state = new StateComponent<ProjectileState>(ProjectileState.Alive);
+
+            _baseDamage = damage;
+            _explRad = explRad;
+            _damageRad = damageRad;
             
             EntityManager.Instance.AddEntity(this);
         }
@@ -40,9 +46,12 @@ namespace ArtillerySeries.src
         public float X { get => Pos.X; }
         public float Y { get => Pos.Y; }
 
-        public float ExplRad { get => _explRad; }
+        public float ExplRad { get => _explRad; set => _explRad = value; }
 
         public PhysicsComponent Physics { get => _physics; set => _physics = value; }
+        public float BaseDamage { get => _baseDamage; set => _baseDamage = value; }
+        public float BaseDamage1 { get => _baseDamage; set => _baseDamage = value; }
+        public float DamageRad { get => _damageRad; set => _damageRad = value; }
 
         public override void Draw()
         {
@@ -107,7 +116,7 @@ namespace ArtillerySeries.src
         {
             BlowUpTerrain(pt);
             ParticleEngine.Instance.CreateFastExplosion(pt, 100);
-            EntityManager.Instance.DamageEntities(100, 70, pt);
+            EntityManager.Instance.DamageEntities(this, _baseDamage, (int)_damageRad, pt);
         }
 
         public void SwitchState(ProjectileState nextState)

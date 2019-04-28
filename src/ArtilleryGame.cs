@@ -22,7 +22,9 @@ namespace ArtillerySeries.src
         public const int CameraMaxHeight = 2000;
         public const int CameraPadding = 100;
 
-        public const float WeaponChargeSpeed = 0.8f;
+        public const float WeaponChargeSpeed = 0.5f;
+
+        public const float SatelliteDamageIncPerTurn = 0.05f;
 
         public const int RayCastStep = 10;
 
@@ -150,6 +152,7 @@ namespace ArtillerySeries.src
                 _world.Draw();
                 ParticleEngine.Instance.Draw();
                 EntityManager.Instance.Draw();
+                _world.DrawSatellite();
                 UserInterface.Instance.Draw();
                 
 

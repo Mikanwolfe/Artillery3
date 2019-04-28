@@ -74,6 +74,7 @@
     <Compile Include="src\TerrainFactory.cs" />
     <Compile Include="src\TerrainFactoryMidpoint.cs" />
     <Compile Include="src\TerrainFactoryRandom.cs" />
+    <Compile Include="src\TextParticle.cs" />
     <Compile Include="src\UIElementAssembly.cs" />
     <Compile Include="src\UI_Combat.cs" />
     <Compile Include="src\UI_LoadingBar.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="src\Vehicle.cs" />
     <Compile Include="src\Weapon.cs" />
     <Compile Include="src\FireWeaponCommand.cs" />
+    <Compile Include="src\WeaponAcidCannon.cs" />
     <Compile Include="src\Wind.cs" />
     <Compile Include="src\World.cs" />
     <Compile Include="src\WorldObserver.cs" />
