@@ -22,6 +22,8 @@ namespace ArtillerySeries.src
         public const int CameraMaxHeight = 2000;
         public const int CameraPadding = 100;
 
+        public const float WeaponChargeSpeed = 0.8f;
+
         public const int RayCastStep = 10;
 
         public const int WorldMaxHeight = 2200;
@@ -104,6 +106,7 @@ namespace ArtillerySeries.src
 
             LoadResources();
 
+            UserInterface.Instance.Initialise();
             
             Player player1 = new Player("Restia", _world);
             Character Innocentia = new Character("Innocentia", 100, 200);
@@ -111,7 +114,7 @@ namespace ArtillerySeries.src
 
 
             Player player2 = new Player("Est", _world);
-            Character char2 = new Character("Materia", 100, 150);
+            Character char2 = new Character("Materia", 100, 200);
             player2.Character = char2;
 
             player1.Initiallise();
@@ -135,6 +138,7 @@ namespace ArtillerySeries.src
                 ParticleEngine.Instance.Update();
                 PhysicsEngine.Instance.Simulate();
                 EntityManager.Instance.Update();
+                UserInterface.Instance.Update();
                 _world.Update();
                 
 
@@ -146,6 +150,9 @@ namespace ArtillerySeries.src
                 _world.Draw();
                 ParticleEngine.Instance.Draw();
                 EntityManager.Instance.Draw();
+                UserInterface.Instance.Draw();
+                
+
                 SwinGame.RefreshScreen(60);
             }
 

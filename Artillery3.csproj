@@ -74,8 +74,13 @@
     <Compile Include="src\TerrainFactory.cs" />
     <Compile Include="src\TerrainFactoryMidpoint.cs" />
     <Compile Include="src\TerrainFactoryRandom.cs" />
-    <Compile Include="src\UI_Button.cs" />
+    <Compile Include="src\UIElementAssembly.cs" />
+    <Compile Include="src\UI_Combat.cs" />
+    <Compile Include="src\UI_LoadingBar.cs" />
     <Compile Include="src\UpdatableObject.cs" />
+    <Compile Include="src\UserInterface.cs" />
+    <Compile Include="src\UIElement.cs" />
+    <Compile Include="src\UserInterfaceObserver.cs" />
     <Compile Include="src\Vehicle.cs" />
     <Compile Include="src\Weapon.cs" />
     <Compile Include="src\FireWeaponCommand.cs" />

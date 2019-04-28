@@ -49,18 +49,23 @@ namespace ArtillerySeries.src
             _angleDestination = VectorDirection(Pos, destination);
         }
 
+        public void LookAtPos(Point2D destination)
+        {
+            _angleDestination = VectorDirection(Pos, destination);
+        }
+
         public override void Draw()
         {
             SwinGame.FillCircle(_mainColor, Pos, 50);
             SwinGame.FillCircle(_accentColor, Pos, 45);
             SwinGame.FillCircle(_mainColor, Pos, 40);
 
-            SwinGame.DrawLine(_mainColor, Pos.X, Pos.Y, 50 * (float)Math.Cos(_angleFacing+Rad(10)) + Pos.X, 50 * (float)Math.Sin(_angleFacing + Rad(10)) + Pos.Y);
+            SwinGame.DrawLine(_mainColor, Pos.X, Pos.Y, 100 * (float)Math.Cos(_angleFacing) + Pos.X, 100 * (float)Math.Sin(_angleFacing) + Pos.Y);
         }
 
         public override void Update()
         {
-            _angleFacing += (_angleDestination - _angleFacing) / 2000;
+            _angleFacing += (_angleDestination - _angleFacing) / 20;
 
 
 

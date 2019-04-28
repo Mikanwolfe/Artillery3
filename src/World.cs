@@ -67,6 +67,9 @@ namespace ArtillerySeries.src
 
             _satellite = new Satellite("Maia", Constants.TerrainWidth / 2, -300);
 
+            UserInterface.Instance.World = this;
+            UserInterface.Instance.Camera = _camera;
+            UserInterface.Instance.WindowRect = _windowRect;
            
 
             _turnCount = 0;
@@ -130,6 +133,8 @@ namespace ArtillerySeries.src
                 _selectedPlayer.NewTurn();
             }
 
+            UserInterface.Instance.NewPlayerTurn();
+
             _turnCount++;
 
             if (_turnCount % 4 == 0)
@@ -166,6 +171,7 @@ namespace ArtillerySeries.src
         public void FocusOnSatellite()
         {
             _camera.FocusCamera(_satellite);
+            _satellite.LookAtPos(_selectedPlayer.Character.LastProjectilePosition);
         }
 
         public void FocusOnSatelliteStrike()
@@ -252,5 +258,6 @@ namespace ArtillerySeries.src
         }
 
         public Color SkyColor { get => _environment.Preset.BgColor; }
+        public Player SelectedPlayer { get => _selectedPlayer; set => _selectedPlayer = value; }
     }
 }

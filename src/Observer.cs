@@ -15,7 +15,8 @@ namespace ArtillerySeries.src
         FocusOnPlayer,
         FocusOnSatellite,
         FocusOnSatelliteStrike,
-        FireSatellite
+        FireSatellite,
+        PlayerIsChargingWeapon
     }
 
     public abstract class Observer

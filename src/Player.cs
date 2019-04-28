@@ -38,6 +38,15 @@ namespace ArtillerySeries.src
             //The world is always an observer for the player.
             _observerComponent = new ObserverComponent();
             _observerComponent.AddObserver(world.ObserverInstance);
+            _observerComponent.AddObserver(UserInterface.Instance.ObserverInstance);
+        }
+
+        public float WeaponChargePercentage
+        {
+            get
+            {
+                return _character.WeaponChargePercentage;
+            }
         }
 
         public void CharacterFired(Projectile projectile, Character parent)
@@ -116,6 +125,16 @@ namespace ArtillerySeries.src
             switch (PeekState())
             {
                 //Idle --> ObvsProj is an event
+
+                case PlayerState.Idle:
+                    if (_character.PeekState() == CharacterState.Firing)
+                    {
+                        _observerComponent.Notify(this, ObserverEvent.PlayerIsChargingWeapon);
+
+                    }
+
+
+                    break;
 
 
                 case PlayerState.ObserveProjectile:

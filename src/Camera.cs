@@ -20,7 +20,8 @@ namespace ArtillerySeries.src
         double _easeSpeed;
         ICameraCanFocus _focus;
 
-        int OffsetX, OffsetY;
+
+        float OffsetX, OffsetY;
 
         
         public Camera(Rectangle windowRect)
@@ -29,8 +30,8 @@ namespace ArtillerySeries.src
             _pos = new Point2D();
             _easeSpeed = Constants.CameraEaseSpeed;
 
-            OffsetX = -1 * (int)_windowRect.Width / 2;
-            OffsetY = -1 * (int)_windowRect.Height / 2;
+            OffsetX = -1 * _windowRect.Width / 2;
+            OffsetY = -1 * _windowRect.Height / 2;
 
         }
 
@@ -40,11 +41,11 @@ namespace ArtillerySeries.src
 
         public void CenterCameraAtFocus()
         {
-            int destinationX = (int)_focus.Pos.X + OffsetX;
-            destinationX = Clamp(destinationX, Constants.CameraPadding, Constants.TerrainWidth - (int)_windowRect.Width - Constants.CameraPadding);
+            float destinationX = _focus.Pos.X + OffsetX;
+            destinationX = Clamp(destinationX, Constants.CameraPadding, Constants.TerrainWidth - _windowRect.Width - Constants.CameraPadding);
 
-            int destinationY = (int)_focus.Pos.Y + OffsetY;
-            destinationY = Clamp(destinationY, -Constants.CameraMaxHeight, (int)_windowRect.Height + Constants.TerrainDepth);
+            float destinationY = _focus.Pos.Y + OffsetY;
+            destinationY = Clamp(destinationY, -Constants.CameraMaxHeight, _windowRect.Height + Constants.TerrainDepth);
 
             _pos.X += (destinationX - _pos.X) / Constants.CameraEaseSpeed;
             _pos.Y += (destinationY - _pos.Y) / Constants.CameraEaseSpeed;
@@ -60,7 +61,6 @@ namespace ArtillerySeries.src
         public override void Update()
         {
             CenterCameraAtFocus();
-
             SwinGame.MoveCameraTo(Pos);
         }
     }

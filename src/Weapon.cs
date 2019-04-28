@@ -66,9 +66,13 @@ namespace ArtillerySeries.src
         float _maxWepAngleRad = 0;
         float _relativeAngle = 0 ;
         float _weaponCharge = 0;
+        float _weaponMaxCharge = 50;
+        float _previousCharge = 0;
         bool _isAutoloader = true; //Autoloader, not AutoLoader. Look it up.
         int _autoloaderClip = 2;
         int _autoloaderAmmoLeft;
+        Point2D _projectilePos;
+        Point2D _projectileVel;
         Point2D _lastProjectilePosition;
 
         public Weapon(string name) : base(name)
@@ -108,6 +112,22 @@ namespace ArtillerySeries.src
         public bool IsAutoloader { get => _isAutoloader; }
         public int AutoloaderClip { get => _autoloaderClip; }
         public int AutoloaderAmmoLeft { get => _autoloaderAmmoLeft; }
+
+        public float WeaponChargePercentage
+        {
+            get
+            {
+                return _weaponCharge / _weaponMaxCharge;
+            }
+        }
+
+        public float PreviousWeaponChargePercentage
+        {
+            get
+            {
+                return _previousCharge / _weaponMaxCharge;
+            }
+        }
 
 
         public bool AutoloaderFired
@@ -157,32 +177,42 @@ namespace ArtillerySeries.src
 
         public void Fire()
         {
+            AimWeapon();
+            FireProjectile();
+        }
+
+        public void AimWeapon()
+        {
             _state = WeaponState.FireState;
-            Point2D projectileVel = new Point2D()
+            _projectileVel = new Point2D()
             {
                 X = (float)(_weaponCharge * Math.Cos(_weaponAngle + _relativeAngle)),
                 Y = -1 * (float)(_weaponCharge * Math.Sin(_weaponAngle + _relativeAngle)),
             };
             if (Direction == FacingDirection.Left)
-                projectileVel.X *= -1;
+                _projectileVel.X *= -1;
 
-            Point2D projectilePos = new Point2D()
+            _projectilePos = new Point2D()
             {
                 X = _projectileSpawnOffset.X + Pos.X,
                 Y = _projectileSpawnOffset.Y + Pos.Y
             };
 
-
-            Projectile projectile = new AcidProjectile(Name + " Projectile", this, projectilePos, projectileVel);
-            _mainProjectile = projectile;
-
+            _previousCharge = _weaponCharge;
             _weaponCharge = 0;
+
             if (_isAutoloader)
             {
                 _autoloaderAmmoLeft--;
             }
 
             _state = WeaponState.IdleState;
+        }
+
+        public void FireProjectile()
+        {
+            Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel);
+            _mainProjectile = projectile;
         }
 
         public void SetProjectile(Projectile projectile)
@@ -258,7 +288,9 @@ namespace ArtillerySeries.src
                     break;
 
                 case WeaponState.ChargingState:
-                    _weaponCharge++;
+                    _weaponCharge += Constants.WeaponChargeSpeed;
+                    if (_weaponCharge > _weaponMaxCharge)
+                        _weaponCharge = _weaponMaxCharge;
                     break;
 
                 case WeaponState.FireState:

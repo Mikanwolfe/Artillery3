@@ -13,7 +13,7 @@ namespace ArtillerySeries.src
     }
     public abstract class DrawableObject : UpdatableObject, IDrawable
     {
-        //This needs to be made better.
+        
         public DrawableObject()
         {
             _visible = true;

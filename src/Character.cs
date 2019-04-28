@@ -47,7 +47,7 @@ namespace ArtillerySeries.src
         Weapon _selectedWeapon;
         Weapon _weapon;
         Weapon _weapon2;
-        List<Weapon> _weapons;
+        List<Weapon> _weaponList;
 
         public delegate void NotifyFiring(Projectile projectile, Character parent);
 
@@ -64,15 +64,12 @@ namespace ArtillerySeries.src
             _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f);
             _weapon2 = new Weapon("Base Weapon 2 -- Remove asap.", 50f, 120f);
             //_weapon2.SetProjectile();
-            _weapons = new List<Weapon>();
+            _weaponList = new List<Weapon>();
             _usesSatellite = true;
 
             _maxArmour = armour;
             _maxHealth = health;            
 
-            Entities.Add(_vehicle);
-            Entities.Add(_weapon);
-            Entities.Add(_weapon2);
             EntityManager.Instance.AddEntity(this);
 
             _state = new StateComponent<CharacterState>(CharacterState.Idle);
@@ -82,7 +79,8 @@ namespace ArtillerySeries.src
             _physics.WindFrictionMult = 0.01f;
 
 
-            UpdateWeaponList();
+            _weaponList.Add(_weapon);
+            _weaponList.Add(_weapon2);
 
         }
 
@@ -140,21 +138,9 @@ namespace ArtillerySeries.src
 
         PhysicsComponent IPhysicsComponent.Physics { get => _physics; set => _physics = value; }
 
-        void UpdateWeaponList()
-        {
-            _weapons = new List<Weapon>();
-            foreach (Entity e in Entities)
-            {
-                if (e is Weapon)
-                {
-                    _weapons.Add(e as Weapon);
-                }
-            }
-        }
-
         public void NewTurn()
         {
-            foreach (Weapon w in _weapons)
+            foreach (Weapon w in _weaponList)
             {
                 w.Reload();
             }
@@ -173,23 +159,21 @@ namespace ArtillerySeries.src
 
         public void SwitchWeapon()
         {
-            if (_weapons.Count != 1)
+            if (_weaponList.Count != 1)
             {
                 if(!_selectedWeapon.AutoloaderFired)
-                    _selectedWeapon = _weapons[(_weapons.IndexOf(_selectedWeapon) + 1) % _weapons.Count];
+                    _selectedWeapon = _weaponList[(_weaponList.IndexOf(_selectedWeapon) + 1) % _weaponList.Count];
             }
         }
 
         public void AddEntity(Entity entity)
         {
             Entities.Add(entity);
-            UpdateWeaponList();
         }
 
         public void RemoveEntity(Entity entity)
         {
             Entities.Remove(entity);
-            UpdateWeaponList();
         }
 
         public void DrawSight()
@@ -237,6 +221,12 @@ namespace ArtillerySeries.src
             Direction = _physics.Facing;
             Pos = _physics.Position;
             AbsoluteAngle = _physics.AbsAngleToGround;
+
+            foreach (Weapon w in _weaponList)
+            {
+                w.Update();
+                w.UpdatePosition(Pos, Direction, AbsoluteAngle);
+            }
 
             base.Update(); // Updates the sub-entities
         }
@@ -291,6 +281,16 @@ namespace ArtillerySeries.src
         public Point2D LastProjectilePosition
         {
             get => _selectedWeapon.LastProjPos;
+        }
+
+        public float WeaponChargePercentage
+        {
+            get => _selectedWeapon.WeaponChargePercentage;
+        }
+
+        public float PreviousWeaponChargePercentage
+        {
+            get => _selectedWeapon.PreviousWeaponChargePercentage;
         }
 
         public override void Damage(float damage)
