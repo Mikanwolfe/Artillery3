@@ -107,13 +107,12 @@ namespace ArtillerySeries.src
 
             foreach (Player p in _players)
             {
-                p.Character.SetXPosition((int)RandBetween(0, _logicalTerrain.Map.Length - 1));
+                p.Character.SetXPosition((int)RandBetween(Constants.CameraPadding, _logicalTerrain.Map.Length - 1 - Constants.CameraPadding));
                 
             }
 
             PhysicsEngine.Instance.Settle();
             SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
-            //Character Innocentia = new Character("Innocentia");
         }
 
         public void CyclePlayers()
