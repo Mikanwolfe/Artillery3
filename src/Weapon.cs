@@ -216,7 +216,7 @@ namespace ArtillerySeries.src
 
         public virtual void FireProjectile()
         {
-            Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, 100, 15, 30);
+            Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, 100, 15, 35);
             _mainProjectile = projectile;
         }
 
