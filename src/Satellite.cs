@@ -53,7 +53,7 @@ namespace ArtillerySeries.src
 
         public void NewTurn()
         {
-            _damageMultiplier += Constants.SatelliteDamageIncPerTurn;
+            
         }
 
         void FireLaser(Point2D destination)
@@ -61,6 +61,8 @@ namespace ArtillerySeries.src
             Console.WriteLine("Satellite damage: {0}", _damage * _damageMultiplier);
             _laserProjectile = new Laser(Name + "'s Laser", null, Pos, destination, _damage * _damageMultiplier, _explRad, _damageRad);
             _angleDestination = VectorDirection(Pos, destination);
+
+            _damageMultiplier += Constants.SatelliteDamageIncPerTurn;
         }
 
         public void LookAtPos(Point2D destination)
