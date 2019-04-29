@@ -69,7 +69,7 @@ namespace ArtillerySeries.src
 
             UserInterface.Instance.World = this;
             UserInterface.Instance.Camera = _camera;
-            UserInterface.Instance.WindowRect = _windowRect;
+            //UserInterface.Instance.SetWindowRect(_windowRect);
            
 
             _turnCount = 0;
