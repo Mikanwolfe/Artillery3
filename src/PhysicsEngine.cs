@@ -158,6 +158,10 @@ namespace ArtillerySeries.src
             return false;
         }
 
+        public void Clear()
+        {
+            _components.Clear();
+        }
         public void Settle()
         {
             foreach(IPhysicsComponent p in _components)

@@ -17,6 +17,7 @@ namespace ArtillerySeries.src
         Observer _observerInstance;
 
         UI_Combat _uiCombat;
+        MenuState _currentState;
 
 
         Camera _camera;
@@ -38,17 +39,6 @@ namespace ArtillerySeries.src
             }
         }
 
-        public void Initialise()
-        {
-            _uiCombat = new UI_Combat();
-            AddElement(_uiCombat);
-        }
-
-        public void NewPlayerTurn()
-        {
-            UpdatePreviousWeaponCharge();
-        }
-
         public void UpdatePreviousWeaponCharge()
         {
             _uiCombat.SetPlayerPreviousPercentage(_world.SelectedPlayer.Character.PreviousWeaponChargePercentage);
@@ -58,7 +48,32 @@ namespace ArtillerySeries.src
         public Camera Camera { get => _camera; set => _camera = value; }
         public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
         public World World { get => _world; set => _world = value; }
-        internal Observer ObserverInstance { get => _observerInstance; set => _observerInstance = value; }
+        public Observer ObserverInstance { get => _observerInstance; set => _observerInstance = value; }
+
+        public void Initialise(MenuState menuState)
+        {
+            _uiElements.Clear();
+            _currentState = menuState;
+
+            switch (menuState)
+            {
+
+                case MenuState.MainMenu:
+
+                    break;
+
+                case MenuState.CombatStage:
+                    _uiCombat = new UI_Combat();
+                    AddElement(_uiCombat);
+                    break;
+
+            }
+        }
+
+        public void NewPlayerTurn()
+        {
+            UpdatePreviousWeaponCharge();
+        }
 
         public void AddElement(UIElement element)
         {
@@ -80,6 +95,8 @@ namespace ArtillerySeries.src
                 e.Draw();
             }
         }
+
+
 
         public void UpdateChargeBar()
         {

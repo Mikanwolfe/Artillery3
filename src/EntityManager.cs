@@ -92,6 +92,11 @@ namespace ArtillerySeries.src
             }
         }
 
+        public void Clear()
+        {
+            _entities.Clear();
+        }
+
         public void Update()
         {
             foreach(Entity e in Entities)

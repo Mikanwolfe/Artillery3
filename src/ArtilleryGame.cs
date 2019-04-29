@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
@@ -59,7 +60,7 @@ namespace ArtillerySeries.src
         public const int VectorSightSize = 20;
     }
     
-    enum MenuState
+    public enum MenuState
     {
         MainMenu,
         CombatStage,
@@ -87,7 +88,6 @@ namespace ArtillerySeries.src
             };
 
             _inputHandler = new InputHandler();
-            _world = new World(_windowRect, _inputHandler);
             _stateComponent = new StateComponent<MenuState>(MenuState.MainMenu);
 
             PhysicsEngine.Instance.SetWindowRect(_windowRect);
@@ -99,9 +99,6 @@ namespace ArtillerySeries.src
             SwinGame.LoadBitmapNamed("windMarker", "windmarker.png");
             SwinGame.LoadSoundEffectNamed("laser_satellite", "magicSorcery_Short1.wav");
             SwinGame.LoadSoundEffectNamed("satellite_prep", "satellite_prep.wav");
-
-
-
         }
 
 
@@ -113,9 +110,11 @@ namespace ArtillerySeries.src
 
             LoadResources();
 
-            UserInterface.Instance.Initialise();
+            
 
             SwitchState(MenuState.MainMenu);
+
+            
 
             while (!SwinGame.WindowCloseRequested())
             {
@@ -130,7 +129,8 @@ namespace ArtillerySeries.src
                         SwinGame.ClearScreen(Color.White);
                         SwinGame.DrawFramerate(0, 0);
 
-                        SwinGame.DrawText("A3 Menu",Color.Black,0,0);
+                        SwinGame.DrawText("A3 Menu", Color.Black, 10, 500);
+
 
                         if (SwinGame.KeyTyped(KeyCode.KKey))
                             SwitchState(MenuState.CombatStage);
@@ -158,6 +158,9 @@ namespace ArtillerySeries.src
                         _world.DrawSatellite();
                         UserInterface.Instance.Draw();
 
+                        if (SwinGame.KeyTyped(KeyCode.KKey))
+                            SwitchState(MenuState.MainMenu);
+
                         break;
                 }
                 SwinGame.RefreshScreen(60);
@@ -169,6 +172,14 @@ namespace ArtillerySeries.src
 
         public void InitialiseCombatStage()
         {
+            
+            _world = new World(_windowRect, _inputHandler);
+            PhysicsEngine.Instance.Clear();
+            EntityManager.Instance.Clear();
+
+            UserInterface.Instance.Initialise(MenuState.CombatStage);
+
+
             Player player1 = new Player("Restia", _world);
             Character Innocentia = new Character("Innocentia", 100, 200);
             player1.Character = Innocentia;
@@ -190,12 +201,13 @@ namespace ArtillerySeries.src
 
         public void EndCombatStage()
         {
-
+            SwinGame.SetCameraPos(ZeroPoint2D());
         }
 
         public void SwitchState(MenuState nextState)
         {
-            switch(PeekState())
+            UserInterface.Instance.Initialise(nextState);
+            switch (PeekState())
             {
 
                 case MenuState.MainMenu:
@@ -205,16 +217,19 @@ namespace ArtillerySeries.src
                     }
                     break;
 
+
                 case MenuState.CombatStage:
+                    EndCombatStage();
                     if (nextState == MenuState.ShopState)
                     {
-                        EndCombatStage();
+                        
                     }
                     break;
 
 
-            }
 
+
+            }
             _stateComponent.Switch(nextState);
         }
 
