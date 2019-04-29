@@ -8,6 +8,8 @@ using static ArtillerySeries.src.ArtilleryFunctions;
 
 namespace ArtillerySeries.src
 {
+
+    public delegate void NotifyGame(UIEvent uiEvent);
     public class UserInterface
     {
         List<UIElement> _uiElements;
@@ -17,8 +19,10 @@ namespace ArtillerySeries.src
         Observer _observerInstance;
 
         UI_Combat _uiCombat;
+        UI_MainMenu _uiMainMenu;
         MenuState _currentState;
 
+        NotifyGame onNotifyUIEvent;
 
         Camera _camera;
 
@@ -39,6 +43,13 @@ namespace ArtillerySeries.src
             }
         }
 
+        
+
+        public void NotifyUIEvent(object sender, UIEventArgs uiEventArgs)
+        {
+            onNotifyUIEvent(uiEventArgs.Event);
+        }
+
         public void UpdatePreviousWeaponCharge()
         {
             _uiCombat.SetPlayerPreviousPercentage(_world.SelectedPlayer.Character.PreviousWeaponChargePercentage);
@@ -46,11 +57,17 @@ namespace ArtillerySeries.src
 
 
         public Camera Camera { get => _camera; set => _camera = value; }
-        public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
+        public Rectangle WindowRect { get => _windowRect; }
         public World World { get => _world; set => _world = value; }
         public Observer ObserverInstance { get => _observerInstance; set => _observerInstance = value; }
+        public NotifyGame OnNotifyUIEvent { get => onNotifyUIEvent; set => onNotifyUIEvent = value; }
 
-        public void Initialise(MenuState menuState)
+        public void SetWindowRect(Rectangle windowRect)
+        {
+            _windowRect = windowRect;
+        }
+
+            public void Initialise(MenuState menuState)
         {
             _uiElements.Clear();
             _currentState = menuState;
@@ -59,7 +76,8 @@ namespace ArtillerySeries.src
             {
 
                 case MenuState.MainMenu:
-
+                    _uiMainMenu = new UI_MainMenu();
+                    AddElement(_uiMainMenu);
                     break;
 
                 case MenuState.CombatStage:
@@ -90,6 +108,8 @@ namespace ArtillerySeries.src
 
         public void Draw()
         {
+
+            SwinGame.DrawText("MenuState: " + _currentState, Color.Black, 1400, 10);
             foreach (UIElement e in _uiElements)
             {
                 e.Draw();

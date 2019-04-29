@@ -65,10 +65,15 @@ namespace ArtillerySeries.src
         MainMenu,
         CombatStage,
         ShopState,
+        EscMenu,
+        //Intermittent
+        LoadState,
         //Unused:
         OptionsMenu, //Will require pushdown
         Credits
     }
+
+    
 
     class ArtilleryGame : IStateComponent<MenuState>
     {
@@ -76,6 +81,8 @@ namespace ArtillerySeries.src
         World _world;
         InputHandler _inputHandler;
         StateComponent<MenuState> _stateComponent;
+
+        
 
         public ArtilleryGame()
         {
@@ -91,16 +98,52 @@ namespace ArtillerySeries.src
             _stateComponent = new StateComponent<MenuState>(MenuState.MainMenu);
 
             PhysicsEngine.Instance.SetWindowRect(_windowRect);
+            UserInterface.Instance.SetWindowRect(_windowRect);
+            UserInterface.Instance.OnNotifyUIEvent = NotifyUIEvent;
+        }
+
+        public void NotifyUIEvent(UIEvent uiEvent)
+        {
+            Console.WriteLine("Arty has been called for a UI Event {0}", uiEvent);
+
+            switch(uiEvent)
+            {
+                case UIEvent.StartGame:
+                    PushState(MenuState.CombatStage);
+                    PushState(MenuState.LoadState);
+                    break;
+
+
+
+            }
+
         }
 
 
         private void LoadResources()
         {
             SwinGame.LoadBitmapNamed("windMarker", "windmarker.png");
-            SwinGame.LoadSoundEffectNamed("laser_satellite", "magicSorcery_Short1.wav");
+            SwinGame.LoadSoundEffectNamed("laser_satellite", "magicSorcery_Short1_edit.wav");
             SwinGame.LoadSoundEffectNamed("satellite_prep", "satellite_prep.wav");
         }
 
+        
+        public void HandleInput()
+        {
+            //for core all-around things like the options and esc menu.
+
+            if (SwinGame.KeyTyped(KeyCode.EscapeKey))
+            {
+                if (PeekState() == MenuState.EscMenu)
+                    PopState();
+                else if (PeekState() != MenuState.EscMenu)
+                    PushState(MenuState.EscMenu);
+
+                
+            }
+                
+
+        }
 
         public void Run()
         {
@@ -120,16 +163,42 @@ namespace ArtillerySeries.src
             {
 
                 SwinGame.ProcessEvents();
+                HandleInput();
 
                 switch (PeekState())
                 {
+
+                    case MenuState.LoadState:
+                        MenuState _holdState = PopState();
+                        if (_holdState != MenuState.LoadState)
+                            throw new Exception("Stack... Exception... Menustate!");
+                        _holdState = PopState();
+                        SwitchState(_holdState);
+
+
+                        break;
+
+                    case MenuState.EscMenu:
+
+                        SwinGame.ClearScreen(Color.White);
+                        SwinGame.DrawFramerate(0, 0);
+                        SwinGame.DrawText("Esc Menu",Color.Black, 10, 500);
+                        SwinGame.MoveCameraTo(0, 0);
+
+                        break;
+
                     case MenuState.MainMenu:
 
+
+                        UserInterface.Instance.Update();
 
                         SwinGame.ClearScreen(Color.White);
                         SwinGame.DrawFramerate(0, 0);
 
                         SwinGame.DrawText("A3 Menu", Color.Black, 10, 500);
+                        UserInterface.Instance.Draw();
+
+
 
 
                         if (SwinGame.KeyTyped(KeyCode.KKey))

@@ -1,0 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using SwinGameSDK;
+using static ArtillerySeries.src.ArtilleryFunctions;
+
+namespace ArtillerySeries.src
+{
+    public class UI_MainMenu : UIElementAssembly
+    {
+        Rectangle _windowRect = UserInterface.Instance.WindowRect;
+        UI_Button _playButton;
+
+        
+
+        public UI_MainMenu()
+        {
+            _playButton = new UI_Button("Start Game", 10, _windowRect.Height * 0.2f, UIEvent.StartGame);
+            _playButton.OnUIEvent += UserInterface.Instance.NotifyUIEvent;
+            AddElement(_playButton);
+        }
+    }
+}

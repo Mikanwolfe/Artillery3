@@ -40,7 +40,7 @@ namespace ArtillerySeries.src
 
         public T Peek()
         {
-            return _stateStack.Peek();
+                return _stateStack.Peek();
         }
 
         public T Pop()
@@ -50,7 +50,17 @@ namespace ArtillerySeries.src
 
         public void Push(T state)
         {
-            _stateStack.Push(state);
+            if (_stateStack.Count != 0)
+            { 
+                if (!_stateStack.Peek().Equals(state))
+                {
+                    _stateStack.Push(state);
+                }
+            }
+            else
+            {
+                _stateStack.Push(state);
+            }
         }
 
         public void Switch(T state)

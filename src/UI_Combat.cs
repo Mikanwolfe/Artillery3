@@ -10,6 +10,10 @@ namespace ArtillerySeries.src
 {
     public class UI_Combat : UIElementAssembly
     {
+
+        //Include a minimap here too!!
+
+
         UI_LoadingBar _playerChargeBar;
         public UI_Combat()
         {
