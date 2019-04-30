@@ -130,7 +130,7 @@ namespace ArtillerySeries.src
         private void LoadResources()
         {
             SwinGame.LoadBitmapNamed("windMarker", "windmarker.png");
-            SwinGame.LoadBitmapNamed("testButton", "testbutton2.png");
+            SwinGame.LoadBitmapNamed("testButton", "testbutton.png");
             SwinGame.LoadSoundEffectNamed("laser_satellite", "magicSorcery_Short1_edit.wav");
             SwinGame.LoadSoundEffectNamed("satellite_prep", "satellite_prep.wav");
         }
