@@ -15,6 +15,7 @@ namespace ArtillerySeries.src
         Idle,
         Walking,
         Firing,
+        Dead,
         EndTurn
     }
     // Players use a single Character per game and they are pre-defined in the system (e.g. Innocentia/Object 261)
@@ -52,7 +53,7 @@ namespace ArtillerySeries.src
         public delegate void NotifyFiring(Projectile projectile, Character parent);
 
         NotifyFiring notifyFiring;
-
+        int _smokeCount;
        
         public Character(string name, int health, int armour)
             : base(name)
@@ -80,6 +81,8 @@ namespace ArtillerySeries.src
 
             _weaponList.Add(_weapon);
             _weaponList.Add(_weapon2);
+
+            _smokeCount = 0;
 
         }
 
@@ -166,6 +169,17 @@ namespace ArtillerySeries.src
             }
         }
 
+        public bool isAlive
+        {
+            get
+            {
+                if (_health <= 1)
+                    return false;
+
+                return true;
+            }
+        }
+
         public void AddEntity(Entity entity)
         {
             Entities.Add(entity);
@@ -186,15 +200,17 @@ namespace ArtillerySeries.src
 
             if (_charBitmap == null)
             {
-                if (_physics.OnGround)
-                    SwinGame.FillCircle(Color.IndianRed, Pos.X, Pos.Y, Constants.InvalidPlayerCircleRadius);
-                else
-                    SwinGame.FillCircle(Color.Purple, Pos.X, Pos.Y, Constants.InvalidPlayerCircleRadius);
 
                 if (_physics.Facing == FacingDirection.Left)
                     SwinGame.FillCircle(Color.Aquamarine, Pos.X - 3, Pos.Y, Constants.InvalidPlayerCircleRadius);
                 else
                     SwinGame.FillCircle(Color.Aquamarine, Pos.X + 3, Pos.Y, Constants.InvalidPlayerCircleRadius);
+
+
+                if (isAlive)
+                    SwinGame.FillCircle(Color.IndianRed, Pos.X, Pos.Y, Constants.InvalidPlayerCircleRadius);
+                else
+                    SwinGame.FillCircle(Color.Black, Pos.X, Pos.Y, Constants.InvalidPlayerCircleRadius);
 
                 DrawTextCentre("Health: " + (int)_health, Color.DarkGray, Pos.X, Pos.Y - 50);
                 DrawTextCentre("Armour: " + (int)_armour, Color.DarkGray, Pos.X, Pos.Y - 40);
@@ -222,33 +238,66 @@ namespace ArtillerySeries.src
             Pos = _physics.Position;
             AbsoluteAngle = _physics.AbsAngleToGround;
 
+            if (PeekState() != CharacterState.Dead)
+            {
+                if (!isAlive)
+                    SwitchState(CharacterState.Dead);
+            }
+
+            _smokeCount++;
+            if (_smokeCount > 10)
+            {
+                if (_health / _maxHealth < 0.8)
+                    ParticleEngine.Instance.CreateSmokeParticle(Pos, Color.Grey, 4f, 0.6f);
+
+                if (_health / _maxHealth < 0.5)
+                    ParticleEngine.Instance.CreateSmokeParticle(Pos, Color.Black, 3f, 0.5f);
+
+                if (_health / _maxHealth < 0.3)
+                {
+                    ParticleEngine.Instance.CreateSmokeParticle(Pos, Color.Orange, 3f, 0.5f);
+                    ParticleEngine.Instance.CreateSmokeParticle(Pos, Color.Yellow, 3f, 0.5f);
+                }
+
+
+                _smokeCount = 0;
+            }
+
             foreach (Weapon w in _weaponList)
             {
                 w.Update();
                 w.UpdatePosition(Pos, Direction, AbsoluteAngle);
             }
 
+
             base.Update(); // Updates the sub-entities
         }
 
-        public void SwitchState(CharacterState state)
+        public void SwitchState(CharacterState nextState)
         {
             // State machine transition code goes here
 
             switch (PeekState())
             {
                 case CharacterState.Idle:
-                    if (state == CharacterState.Firing)
+                    if (nextState == CharacterState.Firing)
                     {
 
                     }
                     //Play firing animation
 
                     break;
+
                 default:
+                    if (nextState == CharacterState.Dead)
+                    {
+                        ParticleEngine.Instance.CreateFastExplosion(Pos, 100);
+                        //DO more die stuff
+
+                    }
                     break;
             }
-            _state.Switch(state);
+            _state.Switch(nextState);
             
         }
 

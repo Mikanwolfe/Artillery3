@@ -17,7 +17,15 @@ namespace ArtillerySeries.src
 
         public UI_MainMenu()
         {
-            _playButton = new UI_Button("Start Game", 10, _windowRect.Height * 0.2f, UIEvent.StartGame);
+            _playButton = new UI_Button("New Game", 10, _windowRect.Height * 0.2f, UIEvent.StartGame);
+            _playButton.OnUIEvent += UserInterface.Instance.NotifyUIEvent;
+            AddElement(_playButton);
+
+            _playButton = new UI_Button("Load Game", 10, _windowRect.Height * 0.3f, UIEvent.StartGame);
+            _playButton.OnUIEvent += UserInterface.Instance.NotifyUIEvent;
+            AddElement(_playButton);
+
+            _playButton = new UI_Button("Exit", 10, _windowRect.Height * 0.5f, UIEvent.Exit);
             _playButton.OnUIEvent += UserInterface.Instance.NotifyUIEvent;
             AddElement(_playButton);
         }

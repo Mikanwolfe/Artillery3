@@ -128,8 +128,13 @@ namespace ArtillerySeries.src
                 if (nextPlayer > _players.Count - 1)
                     nextPlayer = 0;
                 _selectedPlayer = _players[nextPlayer];
+
+                if (!_selectedPlayer.isCharAlive)
+                    CyclePlayers();
+
                 _selectedPlayer.SwitchState(PlayerState.Idle);
                 _selectedPlayer.NewTurn();
+                
             }
 
             UserInterface.Instance.NewPlayerTurn();
@@ -225,9 +230,9 @@ namespace ArtillerySeries.src
             SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
             _selectedPlayer.Draw();
 
-            //SwinGame.DrawText("World State: " + _state.Peek(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 40f);
-            //SwinGame.DrawText("Player State: " + _selectedPlayer.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 50f);
-            //SwinGame.DrawText("Character State: " + _selectedPlayer.Character.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 60f);
+            SwinGame.DrawText("World State: " + _state.Peek(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 40f);
+            SwinGame.DrawText("Player State: " + _selectedPlayer.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 50f);
+            SwinGame.DrawText("Character State: " + _selectedPlayer.Character.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 60f);
         }
 
         public Observer ObserverInstance

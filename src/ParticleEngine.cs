@@ -116,6 +116,31 @@ namespace ArtillerySeries.src
                 windFricMult));
         }
 
+        public void CreateSmokeParticle(Point2D pos, Color color, float lifeMult, float sizeMult)
+        {
+            Point2D velocity = Normalise(new Point2D()
+            {
+                X = (float)RandDoubleBetween(-1, 1),
+                Y = (float)RandDoubleBetween(0, 1)
+            });
+            velocity.X *= RandFloatBetween(-1, 1);
+            velocity.Y *= RandFloatBetween(0.5f, 1);
+
+            Particle _particleToAdd = new Particle(
+                RandDoubleBetween(0.5, 1) * lifeMult,
+                pos,
+                velocity,
+                _random.Next(2, 10),
+                color,
+                -0.4f,
+                1);
+
+            _particleToAdd.Radius *= sizeMult;
+            _particleToAdd.Physics.CanCollideWithGround = false;
+
+            _particles.Add(_particleToAdd);
+        }
+
         public void CreateNonCollideParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult)
         {
             Point2D velocity = Normalise(new Point2D()
@@ -176,6 +201,7 @@ namespace ArtillerySeries.src
             _particles.Add(_particleToAdd);
         }
 
+       
         public void CreateTracer(Point2D pos, Color color, double radius, float lifeMult, float weight)
         {
             _particles.Add(new Particle(

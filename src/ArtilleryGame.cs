@@ -63,9 +63,11 @@ namespace ArtillerySeries.src
     public enum MenuState
     {
         MainMenu,
+        PlayerSelectState,
         CombatStage,
         ShopState,
         EscMenu,
+        Exit,
         //Intermittent
         LoadState,
         //Unused:
@@ -82,7 +84,7 @@ namespace ArtillerySeries.src
         InputHandler _inputHandler;
         StateComponent<MenuState> _stateComponent;
 
-        
+        bool userExitRequested = false;
 
         public ArtilleryGame()
         {
@@ -113,6 +115,11 @@ namespace ArtillerySeries.src
                     PushState(MenuState.LoadState);
                     break;
 
+
+                case UIEvent.Exit:
+                    PushState(MenuState.Exit);
+                    PushState(MenuState.LoadState);
+                    break;
 
 
             }
@@ -159,7 +166,7 @@ namespace ArtillerySeries.src
 
             
 
-            while (!SwinGame.WindowCloseRequested())
+            while (!SwinGame.WindowCloseRequested() && !userExitRequested)
             {
 
                 SwinGame.ProcessEvents();
@@ -184,6 +191,12 @@ namespace ArtillerySeries.src
                         SwinGame.DrawFramerate(0, 0);
                         SwinGame.DrawText("Esc Menu",Color.Black, 10, 500);
                         SwinGame.MoveCameraTo(0, 0);
+
+                        break;
+
+                    case MenuState.Exit:
+
+                        userExitRequested = true;
 
                         break;
 
@@ -258,11 +271,17 @@ namespace ArtillerySeries.src
             Character char2 = new Character("Materia", 100, 200);
             player2.Character = char2;
 
+            Player player3 = new Player("Aria", _world);
+            Character char3 = new Character("Yves", 100, 200);
+            player3.Character = char3;
+
             player1.Initiallise();
             player2.Initiallise();
+            player3.Initiallise();
 
             _world.AddPlayer(player1);
             _world.AddPlayer(player2);
+            _world.AddPlayer(player3);
 
             _world.CyclePlayers();
             _world.NewSession();

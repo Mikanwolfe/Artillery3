@@ -24,18 +24,12 @@ namespace ArtillerySeries.src
         ObserverComponent _observerComponent;
         double _observeDelay;
 
-        public Player(string name)
-            :base(name)
-        {
-            _state = new StateComponent<PlayerState>(PlayerState.Idle);
-            _observeDelay = 0;
-
-        }
-
         public Player(string name, World world)
-            : this(name)
+            : base(name)
         {
             //The world is always an observer for the player.
+            _state = new StateComponent<PlayerState>(PlayerState.Idle);
+            _observeDelay = 0;
             _observerComponent = new ObserverComponent();
             _observerComponent.AddObserver(world.ObserverInstance);
             _observerComponent.AddObserver(UserInterface.Instance.ObserverInstance);
@@ -53,6 +47,14 @@ namespace ArtillerySeries.src
         {
             SwitchState(PlayerState.ObserveProjectile);
             _observerComponent.Notify(projectile, ObserverEvent.PlayerFiredProjectile);
+        }
+
+        public bool isCharAlive
+        {
+            get
+            {
+                return _character.isAlive;
+            }
         }
 
         public void NewTurn()
@@ -127,9 +129,16 @@ namespace ArtillerySeries.src
                 //Idle --> ObvsProj is an event
 
                 case PlayerState.Idle:
+
                     if (_character.PeekState() == CharacterState.Firing)
                     {
                         _observerComponent.Notify(this, ObserverEvent.PlayerIsChargingWeapon);
+
+                    }
+
+                    if (_character.PeekState() == CharacterState.Dead)
+                    {
+                        SwitchState(PlayerState.EndTurn);
 
                     }
 

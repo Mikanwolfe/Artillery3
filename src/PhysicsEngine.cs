@@ -75,6 +75,8 @@ namespace ArtillerySeries.src
             //make this not an exception!!
             foreach (IPhysicsComponent p in _components)
             {
+                if (!p.Physics.Enabled)
+                    RemoveComponent(p);
                 if (p != null)
                 {
                     if (p.Physics.Enabled)
@@ -190,6 +192,7 @@ namespace ArtillerySeries.src
         public void RemoveComponent(IPhysicsComponent component)
         {
             //_components.Remove(component);
+            component.Physics.Enabled = false;
             _componentsToRemove.Add(component);
         }
 
