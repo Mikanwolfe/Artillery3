@@ -75,9 +75,14 @@ namespace ArtillerySeries.src
         {
             // State machine transition code goes here
 
-            
+            if (state == PlayerState.EndTurn)
+            {
+                _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
+            }
+
             switch (_state.Peek())
             {
+
                 case PlayerState.Idle:
                     if(state == PlayerState.ObserveProjectile)
                     {
@@ -89,8 +94,6 @@ namespace ArtillerySeries.src
                     if (state == PlayerState.ObserveSatellite)
                         _observerComponent.Notify(this, ObserverEvent.FocusOnSatellite);
                         _observeDelay = Constants.CameraAfterExplosionDelay * 1.2;
-                    if (state == PlayerState.EndTurn)
-                        _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
                     break;
 
                 case PlayerState.ObserveSatellite:

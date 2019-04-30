@@ -173,7 +173,15 @@ namespace ArtillerySeries.src
                 HandleInput();
 
                 switch (PeekState())
-                {
+
+                { 
+                    case MenuState.ShopState:
+                        SwinGame.ClearScreen(Color.White);
+                        SwinGame.DrawFramerate(0, 0);
+
+                        SwinGame.DrawText("This is the shop menu!", Color.Black, 10, 500);
+
+                        break;
 
                     case MenuState.LoadState:
                         MenuState _holdState = PopState();
@@ -251,13 +259,14 @@ namespace ArtillerySeries.src
             SwinGame.CloseAudio();
             SwinGame.ReleaseAllResources();
         }
-
         public void InitialiseCombatStage()
         {
             
             _world = new World(_windowRect, _inputHandler);
+            _world.OnNotifyGameEnded = EndCombatStage;
             PhysicsEngine.Instance.Clear();
             EntityManager.Instance.Clear();
+            ParticleEngine.Instance.Clear();
 
             UserInterface.Instance.Initialise(MenuState.CombatStage);
 
@@ -289,9 +298,17 @@ namespace ArtillerySeries.src
 
         public void EndCombatStage()
         {
-            SwinGame.SetCameraPos(ZeroPoint2D());
+            SwitchState(MenuState.ShopState);
         }
 
+        public void ExitCombatStage()
+        {
+            SwinGame.SetCameraPos(ZeroPoint2D());
+            PhysicsEngine.Instance.Clear();
+            EntityManager.Instance.Clear();
+            ParticleEngine.Instance.Clear();
+
+        }
         public void SwitchState(MenuState nextState)
         {
             UserInterface.Instance.Initialise(nextState);
@@ -307,7 +324,9 @@ namespace ArtillerySeries.src
 
 
                 case MenuState.CombatStage:
-                    EndCombatStage();
+                    ExitCombatStage();
+
+                    
                     if (nextState == MenuState.ShopState)
                     {
                         

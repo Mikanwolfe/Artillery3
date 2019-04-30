@@ -30,7 +30,7 @@ namespace ArtillerySeries.src
             {
                 if (instance == null)
                     instance = new ParticleEngine();
-                return instance; 
+                return instance;
             }
         }
 
@@ -201,7 +201,7 @@ namespace ArtillerySeries.src
             _particles.Add(_particleToAdd);
         }
 
-       
+
         public void CreateTracer(Point2D pos, Color color, double radius, float lifeMult, float weight)
         {
             _particles.Add(new Particle(
@@ -230,9 +230,9 @@ namespace ArtillerySeries.src
         {
             for (int i = 0; i < numParticles; i++)
             {
-                CreateSimpleParticle(pos, Roughly(Color.Orange, 0.2f),10,2, 0.1f);
-                CreateSimpleParticle(pos, RoughlyValued(Color.Black, 0.5f),10,4, 0.1f);
-                CreateSimpleParticle(pos, Roughly(Color.Yellow, 0.2f),10,2, 0.1f);
+                CreateSimpleParticle(pos, Roughly(Color.Orange, 0.2f), 10, 2, 0.1f);
+                CreateSimpleParticle(pos, RoughlyValued(Color.Black, 0.5f), 10, 4, 0.1f);
+                CreateSimpleParticle(pos, Roughly(Color.Yellow, 0.2f), 10, 2, 0.1f);
             }
         }
 
@@ -251,9 +251,9 @@ namespace ArtillerySeries.src
         {
             for (int i = 0; i < numParticles; i++)
             {
-                CreateAcidParticle(pos, Color.Orange, 20, 7, 0.3f,1,0.12f);
-                CreateAcidParticle(pos, Color.Yellow, 20, 7, 0.3f,1,0.12f);
-                CreateAcidParticle(pos, Color.Green, 20, 10, 0.3f,1,0.12f);
+                CreateAcidParticle(pos, Color.Orange, 20, 7, 0.3f, 1, 0.12f);
+                CreateAcidParticle(pos, Color.Yellow, 20, 7, 0.3f, 1, 0.12f);
+                CreateAcidParticle(pos, Color.Green, 20, 10, 0.3f, 1, 0.12f);
 
             }
         }
@@ -267,7 +267,7 @@ namespace ArtillerySeries.src
 
         public void Update()
         {
-            foreach(Particle p in _particles)
+            foreach (Particle p in _particles)
             {
                 p.Update();
 
@@ -291,11 +291,17 @@ namespace ArtillerySeries.src
                 p.Draw();
             }
         }
-        
+
 
         public void RemoveParticle(Particle p)
         {
             _particlesToRemove.Add(p);
+        }
+
+        public void Clear()
+        {
+            _particles.Clear();
+            _particlesToRemove.Clear();
         }
     }
 }

@@ -14,8 +14,11 @@ namespace ArtillerySeries.src
         Loading,
         TrackingPlayer,
         TrackingProjectile,
-        TrackingEntity
+        TrackingEntity,
+        EndGame
     }
+
+    public delegate void NotifyGameEnded();
 
     public class World : IStateComponent<WorldState>
     {
@@ -44,8 +47,10 @@ namespace ArtillerySeries.src
 
         List<Player> _players;
         Player _selectedPlayer;
+        int _playersAlive;
 
         Satellite _satellite;
+        NotifyGameEnded onNotifyGameEnded;
 
         Sprite _windMarker;
 
@@ -108,7 +113,6 @@ namespace ArtillerySeries.src
             foreach (Player p in _players)
             {
                 p.Character.SetXPosition((int)RandBetween(Constants.CameraPadding, _logicalTerrain.Map.Length - 1 - Constants.CameraPadding));
-                
             }
 
             PhysicsEngine.Instance.Settle();
@@ -124,9 +128,16 @@ namespace ArtillerySeries.src
             else
             {
 
-                int nextPlayer = _players.IndexOf(_selectedPlayer) + 1;
-                if (nextPlayer > _players.Count - 1)
-                    nextPlayer = 0;
+                _playersAlive = 0;
+                foreach (Player p in _players)
+                {
+                    if (p.isCharAlive)
+                        _playersAlive++;
+                }
+                if (_playersAlive <= 1)
+                    SwitchState(WorldState.EndGame);
+
+                int nextPlayer = Clamp((_players.IndexOf(_selectedPlayer) + 1) % _players.Count, 0, _players.Count - 1);
                 _selectedPlayer = _players[nextPlayer];
 
                 if (!_selectedPlayer.isCharAlive)
@@ -209,6 +220,8 @@ namespace ArtillerySeries.src
             _windMarker.Rotation = PhysicsEngine.Instance.WindMarkerDirection + 180;
             _satellite.Update();
 
+            
+
 
         }
 
@@ -249,6 +262,16 @@ namespace ArtillerySeries.src
         {
             // State machine transition code goes here
 
+            switch (state)
+            {
+                case WorldState.EndGame:
+                    if (onNotifyGameEnded != null)
+                    {
+                        onNotifyGameEnded();
+                    }
+                    break;
+            }
+
             _state.Switch(state);
         }
 
@@ -269,5 +292,6 @@ namespace ArtillerySeries.src
 
         public Color SkyColor { get => _environment.Preset.BgColor; }
         public Player SelectedPlayer { get => _selectedPlayer; set => _selectedPlayer = value; }
+        public NotifyGameEnded OnNotifyGameEnded { get => onNotifyGameEnded; set => onNotifyGameEnded = value; }
     }
 }
