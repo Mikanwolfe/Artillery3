@@ -15,6 +15,7 @@ namespace ArtillerySeries.src
         TrackingPlayer,
         TrackingProjectile,
         TrackingEntity,
+        ShowWinScreen,
         EndGame
     }
 
@@ -44,6 +45,7 @@ namespace ArtillerySeries.src
         CameraFocusPoint _cameraFocusPoint;
 
         int _turnCount;
+        int _winScreenCount;
 
         List<Player> _players;
         Player _selectedPlayer;
@@ -135,7 +137,11 @@ namespace ArtillerySeries.src
                         _playersAlive++;
                 }
                 if (_playersAlive <= 1)
-                    SwitchState(WorldState.EndGame);
+                {
+                    if(PeekState() != WorldState.ShowWinScreen)
+                      SwitchState(WorldState.ShowWinScreen);
+                }
+                    
 
                 int nextPlayer = Clamp((_players.IndexOf(_selectedPlayer) + 1) % _players.Count, 0, _players.Count - 1);
                 _selectedPlayer = _players[nextPlayer];
@@ -161,9 +167,12 @@ namespace ArtillerySeries.src
 
         public void HandleInput()
         {
-            _playerCommand = _inputHandler.HandleInput();
-            if (_playerCommand != null)
-                _playerCommand.Execute(_selectedPlayer.Character);
+            if (PeekState() != WorldState.ShowWinScreen)
+            {
+                _playerCommand = _inputHandler.HandleInput();
+                if (_playerCommand != null)
+                    _playerCommand.Execute(_selectedPlayer.Character);
+            }
 
         }
 
@@ -220,8 +229,19 @@ namespace ArtillerySeries.src
             _windMarker.Rotation = PhysicsEngine.Instance.WindMarkerDirection + 180;
             _satellite.Update();
 
-            
+            switch (PeekState())
+            {
+                case WorldState.ShowWinScreen:
+                    _winScreenCount++;
 
+
+                    if (_winScreenCount > 200)
+                        SwitchState(WorldState.EndGame);
+
+                    break;
+
+
+            }
 
         }
 
@@ -264,6 +284,17 @@ namespace ArtillerySeries.src
 
             switch (state)
             {
+                case WorldState.ShowWinScreen:
+                    foreach(Player p in _players)
+                    {
+                        if (p.isCharAlive)
+                            _selectedPlayer = p;
+                    }
+
+                    FocusOnPlayer();
+                    _winScreenCount = 0;
+                    break;
+
                 case WorldState.EndGame:
                     if (onNotifyGameEnded != null)
                     {

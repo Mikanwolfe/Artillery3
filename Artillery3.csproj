@@ -81,6 +81,7 @@
     <Compile Include="src\UI_Combat.cs" />
     <Compile Include="src\UI_LoadingBar.cs" />
     <Compile Include="src\UI_MainMenu.cs" />
+    <Compile Include="src\UI_WinScreen.cs" />
     <Compile Include="src\UpdatableObject.cs" />
     <Compile Include="src\UserInterface.cs" />
     <Compile Include="src\UIElement.cs" />
@@ -191,6 +192,8 @@
     <WinLibs Include="lib\win32\*.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\images\testbutton.png" />
+    <Content Include="Resources\images\testbutton2.png" />
     <Content Include="Resources\images\windmarker.png" />
     <Content Include="Resources\sounds\magicSorcery_Short1_edit.wav" />
     <Content Include="Resources\sounds\satellite_prep.wav" />

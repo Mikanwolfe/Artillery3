@@ -88,6 +88,13 @@ namespace ArtillerySeries.src
             }
         }
 
+        public void ShowWinScreen()
+        {
+
+
+
+        }
+
         public void NewPlayerTurn()
         {
             UpdatePreviousWeaponCharge();
