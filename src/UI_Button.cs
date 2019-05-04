@@ -38,6 +38,12 @@ namespace ArtillerySeries.src
             : this(text, x, y, uiEvent)
         {
             _bitmap = bitmap;
+            if (_bitmap != null)
+            {
+                _width = _bitmap.Width;
+                _height = _bitmap.Height;
+
+            }
         }
 
         public override void Draw()

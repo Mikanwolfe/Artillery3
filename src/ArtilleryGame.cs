@@ -131,6 +131,14 @@ namespace ArtillerySeries.src
         {
             SwinGame.LoadBitmapNamed("windMarker", "windmarker.png");
             SwinGame.LoadBitmapNamed("testButton", "testbutton.png");
+            SwinGame.LoadBitmapNamed("menuLogo", "menu_logo.png");
+            SwinGame.LoadBitmapNamed("menuGradient", "menu_gradient.png");
+            SwinGame.LoadBitmapNamed("startButton", "menu_start.png");
+            SwinGame.LoadBitmapNamed("loadButton", "menu_load.png");
+            SwinGame.LoadBitmapNamed("optionsButton", "menu_options.png");
+            SwinGame.LoadBitmapNamed("exitButton", "menu_exit.png");
+
+
             SwinGame.LoadSoundEffectNamed("laser_satellite", "magicSorcery_Short1_edit.wav");
             SwinGame.LoadSoundEffectNamed("satellite_prep", "satellite_prep.wav");
         }
@@ -217,7 +225,6 @@ namespace ArtillerySeries.src
                         SwinGame.ClearScreen(Color.White);
                         SwinGame.DrawFramerate(0, 0);
 
-                        SwinGame.DrawText("A3 Menu", Color.Black, 10, 500);
                         UserInterface.Instance.Draw();
 
 

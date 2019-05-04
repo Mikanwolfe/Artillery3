@@ -17,21 +17,30 @@ namespace ArtillerySeries.src
 
         public UI_MainMenu()
         {
-            _playButton = new UI_Button("New Game", 40, _windowRect.Height * 0.2f, UIEvent.StartGame);
+
+            UI_DynamicImage _menuGradient = new UI_DynamicImage(_windowRect.Width * 0.234f, 0, SwinGame.BitmapNamed("menuGradient"));
+            AddElement(_menuGradient);
+
+            UI_StaticImage _menuLogo = new UI_StaticImage(_windowRect.Width * 0.026f, _windowRect.Height * 0.24f, SwinGame.BitmapNamed("menuLogo"));
+            AddElement(_menuLogo);
+
+            _playButton = new UI_Button("New Game", _windowRect.Width * 0.026f, _windowRect.Height * 0.417f, UIEvent.StartGame, SwinGame.BitmapNamed("startButton"));
             _playButton.OnUIEvent += UserInterface.Instance.NotifyUIEvent;
             AddElement(_playButton);
 
-            _playButton = new UI_Button("Load Game", 40, _windowRect.Height * 0.3f, UIEvent.StartGame);
+            _playButton = new UI_Button("Load Game", _windowRect.Width * 0.026f, _windowRect.Height * 0.466f, UIEvent.StartGame, SwinGame.BitmapNamed("loadButton"));
             _playButton.OnUIEvent += UserInterface.Instance.NotifyUIEvent;
             AddElement(_playButton);
 
-            _playButton = new UI_Button("Test Text", 40, _windowRect.Height * 0.4f, UIEvent.StartGame, SwinGame.BitmapNamed("testButton"));
+            _playButton = new UI_Button("Test Text", _windowRect.Width * 0.026f, _windowRect.Height * 0.520f, UIEvent.StartGame, SwinGame.BitmapNamed("optionsButton"));
             _playButton.OnUIEvent += UserInterface.Instance.NotifyUIEvent;
             AddElement(_playButton);
 
-            _playButton = new UI_Button("Exit", 40, _windowRect.Height * 0.5f, UIEvent.Exit);
+            _playButton = new UI_Button("Exit", _windowRect.Width * 0.026f, _windowRect.Height * 0.572f, UIEvent.Exit, SwinGame.BitmapNamed("exitButton"));
             _playButton.OnUIEvent += UserInterface.Instance.NotifyUIEvent;
             AddElement(_playButton);
+
+            
         }
     }
 }

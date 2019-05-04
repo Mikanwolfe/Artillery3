@@ -79,8 +79,10 @@
     <Compile Include="src\UIEventArgs.cs" />
     <Compile Include="src\UI_Button.cs" />
     <Compile Include="src\UI_Combat.cs" />
+    <Compile Include="src\UI_DynamicImage.cs" />
     <Compile Include="src\UI_LoadingBar.cs" />
     <Compile Include="src\UI_MainMenu.cs" />
+    <Compile Include="src\UI_StaticImage.cs" />
     <Compile Include="src\UI_WinScreen.cs" />
     <Compile Include="src\UpdatableObject.cs" />
     <Compile Include="src\UserInterface.cs" />
@@ -192,6 +194,11 @@
     <WinLibs Include="lib\win32\*.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\images\menu_exit.png" />
+    <Content Include="Resources\images\menu_load.png" />
+    <Content Include="Resources\images\menu_logo.png" />
+    <Content Include="Resources\images\menu_options.png" />
+    <Content Include="Resources\images\menu_start.png" />
     <Content Include="Resources\images\testbutton.png" />
     <Content Include="Resources\images\testbutton2.png" />
     <Content Include="Resources\images\windmarker.png" />
