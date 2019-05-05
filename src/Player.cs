@@ -28,6 +28,9 @@ namespace ArtillerySeries.src
             : base(name)
         {
             //The world is always an observer for the player.
+            _observerComponent = new ObserverComponent();
+            _observerComponent.AddObserver(world.ObserverInstance);
+            _observerComponent.AddObserver(UserInterface.Instance.ObserverInstance);
             _state = new StateComponent<PlayerState>(PlayerState.Idle);
             _observeDelay = 0;
             
@@ -124,6 +127,11 @@ namespace ArtillerySeries.src
 
             _state.Switch(state);
 
+        }
+
+        public void SetXPosition(int x)
+        {
+            _character.SetXPosition(x);
         }
 
         public override void Draw()

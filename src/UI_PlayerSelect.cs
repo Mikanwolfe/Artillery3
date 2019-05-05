@@ -26,6 +26,7 @@ namespace ArtillerySeries.src
         List<Player> _players;
 
         int numberPlayers;
+        bool _characterSelected = false;
         int currentIndexPlayer;
 
 
@@ -90,31 +91,47 @@ namespace ArtillerySeries.src
                 case PlayerSelectState.ReadingPlayerCharacters:
                     SwinGame.EndReadingText();
 
-                    ClearUI();
-                    AddElement(_menuLogo);
+                    if (currentIndexPlayer < numberPlayers)
+                    {
+                        ClearUI();
+                        AddElement(_menuLogo);
 
-                    /* create the ui */
+                        /* create the ui */
 
-                    UI_Button _uiButton;
+                        UI_Button _uiButton;
 
-                    textElement = new UI_Text(Width(0.5f), Height(0.35f),
-                            Color.Black,"Select a Character", true);
-                    AddElement(textElement);
+                        textElement = new UI_Text(Width(0.5f), Height(0.35f),
+                                Color.Black, "Select a Character", true);
+                        AddElement(textElement);
 
-                    textElement = new UI_Text(Width(0.5f), Height(0.38f),
-                            Color.Black, _players[currentIndexPlayer].Name, true);
-                    AddElement(textElement);
+                        textElement = new UI_Text(Width(0.5f), Height(0.38f),
+                                Color.Black, _players[currentIndexPlayer].Name, true);
+                        AddElement(textElement);
 
-                    _uiButton = new UI_Button("Character 1", Width(0.4f), Height(0.4f),new UIEventArgs("Character 1"));
-                    _uiButton.OnUIEvent += NotifyUIEvent;
-                    _uiButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
-                    AddElement(_uiButton);
+                        _uiButton = new UI_Button("G.W. Tiger", Width(0.25f), Height(0.5f), new UIEventArgs("gwt"));
+                        _uiButton.OnUIEvent += NotifyUIEvent;
+                        _uiButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
+                        _uiButton.MiddleAligned = true;
+                        AddElement(_uiButton);
 
-                    /* End ui creation */
+                        _uiButton = new UI_Button("Object 15X", Width(0.5f), Height(0.5f), new UIEventArgs("obj"));
+                        _uiButton.OnUIEvent += NotifyUIEvent;
+                        _uiButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
+                        _uiButton.MiddleAligned = true;
+                        AddElement(_uiButton);
+
+                        _uiButton = new UI_Button("Innocentia", Width(0.75f), Height(0.5f), new UIEventArgs("int"));
+                        _uiButton.OnUIEvent += NotifyUIEvent;
+                        _uiButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
+                        _uiButton.MiddleAligned = true;
+                        AddElement(_uiButton);
+
+                        /* End ui creation */
 
 
+                        
+                    }
                     currentIndexPlayer++;
-
                     break;
 
 
@@ -128,6 +145,27 @@ namespace ArtillerySeries.src
         {
             //This is for the buttons
             Console.WriteLine(uiEventArgs.Text + " selected!");
+
+            switch (uiEventArgs.Text)
+            {
+                case "gwt":
+                    _players[currentIndexPlayer-1].Character = new Character("G.W. Tiger", 100, 200);
+                    Console.WriteLine("GTW Selected!");
+                    break;
+
+                case "obj":
+                    _players[currentIndexPlayer-1].Character = new Character("G.W. Tiger", 100, 200);
+                    Console.WriteLine("Obj Selected!");
+                    break;
+
+
+
+            }
+            
+
+
+            _characterSelected = true;
+            
         }
 
         public override void Draw()
@@ -176,16 +214,23 @@ namespace ArtillerySeries.src
                     break;
 
                 case PlayerSelectState.ReadingPlayerCharacters:
-                    if (currentIndexPlayer >= numberPlayers)
+
+                    if (currentIndexPlayer > numberPlayers)
                     {
-                        //endgame
+                        Console.WriteLine("Called to finish!");
+                        UserInterface.Instance.FinishedPlayerSelection(_players);
                     }
                     else
                     {
+                        if (_characterSelected)
+                        {
+                            _characterSelected = false;
+                            SwitchState(PlayerSelectState.ReadingPlayerCharacters);
+                        }
+                            
 
-
+                        base.Update();
                     }
-
 
                     break;
 

@@ -83,6 +83,7 @@ namespace ArtillerySeries.src
         World _world;
         InputHandler _inputHandler;
         StateComponent<MenuState> _stateComponent;
+        UIEventArgs _uiEventArgs;
 
         bool userExitRequested = false;
 
@@ -104,11 +105,12 @@ namespace ArtillerySeries.src
             UserInterface.Instance.OnNotifyUIEvent = NotifyUIEvent;
         }
 
-        public void NotifyUIEvent(UIEvent uiEvent)
+        public void NotifyUIEvent(UIEventArgs uiEvent)
         {
-            Console.WriteLine("Arty has been called for a UI Event {0}", uiEvent);
+            Console.WriteLine("Arty has been called for a UI Event {0}", uiEvent.Event);
+            _uiEventArgs = uiEvent;
 
-            switch(uiEvent)
+            switch (uiEvent.Event)
             {
                 case UIEvent.StartGame:
                     PushState(MenuState.PlayerSelectState);
@@ -118,6 +120,11 @@ namespace ArtillerySeries.src
 
                 case UIEvent.Exit:
                     PushState(MenuState.Exit);
+                    PushState(MenuState.LoadState);
+                    break;
+
+                case UIEvent.StartCombat:
+                    PushState(MenuState.CombatStage);
                     PushState(MenuState.LoadState);
                     break;
 
@@ -294,13 +301,13 @@ namespace ArtillerySeries.src
             
             _world = new World(_windowRect, _inputHandler);
             _world.OnNotifyGameEnded = EndCombatStage;
-            PhysicsEngine.Instance.Clear();
-            EntityManager.Instance.Clear();
+            //PhysicsEngine.Instance.Clear();
+            //EntityManager.Instance.Clear();
             ParticleEngine.Instance.Clear();
 
             UserInterface.Instance.Initialise(MenuState.CombatStage);
 
-
+            /*
             Player player1 = new Player("Restia", _world);
             Character Innocentia = new Character("Innocentia", 100, 200);
             player1.Character = Innocentia;
@@ -314,6 +321,16 @@ namespace ArtillerySeries.src
             Character char3 = new Character("Yves", 100, 200);
             player3.Character = char3;
 
+    */
+
+            List<Player> players = _uiEventArgs.Players;
+            foreach (Player p in players)
+            {
+                p.SetWorld(_world);
+                p.Initiallise();
+                _world.AddPlayer(p);
+            }
+            /*
             player1.Initiallise();
             player2.Initiallise();
             player3.Initiallise();
@@ -321,7 +338,8 @@ namespace ArtillerySeries.src
             _world.AddPlayer(player1);
             _world.AddPlayer(player2);
             _world.AddPlayer(player3);
-
+            */
+            
             _world.CyclePlayers();
             _world.NewSession();
         }
@@ -345,7 +363,7 @@ namespace ArtillerySeries.src
             switch (PeekState())
             {
 
-                case MenuState.MainMenu:
+                case MenuState.PlayerSelectState:
                     if (nextState == MenuState.CombatStage)
                     {
                         InitialiseCombatStage();

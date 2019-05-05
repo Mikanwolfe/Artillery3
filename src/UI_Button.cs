@@ -20,6 +20,8 @@ namespace ArtillerySeries.src
         string _text;
         bool _isMouseOver = false;
 
+        bool _middleAligned = false;
+
         UIEventArgs _uiEventArgs;
 
 
@@ -29,6 +31,7 @@ namespace ArtillerySeries.src
         SoundEffect _mouseOverSoundEffect;
 
         public SoundEffect MouseOverSoundEffect { get => _mouseOverSoundEffect; set => _mouseOverSoundEffect = value; }
+        public bool MiddleAligned { get => _middleAligned; set => _middleAligned = value; }
 
         public UI_Button(string text, float x, float y, UIEvent uiEvent)
         {
@@ -70,17 +73,34 @@ namespace ArtillerySeries.src
             if (_bitmap == null)
             {
                 if (_isMouseOver)
-                    SwinGame.DrawRectangle(_highlightColor, Pos.X, Pos.Y, _width, _height);
+                {
+                    if (_middleAligned)
+                        SwinGame.DrawRectangle(_highlightColor, Pos.X - _width / 2, Pos.Y - _height / 2, _width, _height);
+                    else
+                        SwinGame.DrawRectangle(_highlightColor, Pos.X, Pos.Y, _width, _height);
+                }
                 else
-                    SwinGame.DrawRectangle(_baseColor, Pos.X, Pos.Y, _width, _height);
-                DrawTextCentre(_text, Color.Black, Pos.X + _width / 2 - 5, Pos.Y + _height / 2 - 5);
+                {
+                    if (_middleAligned)
+                        SwinGame.DrawRectangle(_baseColor, Pos.X - _width / 2, Pos.Y - _height / 2, _width, _height);
+                    else
+                        SwinGame.DrawRectangle(_baseColor, Pos.X, Pos.Y, _width, _height);
+                }
+
+                if (_middleAligned)
+                    DrawTextCentre(_text, Color.Black, Pos.X - 5, Pos.Y  - 5);
+                else
+                    DrawTextCentre(_text, Color.Black, Pos.X + _width / 2 - 5, Pos.Y + _height / 2 - 5);
             }
             else
             {
                 if (_selectedBitmap == null)
                 {
-                    if (_isMouseOver)
+                    if (_middleAligned)
+                        SwinGame.DrawRectangle(_highlightColor, Pos.X - _width / 2, Pos.Y - _height / 2, _width, _height);
+                    else
                         SwinGame.DrawRectangle(_highlightColor, Pos.X, Pos.Y, _width, _height);
+
                     SwinGame.DrawBitmap(_bitmap, Pos.X, Pos.Y);
                 }
                 else
@@ -95,7 +115,21 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
-            if (SwinGame.PointInRect(SwinGame.MousePosition(), Pos.X, Pos.Y, _width, _height))
+            Rectangle buttonArea = new Rectangle()
+            {
+                X = Pos.X,
+                Y = Pos.Y,
+                Width = _width,
+                Height = _height
+            };
+
+            if (MiddleAligned)
+            {
+                buttonArea.X -= _width / 2;
+                buttonArea.Y -= _height / 2;
+            }
+
+            if (SwinGame.PointInRect(SwinGame.MousePosition(), buttonArea))
             {
                 if (_isMouseOver == false)
                 {

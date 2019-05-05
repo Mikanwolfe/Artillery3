@@ -9,7 +9,7 @@ using static ArtillerySeries.src.ArtilleryFunctions;
 namespace ArtillerySeries.src
 {
 
-    public delegate void NotifyGame(UIEvent uiEvent);
+    public delegate void NotifyGame(UIEventArgs uiEvent);
     public class UserInterface
     {
         List<UIElement> _uiElements;
@@ -22,6 +22,8 @@ namespace ArtillerySeries.src
         UI_MainMenu _uiMainMenu;
         UI_PlayerSelect _uiPlayerSelect;
         MenuState _currentState;
+
+        
 
         NotifyGame onNotifyUIEvent;
 
@@ -48,7 +50,14 @@ namespace ArtillerySeries.src
 
         public void NotifyUIEvent(object sender, UIEventArgs uiEventArgs)
         {
-            onNotifyUIEvent(uiEventArgs.Event);
+            onNotifyUIEvent(uiEventArgs);
+        }
+
+        public void FinishedPlayerSelection(List<Player> players)
+        {
+            UIEventArgs eventArgs = new UIEventArgs(UIEvent.StartCombat);
+            eventArgs.Players = players;
+            onNotifyUIEvent(eventArgs);
         }
 
         public void UpdatePreviousWeaponCharge()

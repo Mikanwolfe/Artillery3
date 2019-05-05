@@ -114,7 +114,7 @@ namespace ArtillerySeries.src
 
             foreach (Player p in _players)
             {
-                p.Character.SetXPosition((int)RandBetween(Constants.CameraPadding, _logicalTerrain.Map.Length - 1 - Constants.CameraPadding));
+                p.SetXPosition((int)RandBetween(Constants.CameraPadding, _logicalTerrain.Map.Length - 1 - Constants.CameraPadding));
             }
 
             PhysicsEngine.Instance.Settle();
