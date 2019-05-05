@@ -30,6 +30,18 @@ namespace ArtillerySeries.src
             //The world is always an observer for the player.
             _state = new StateComponent<PlayerState>(PlayerState.Idle);
             _observeDelay = 0;
+            
+        }
+
+        public Player(string name)
+            : base(name)
+        {
+            _state = new StateComponent<PlayerState>(PlayerState.Idle);
+            _observeDelay = 0;
+        }
+
+        public void SetWorld(World world)
+        {
             _observerComponent = new ObserverComponent();
             _observerComponent.AddObserver(world.ObserverInstance);
             _observerComponent.AddObserver(UserInterface.Instance.ObserverInstance);

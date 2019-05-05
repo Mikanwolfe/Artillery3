@@ -17,12 +17,18 @@ namespace ArtillerySeries.src
     public class UIEventArgs : EventArgs
     {
         UIEvent _uiEvent;
+        string _text;
         public UIEventArgs(UIEvent uiEvent)
         {
             _uiEvent = uiEvent;
         }
 
-        public UIEvent Event { get => _uiEvent; set => _uiEvent = value; }
+        public UIEventArgs(string text)
+        {
+            _text = text;
+        }
 
+        public UIEvent Event { get => _uiEvent; set => _uiEvent = value; }
+        public string Text { get => _text; set => _text = value; }
     }
 }

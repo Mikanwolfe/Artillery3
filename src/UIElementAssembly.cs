@@ -28,6 +28,11 @@ namespace ArtillerySeries.src
             }
         }
 
+        public void ClearUI()
+        {
+            _uiElements.Clear();
+        }
+
         public override void Update()
         {
             foreach (UIElement e in _uiElements)

@@ -12,7 +12,9 @@ namespace ArtillerySeries.src
 
     public enum PlayerSelectState{
         ReadingNumberPlayers,
-        ReadingPlayers
+        ReadingPlayers,
+        ReadingPlayerCharacters,
+        Finishing
     }
     public class UI_PlayerSelect : UIElementAssembly, IStateComponent<PlayerSelectState>
     {
@@ -20,6 +22,7 @@ namespace ArtillerySeries.src
         UI_Text textElement;
         StateComponent<PlayerSelectState> _stateComponent;
 
+        UI_StaticImage _menuLogo;
         List<Player> _players;
 
         int numberPlayers;
@@ -30,7 +33,7 @@ namespace ArtillerySeries.src
         {
             _stateComponent = new StateComponent<PlayerSelectState>(PlayerSelectState.ReadingNumberPlayers);
 
-            UI_StaticImage _menuLogo = new UI_StaticImage(Width(0.45f), Height(0.14f), SwinGame.BitmapNamed("menuLogo"));
+            _menuLogo = new UI_StaticImage(Width(0.45f), Height(0.14f), SwinGame.BitmapNamed("menuLogo"));
             AddElement(_menuLogo);
 
             textElement = new UI_Text(Width(0.5f), Height(0.35f),
@@ -42,6 +45,8 @@ namespace ArtillerySeries.src
             //start reading number players.
             SwinGame.StartReadingText(Color.Black, 20, SwinGame.FontNamed("guiFont"),
                             (int)Width(0.5f), (int)Height(0.4f));
+
+            _players = new List<Player>();
 
         }
 
@@ -67,22 +72,69 @@ namespace ArtillerySeries.src
             switch (nextState)
             {
                 case PlayerSelectState.ReadingPlayers:
-
                     SwinGame.StartReadingText(Color.Black, 20, SwinGame.FontNamed("guiFont"),
                             (int)Width(0.5f), (int)Height(0.4f));
                     currentIndexPlayer++;
+
+
+                    ClearUI();
                     
+                    AddElement(_menuLogo);
 
-
-
+                    textElement = new UI_Text(Width(0.5f), Height(0.35f),
+                            Color.Black, "Player " + currentIndexPlayer + "'s Name:", true);
+                    AddElement(textElement);
 
                     break;
 
-                
+                case PlayerSelectState.ReadingPlayerCharacters:
+                    SwinGame.EndReadingText();
+
+                    ClearUI();
+                    AddElement(_menuLogo);
+
+                    /* create the ui */
+
+                    UI_Button _uiButton;
+
+                    textElement = new UI_Text(Width(0.5f), Height(0.35f),
+                            Color.Black,"Select a Character", true);
+                    AddElement(textElement);
+
+                    textElement = new UI_Text(Width(0.5f), Height(0.38f),
+                            Color.Black, _players[currentIndexPlayer].Name, true);
+                    AddElement(textElement);
+
+                    _uiButton = new UI_Button("Character 1", Width(0.4f), Height(0.4f),new UIEventArgs("Character 1"));
+                    _uiButton.OnUIEvent += NotifyUIEvent;
+                    _uiButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
+                    AddElement(_uiButton);
+
+                    /* End ui creation */
+
+
+                    currentIndexPlayer++;
+
+                    break;
+
+
             }
 
             
             _stateComponent.Switch(nextState);
+        }
+
+        public void NotifyUIEvent(object sender, UIEventArgs uiEventArgs)
+        {
+            //This is for the buttons
+            Console.WriteLine(uiEventArgs.Text + " selected!");
+        }
+
+        public override void Draw()
+        {
+            DrawTextCentre("UI State:" + PeekState(), Color.Black, Width(0.5f), Height(0.1f));
+
+            base.Draw();
         }
 
         public override void Update()
@@ -97,8 +149,9 @@ namespace ArtillerySeries.src
                     if (!SwinGame.ReadingText())
                     {
                         numberPlayers = Convert.ToInt32( SwinGame.EndReadingText());
-                        SwitchState(PlayerSelectState.ReadingPlayers);
                         currentIndexPlayer = 0;
+                        SwitchState(PlayerSelectState.ReadingPlayers);
+                        
                     }
 
                     
@@ -106,11 +159,30 @@ namespace ArtillerySeries.src
                     break;
 
                 case PlayerSelectState.ReadingPlayers:
-                    if (currentIndexPlayer >= numberPlayers)
+                    if (currentIndexPlayer > numberPlayers)
                     {
-                        //endgame!
+                        currentIndexPlayer = 0;
+                        SwitchState(PlayerSelectState.ReadingPlayerCharacters);
                     } else
                     {
+                       
+                        if (!SwinGame.ReadingText())
+                        {
+                            Player player = new Player(SwinGame.EndReadingText());
+                            _players.Add(player);
+                            SwitchState(PlayerSelectState.ReadingPlayers);
+                        }
+                    }
+                    break;
+
+                case PlayerSelectState.ReadingPlayerCharacters:
+                    if (currentIndexPlayer >= numberPlayers)
+                    {
+                        //endgame
+                    }
+                    else
+                    {
+
 
                     }
 

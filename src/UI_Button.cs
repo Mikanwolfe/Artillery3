@@ -20,7 +20,7 @@ namespace ArtillerySeries.src
         string _text;
         bool _isMouseOver = false;
 
-        UIEvent _uiEvent;
+        UIEventArgs _uiEventArgs;
 
 
         Color _baseColor = Color.Black;
@@ -35,7 +35,15 @@ namespace ArtillerySeries.src
             _text = text;
             Pos = new Point2D() { X = x, Y = y };
 
-            _uiEvent = uiEvent;
+            _uiEventArgs = new UIEventArgs(uiEvent);
+        }
+
+        public UI_Button(string text, float x, float y, UIEventArgs uiEvent)
+        {
+            _text = text;
+            Pos = new Point2D() { X = x, Y = y };
+
+            _uiEventArgs = uiEvent;
         }
 
         public UI_Button(string text, float x, float y, UIEvent uiEvent, Bitmap bitmap)
@@ -105,7 +113,7 @@ namespace ArtillerySeries.src
 
             if (_isMouseOver && SwinGame.MouseClicked(MouseButton.LeftButton) && OnUIEvent != null)
             {
-                OnUIEvent(this, new UIEventArgs(_uiEvent));
+                OnUIEvent(this, _uiEventArgs);
             }
         }
     }
