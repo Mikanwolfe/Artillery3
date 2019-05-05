@@ -15,14 +15,11 @@ namespace ArtillerySeries.src
         int _height = 40;
         int _width = 150;
 
-        float _x = 0;
-        float _y = 0;
-
         public UI_StaticImage(float x, float y, Bitmap bitmap)
         {
             Visible = true;
-            _x = x;
-            _y = y;
+            X = x;
+            Y = y;
 
             _bitmap = bitmap;
 
@@ -34,13 +31,11 @@ namespace ArtillerySeries.src
             }
         }
 
-        public float X { get => _x; set => _x = value; }
-        public float Y { get => _y; set => _y = value; }
 
         public override void Draw()
         {
             if (Visible)
-                SwinGame.DrawBitmap(_bitmap, _x, _y);
+                SwinGame.DrawBitmap(_bitmap, X, Y);
         }
 
         public override void Update()

@@ -111,7 +111,7 @@ namespace ArtillerySeries.src
             switch(uiEvent)
             {
                 case UIEvent.StartGame:
-                    PushState(MenuState.CombatStage);
+                    PushState(MenuState.PlayerSelectState);
                     PushState(MenuState.LoadState);
                     break;
 
@@ -148,6 +148,8 @@ namespace ArtillerySeries.src
             SwinGame.LoadSoundEffectNamed("laser_satellite", "magicSorcery_Short1_edit.wav");
             SwinGame.LoadSoundEffectNamed("satellite_prep", "satellite_prep.wav");
             SwinGame.LoadSoundEffectNamed("menuSound", "koikenmenu.ogg");
+
+            SwinGame.LoadFontNamed("guiFont", "maven_pro_regular.ttf", 12);
         }
 
         
@@ -175,6 +177,7 @@ namespace ArtillerySeries.src
             SwinGame.SetIcon("H:\\repos\\Artillery3\\Resources\\images\\logoArtillery3LogoIcon.ico");
 
             LoadResources();
+            SwinGame.ClearScreen(Color.White);
 
             
 
@@ -196,6 +199,18 @@ namespace ArtillerySeries.src
                         SwinGame.DrawFramerate(0, 0);
 
                         SwinGame.DrawText("This is the shop menu!", Color.Black, 10, 500);
+
+                        break;
+
+                    case MenuState.PlayerSelectState:
+
+                        UserInterface.Instance.Update();
+
+                        SwinGame.ClearScreen(Color.White);
+                        SwinGame.DrawFramerate(0, 0);
+
+                        UserInterface.Instance.Draw();
+                        
 
                         break;
 

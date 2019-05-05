@@ -82,7 +82,9 @@
     <Compile Include="src\UI_DynamicImage.cs" />
     <Compile Include="src\UI_LoadingBar.cs" />
     <Compile Include="src\UI_MainMenu.cs" />
+    <Compile Include="src\UI_PlayerSelect.cs" />
     <Compile Include="src\UI_StaticImage.cs" />
+    <Compile Include="src\UI_Text.cs" />
     <Compile Include="src\UI_WinScreen.cs" />
     <Compile Include="src\UpdatableObject.cs" />
     <Compile Include="src\UserInterface.cs" />

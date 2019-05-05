@@ -20,6 +20,7 @@ namespace ArtillerySeries.src
 
         UI_Combat _uiCombat;
         UI_MainMenu _uiMainMenu;
+        UI_PlayerSelect _uiPlayerSelect;
         MenuState _currentState;
 
         NotifyGame onNotifyUIEvent;
@@ -67,8 +68,15 @@ namespace ArtillerySeries.src
             _windowRect = windowRect;
         }
 
-            public void Initialise(MenuState menuState)
+        public void Initialise(MenuState menuState)
         {
+
+            for (float i = 0; i < 1; i += 0.1f)
+            {
+                SwinGame.FillRectangle(SwinGame.RGBAFloatColor(1, 1, 1, i), 0, 0, WindowRect.Width, WindowRect.Height);
+                SwinGame.RefreshScreen(60);
+            }
+
             _uiElements.Clear();
             _currentState = menuState;
 
@@ -78,6 +86,12 @@ namespace ArtillerySeries.src
                 case MenuState.MainMenu:
                     _uiMainMenu = new UI_MainMenu();
                     AddElement(_uiMainMenu);
+                    break;
+
+
+                case MenuState.PlayerSelectState:
+                    _uiPlayerSelect = new UI_PlayerSelect();
+                    AddElement(_uiPlayerSelect);
                     break;
 
                 case MenuState.CombatStage:

@@ -63,12 +63,12 @@ namespace ArtillerySeries.src
             }
         }
 
-        public void Switch(T state)
+        public void Switch(T nextState)
         {
-            if (!_stateStack.Peek().Equals(state))
+            if (!_stateStack.Peek().Equals(nextState))
             {
                 _stateStack.Pop();
-                _stateStack.Push(state);
+                _stateStack.Push(nextState);
             }
         }
     }
