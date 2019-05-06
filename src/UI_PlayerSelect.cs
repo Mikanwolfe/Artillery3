@@ -154,7 +154,7 @@ namespace ArtillerySeries.src
                     Weapon autoLoader = new Weapon("BatChat Autoloader", 10, 85, ProjectileType.Shell);
                     autoLoader.IsAutoloader = true;
                     autoLoader.AutoloaderClip = 5;
-                    
+                    autoLoader.ProjectilesFiredPerTurn = 3;
                     autoLoader.BaseDamage = 80;
                     newCharacter.AddWeapon(autoLoader);
 

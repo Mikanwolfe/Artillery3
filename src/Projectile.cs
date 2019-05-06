@@ -33,6 +33,7 @@ namespace ArtillerySeries.src
             _parentWeapon = parentWeapon;
             _physics = new PhysicsComponent(this);
             _physics.Velocity = vel;
+            Pos = pos;
             _physics.Position = pos;
             _state = new StateComponent<ProjectileState>(ProjectileState.Alive);
 

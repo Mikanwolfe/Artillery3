@@ -18,9 +18,28 @@ namespace ArtillerySeries.src
          * 
          */
 
+        private static Random _random = new Random();
+
+        public static Point2D RandomPoint2D(float magnitude)
+        {
+            return new Point2D()
+            {
+                X = (float)_random.NextDouble() * magnitude,
+                Y = (float)_random.NextDouble() * magnitude
+            };
+        }
         public static double RandBetween(double min, double max)
         {
             return ParticleEngine.Instance.RandDoubleBetween(min, max);
+        }
+
+        public static Point2D AddPoint2D(Point2D a, Point2D b)
+        {
+            return new Point2D()
+            {
+                X = a.X + b.X,
+                Y = a.Y + b.Y,
+            };
         }
 
         public static Point2D Normalise(Point2D vector)

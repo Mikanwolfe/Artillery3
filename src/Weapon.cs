@@ -75,6 +75,8 @@ namespace ArtillerySeries.src
         Point2D _projectileVel;
         Point2D _lastProjectilePosition;
 
+        int _projectilesFiredPerTurn = 1;
+
         ProjectileType _projectileType;
 
         ProjectileFactory _projectileFactory;
@@ -161,6 +163,13 @@ namespace ArtillerySeries.src
         public Point2D ProjectileVel { get => _projectileVel; set => _projectileVel = value; }
         public bool UsesSatellite { get => _usesSatellite; set => _usesSatellite = value; }
         public float BaseDamage { get => _baseDamage; set => _baseDamage = value; }
+        public int ProjectilesFiredPerTurn { get => _projectilesFiredPerTurn; set
+            {
+                _projectilesFiredPerTurn = value;
+                _projectileFactory.ProjectilesFiredPerTurn = value;
+            }
+
+        }
 
         public void DepressWeapon()
         {
@@ -184,7 +193,6 @@ namespace ArtillerySeries.src
         public void Fire()
         {
             AimWeapon();
-            FireProjectile();
             FireProjectile();
         }
 
@@ -224,7 +232,7 @@ namespace ArtillerySeries.src
 
         public void SetProjectile(Projectile projectile)
         {
-            _mainProjectile = projectile;
+            //_mainProjectile = projectile;
         }
         
 
@@ -280,7 +288,7 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
-
+            _projectileFactory.Update();
             
 
             _previousState = _state;

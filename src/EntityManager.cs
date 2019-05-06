@@ -16,11 +16,13 @@ namespace ArtillerySeries.src
         private static EntityManager instance;
         private static List<Entity> _entities;
         private static List<Entity> _entitiesToRemove;
+        private static List<Entity> _entitiesToAdd;
         private EntityManager()
         {
             instance = this;
             _entities = new List<Entity>();
             _entitiesToRemove = new List<Entity>();
+            _entitiesToAdd = new List<Entity>();
         }
 
         public static EntityManager Instance
@@ -37,7 +39,7 @@ namespace ArtillerySeries.src
 
         public void AddEntity(Entity e)
         {
-            Entities.Add(e);
+            _entitiesToAdd.Add(e);
         }
 
         public void RemoveEntity(Entity e)
@@ -110,6 +112,13 @@ namespace ArtillerySeries.src
                 
             }
             _entitiesToRemove.Clear();
+
+            foreach (Entity e in _entitiesToAdd)
+            {
+                Entities.Add(e);
+
+            }
+            _entitiesToAdd.Clear();
 
         }
     }
