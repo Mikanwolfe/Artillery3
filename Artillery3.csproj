@@ -67,6 +67,7 @@
     <Compile Include="src\PhysicsEngine.cs" />
     <Compile Include="src\Player.cs" />
     <Compile Include="src\Projectile.cs" />
+    <Compile Include="src\ProjectileFactory.cs" />
     <Compile Include="src\Satellite.cs" />
     <Compile Include="src\StateComponent.cs" />
     <Compile Include="src\SwitchWeaponCommand.cs" />

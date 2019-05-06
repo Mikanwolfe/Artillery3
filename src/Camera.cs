@@ -57,6 +57,14 @@ namespace ArtillerySeries.src
             _focus = focusPoint;
         }
 
+        public void Zero()
+        {
+            _focus = new CameraFocusPoint()
+            {
+                Pos = ZeroPoint2D()
+            };
+        }
+
 
         public override void Update()
         {

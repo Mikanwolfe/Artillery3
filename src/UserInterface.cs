@@ -80,11 +80,25 @@ namespace ArtillerySeries.src
         public void Initialise(MenuState menuState)
         {
 
-            for (float i = 0; i < 1; i += 0.1f)
+            if (_camera != null)
             {
-                SwinGame.FillRectangle(SwinGame.RGBAFloatColor(1, 1, 1, i), 0, 0, WindowRect.Width, WindowRect.Height);
-                SwinGame.RefreshScreen(60);
+                SwinGame.SetCameraPos(ZeroPoint2D());
+                for (float i = 0; i < 1; i += 0.1f)
+                {
+                    SwinGame.FillRectangle(SwinGame.RGBAFloatColor(1, 1, 1, i), _camera.Pos.X, _camera.Pos.Y, WindowRect.Width, WindowRect.Height);
+                    SwinGame.RefreshScreen(60);
+                }
+            } else
+            {
+                SwinGame.SetCameraPos(ZeroPoint2D());
+                for (float i = 0; i < 1; i += 0.1f)
+                {
+                    SwinGame.FillRectangle(SwinGame.RGBAFloatColor(1, 1, 1, i), 0, 0, WindowRect.Width, WindowRect.Height);
+                    SwinGame.RefreshScreen(60);
+                }
             }
+            
+
 
             _uiElements.Clear();
             _currentState = menuState;
@@ -107,7 +121,6 @@ namespace ArtillerySeries.src
                     _uiCombat = new UI_Combat();
                     AddElement(_uiCombat);
                     break;
-
             }
         }
 
@@ -138,8 +151,6 @@ namespace ArtillerySeries.src
 
         public void Draw()
         {
-
-            SwinGame.DrawText("MenuState: " + _currentState, Color.Black, 1400, 10);
             foreach (UIElement e in _uiElements)
             {
                 e.Draw();

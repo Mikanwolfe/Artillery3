@@ -18,9 +18,6 @@ namespace ArtillerySeries.src
         Dead,
         EndTurn
     }
-    // Players use a single Character per game and they are pre-defined in the system (e.g. Innocentia/Object 261)
-    //  but they can also be added to and customized on the fly.
-    //  I don't know if this will work well but hey, let's hope for the best!
 
 
     public class Character : EntityAssembly, 
@@ -30,20 +27,10 @@ namespace ArtillerySeries.src
         float _health, _armour;
         float _maxHealth = 100, _maxArmour = 100;
 
-        Vehicle _vehicle;  //throw this away
-        //Point2D _pos;
         Bitmap _charBitmap; // use sprites
         PhysicsComponent _physics;
         StateComponent<CharacterState> _state;
         bool _selected;
-        
-
-        //Weapons should be seperate list.
-        //they are treated seperately as base.draw() will draw all the sights, which isn't required...
-        // OR, they can be in the same list with a known selected weaopn who's sight will be drawn.
-        // Weapons are selected by iterating through known weapons by iterating through the list
-        // and checking if the entity implements the IWeapon interface, or having a seperate list that
-        // is updated every time a new entity is added to the list.
 
         Weapon _selectedWeapon;
         Weapon _weapon;
@@ -60,11 +47,9 @@ namespace ArtillerySeries.src
         {
 
             _physics = new PhysicsComponent(this);
-            _vehicle = new Vehicle(name);
             _selected = false;
             _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f);
             _weapon2 = new WeaponAcidCannon(30f, 70f);
-            //_weapon2.SetProjectile();
             _weaponList = new List<Weapon>();
 
             _maxArmour = armour;
@@ -90,6 +75,11 @@ namespace ArtillerySeries.src
         {
             _armour = _maxArmour;
             _health = _maxHealth;
+        }
+
+        public void AddWeapon(Weapon w)
+        {
+            _weaponList.Add(w);
         }
 
         public void SetFiringNotif(NotifyFiring parentFunction)
@@ -222,9 +212,7 @@ namespace ArtillerySeries.src
 
 
             float angle = (float)(_physics.AbsAngleToGround * 180 / Math.PI);
-            //SwinGame.DrawText("Absolute Angle: " + angle.ToString(), Color.Black, 50, 50);
             angle = (float)(_physics.RelAngleToGround * 180 / Math.PI);
-            //SwinGame.DrawText("Relative Angle: " + angle.ToString(), Color.Black, 50, 70);
 
             
 

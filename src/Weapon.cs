@@ -11,7 +11,6 @@ namespace ArtillerySeries.src
 
     public interface IWeapon
     {
-        List<Projectile> Ammunition { get; set; }
         void Fire();
         void Charge();
         void DrawSight();
@@ -43,7 +42,6 @@ namespace ArtillerySeries.src
 
         Bitmap _bitmap;
         Sprite _sprite;
-        List<Projectile> _ammunition;
 
         Projectile _mainProjectile;
 
@@ -68,6 +66,7 @@ namespace ArtillerySeries.src
         float _weaponCharge = 0;
         float _weaponMaxCharge = 50;
         float _previousCharge = 0;
+        float _baseDamage = 100;
         bool _isAutoloader = true; //Autoloader, not AutoLoader. Look it up.
         bool _usesSatellite;
         int _autoloaderClip = 2;
@@ -78,7 +77,6 @@ namespace ArtillerySeries.src
 
         public Weapon(string name) : base(name)
         {
-            _ammunition = new List<Projectile>();
             _weaponCharge = 0;
             _state = WeaponState.IdleState;
             _projectileSpawnOffset = new Point2D()
@@ -110,7 +108,6 @@ namespace ArtillerySeries.src
 
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
         public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
-        List<Projectile> IWeapon.Ammunition { get => _ammunition; set => _ammunition = value; }
         public bool IsAutoloader { get => _isAutoloader; set => _isAutoloader = value; }
         public int AutoloaderClip { get => _autoloaderClip; set => _autoloaderClip = value; }
         public int AutoloaderAmmoLeft { get => _autoloaderAmmoLeft; }
@@ -159,6 +156,7 @@ namespace ArtillerySeries.src
         public Point2D ProjectilePos { get => _projectilePos; set => _projectilePos = value; }
         public Point2D ProjectileVel { get => _projectileVel; set => _projectileVel = value; }
         public bool UsesSatellite { get => _usesSatellite; set => _usesSatellite = value; }
+        public float BaseDamage { get => _baseDamage; set => _baseDamage = value; }
 
         public void DepressWeapon()
         {
@@ -171,7 +169,6 @@ namespace ArtillerySeries.src
 
         public void Charge()
         {
-            //Observation: void ChangeState(State state) could be used to change state + add a transition state/commands 
             _state = WeaponState.ChargingState;
         }
 
@@ -183,6 +180,7 @@ namespace ArtillerySeries.src
         public void Fire()
         {
             AimWeapon();
+            FireProjectile();
             FireProjectile();
         }
 
@@ -216,7 +214,7 @@ namespace ArtillerySeries.src
 
         public virtual void FireProjectile()
         {
-            Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, 100, 15, 35);
+            Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, _baseDamage, 15, 35);
             _mainProjectile = projectile;
         }
 
@@ -275,9 +273,6 @@ namespace ArtillerySeries.src
 
             DrawAutoloaderClip();
         }
-
-
-
 
         public override void Update()
         {

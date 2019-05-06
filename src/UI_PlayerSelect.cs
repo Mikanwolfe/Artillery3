@@ -145,17 +145,31 @@ namespace ArtillerySeries.src
         {
             //This is for the buttons
             Console.WriteLine(uiEventArgs.Text + " selected!");
+            Character newCharacter;
 
             switch (uiEventArgs.Text)
             {
                 case "gwt":
-                    _players[currentIndexPlayer-1].Character = new Character("G.W. Tiger", 100, 200);
+                    newCharacter = new Character("G.W. Tiger", 100, 250);
+                    Weapon autoLoader = new Weapon("BatChat Autoloader", 10, 85);
+                    autoLoader.IsAutoloader = true;
+                    autoLoader.AutoloaderClip = 5;
+                    
+                    autoLoader.BaseDamage = 80;
+                    newCharacter.AddWeapon(autoLoader);
+
+                    _players[currentIndexPlayer-1].Character = newCharacter;
                     Console.WriteLine("GTW Selected!");
                     break;
 
                 case "obj":
-                    _players[currentIndexPlayer-1].Character = new Character("G.W. Tiger", 100, 200);
+                    _players[currentIndexPlayer-1].Character = new Character("Object 15X", 100, 100);
                     Console.WriteLine("Obj Selected!");
+                    break;
+
+                case "int":
+                    _players[currentIndexPlayer - 1].Character = new Character("Innocentia", 100, 100);
+                    Console.WriteLine("int Selected!");
                     break;
 
 

@@ -351,7 +351,7 @@ namespace ArtillerySeries.src
 
         public void ExitCombatStage()
         {
-            SwinGame.SetCameraPos(ZeroPoint2D());
+            //SwinGame.SetCameraPos(ZeroPoint2D());
             PhysicsEngine.Instance.Clear();
             EntityManager.Instance.Clear();
             ParticleEngine.Instance.Clear();
