@@ -8,12 +8,9 @@ namespace ArtillerySeries.src
 {
     class WeaponAcidCannon : Weapon
     {
-        public WeaponAcidCannon() : base("Acid Cannon")
-        {
-        }
 
         public WeaponAcidCannon(float minWepAngleDeg, float maxWepAngleDeg) 
-            : base("Acid Cannon", minWepAngleDeg, maxWepAngleDeg)
+            : base("Acid Cannon", minWepAngleDeg, maxWepAngleDeg, ProjectileType.Shell)
         {
             IsAutoloader = false;
             UsesSatellite = true;

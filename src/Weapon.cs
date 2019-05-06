@@ -75,7 +75,13 @@ namespace ArtillerySeries.src
         Point2D _projectileVel;
         Point2D _lastProjectilePosition;
 
-        public Weapon(string name) : base(name)
+        ProjectileType _projectileType;
+
+        ProjectileFactory _projectileFactory;
+
+
+        public Weapon (string name, float minWepAngleDeg, float maxWepAngleDeg, ProjectileType projectileType)
+            : base(name)
         {
             _weaponCharge = 0;
             _state = WeaponState.IdleState;
@@ -84,15 +90,13 @@ namespace ArtillerySeries.src
                 X = 0,
                 Y = -5
             };
-        }
-
-        public Weapon (string name, float minWepAngleDeg, float maxWepAngleDeg)
-            :this(name)
-        {
+            _projectileType = projectileType;
+            _projectileFactory = new ProjectileFactory(_projectileType);
             _minWepAngleRad = Rad(minWepAngleDeg);
             _maxWepAngleRad = Rad(maxWepAngleDeg);
             _weaponAngle = _minWepAngleRad;
             _usesSatellite = false;
+            
         }
         
         public Projectile MainProjectile
@@ -214,8 +218,8 @@ namespace ArtillerySeries.src
 
         public virtual void FireProjectile()
         {
-            Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, _baseDamage, 15, 35);
-            _mainProjectile = projectile;
+            //Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, _baseDamage, 15, 35);
+            _mainProjectile = _projectileFactory.FireProjectile(this, _projectilePos, _projectileVel, _baseDamage, 15, 35);
         }
 
         public void SetProjectile(Projectile projectile)

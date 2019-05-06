@@ -48,7 +48,7 @@ namespace ArtillerySeries.src
 
             _physics = new PhysicsComponent(this);
             _selected = false;
-            _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f);
+            _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f, ProjectileType.MachineGun);
             _weapon2 = new WeaponAcidCannon(30f, 70f);
             _weaponList = new List<Weapon>();
 
