@@ -59,7 +59,8 @@ namespace ArtillerySeries.src
         public World(Rectangle windowRect, InputHandler inputHandler)
         {
             _windowRect = windowRect;
-            _camera = new Camera(windowRect);
+            UserInterface.Instance.World = this;
+            _camera = UserInterface.Instance.Camera;
             _cameraFocusPoint = new CameraFocusPoint();
             _logicalTerrain = new Terrain(_windowRect);
             _environment = new Environment(_windowRect, _camera);
@@ -74,9 +75,7 @@ namespace ArtillerySeries.src
 
             _satellite = new Satellite("Maia", Constants.TerrainWidth / 2, -300);
 
-            UserInterface.Instance.World = this;
-            UserInterface.Instance.Camera = _camera;
-            //UserInterface.Instance.SetWindowRect(_windowRect);
+            
            
 
             _turnCount = 0;

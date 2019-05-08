@@ -97,12 +97,14 @@ namespace ArtillerySeries.src
                 Height = Constants.WindowHeight
             };
 
-            _inputHandler = new InputHandler();
-            _stateComponent = new StateComponent<MenuState>(MenuState.MainMenu);
-
             PhysicsEngine.Instance.SetWindowRect(_windowRect);
             UserInterface.Instance.SetWindowRect(_windowRect);
             UserInterface.Instance.OnNotifyUIEvent = NotifyUIEvent;
+
+            _inputHandler = new InputHandler();
+            _stateComponent = new StateComponent<MenuState>(MenuState.MainMenu);
+
+            
         }
 
         public void NotifyUIEvent(UIEventArgs uiEvent)

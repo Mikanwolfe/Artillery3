@@ -15,7 +15,7 @@ namespace ArtillerySeries.src
         List<UIElement> _uiElements;
         private static UserInterface instance;
         Rectangle _windowRect;
-        World _world;
+        World _world; // remove this and replace with ui args
         Observer _observerInstance;
 
         UI_Combat _uiCombat;
@@ -75,6 +75,7 @@ namespace ArtillerySeries.src
         public void SetWindowRect(Rectangle windowRect)
         {
             _windowRect = windowRect;
+            _camera = new Camera(windowRect);
         }
 
         public void Initialise(MenuState menuState)
@@ -126,7 +127,7 @@ namespace ArtillerySeries.src
 
         public void ShowWinScreen()
         {
-
+            _camera.Zero();
 
 
         }
