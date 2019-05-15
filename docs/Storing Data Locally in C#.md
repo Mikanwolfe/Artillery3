@@ -51,3 +51,18 @@ XML Serialisation for saving the game though. Totally worth for the terrain and 
 
 
 App.Config for the config stuff and loading it into the constants static file. Constants is a bit of a pain  since it's constant, however, if we just keep it static and allow the variables to be edited we can work around the issue and change some things around as we move to MVC
+
+---
+
+Links and stuff
+
+https://www.c-sharpcorner.com/article/is-json-overridden-xml/
+
+https://stackoverflow.com/questions/1941928/best-way-to-store-data-locally-in-net-c
+
+https://stackoverflow.com/questions/13043530/what-is-app-config-in-c-net-how-to-use-it
+
+https://www.guru99.com/c-sharp-serialization.html
+
+https://stackoverflow.com/questions/10864755/adding-and-reading-from-a-config-file
+
