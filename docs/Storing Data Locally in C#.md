@@ -34,3 +34,20 @@ Take, for example, the serialised contents of a shape class:
 Example
 ```
 
+
+
+In the case of Artillery 3, we would want to include a large amount of content that is readily accessible and modifiable if necessary. 
+
+
+
+
+
+The decision is JSON. JSON is more readable than XML, the Newtonsoft JSON.NET is super easy to use and it helps with the rather large number of properties for... a lot of things.
+
+
+
+XML Serialisation for saving the game though. Totally worth for the terrain and stuff.
+
+
+
+App.Config for the config stuff and loading it into the constants static file. Constants is a bit of a pain  since it's constant, however, if we just keep it static and allow the variables to be edited we can work around the issue and change some things around as we move to MVC
