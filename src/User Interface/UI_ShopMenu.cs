@@ -11,6 +11,6 @@ namespace ArtillerySeries.src
     public class UI_ShopMenu : UIElementAssembly
     {
         Rectangle _windowRect = UserInterface.Instance.WindowRect;
-
+        //I just need this to work.
     }
 }
