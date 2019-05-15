@@ -303,27 +303,10 @@ namespace ArtillerySeries.src
             
             _world = new World(_windowRect, _inputHandler);
             _world.OnNotifyGameEnded = EndCombatStage;
-            //PhysicsEngine.Instance.Clear();
-            //EntityManager.Instance.Clear();
             ParticleEngine.Instance.Clear();
 
             UserInterface.Instance.Initialise(MenuState.CombatStage);
 
-            /*
-            Player player1 = new Player("Restia", _world);
-            Character Innocentia = new Character("Innocentia", 100, 200);
-            player1.Character = Innocentia;
-
-
-            Player player2 = new Player("Est", _world);
-            Character char2 = new Character("Materia", 100, 200);
-            player2.Character = char2;
-
-            Player player3 = new Player("Aria", _world);
-            Character char3 = new Character("Yves", 100, 200);
-            player3.Character = char3;
-
-    */
 
             List<Player> players = _uiEventArgs.Players;
             foreach (Player p in players)
@@ -332,15 +315,6 @@ namespace ArtillerySeries.src
                 p.Initiallise();
                 _world.AddPlayer(p);
             }
-            /*
-            player1.Initiallise();
-            player2.Initiallise();
-            player3.Initiallise();
-
-            _world.AddPlayer(player1);
-            _world.AddPlayer(player2);
-            _world.AddPlayer(player3);
-            */
             
             _world.CyclePlayers();
             _world.NewSession();
@@ -353,7 +327,6 @@ namespace ArtillerySeries.src
 
         public void ExitCombatStage()
         {
-            //SwinGame.SetCameraPos(ZeroPoint2D());
             PhysicsEngine.Instance.Clear();
             EntityManager.Instance.Clear();
             ParticleEngine.Instance.Clear();
