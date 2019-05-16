@@ -75,8 +75,8 @@ namespace ArtillerySeries.src
 
             _satellite = new Satellite("Maia", Constants.TerrainWidth / 2, -300);
 
+
             
-           
 
             _turnCount = 0;
         }
