@@ -14,8 +14,21 @@ namespace Artillery
     public class Artillery
     {
         Rectangle _windowRect;
+        bool UserExitRequested = false;
+        
+        public Artillery()
+        {
+            LoadResources();
+            _windowRect = new Rectangle
+            {
+                Width = Artillery.Constants.WindowWidth,
+                Height = Artillery.Constants.WindowHeight
+            };
 
 
+
+
+        }
         
 
         public void Run()
@@ -26,6 +39,31 @@ namespace Artillery
 
 
 
+        }
+
+        private void LoadResources()
+        {
+            SwinGame.LoadBitmapNamed("windMarker", "windmarker.png");
+            SwinGame.LoadBitmapNamed("testButton", "testbutton.png");
+            SwinGame.LoadBitmapNamed("menuLogo", "menu_logo.png");
+            SwinGame.LoadBitmapNamed("menuGradientFull", "menu_gradient_fulltrans.png");
+            SwinGame.LoadBitmapNamed("menuGradientHalf", "menu_gradient_halftrans.png");
+            SwinGame.LoadBitmapNamed("startButton", "menu_start.png");
+            SwinGame.LoadBitmapNamed("loadButton", "menu_load.png");
+            SwinGame.LoadBitmapNamed("optionsButton", "menu_options.png");
+            SwinGame.LoadBitmapNamed("exitButton", "menu_exit.png");
+
+            SwinGame.LoadBitmapNamed("startButtonSelected", "menu_start_selected.png");
+            SwinGame.LoadBitmapNamed("loadButtonSelected", "menu_load_selected.png");
+            SwinGame.LoadBitmapNamed("optionsButtonSelected", "menu_options_selected.png");
+            SwinGame.LoadBitmapNamed("exitButtonSelected", "menu_exit_selected.png");
+
+
+            SwinGame.LoadSoundEffectNamed("laser_satellite", "magicSorcery_Short1_edit.wav");
+            SwinGame.LoadSoundEffectNamed("satellite_prep", "satellite_prep.wav");
+            SwinGame.LoadSoundEffectNamed("menuSound", "koikenmenu.ogg");
+
+            SwinGame.LoadFontNamed("guiFont", "maven_pro_regular.ttf", 12);
         }
 
         /* ----------------------------------- Constants ----------------------------------- */
