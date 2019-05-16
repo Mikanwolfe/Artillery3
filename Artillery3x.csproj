@@ -148,8 +148,9 @@
     <Content Include="Resources\sounds\satellite_prep.wav" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\ArtilleryGame.cs" />
+    <Compile Include="src\Artillery.cs" />
     <Compile Include="src\GameMain.cs" />
+    <Compile Include="src\TestClass.cs" />
     <Compile Include="src\Utilities.cs" />
   </ItemGroup>
   <Target Name="CopyLibsToOut">
