@@ -4,10 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using Newtonsoft.Json;
+using static Artillery.Utilities;
 
-namespace ArtillerySeries.src
+namespace Artillery
 {
-    class ArtilleryGame
+    public class ArtilleryGame
     {
+        public static class Constants
+        {
+            public const string SettingsLocation = "settings.json";
+        }
+
+
     }
 }

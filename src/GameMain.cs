@@ -1,7 +1,7 @@
 ﻿using System;
 
-namespace ArtillerySeries.src
-{
+namespace Artillery
+{ 
     public class GameMain
     {
 

@@ -3,9 +3,9 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug-Windows</Configuration>
     <ProjectGuid>{2127FE68-7227-40EA-A85F-DDE575159B2D}</ProjectGuid>
-    <RootNamespace>ArtillerySeries</RootNamespace>
+    <RootNamespace>Artillery</RootNamespace>
     <MonoMacResourcePrefix>Resources</MonoMacResourcePrefix>
-    <AssemblyName>Artillery3</AssemblyName>
+    <AssemblyName>Artillery3x</AssemblyName>
     <SuppressXamMacUpsell>True</SuppressXamMacUpsell>
     <SuppressXamMacMigration>True</SuppressXamMacMigration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -36,71 +36,6 @@
     <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyLibsToOut</PrepareForRunDependsOn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="src\Entities\Projectiles\AcidProjectile.cs" />
-    <Compile Include="src\ArtilleryFunctions.cs" />
-    <Compile Include="src\User Interface\UI_ShopMenu.cs" />
-    <Compile Include="src\World\Camera.cs" />
-    <Compile Include="src\World\CameraFocusPoint.cs" />
-    <Compile Include="src\World\CelestialBody.cs" />
-    <Compile Include="src\Entities\Players\Character.cs" />
-    <Compile Include="src\Commands\ChargeWeaponCommand.cs" />
-    <Compile Include="src\Commands\Command.cs" />
-    <Compile Include="src\Commands\DepressWeaponCommand.cs" />
-    <Compile Include="src\Entities\DrawableObject.cs" />
-    <Compile Include="src\Commands\ElevateWeaponCommand.cs" />
-    <Compile Include="src\Entities\Entity.cs" />
-    <Compile Include="src\Entities\EntityAssembly.cs" />
-    <Compile Include="src\Managers\EntityManager.cs" />
-    <Compile Include="src\World\Environment.cs" />
-    <Compile Include="src\World\EnvironmentPreset.cs" />
-    <Compile Include="src\GameMain.cs" />
-    <Compile Include="src\ArtilleryGame.cs" />
-    <Compile Include="src\Entities\Players\Hull.cs" />
-    <Compile Include="src\InputHandler.cs" />
-    <Compile Include="src\Entities\Projectiles\Laser.cs" />
-    <Compile Include="src\Commands\MoveLeftCommand.cs" />
-    <Compile Include="src\Commands\MoveRightCommand.cs" />
-    <Compile Include="src\Components\Observer.cs" />
-    <Compile Include="src\Components\ObserverComponent.cs" />
-    <Compile Include="src\Particles\Particle.cs" />
-    <Compile Include="src\Managers\ParticleEngine.cs" />
-    <Compile Include="src\Components\PhysicsComponent.cs" />
-    <Compile Include="src\Managers\PhysicsEngine.cs" />
-    <Compile Include="src\Entities\Players\Player.cs" />
-    <Compile Include="src\Entities\Projectiles\Projectile.cs" />
-    <Compile Include="src\Entities\Projectiles\ProjectileFactory.cs" />
-    <Compile Include="src\World\Satellite.cs" />
-    <Compile Include="src\Components\StateComponent.cs" />
-    <Compile Include="src\Commands\SwitchWeaponCommand.cs" />
-    <Compile Include="src\World\Terrain.cs" />
-    <Compile Include="src\World\TerrainFactory.cs" />
-    <Compile Include="src\World\TerrainFactoryMidpoint.cs" />
-    <Compile Include="src\World\TerrainFactoryRandom.cs" />
-    <Compile Include="src\Particles\TextParticle.cs" />
-    <Compile Include="src\User Interface\UIElementAssembly.cs" />
-    <Compile Include="src\User Interface\UIEventArgs.cs" />
-    <Compile Include="src\User Interface\UI_Button.cs" />
-    <Compile Include="src\User Interface\UI_Combat.cs" />
-    <Compile Include="src\User Interface\UI_DynamicImage.cs" />
-    <Compile Include="src\User Interface\UI_LoadingBar.cs" />
-    <Compile Include="src\User Interface\UI_MainMenu.cs" />
-    <Compile Include="src\User Interface\UI_PlayerSelect.cs" />
-    <Compile Include="src\User Interface\UI_StaticImage.cs" />
-    <Compile Include="src\User Interface\UI_Text.cs" />
-    <Compile Include="src\User Interface\UI_WinScreen.cs" />
-    <Compile Include="src\Entities\UpdatableObject.cs" />
-    <Compile Include="src\Managers\UserInterface.cs" />
-    <Compile Include="src\User Interface\UIElement.cs" />
-    <Compile Include="src\User Interface\UserInterfaceObserver.cs" />
-    <Compile Include="src\Entities\Players\Vehicle.cs" />
-    <Compile Include="src\Entities\Players\Weapons\Weapon.cs" />
-    <Compile Include="src\Commands\FireWeaponCommand.cs" />
-    <Compile Include="src\Entities\Players\Weapons\WeaponAcidCannon.cs" />
-    <Compile Include="src\World\Wind.cs" />
-    <Compile Include="src\World\World.cs" />
-    <Compile Include="src\Components\WorldObserver.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -111,7 +46,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="src\Components\ClassDiagram.cd" />
     <None Include="Resources\animations\startup.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -212,6 +146,11 @@
     <Content Include="Resources\images\windmarker.png" />
     <Content Include="Resources\sounds\magicSorcery_Short1_edit.wav" />
     <Content Include="Resources\sounds\satellite_prep.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="src\ArtilleryGame.cs" />
+    <Compile Include="src\GameMain.cs" />
+    <Compile Include="src\Utilities.cs" />
   </ItemGroup>
   <Target Name="CopyLibsToOut">
     <Copy SourceFiles="@(WinLibs)" DestinationFolder="$(OutDir)" />

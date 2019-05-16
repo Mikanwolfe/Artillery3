@@ -16,6 +16,20 @@ Verdict:
 
 
 
+
+
+## App.Config
+
+Will only use for tech specs. 
+
+https://stackoverflow.com/questions/1565898/app-config-vs-custom-xml-file
+
+See second ans
+
+![1557965923034](C:\repos\Artillery3\docs\Storing Data Locally in C#-assets\1557965923034.png)
+
+Hence, using a JSON for this is easier using newtonsoft.json
+
 ## Storing Data Locally in C#
 
 As with many games, A3 requires content to run. A3 defines classes and it's from those classes we create some objects to mess around with, and it's these objects that A3 just can't seem to get enough of.
