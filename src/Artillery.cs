@@ -14,8 +14,8 @@ namespace Artillery
     public class Artillery
     {
         Rectangle _windowRect;
-        bool UserExitRequested = false;
-        
+        bool _userExitRequested = false;
+
         public Artillery()
         {
             LoadResources();
@@ -25,19 +25,36 @@ namespace Artillery
                 Height = Artillery.Constants.WindowHeight
             };
 
-
-
-
         }
-        
+
 
         public void Run()
         {
+            try
+            {
+                SwinGame.TryOpenAudio();
+            }
+            catch (Exception e)
+            {
+                //Not like it's an issue.
+            }
 
-            
+            SwinGame.OpenGraphicsWindow("Artillery3", Artillery.Constants.WindowWidth, Artillery.Constants.WindowHeight);
+            SwinGame.ClearScreen(Color.White);
+
+
+            while (!SwinGame.WindowCloseRequested() && !_userExitRequested)
+            {
+
+                SwinGame.ProcessEvents();
 
 
 
+
+            }
+            SwinGame.RefreshScreen(60);
+            SwinGame.CloseAudio();
+            SwinGame.ReleaseAllResources();
 
         }
 
