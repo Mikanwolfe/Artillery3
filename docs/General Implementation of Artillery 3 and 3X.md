@@ -40,6 +40,24 @@ This was originally intended to allow the player to control multiple entities, b
 
 
 
+### Command Design pattern
+
+I have to thoroughly look into this again and to some extent, I'd like to re-jig this to work with a console system.
+
+However, all the character interactions are done through the command design pattern. I might also be able to turn other method calls into the command design pattern and have one central command manager that the console can access.
+
+Command also allows me to control the characters through the AI, though the implementation-level stuff here I'm not too familiar with at current. 
+
+### Abstract Factory design pattern
+
+The terrain is generated through the abstract factory which decouples the terrain generation from the terrain itself and the world that it is placed in.
+
+#### Composition
+
+Composition over inheritance--change thins from concrete classes to abstract, and allow them to be set and unset. This would be the inversion principle using interfaces.
+
+
+
 ### Design Patterns
 
 The entities originally utilised the composite design pattern as I thought that would simplify the process, however, as all entities have slightly different logic this was eventually thrown out of the door.
