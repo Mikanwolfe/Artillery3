@@ -23,7 +23,8 @@ namespace Artillery
         #region Methods
         public override void Draw()
         {
-
+            _a3Data.LogicalTerrain.Draw();
+            Console.WriteLine("Drawing terrain...");
         }
 
         public override void Exit()
@@ -35,7 +36,7 @@ namespace Artillery
         {
             Console.WriteLine("Look, we're in the combat state. You happy?");
 
-            
+            _a3Data.GenerateTerrain();
 
         }
 

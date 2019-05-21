@@ -17,7 +17,7 @@ namespace Artillery
 
         #region Fields
 
-        Camera _camera;
+        
         Rectangle _windowRect = new Rectangle()
         {
             Width = Artillery.Constants.WindowWidth,
@@ -30,6 +30,8 @@ namespace Artillery
             Height = Artillery.Constants.WindowHeight + Artillery.Constants.TerrainBoxPadding
         };
 
+        Camera _camera;
+
         Terrain _logicalTerrain;
         List<Terrain> _bgTerrain = new List<Terrain>(Artillery.Constants.NumBgTerrain);
 
@@ -41,7 +43,9 @@ namespace Artillery
 
         public A3Data()
         {
+            _camera = new Camera(_windowRect);
             _terrainFactory = new TerrainFactoryMidpoint(_windowRect, _terrainBox, _camera);
+            
         }
 
 
@@ -60,6 +64,8 @@ namespace Artillery
         #region Properties
 
         public TerrainFactory TerrainFactory { get => _terrainFactory; set => _terrainFactory = value; }
+        public Terrain LogicalTerrain { get => _logicalTerrain; set => _logicalTerrain = value; }
+        public List<Terrain> BgTerrain { get => _bgTerrain; set => _bgTerrain = value; }
 
         #endregion
     }

@@ -56,9 +56,10 @@ namespace Artillery
 
                 _gameStateManager.Update();
                 _gameStateManager.Draw();
+                SwinGame.RefreshScreen(60);
 
             }
-            SwinGame.RefreshScreen(60);
+            
             SwinGame.CloseAudio();
             SwinGame.ReleaseAllResources();
 

@@ -105,7 +105,13 @@ Hence, a composite design would allow for the main object to send information to
 
 Sprites can rotate. Bitmaps can't. I won't be using most of the functionality so I'll use a wrapper and interface with the IDrawableComponent DIP.
 
+### MVC Ideas incorporated
 
+The A3Data data structure is similar to that of MVC. It's not plain-old as it does contain logic, however, it doesn't have an update method and is prompted to do stuff or be manipulated by the rest of the code.
+
+this helps centralise all the data and information, as well as non-persistent memory such as presets and whatnot.
+
+also helps with terrain presets and whatnot.
 
 ### StateManager and StateMachines
 

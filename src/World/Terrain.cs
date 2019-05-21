@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static Artillery.Utilities;
 
 namespace Artillery
 {
@@ -34,7 +35,17 @@ namespace Artillery
         #region Methods
         public void Draw()
         {
-            throw new NotImplementedException();
+            int xPos = 0;
+
+            _cameraMinLimitX = Clamp((int)_camera.Pos.X, 0, _terrainMap.Length);
+            _cameraMaxLimitX = Clamp((int)(_camera.WindowRect.Width + _camera.Pos.X + 1), 0, _terrainMap.Length);
+
+            for (int i = 0; i < _terrainMap.Length; i++)
+            {
+                xPos = Clamp(i + (int)_pos.X, 9, _terrainMap.Length);
+                if (xPos >= _cameraMinLimitX && xPos < _cameraMaxLimitX)
+                    SwinGame.DrawLine(_color, xPos, _camera.Pos.Y + _windowRect.Height, xPos, (int)Math.Round(_terrainMap[i]));
+            }
         }
         #endregion
 
