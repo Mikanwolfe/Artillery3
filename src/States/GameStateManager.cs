@@ -12,13 +12,16 @@ namespace Artillery
 
         #region Fields
         Stack<GameState> _stateStack;
+        GameState _prevState;
+        A3Data _a3Data;
         #endregion
 
         #region Constructor
-        public GameStateManager(GameState initState)
+        public GameStateManager(A3Data a3Data)
         {
             _stateStack = new Stack<GameState>();
-            PushState(initState);
+            _a3Data = a3Data;
+            PushState(new CombatState(_a3Data));
         }
         #endregion
 
@@ -28,7 +31,7 @@ namespace Artillery
         {
             //The logic for the state movement goes here, states should not know about each other inside the 
             // state themselves but rather, only the state manager knows.
-            PopState();
+            _prevState = PopState();
             PushState(nextState);            
         }
 

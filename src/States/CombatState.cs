@@ -11,13 +11,12 @@ namespace Artillery
         #region Fields
 
 
-
         #endregion
 
         #region Constructor
-        public CombatState(A3Data a3Data) : base(a3Data)
+        public CombatState(A3Data a3Data) 
+            : base(a3Data)
         {
-
         }
         #endregion
 
@@ -35,6 +34,9 @@ namespace Artillery
         public override void Initialise()
         {
             Console.WriteLine("Look, we're in the combat state. You happy?");
+
+            
+
         }
 
         public override void Update()

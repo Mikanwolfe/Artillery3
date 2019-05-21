@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SwinGameSDK;
 
 namespace Artillery
 {
@@ -17,7 +18,22 @@ namespace Artillery
         #region Fields
 
         Camera _camera;
+        Rectangle _windowRect = new Rectangle()
+        {
+            Width = Artillery.Constants.WindowWidth,
+            Height = Artillery.Constants.WindowHeight
+        };
+
+        Rectangle _terrainBox = new Rectangle()
+        {
+            Width = Artillery.Constants.WindowWidth + Artillery.Constants.TerrainBoxPadding,
+            Height = Artillery.Constants.WindowHeight + Artillery.Constants.TerrainBoxPadding
+        };
+
         Terrain _logicalTerrain;
+        List<Terrain> _bgTerrain = new List<Terrain>(Artillery.Constants.NumBgTerrain);
+
+        TerrainFactory _terrainFactory;
 
         #endregion
 
@@ -25,12 +41,25 @@ namespace Artillery
 
         public A3Data()
         {
-            //nothing for now
-
-
-
+            _terrainFactory = new TerrainFactoryMidpoint(_windowRect, _terrainBox, _camera);
         }
 
+
+
+        #endregion
+
+        #region Methods
+
+        public void GenerateTerrain()
+        {
+            _logicalTerrain = _terrainFactory.Generate(Color.Green);
+        }
+
+        #endregion
+
+        #region Properties
+
+        public TerrainFactory TerrainFactory { get => _terrainFactory; set => _terrainFactory = value; }
 
         #endregion
     }

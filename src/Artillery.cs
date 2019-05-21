@@ -37,13 +37,12 @@ namespace Artillery
             }
             catch (Exception e)
             {
-                Console.WriteLine("Audio failed to open: " + e.Message);
-                //Not like it's an issue.
+                Console.WriteLine("Audio failed to open: " + e.Message); //Not like it's an issue.
             }
 
             
             A3Data _a3Data = new A3Data();
-            GameState CurrentState = new CombatState(_a3Data);
+            GameStateManager _gameStateManager = new GameStateManager(_a3Data);
 
             SwinGame.OpenGraphicsWindow("Artillery3x", Artillery.Constants.WindowWidth, Artillery.Constants.WindowHeight);
 
@@ -55,10 +54,8 @@ namespace Artillery
                 SwinGame.ClearScreen(Color.White);
                 SwinGame.ProcessEvents();
 
-                CurrentState.Update();
-                CurrentState.Draw();
-
-
+                _gameStateManager.Update();
+                _gameStateManager.Draw();
 
             }
             SwinGame.RefreshScreen(60);
@@ -124,7 +121,9 @@ namespace Artillery
         public int TerrainWidth;
         public float TerrainReductionCoef;
         public int AverageTerrainHeight;
+        public int TerrainBoxPadding;
         public int BaseTerrainInitialDisplacement;
+        public int NumBgTerrain;
     }
 
 }
