@@ -10,6 +10,8 @@ namespace Artillery
     {
         void Update();
         void Draw();
+        void Initialise();
+        void Exit();
     }
     public class GameState: IGameState, IDrawableComponent
     {
@@ -32,12 +34,22 @@ namespace Artillery
 
         #region Methods
 
-        public void Draw()
+        public virtual void Draw()
         {
             
         }
 
-        public void Update()
+        public virtual void Exit()
+        {
+
+        }
+
+        public virtual void Initialise()
+        {
+
+        }
+
+        public virtual void Update()
         {
             
         }

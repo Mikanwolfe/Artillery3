@@ -22,7 +22,25 @@ namespace Artillery
         #endregion
 
         #region Methods
+        public override void Draw()
+        {
 
+        }
+
+        public override void Exit()
+        {
+
+        }
+
+        public override void Initialise()
+        {
+            Console.WriteLine("Look, we're in the combat state. You happy?");
+        }
+
+        public override void Update()
+        {
+
+        }
         #endregion
 
         #region Properties

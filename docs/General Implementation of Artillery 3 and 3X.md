@@ -105,6 +105,12 @@ Hence, a composite design would allow for the main object to send information to
 
 Sprites can rotate. Bitmaps can't. I won't be using most of the functionality so I'll use a wrapper and interface with the IDrawableComponent DIP.
 
+
+
+### StateManager and StateMachines
+
+Only the state manager knows the transitions between states, the states themselves are wholly unaware of which to and from transitions they undergo.
+
 ### Doubles vs Floats
 
 Floats are 16b and since we have a lot of numbers, let's go with floats for performance reasons.

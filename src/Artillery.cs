@@ -19,6 +19,7 @@ namespace Artillery
         public Artillery()
         {
             LoadResources();
+            
             _windowRect = new Rectangle
             {
                 Width = Artillery.Constants.WindowWidth,
@@ -40,7 +41,9 @@ namespace Artillery
                 //Not like it's an issue.
             }
 
+            
             A3Data _a3Data = new A3Data();
+            GameState CurrentState = new CombatState(_a3Data);
 
             SwinGame.OpenGraphicsWindow("Artillery3x", Artillery.Constants.WindowWidth, Artillery.Constants.WindowHeight);
 
@@ -52,6 +55,8 @@ namespace Artillery
                 SwinGame.ClearScreen(Color.White);
                 SwinGame.ProcessEvents();
 
+                CurrentState.Update();
+                CurrentState.Draw();
 
 
 

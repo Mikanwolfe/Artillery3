@@ -14,9 +14,10 @@ namespace Artillery
          * 
          */
 
-
         #region Fields
 
+        Camera _camera;
+        Terrain _logicalTerrain;
 
         #endregion
 
