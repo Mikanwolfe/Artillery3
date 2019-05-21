@@ -32,6 +32,73 @@ After reading up on a number of game design structures and design patterns, espe
 
 Furthermore, I then made a child class that was a Drawable Object, however, in hindsight I did not fully define the concept of a drawable object and therefore it did not have a position (though it required one) which caused significant issues later when defining the idea of an entity and later, a particle. In 3X I intend to fix this and have Entities and Particles again as seperate systems (as they don't generally interact) though Particles do have the ability to damage entities. I may use the DIP to separate the concept of entities from the entity engine and combine the two, though they are quite different in a number of ways.
 
+## From the bottom up
+
+Entities are drawable objects, entities have a lot more components composed of lots of other things. This is important as I did not want artillery to have a rigid hierarchy structure, hence, only characters and potentially other concepts inherit from entity.
+
+### The concept of an entity and definitions of certain objects
+
+**Updatable Object**
+
+* Enum Disabled, Enabled
+
+**Drawable Component** 
+
+* Inherits from above enum, most game elements are of this class
+
+* Game element
+* Has position
+* has "Drawable wrapper" -- An A3X construct that acts as a sprite wrapper
+* Does not have rotation
+
+**IDrawable Wrapper**
+
+* Internal information such as rotation, visbility, etc. all passed to drawable for access
+* A3x Construct
+
+**Entity**
+
+* Most active gameobjects
+* Characters are entities
+* Particles are entities
+* Components
+  * I am Damageable
+  * I can Damage
+  * I have PhysicsComponent
+  * I have DrawableComponent
+
+Things that are entities:
+
+* Characters
+* Destructible objects
+  * Cities
+  * Crates
+  * Item Drops
+* Satellite
+
+**Entity Components**
+
+* Allow entity to inherit (other things too but it's specifically for entity)
+
+## The concept of Characters
+
+* They have a name
+* They have a description
+* They have 
+
+
+
+### Content loading and character factories
+
+* Characters have complex instantiation made worse by the fact that they require JSON object information from the data file, hence, I'll probably have to make a character factory to deal with this
+
+
+### Drawable Component or Composition?
+
+One of the issues is that since the position is stored by the drawable object, the information has ot be passed to the base class. This required a weird workaround using the UpdatePosition method to class information back and forth whilst keeping with encapsulation.
+
+Hence, a composite design would allow for the main object to send information to a child instead of a parent, since the drawable object needs a position but does not manipulate it, it doesn't make sense for it to store it.
+
 ## The Idea of Players from A2 and A3
 
 A2 had the player be a physical entity in the world. A3 saw the player as a container to the physical entity in the world, containing a character, which was the entity the player could control. I did not notice this at first, however, this was the implementation of the Dependency inversion principle at work as it would soon allow me to disconnect the concept of characters from the players altogether although this will take quite some predetermined work. Hence, the characters will soon be able to be controlled by the AI instead of simply players.
