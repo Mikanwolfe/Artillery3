@@ -17,6 +17,9 @@ namespace Artillery
         {
             _enabled = true;
         }
+
+        public bool Enabled { get => _enabled; set => _enabled = value; }
+
         public abstract void Update();
     }
 }

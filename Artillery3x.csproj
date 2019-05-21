@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="README.md" />
     <None Include="Resources\animations\startup.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -149,9 +150,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\Artillery.cs" />
+    <Compile Include="src\Components\DrawableComponent.cs" />
+    <Compile Include="src\Components\Vector.cs" />
     <Compile Include="src\GameMain.cs" />
-    <Compile Include="src\TestClass.cs" />
+    <Compile Include="src\UpdatableObject.cs" />
     <Compile Include="src\Utilities.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\Core\" />
   </ItemGroup>
   <Target Name="CopyLibsToOut">
     <Copy SourceFiles="@(WinLibs)" DestinationFolder="$(OutDir)" />

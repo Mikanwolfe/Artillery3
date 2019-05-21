@@ -99,6 +99,12 @@ One of the issues is that since the position is stored by the drawable object, t
 
 Hence, a composite design would allow for the main object to send information to a child instead of a parent, since the drawable object needs a position but does not manipulate it, it doesn't make sense for it to store it.
 
+
+
+### Sprites vs Bitmaps
+
+Sprites can rotate. Bitmaps can't. I won't be using most of the functionality so I'll use a wrapper and interface with the IDrawableComponent DIP.
+
 ## The Idea of Players from A2 and A3
 
 A2 had the player be a physical entity in the world. A3 saw the player as a container to the physical entity in the world, containing a character, which was the entity the player could control. I did not notice this at first, however, this was the implementation of the Dependency inversion principle at work as it would soon allow me to disconnect the concept of characters from the players altogether although this will take quite some predetermined work. Hence, the characters will soon be able to be controlled by the AI instead of simply players.

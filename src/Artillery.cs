@@ -32,20 +32,21 @@ namespace Artillery
         {
             try
             {
-                SwinGame.TryOpenAudio();
+                SwinGame.OpenAudio();
             }
             catch (Exception e)
             {
+                Console.WriteLine("Audio failed to open: " + e.Message);
                 //Not like it's an issue.
             }
 
-            SwinGame.OpenGraphicsWindow("Artillery3", Artillery.Constants.WindowWidth, Artillery.Constants.WindowHeight);
+            SwinGame.OpenGraphicsWindow("Artillery3x", Artillery.Constants.WindowWidth, Artillery.Constants.WindowHeight);
             SwinGame.ClearScreen(Color.White);
 
 
             while (!SwinGame.WindowCloseRequested() && !_userExitRequested)
             {
-
+                SwinGame.ClearScreen(Color.White);
                 SwinGame.ProcessEvents();
 
 
@@ -57,6 +58,8 @@ namespace Artillery
             SwinGame.ReleaseAllResources();
 
         }
+
+        /* ----------------------------------- Unimportant stuff ----------------------------------- */
 
         private void LoadResources()
         {
@@ -85,7 +88,7 @@ namespace Artillery
 
         /* ----------------------------------- Constants ----------------------------------- */
 
-        static string SettingsFile = "settings.json";
+        static string SettingsFile = "settings.json"; // Yes this is hard-coded. App.Config change maybe.
         private static Constants _constants;
         public static Constants Constants
         {
@@ -103,6 +106,7 @@ namespace Artillery
     }
     public class Constants
     {
+        private Constants() { }
         public string InitString;
         public int WindowWidth;
         public int WindowHeight;
