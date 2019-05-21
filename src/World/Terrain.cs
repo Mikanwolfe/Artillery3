@@ -42,7 +42,7 @@ namespace Artillery
 
             for (int i = 0; i < _terrainMap.Length; i++)
             {
-                xPos = Clamp(i + (int)_pos.X, 9, _terrainMap.Length);
+                xPos = Clamp(i + (int)_pos.X, 0, _terrainMap.Length);
                 if (xPos >= _cameraMinLimitX && xPos < _cameraMaxLimitX)
                     SwinGame.DrawLine(_color, xPos, _camera.Pos.Y + _windowRect.Height, xPos, (int)Math.Round(_terrainMap[i]));
             }

@@ -120,6 +120,7 @@ namespace Artillery
         public int CameraPadding;
         public int CameraMaxHeight;
         public int TerrainWidth;
+        public int TerrainHeight;
         public float TerrainReductionCoef;
         public int AverageTerrainHeight;
         public int TerrainBoxPadding;

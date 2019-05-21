@@ -26,8 +26,8 @@ namespace Artillery
 
         Rectangle _terrainBox = new Rectangle()
         {
-            Width = Artillery.Constants.WindowWidth + Artillery.Constants.TerrainBoxPadding,
-            Height = Artillery.Constants.WindowHeight + Artillery.Constants.TerrainBoxPadding
+            Width = Artillery.Constants.TerrainWidth + Artillery.Constants.TerrainBoxPadding,
+            Height = Artillery.Constants.TerrainHeight + Artillery.Constants.TerrainBoxPadding
         };
 
         Camera _camera;

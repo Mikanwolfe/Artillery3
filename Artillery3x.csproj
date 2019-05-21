@@ -152,7 +152,8 @@
     <Compile Include="src\Artillery.cs" />
     <Compile Include="src\Core\A3Data.cs" />
     <Compile Include="src\Components\DrawableComponent.cs" />
-    <Compile Include="src\Core\Command.cs" />
+    <Compile Include="src\Comands\Command.cs" />
+    <Compile Include="src\Entities\Entity.cs" />
     <Compile Include="src\Core\ZeroVector.cs" />
     <Compile Include="src\States\GameStateManager.cs" />
     <Compile Include="src\States\CombatState.cs" />
@@ -160,7 +161,7 @@
     <Compile Include="src\Core\Vector.cs" />
     <Compile Include="src\GameMain.cs" />
     <Compile Include="src\Core\UpdatableObject.cs" />
-    <Compile Include="src\Core\InputHandler.cs" />
+    <Compile Include="src\Comands\InputHandler.cs" />
     <Compile Include="src\Core\Camera.cs" />
     <Compile Include="src\World\Terrain.cs" />
     <Compile Include="src\Utilities.cs" />

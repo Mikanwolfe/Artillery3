@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace Artillery
 { 
     public class GameMain
