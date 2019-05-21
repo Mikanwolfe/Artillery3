@@ -9,30 +9,34 @@ namespace Artillery
 {
     public class Vector
     {
-        double _x = 0;
-        double _y = 0;
 
+        float _x = 0;
+        float _y = 0;
 
-        public Vector(double x, double y)
+        #region Constructors
+        public Vector(float x, float y)
         {
             _x = x;
             _y = y;
         }
-        public Vector(float x, float y)
-            : this((double)x, (double)y)
+        public Vector(double x, double y)
+            : this((float)x, (float)y)
         {
 
         }
-        
+
         public Vector(Point2D pt)
             : this(pt.X, pt.Y)
         {
 
         }
+        #endregion
+
+        #region Methods
 
         public void Normalise()
         {
-            double magnitude = Math.Sqrt((_x * _x) + (_y * _y));
+            float magnitude = (float)Math.Sqrt((_x * _x) + (_y * _y));
             _x /= magnitude;
             _y /= magnitude;
         }
@@ -42,15 +46,19 @@ namespace Artillery
             get => Math.Sqrt((_x * _x) + (_y * _y));
         }
 
+        #endregion
+
+        #region Properties
         public Point2D ToPoint2D
         {
             get => new Point2D()
-                {
-                X = (float)_x,
-                    Y = (float)_y
-                };
+            {
+                X = _x,
+                Y = _y
+            };
         }
-        public double X { get => _x; set => _x = value; }
-        public double Y { get => _y; set => _y = value; }
+        public float X { get => _x; set => _x = value; }
+        public float Y { get => _y; set => _y = value; }
+        #endregion
     }
 }

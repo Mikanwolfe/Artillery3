@@ -10,12 +10,10 @@ namespace Artillery
     public interface IDrawableComponent
     {
         void Draw();
-        Vector Pos { get; set; }
     }
 
     public class DrawableComponent : IDrawableComponent
     {
-        Vector _pos;
         Sprite _sprite;
         
         public DrawableComponent(Sprite sprite)
@@ -28,13 +26,9 @@ namespace Artillery
         {
 
         }
-        public void Draw()
+        public virtual void Draw()
         {
-            _sprite.Draw(Pos.ToPoint2D);
+            _sprite.Draw(new ZeroVector().ToPoint2D);
         }
-
-        public Vector Pos { get => _pos; set => _pos = value; }
-        public double X { get => _pos.X; set => _pos.X = value; }
-        public double Y { get => _pos.Y; set => _pos.Y = value; }
     }
 }

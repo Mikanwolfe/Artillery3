@@ -150,15 +150,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\Artillery.cs" />
+    <Compile Include="src\A3Data.cs" />
     <Compile Include="src\Components\DrawableComponent.cs" />
-    <Compile Include="src\Components\Vector.cs" />
+    <Compile Include="src\States\GameState.cs" />
+    <Compile Include="src\Core\Vector.cs" />
     <Compile Include="src\GameMain.cs" />
-    <Compile Include="src\UpdatableObject.cs" />
+    <Compile Include="src\Core\UpdatableObject.cs" />
     <Compile Include="src\Utilities.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="src\Core\" />
-  </ItemGroup>
+  <ItemGroup />
   <Target Name="CopyLibsToOut">
     <Copy SourceFiles="@(WinLibs)" DestinationFolder="$(OutDir)" />
   </Target>

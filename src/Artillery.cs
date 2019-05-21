@@ -40,8 +40,11 @@ namespace Artillery
                 //Not like it's an issue.
             }
 
+            A3Data _a3Data = new A3Data();
+
             SwinGame.OpenGraphicsWindow("Artillery3x", Artillery.Constants.WindowWidth, Artillery.Constants.WindowHeight);
-            SwinGame.ClearScreen(Color.White);
+
+            LoadResources();
 
 
             while (!SwinGame.WindowCloseRequested() && !_userExitRequested)

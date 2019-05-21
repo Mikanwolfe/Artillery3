@@ -105,6 +105,16 @@ Hence, a composite design would allow for the main object to send information to
 
 Sprites can rotate. Bitmaps can't. I won't be using most of the functionality so I'll use a wrapper and interface with the IDrawableComponent DIP.
 
+### Doubles vs Floats
+
+Floats are 16b and since we have a lot of numbers, let's go with floats for performance reasons.
+
+Originally vectors used doubles but this was rescinded.
+
+### Command
+
+DIP between Swingame.Handleinput and the game
+
 ## The Idea of Players from A2 and A3
 
 A2 had the player be a physical entity in the world. A3 saw the player as a container to the physical entity in the world, containing a character, which was the entity the player could control. I did not notice this at first, however, this was the implementation of the Dependency inversion principle at work as it would soon allow me to disconnect the concept of characters from the players altogether although this will take quite some predetermined work. Hence, the characters will soon be able to be controlled by the AI instead of simply players.
