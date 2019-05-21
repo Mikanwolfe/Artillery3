@@ -14,6 +14,12 @@ namespace Artillery
         float _y = 0;
 
         #region Constructors
+
+        public Vector()
+            : this(0, 0)
+        {
+
+        }
         public Vector(float x, float y)
         {
             _x = x;

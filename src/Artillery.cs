@@ -113,6 +113,13 @@ namespace Artillery
         public string InitString;
         public int WindowWidth;
         public int WindowHeight;
+        public float CameraEaseSpeed;
+        public int CameraPadding;
+        public int CameraMaxHeight;
+        public int TerrainWidth;
+        public float TerrainReductionCoef;
+        public int AverageTerrainHeight;
+        public int BaseTerrainInitialDisplacement;
     }
 
 }

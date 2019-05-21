@@ -30,19 +30,15 @@ namespace ArtillerySeries.src
         public Rectangle WindowRect { get => _windowRect; }
         public Random Random { get => _random; set => _random = value; }
         public float ReductionCoef { get => _reductionCoef; set => _reductionCoef = value; }
-
         public Rectangle TerrainBox { get => _terrainBox; }
-
         public Camera CameraInstance { get => _camera; set => value = _camera; }
         protected int PowerCeiling( float baseValue, float exp)
         {
             return (int)Math.Ceiling(Math.Log(exp, baseValue));
         }
 
-
         public abstract Terrain Generate(Color color);
         public abstract Terrain Generate(Color color, int averageTerrainHeight);
         public abstract Terrain Generate(Color color, int averageTerrainHeight, float reductionCoef);
-
     }
 }

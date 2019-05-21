@@ -16,13 +16,19 @@ namespace Artillery
         Rectangle _windowRect;
         Vector _pos; //The terrain moves!
         private Color _color; //assigned by factory based on gamedata
-        //private Camera _camera = null; <-- this will be stored in the game data
+        private Camera _camera = null;
         private int _cameraMinLimitX, _cameraMaxLimitX;
         private int _terrainDistance = 0; //used for parallax
 
         #endregion
 
         #region Constructor
+        public Terrain(Rectangle windowRect, Camera camera)
+        {
+            _windowRect = windowRect;
+            _pos = new Vector();
+            _camera = camera;
+        }
         #endregion
 
         #region Methods
@@ -33,6 +39,11 @@ namespace Artillery
         #endregion
 
         #region Properties
+        public float[] Map { get => _terrainMap; set => _terrainMap = value; }
+        public Color Color { get => _color; set => _color = value; }
+        public Camera CameraInstance { get => _camera; set => _camera = value; }
+        public Vector Pos { get => _pos; }
+        public int TerrainDistance { get => _terrainDistance; set => _terrainDistance = value; }
         #endregion
 
     }
