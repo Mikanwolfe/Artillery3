@@ -8,9 +8,21 @@ namespace Artillery
 {
     public interface IPhysicsComponent
     {
-        PhysicsComponent Physics { get; set; }
+        void Update();
+        Vector Pos { get; set; }
+        Vector Vel { get; set; }
+        Vector Acc { get; set; }
+        float WeightMult { get; set; }
+        float FricCoef { get; set; }
+        float WindFricMult { get; set; }
+        double AbsAngle { get; set; }
+        double RelAngle { get; set; }
+        bool OnGround { get; }
+        bool GravityEnabeld { get; set; }
+        bool HasGroundFriction { get; set; }
+        bool CanCollideWithGround { get; set; }
     }
-    public class PhysicsComponent : UpdatableObject
+    public class PhysicsComponent : UpdatableObject, IPhysicsComponent
     {
         #region Fields
         bool _toBeRemoved = false;
@@ -57,6 +69,12 @@ namespace Artillery
                 _facing = Direction.Right;
             if (_vel.X < 0)
                 _facing = Direction.Left;
+
+            if (_facing == Direction.Right)
+                _relAngle = _absAngle;
+            else
+                _relAngle = _absAngle * -1;
+
             _acc.X = 0;
             _acc.Y = 0;
         }
@@ -77,6 +95,7 @@ namespace Artillery
         public bool GravityEnabled { get => _gravityEnabled; set => _gravityEnabled = value; }
         public bool HasGroundFriction { get => _hasGroundFriction; set => _hasGroundFriction = value; }
         public bool CanCollideWithGround { get => _canCollideWithGround; set => _canCollideWithGround = value; }
+        public bool GravityEnabeld { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         #endregion
 
     }
