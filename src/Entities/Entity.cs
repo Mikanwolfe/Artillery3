@@ -17,7 +17,8 @@ namespace Artillery
     {
 
         #region Fields
-        DrawableComponent _drawableComponent;
+        IDrawableComponent _drawableComponent;
+        bool _toBeRemoved;
         string _name;
         string _shortDesc;
         string _longDesc;
@@ -37,6 +38,8 @@ namespace Artillery
             _direction = Direction.Left;
             _absAngle = 0;
             _pos = new Vector();
+
+            Services.Instance.EntityManager.AddEntity(this);
         }
         #endregion
 
@@ -48,7 +51,7 @@ namespace Artillery
 
         public virtual void Draw()
         {
-            
+            _drawableComponent.Draw();
         }
         #endregion
 
@@ -57,9 +60,10 @@ namespace Artillery
         public string ShortDesc { get => _shortDesc; set => _shortDesc = value; }
         public string LongDesc { get => _longDesc; set => _longDesc = value; }
         public Direction Direction { get => _direction; set => _direction = value; }
-        public float AbsAngle { get => _absAngle; set => _absAngle = value; }
+        public double AbsAngle { get => _absAngle; set => _absAngle = value; }
         public Vector Pos { get => _pos; set => _pos = value; }
-        public DrawableComponent DrawableComponent { get => _drawableComponent; set => _drawableComponent = value; }
+        public IDrawableComponent DrawableComponent { get => _drawableComponent; set => _drawableComponent = value; }
+        public bool ToBeRemoved { get => _toBeRemoved; set => _toBeRemoved = value; }
         #endregion
 
     }

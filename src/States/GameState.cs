@@ -57,7 +57,7 @@ namespace Artillery
         #endregion
 
         #region Properties
-
+        public Vector Pos => null;
         #endregion
     }
 }

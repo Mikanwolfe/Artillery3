@@ -10,25 +10,65 @@ namespace Artillery
     public interface IDrawableComponent
     {
         void Draw();
+        Vector Pos { get; }
     }
 
     public class DrawableComponent : IDrawableComponent
     {
+
+
+        #region Fields
         Sprite _sprite;
-        
-        public DrawableComponent(Sprite sprite)
+        IDrawableComponent _parent;
+        #endregion
+
+        #region Constructor
+
+        public DrawableComponent(IDrawableComponent parent)
         {
+            _parent = parent;
+            _sprite = null;
+        }
+
+        public DrawableComponent(IDrawableComponent parent, Sprite sprite)
+        {
+            _parent = parent;
             _sprite = sprite;
         }
 
-        public DrawableComponent(Bitmap bitmap)
-            : this(new Sprite(bitmap))
+        public DrawableComponent(IDrawableComponent parent, Bitmap bitmap)
+            : this(parent, new Sprite(bitmap))
         {
 
         }
+        #endregion
+
+        #region Methods
+
+
         public virtual void Draw()
         {
-            _sprite.Draw(new ZeroVector().ToPoint2D);
+            if (Pos != null)
+            {
+                if (_sprite != null)
+                {
+                    _sprite.Draw(new ZeroVector().ToPoint2D);
+                }
+                else
+                {
+                    SwinGame.FillCircle(Color.Red, Pos.ToPoint2D, 3);
+                }
+
+            }
+
         }
+
+        #endregion
+
+        #region Properties
+        public Vector Pos => _parent.Pos;
+        #endregion
+
+
     }
 }

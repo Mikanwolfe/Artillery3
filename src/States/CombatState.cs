@@ -17,6 +17,7 @@ namespace Artillery
         public CombatState(A3Data a3Data) 
             : base(a3Data)
         {
+            Character Innocentia = new Character("Innocentia");
         }
         #endregion
 

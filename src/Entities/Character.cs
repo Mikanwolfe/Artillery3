@@ -49,6 +49,9 @@ namespace Artillery
             _physicsComponent = new PhysicsComponent(this);
             _damageComponent = new DamageableComponent(this);
             _stateComponent = new StateComponent<ChararacterState>(ChararacterState.Idle);
+
+            DrawableComponent = new DrawableComponent(this);
+
         }
 
         #endregion

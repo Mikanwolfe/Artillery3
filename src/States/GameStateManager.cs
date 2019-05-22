@@ -14,6 +14,7 @@ namespace Artillery
         Stack<GameState> _stateStack;
         GameState _prevState;
         A3Data _a3Data;
+
         #endregion
 
         #region Constructor
@@ -60,7 +61,7 @@ namespace Artillery
         #endregion
 
         #region Properties
-
+        public Vector Pos => null;
         #endregion
     }
 }
