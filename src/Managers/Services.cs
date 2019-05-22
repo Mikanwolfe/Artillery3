@@ -16,6 +16,7 @@ namespace Artillery
         #region Fields
         private static Services _instance;
         private IEntityManager _entityManager;
+        private IPhysicsEngine _physicsEngine;
 
         #endregion
 
@@ -35,13 +36,14 @@ namespace Artillery
             }
         }
 
-        public IEntityManager EntityManager { get => _entityManager; set => _entityManager = value; }
         #endregion
 
         #region Methods
         #endregion
 
         #region Properties
+        public IEntityManager EntityManager { get => _entityManager; set => _entityManager = value; }
+        public IPhysicsEngine PhysicsEngine { get => _physicsEngine; set => _physicsEngine = value; }
         #endregion
     }
 }

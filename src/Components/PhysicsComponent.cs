@@ -42,6 +42,7 @@ namespace Artillery
         #region Constructor
         public PhysicsComponent(IPhysicsComponent parent)
         {
+            Artillery.Services.PhysicsEngine
             _parent = parent;
             _pos = new Vector();
             _vel = new Vector();

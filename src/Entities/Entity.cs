@@ -39,7 +39,7 @@ namespace Artillery
             _absAngle = 0;
             _pos = new Vector();
 
-            Services.Instance.EntityManager.AddEntity(this);
+            Artillery.Services.EntityManager.AddEntity(this);
         }
         #endregion
 

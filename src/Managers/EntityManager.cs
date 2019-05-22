@@ -14,23 +14,18 @@ namespace Artillery
         void Draw();
         bool HasEntity(Entity e);
         bool HasEntity(string name);
-        List<Entity> Entities { get; }
     }
     public class EntityManager : IEntityManager
     {
         #region Fields
-        List<Entity> _entities;
-        List<Entity> _entitiesToAdd;
-        List<Entity> _entitiesToRemove;
+        A3Data _a3Data;
 
         #endregion
 
         #region Constructor
-        public EntityManager()
+        public EntityManager(A3Data a3Data)
         {
-            _entities = new List<Entity>();
-            _entitiesToAdd = new List<Entity>();
-            _entitiesToRemove = new List<Entity>();
+            
 
         }
         #endregion

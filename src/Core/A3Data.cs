@@ -16,8 +16,10 @@ namespace Artillery
          */
 
         #region Fields
+        List<Entity> _entities;
+        List<Entity> _entitiesToAdd;
+        List<Entity> _entitiesToRemove;
 
-        
         Rectangle _windowRect = new Rectangle()
         {
             Width = Artillery.Constants.WindowWidth,
@@ -45,7 +47,11 @@ namespace Artillery
         {
             _camera = new Camera(_windowRect);
             _terrainFactory = new TerrainFactoryMidpoint(_windowRect, _terrainBox, _camera);
-            
+
+            _entities = new List<Entity>();
+            _entitiesToAdd = new List<Entity>();
+            _entitiesToRemove = new List<Entity>();
+
         }
 
 

@@ -67,6 +67,11 @@ namespace Artillery
 
         /* ----------------------------------- Unimportant stuff ----------------------------------- */
 
+        public static Services Services
+        {
+            get => Services.Instance;
+        }
+
         private void LoadResources()
         {
             SwinGame.LoadBitmapNamed("windMarker", "windmarker.png");
