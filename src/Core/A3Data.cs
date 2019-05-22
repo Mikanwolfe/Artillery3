@@ -17,8 +17,6 @@ namespace Artillery
 
         #region Fields
         List<Entity> _entities;
-        List<Entity> _entitiesToAdd;
-        List<Entity> _entitiesToRemove;
 
         Rectangle _windowRect = new Rectangle()
         {
@@ -49,8 +47,7 @@ namespace Artillery
             _terrainFactory = new TerrainFactoryMidpoint(_windowRect, _terrainBox, _camera);
 
             _entities = new List<Entity>();
-            _entitiesToAdd = new List<Entity>();
-            _entitiesToRemove = new List<Entity>();
+            
 
         }
 
@@ -59,6 +56,7 @@ namespace Artillery
         #endregion
 
         #region Methods
+        //This should be empty in the end maybe
 
         public void GenerateTerrain()
         {
@@ -72,6 +70,7 @@ namespace Artillery
         public TerrainFactory TerrainFactory { get => _terrainFactory; set => _terrainFactory = value; }
         public Terrain LogicalTerrain { get => _logicalTerrain; set => _logicalTerrain = value; }
         public List<Terrain> BgTerrain { get => _bgTerrain; set => _bgTerrain = value; }
+        public List<Entity> Entities { get => _entities; set => _entities = value; }
 
         #endregion
     }

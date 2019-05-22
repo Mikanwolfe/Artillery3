@@ -159,6 +159,7 @@
     <Compile Include="src\Core\ZeroVector.cs" />
     <Compile Include="src\Components\PhysicsComponent.cs" />
     <Compile Include="src\Components\StateComponent.cs" />
+    <Compile Include="src\Managers\PhysicsEngine.cs" />
     <Compile Include="src\Managers\EntityManager.cs" />
     <Compile Include="src\Managers\Services.cs" />
     <Compile Include="src\States\GameStateManager.cs" />
