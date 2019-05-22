@@ -42,6 +42,8 @@ namespace Artillery
 
             
             A3Data _a3Data = new A3Data();
+            Services.Instance.Initialise(_a3Data);
+
             GameStateManager _gameStateManager = new GameStateManager(_a3Data);
 
             SwinGame.OpenGraphicsWindow("Artillery3x", Artillery.Constants.WindowWidth, Artillery.Constants.WindowHeight);
@@ -53,6 +55,9 @@ namespace Artillery
             {
                 SwinGame.ClearScreen(Color.White);
                 SwinGame.ProcessEvents();
+
+                Services.Update();
+                Services.Draw();
 
                 _gameStateManager.Update();
                 _gameStateManager.Draw();
@@ -121,6 +126,7 @@ namespace Artillery
         public string InitString;
         public int WindowWidth;
         public int WindowHeight;
+        public float Gravity;
         public float CameraEaseSpeed;
         public int CameraPadding;
         public int CameraMaxHeight;

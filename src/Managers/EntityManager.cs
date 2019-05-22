@@ -28,6 +28,7 @@ namespace Artillery
         #region Constructor
         public EntityManager(A3Data a3Data)
         {
+            _a3Data = a3Data;
             _entitiesToAdd = new List<Entity>();
             _entitiesToRemove = new List<Entity>();
             _entities = _a3Data.Entities;
@@ -40,7 +41,7 @@ namespace Artillery
         public void Initialise(A3Data a3Data)
         {
             _a3Data = a3Data;
-            //clear thje rest
+            
         }
         public void Update()
         {

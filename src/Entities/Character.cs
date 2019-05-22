@@ -40,6 +40,7 @@ namespace Artillery
         IStateComponent<ChararacterState> _stateComponent;
 
         bool _isSelected = false;
+        bool _diesUponExitingScreen = false;
 
         #endregion
 
@@ -136,10 +137,11 @@ namespace Artillery
         public float WindFricMult { get => _physicsComponent.WindFricMult; set => _physicsComponent.WindFricMult = value; }
         double IPhysicsComponent.AbsAngle { get => _physicsComponent.AbsAngle; set => _physicsComponent.AbsAngle = value; }
         public double RelAngle { get => _physicsComponent.RelAngle; set => _physicsComponent.RelAngle = value; }
-        public bool OnGround => _physicsComponent.OnGround;
-        public bool GravityEnabeld { get => _physicsComponent.GravityEnabeld; set => _physicsComponent.GravityEnabeld = value; }
+        public bool OnGround { get => _physicsComponent.OnGround; set => _physicsComponent.OnGround = value; }
+        public bool GravityEnabled { get => _physicsComponent.GravityEnabled; set => _physicsComponent.GravityEnabled = value; }
         public bool HasGroundFriction { get => _physicsComponent.HasGroundFriction; set => _physicsComponent.HasGroundFriction = value; }
         public bool CanCollideWithGround { get => _physicsComponent.CanCollideWithGround; set => _physicsComponent.CanCollideWithGround = value; }
+        public bool DiesUponExitingScreen { get => _diesUponExitingScreen; set => _diesUponExitingScreen = value; }
         #endregion
 
     }

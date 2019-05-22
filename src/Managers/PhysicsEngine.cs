@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SwinGameSDK;
+using static Artillery.Utilities;
 
 namespace Artillery
 {
@@ -15,10 +17,6 @@ namespace Artillery
     {
 
         #region Fields
-
-        List<Entity> _components;
-        List<Entity> _componentsToAdd;
-        List<Entity> _componentsToRemove;
 
         A3Data _a3Data;
 
@@ -36,24 +34,78 @@ namespace Artillery
 
         public void Initialise(A3Data a3Data)
         {
-            _components.Clear();
-            _componentsToAdd.Clear();
-            _componentsToRemove.Clear();
-
-            _a3Data = a3Data;
-
-            foreach (Entity e in _a3Data.Entities)
-            {
-                IPhysicsComponent component = e as IPhysicsComponent;
-                if (e != null)
-                    _components.Add(e);
-            }
 
         }
 
         public void Update()
         {
-            
+            IPhysicsComponent component;
+            foreach (Entity e in _a3Data.Entities)
+            {
+                component = e as IPhysicsComponent;
+                if (component != null)
+                {
+                    Simulate(component);
+                }
+            }
+        }
+
+        private void Simulate(IPhysicsComponent e)
+        {
+            if (_a3Data.LogicalTerrain == null)
+                throw new MissingMemberException("No terrain to simulate with! Nothing to stop falls!");
+
+            if (e.Enabled)
+            {
+                if (e.GravityEnabled)
+                    e.Vel.Y += Artillery.Constants.Gravity * e.WeightMult;
+
+                if ((e.Pos.Y >= _a3Data.LogicalTerrain.Map[(int)e.Pos.X]) 
+                             && e.CanCollideWithGround)
+                {
+                    e.Vel.Y = 0;
+                    e.Pos.Y = _a3Data.LogicalTerrain.Map[(int)e.Pos.X];
+                    e.OnGround = true;
+
+                }
+                else
+                {
+                    e.OnGround = false;
+                }
+
+                if (e.OnGround)
+                {
+                    int x = (int)e.Pos.X;
+
+                    float p1 = _a3Data.LogicalTerrain.Map[Clamp((x - 1),
+                        0, _a3Data.LogicalTerrain.Map.Length - 1)];
+                    float p2 = _a3Data.LogicalTerrain.Map[Clamp((x + 1),
+                        0, _a3Data.LogicalTerrain.Map.Length - 1)];
+
+                    e.Vel.X *= (float)Math.Cos(e.RelAngle);
+                    e.Vel.Y *= (float)Math.Cos(e.RelAngle);
+
+                    if (e.HasGroundFriction)
+                        e.Vel.X *= (1 - e.FricCoef);
+
+                    e.AbsAngle= Math.Atan((p1 - p2) / (3));
+                }
+                else
+                {
+
+                    //p.Physics.VelX += _wind.X * p.Physics.WindFrictionMult;
+                    //p.Physics.VelY += _wind.Y * p.Physics.WindFrictionMult;
+
+                }
+
+
+
+                e.Pos += e.Vel;
+
+
+            }
+
+
         }
         #endregion
 

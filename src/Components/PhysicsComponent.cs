@@ -9,6 +9,8 @@ namespace Artillery
     public interface IPhysicsComponent
     {
         void Update();
+        void Die();
+        bool Enabled { get; set; }
         Vector Pos { get; set; }
         Vector Vel { get; set; }
         Vector Acc { get; set; }
@@ -17,10 +19,11 @@ namespace Artillery
         float WindFricMult { get; set; }
         double AbsAngle { get; set; }
         double RelAngle { get; set; }
-        bool OnGround { get; }
-        bool GravityEnabeld { get; set; }
+        bool OnGround { get; set; }
+        bool GravityEnabled { get; set; }
         bool HasGroundFriction { get; set; }
         bool CanCollideWithGround { get; set; }
+        bool DiesUponExitingScreen { get; set; }
     }
     public class PhysicsComponent : UpdatableObject, IPhysicsComponent
     {
@@ -42,7 +45,6 @@ namespace Artillery
         #region Constructor
         public PhysicsComponent(IPhysicsComponent parent)
         {
-            Artillery.Services.PhysicsEngine
             _parent = parent;
             _pos = new Vector();
             _vel = new Vector();
@@ -80,6 +82,11 @@ namespace Artillery
             _acc.Y = 0;
         }
 
+        public void Die()
+        {
+            _parent.Die();
+        }
+
         #endregion
 
         #region Properties
@@ -96,7 +103,7 @@ namespace Artillery
         public bool GravityEnabled { get => _gravityEnabled; set => _gravityEnabled = value; }
         public bool HasGroundFriction { get => _hasGroundFriction; set => _hasGroundFriction = value; }
         public bool CanCollideWithGround { get => _canCollideWithGround; set => _canCollideWithGround = value; }
-        public bool GravityEnabeld { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool DiesUponExitingScreen { get => _parent.DiesUponExitingScreen; set => _parent.DiesUponExitingScreen = value; }
         #endregion
 
     }

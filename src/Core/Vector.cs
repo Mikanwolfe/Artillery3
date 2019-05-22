@@ -52,6 +52,16 @@ namespace Artillery
             get => Math.Sqrt((_x * _x) + (_y * _y));
         }
 
+        public static Vector operator +(Vector a, Vector b)
+        {
+            return new Vector(a.X + b.X, a.Y + b.Y);
+        }
+
+        public static Vector operator -(Vector a, Vector b)
+        {
+            return new Vector(a.X - b.X, a.Y - b.Y);
+        }
+
         #endregion
 
         #region Properties

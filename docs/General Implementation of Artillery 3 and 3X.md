@@ -86,7 +86,13 @@ Things that are entities:
 * They have a description
 * They have 
 
+### SwinGame Wrappers
 
+POINT2D AND OTHER CLASSES ARE SEALED!!! WHAT A PAIN!!!
+
+Hence, `Vector` deals by creating a wrapper for Point2D... or rather, it's used instead of Point2D and contains a cast for it, `Vector.ToPoint2D`.
+
+You can ACTUALLY ADD VECTORS!!! `a += b` WORKS! YOU CAN'T DO THAT TO POINT2Ds!!
 
 ### Content loading and character factories
 
@@ -112,6 +118,17 @@ The A3Data data structure is similar to that of MVC. It's not plain-old as it do
 this helps centralise all the data and information, as well as non-persistent memory such as presets and whatnot.
 
 also helps with terrain presets and whatnot.
+
+##### The reversed and implemented design of singleton engine and services
+
+* singleton physics and co have been turned into a Services singleton
+* Physics, Entity, Particles, don't store the data anymore, it's in A3Data
+* PhysicsEngine just uses the list supplied by passive conversion from A3Data. The list of entities is passed and particles are passed to the engine.
+* A good measure of coupling is the number of `new` keywords there are in the code. The physicsengine has **none**.
+
+#### Current inverted cone analogy
+
+The game used to have a game-centric structure with distributed data. Now it's a3-data centred with the game revolving around manipulating the basic A3Data structure.
 
 ### StateManager and StateMachines
 

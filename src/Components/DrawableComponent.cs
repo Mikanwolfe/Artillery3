@@ -56,7 +56,7 @@ namespace Artillery
                 }
                 else
                 {
-                    SwinGame.FillCircle(Color.Red, Pos.ToPoint2D, 3);
+                    SwinGame.FillCircle(Color.Red, Pos.ToPoint2D, 5);
                 }
 
             }

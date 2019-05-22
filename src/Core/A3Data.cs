@@ -18,6 +18,8 @@ namespace Artillery
         #region Fields
         List<Entity> _entities;
 
+        Random _random = new Random();
+
         Rectangle _windowRect = new Rectangle()
         {
             Width = Artillery.Constants.WindowWidth,

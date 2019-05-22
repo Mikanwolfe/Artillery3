@@ -16,8 +16,6 @@ namespace Artillery
     public class GameState: IGameState, IDrawableComponent
     {
         #region Fields
-
-        protected static Random _random = new Random();
         protected A3Data _a3Data;
         protected InputHandler _inputHandler = new InputHandler();
 

@@ -8,7 +8,8 @@ namespace Artillery
 {
     public interface IServices
     {
-
+        void Update();
+        void Draw();
     }
     public class Services : IServices
     {
@@ -17,6 +18,7 @@ namespace Artillery
         private static Services _instance;
         private IEntityManager _entityManager;
         private IPhysicsEngine _physicsEngine;
+        private A3Data _a3Data;
 
         #endregion
 
@@ -24,7 +26,6 @@ namespace Artillery
         private Services()
         {
             _instance = this;
-            _entityManager = new EntityManager();
         }
         public static Services Instance
         {
@@ -39,6 +40,24 @@ namespace Artillery
         #endregion
 
         #region Methods
+
+        public void Update()
+        {
+            _entityManager.Update();
+            _physicsEngine.Update();
+        }
+
+        public void Draw()
+        {
+            _entityManager.Draw();
+        }
+
+        public void Initialise(A3Data a3Data)
+        {
+            _a3Data = a3Data;
+            _entityManager = new EntityManager(_a3Data);
+            _physicsEngine = new PhysicsEngine(_a3Data);
+        }
         #endregion
 
         #region Properties
