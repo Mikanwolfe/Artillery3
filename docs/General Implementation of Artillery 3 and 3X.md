@@ -168,6 +168,8 @@ This doesn't really matter for our implementation, however, it is OOP practice.
 
 (Update after: there is now a base services interface and it's extendable, services are just singletons that can be called to update every frame, and can be disabled.)
 
+
+
 ### Command Design pattern
 
 I have to thoroughly look into this again and to some extent, I'd like to re-jig this to work with a console system.
@@ -175,6 +177,26 @@ I have to thoroughly look into this again and to some extent, I'd like to re-jig
 However, all the character interactions are done through the command design pattern. I might also be able to turn other method calls into the command design pattern and have one central command manager that the console can access.
 
 Command also allows me to control the characters through the AI, though the implementation-level stuff here I'm not too familiar with at current. 
+
+
+
+### How commands work now
+
+* Input-handler is a service and is called every frame.
+  * Input handler's job is to translate keystrokes into command objects. It has an internal dictionary.
+  * it checks for all registered keys that are bound (it has a hard-coded-copy of the keys)
+  * if the key is down it will add the correct command object to the command-stream object inside a3Data. 
+* The Command Processor is a service and is called every frame
+  * It takes the command stream object and executes each of them
+  * It will send the relevant data based on either the object or just simply executes all of them until there are none left.
+
+Everything is built upon abstractions and interfaces, and there is an insane amount of flexibility here.
+
+The important thing to note is that the input handler isn't the only object that should be writing to the command stream. Realistically, the game should check if the current player is AI and suggest whether or not to use the input handler or the AI module. the AI module will then be capable of writing through an adaptor directly to the command stream object, in which case, all the commands will be processed during that frame.
+
+This is a lot of low coupling. No one object really knows details about other objects.
+
+
 
 ### Abstract Factory design pattern
 
