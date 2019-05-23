@@ -37,7 +37,20 @@ namespace Artillery
 
         public void HandleInput(A3Data a3Data) //yes that means we can only handle one command at a time.
         {
-            //foreach registered key, check and add command.
+            foreach (KeyCode k in _registeredKeys)
+            {
+                if (SwinGame.KeyDown(k))
+                {
+                    if (a3Data.SelectedPlayer != null)
+                        _keyToCommands[k].Execute(a3Data.SelectedPlayer);
+                    else
+                        throw new MissingMemberException("selectedPlayer not found", "a3Data.SelectedPlayer");
+                    //We can fix this later
+                }
+
+
+            }
+            
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Artillery
         void Initialise();
         void Exit();
     }
-    public class GameState: IGameState, IDrawableComponent
+    public class GameState: IGameState, IDrawable
     {
         #region Fields
         protected A3Data _a3Data;
@@ -55,7 +55,7 @@ namespace Artillery
         #endregion
 
         #region Properties
-        public Vector Pos => null;
+
         #endregion
     }
 }

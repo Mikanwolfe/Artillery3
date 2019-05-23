@@ -9,6 +9,7 @@ namespace Artillery
     public interface IUpdatable
     {
         void Update();
+        bool Enabled { get; set; }
     }
     public abstract class UpdatableObject : IUpdatable
     {

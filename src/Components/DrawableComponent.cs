@@ -7,9 +7,13 @@ using SwinGameSDK;
 
 namespace Artillery
 {
-    public interface IDrawableComponent
+
+    public interface IDrawable
     {
         void Draw();
+    }
+    public interface IDrawableComponent : IDrawable
+    {     
         Vector Pos { get; }
     }
 

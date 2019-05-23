@@ -19,6 +19,10 @@ namespace Artillery
 
         ICommandStream _commandStream;
 
+        ICharacter _selectedPlayer;
+
+        private int _selectedPlayerIndex;
+
         List<Entity> _entities;
 
         Random _random = new Random();
@@ -62,7 +66,18 @@ namespace Artillery
         #endregion
 
         #region Methods
-        //This should be empty in the end maybe
+
+
+        public void ShufflePlayers()
+        {
+            //Shuffle players that are alive, make sure to let the 
+            // right character know they're selected.
+
+            
+
+
+
+        }
 
         public void GenerateTerrain()
         {
@@ -78,6 +93,7 @@ namespace Artillery
         public List<Terrain> BgTerrain { get => _bgTerrain; set => _bgTerrain = value; }
         public List<Entity> Entities { get => _entities; set => _entities = value; }
         public ICommandStream CommandStream { get => _commandStream; set => _commandStream = value; }
+        public ICharacter SelectedPlayer { get => _selectedPlayer; }
 
         #endregion
     }

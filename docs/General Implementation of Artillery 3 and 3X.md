@@ -150,9 +150,23 @@ A2 had the player be a physical entity in the world. A3 saw the player as a cont
 
 This was originally intended to allow the player to control multiple entities, but for now, will be unable to do so.
 
+
+
+#### About players and cycling them
+
+
+
 #### Input Handler
 
-Input handler doesn't execute inputs, it simply captures inputs for the game stores them as commands in a3Data's command stack/stream. Furthermore all the AI does is just emit a stream of commands
+Input handler doesn't execute inputs, it simply captures inputs for the game stores them as commands in a3Data's command stack/stream. Furthermore all the AI does is just emit a stream of commands.
+
+We will also have a command processor, which is an interface that simply allows the execution of all the commands from the a3Data's command stream object. This should be registered as a service.
+
+At this point i *am* tempted to create a services base class, which I might do, but what I **won't do** is create a list of services. In this case, you **do** want a level of rigidity when it comes to what services are allowed since we don't want to allow superfluous services. In the end, what we can do is have the services extendable and to have the engines and core services overwritable via properties from A3. Otherwise, they can default (or to null).
+
+This doesn't really matter for our implementation, however, it is OOP practice.
+
+(Update after: there is now a base services interface and it's extendable, services are just singletons that can be called to update every frame, and can be disabled.)
 
 ### Command Design pattern
 
