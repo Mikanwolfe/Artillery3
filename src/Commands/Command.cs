@@ -9,10 +9,10 @@ namespace Artillery
 
     public interface ICommand
     {
-        void Execute();
+        void Execute(ICharacter c);
     }
     public abstract class Command : ICommand
     {
-        public abstract void Execute();
+        public abstract void Execute(ICharacter c);
     }
 }

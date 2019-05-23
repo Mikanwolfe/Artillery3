@@ -16,6 +16,9 @@ namespace Artillery
          */
 
         #region Fields
+
+        ICommandStream _commandStream;
+
         List<Entity> _entities;
 
         Random _random = new Random();
@@ -49,7 +52,8 @@ namespace Artillery
             _terrainFactory = new TerrainFactoryMidpoint(_windowRect, _terrainBox, _camera);
 
             _entities = new List<Entity>();
-            
+
+            _commandStream = new CommandStream();
 
         }
 
@@ -73,6 +77,7 @@ namespace Artillery
         public Terrain LogicalTerrain { get => _logicalTerrain; set => _logicalTerrain = value; }
         public List<Terrain> BgTerrain { get => _bgTerrain; set => _bgTerrain = value; }
         public List<Entity> Entities { get => _entities; set => _entities = value; }
+        public ICommandStream CommandStream { get => _commandStream; set => _commandStream = value; }
 
         #endregion
     }

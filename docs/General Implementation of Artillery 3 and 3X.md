@@ -150,7 +150,9 @@ A2 had the player be a physical entity in the world. A3 saw the player as a cont
 
 This was originally intended to allow the player to control multiple entities, but for now, will be unable to do so.
 
+#### Input Handler
 
+Input handler doesn't execute inputs, it simply captures inputs for the game stores them as commands in a3Data's command stack/stream. Furthermore all the AI does is just emit a stream of commands
 
 ### Command Design pattern
 

@@ -150,9 +150,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\Artillery.cs" />
+    <Compile Include="src\Commands\CommandStream.cs" />
     <Compile Include="src\Core\A3Data.cs" />
     <Compile Include="src\Components\DrawableComponent.cs" />
-    <Compile Include="src\Comands\Command.cs" />
+    <Compile Include="src\Commands\Command.cs" />
+    <Compile Include="src\Commands\CommandMove.cs" />
     <Compile Include="src\Entities\Character.cs" />
     <Compile Include="src\Components\DamageableComponent.cs" />
     <Compile Include="src\Entities\Entity.cs" />
@@ -168,7 +170,7 @@
     <Compile Include="src\Core\Vector.cs" />
     <Compile Include="src\GameMain.cs" />
     <Compile Include="src\Core\UpdatableObject.cs" />
-    <Compile Include="src\Comands\InputHandler.cs" />
+    <Compile Include="src\Commands\InputHandler.cs" />
     <Compile Include="src\Core\Camera.cs" />
     <Compile Include="src\World\Terrain.cs" />
     <Compile Include="src\Utilities.cs" />
