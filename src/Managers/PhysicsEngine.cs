@@ -19,6 +19,7 @@ namespace Artillery
         #region Fields
 
         A3Data _a3Data;
+        private bool _enabled;
 
         #endregion
 
@@ -28,24 +29,29 @@ namespace Artillery
             _a3Data = a3Data;
         }
 
+        public bool Enabled { get => _enabled; set => _enabled = value; }
+
         #endregion
 
         #region Methods
 
         public void Initialise(A3Data a3Data)
         {
-
+            _enabled = true;
         }
 
         public void Update()
         {
-            IPhysicsComponent component;
-            foreach (Entity e in _a3Data.Entities)
+            if (!Enabled)
             {
-                component = e as IPhysicsComponent;
-                if (component != null)
+                IPhysicsComponent component;
+                foreach (Entity e in _a3Data.Entities)
                 {
-                    Simulate(component);
+                    component = e as IPhysicsComponent;
+                    if (component != null)
+                    {
+                        Simulate(component);
+                    }
                 }
             }
         }

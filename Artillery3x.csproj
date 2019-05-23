@@ -154,13 +154,14 @@
     <Compile Include="src\Core\A3Data.cs" />
     <Compile Include="src\Components\DrawableComponent.cs" />
     <Compile Include="src\Commands\Command.cs" />
-    <Compile Include="src\Commands\CommandMove.cs" />
+    <Compile Include="src\Commands\CommandCharacters.cs" />
     <Compile Include="src\Entities\Character.cs" />
     <Compile Include="src\Components\DamageableComponent.cs" />
     <Compile Include="src\Entities\Entity.cs" />
     <Compile Include="src\Core\ZeroVector.cs" />
     <Compile Include="src\Components\PhysicsComponent.cs" />
     <Compile Include="src\Components\StateComponent.cs" />
+    <Compile Include="src\Managers\CommandProcessor.cs" />
     <Compile Include="src\Managers\PhysicsEngine.cs" />
     <Compile Include="src\Managers\EntityManager.cs" />
     <Compile Include="src\Managers\Services.cs" />

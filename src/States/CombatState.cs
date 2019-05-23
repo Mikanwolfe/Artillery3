@@ -9,7 +9,7 @@ namespace Artillery
     public class CombatState : GameState
     {
         #region Fields
-
+        private IInputHandler _inputHandler;
 
         #endregion
 
@@ -17,7 +17,9 @@ namespace Artillery
         public CombatState(A3Data a3Data) 
             : base(a3Data)
         {
+            _inputHandler = new InputHandler();
             Character Innocentia = new Character("Innocentia");
+            _a3Data.SelectedPlayer = Innocentia;
         }
         #endregion
 
@@ -43,7 +45,7 @@ namespace Artillery
 
         public override void Update()
         {
-
+            _inputHandler.HandleInput(_a3Data);
         }
         #endregion
 

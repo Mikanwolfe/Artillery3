@@ -17,6 +17,8 @@ namespace Artillery
         private static Services _instance;
         private IEntityManager _entityManager;
         private IPhysicsEngine _physicsEngine;
+        private ICommandProcessor _commandProcessor;
+
         private bool _enabled = true;
 
         private List<IServices> _services;
@@ -49,6 +51,7 @@ namespace Artillery
         {
             _entityManager.Update();
             _physicsEngine.Update();
+            _commandProcessor.Update(_a3Data);
 
             foreach (IServices s in _services)
             {
@@ -73,6 +76,8 @@ namespace Artillery
             _a3Data = a3Data;
             _entityManager = new EntityManager(_a3Data);
             _physicsEngine = new PhysicsEngine(_a3Data);
+
+            _commandProcessor = new CommandProcessor();
         }
 
         public void AddService(IServices service)
@@ -93,6 +98,11 @@ namespace Artillery
         public void SetEntityManager(IEntityManager e)
         {
             _entityManager = e;
+        }
+
+        public void SetCommandProcessor(ICommandProcessor c)
+        {
+            _commandProcessor = c;
         }
 
         #endregion

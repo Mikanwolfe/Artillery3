@@ -10,11 +10,13 @@ namespace Artillery
     {
         void AddCommand(ICommand c);
         void FlushCommands();
+        bool Finished { get; }
 
     }
     public class CommandStream : ICommandStream
     {
         private Stack<ICommand> _commands;
+        public bool Finished => (_commands.Count == 0);
 
         public CommandStream()
         {
@@ -23,7 +25,7 @@ namespace Artillery
 
         public void Execute(ICharacter c)
         {
-            if (_commands.Peek() != null)
+            if (_commands.Count != 0)
             {
                 ICommand _currentCommand = _commands.Pop();
                 _currentCommand.Execute(c);

@@ -84,12 +84,12 @@ namespace Artillery
 
         public void MoveLeft()
         {
-            throw new NotImplementedException();
+            Pos.X -= 1;
         }
 
         public void MoveRight()
         {
-            throw new NotImplementedException();
+            Pos.X += 1;
         }
 
         public void Fire()

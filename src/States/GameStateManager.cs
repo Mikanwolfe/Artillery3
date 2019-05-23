@@ -14,7 +14,7 @@ namespace Artillery
         Stack<GameState> _stateStack;
         GameState _prevState;
         A3Data _a3Data;
-
+        private bool _enabled;
         #endregion
 
         #region Constructor
@@ -23,6 +23,7 @@ namespace Artillery
             _stateStack = new Stack<GameState>();
             _a3Data = a3Data;
             PushState(new CombatState(_a3Data));
+            _enabled = true;
         }
         #endregion
 
@@ -62,6 +63,8 @@ namespace Artillery
 
         #region Properties
         public Vector Pos => null;
+
+        public bool Enabled { get => _enabled; set => _enabled = value; }
         #endregion
     }
 }
