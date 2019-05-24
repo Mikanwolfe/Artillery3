@@ -239,3 +239,10 @@ or
 rather, characters shouldn't be tied to input method.
 
 players inherit from characters (just in case they want to be an observer for example) and therefore contain the input method component.
+
+
+
+## Weapons and coupling
+
+Won't be rewriting the system due to time constraints, however this is highly coupled and therefore soldered together, the IWeapon interface was removed since it was becoming needlessly complicated anyway.
+
