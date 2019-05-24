@@ -8,7 +8,7 @@ using static Artillery.Utilities;
 
 namespace Artillery
 {
-    public interface ICharacter
+    public interface ICharacter: ICameraCanFocus, IPhysicsComponent
     {
         void MoveLeft();
         void MoveRight();
@@ -18,7 +18,6 @@ namespace Artillery
         void ChargeWeapon();
         void NewTurn();
         void SwitchWeapon();
-
         void MoveToPosition(Vector pos);
 
     }
@@ -31,7 +30,7 @@ namespace Artillery
         Dead,
         EndTurn
     }
-    public class Character : Entity, ICharacter, IPhysicsComponent, IDamageableComponent
+    public class Character : Entity, ICharacter, IDamageableComponent
     {
 
         #region Fields
@@ -130,6 +129,7 @@ namespace Artillery
 
         #region Properties
         public IPhysicsComponent Physics { get => _physicsComponent; set => _physicsComponent = value; }
+        public override Vector Pos { get => _physicsComponent.Pos; set => _physicsComponent.Pos = value; }
         public Vector Vel { get => _physicsComponent.Vel; set => _physicsComponent.Vel = value; }
         public Vector Acc { get => _physicsComponent.Acc; set => _physicsComponent.Acc = value; }
         public float WeightMult { get => _physicsComponent.WeightMult; set => _physicsComponent.WeightMult = value; }

@@ -17,7 +17,7 @@ namespace Artillery
         {
             while (!a3Data.CommandStream.Finished)
             {
-                a3Data.CommandStream.Execute(a3Data.SelectedPlayer);
+                a3Data.CommandStream.Execute(a3Data.SelectedPlayer.Character);
             }
         }
     }

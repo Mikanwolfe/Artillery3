@@ -55,7 +55,7 @@ namespace Artillery
                 if (SwinGame.KeyDown(k))
                 {
                     if (a3Data.SelectedPlayer != null)
-                        _keyToCommands[k].Execute(a3Data.SelectedPlayer);
+                        _keyToCommands[k].Execute(a3Data.SelectedPlayer.Character);
                     else
                         throw new MissingMemberException("selectedPlayer not found", "a3Data.SelectedPlayer");
                     //We can fix this later

@@ -61,7 +61,7 @@ namespace Artillery
         public string LongDesc { get => _longDesc; set => _longDesc = value; }
         public Direction Direction { get => _direction; set => _direction = value; }
         public double AbsAngle { get => _absAngle; set => _absAngle = value; }
-        public Vector Pos { get => _pos; set => _pos = value; }
+        virtual public Vector Pos { get => _pos; set => _pos = value; }
         public IDrawableComponent DrawableComponent { get => _drawableComponent; set => _drawableComponent = value; }
         public bool ToBeRemoved { get => _toBeRemoved; set => _toBeRemoved = value; }
         #endregion

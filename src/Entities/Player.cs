@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace Artillery
 {
-    public interface IPlayer : ICharacter
+    public interface IPlayer
     {
         IInputMethod InputMethod { get; set; }
+        ICharacter Character { get; set; }
     }
-    public class Player : ICharacter, IPlayer
+    public class Player : IPlayer
     {
 
 
@@ -18,6 +19,8 @@ namespace Artillery
         ICharacter _character;
         IInputMethod _inputMethod;
         string _playerName;
+
+        
         #endregion
 
         #region Constructor
@@ -26,61 +29,16 @@ namespace Artillery
             _playerName = playerName;  
             _inputMethod = inputMethod;
         }
-
-
         #endregion
 
         #region Methods
+
         #endregion
 
         #region Properties
         public ICharacter Character { get => _character; set => _character = value; }
         public IInputMethod InputMethod { get => _inputMethod; set => _inputMethod = value; }
 
-        public void AimWeaponDown()
-        {
-            _character.AimWeaponDown();
-        }
-
-        public void AimWeaponUp()
-        {
-            _character.AimWeaponUp();
-        }
-
-        public void ChargeWeapon()
-        {
-            _character.ChargeWeapon();
-        }
-
-        public void Fire()
-        {
-            _character.Fire();
-        }
-
-        public void MoveLeft()
-        {
-            _character.MoveLeft();
-        }
-
-        public void MoveRight()
-        {
-            _character.MoveRight();
-        }
-
-        public void MoveToPosition(Vector pos)
-        {
-            _character.MoveToPosition(pos);
-        }
-
-        public void NewTurn()
-        {
-            _character.NewTurn();
-        }
-
-        public void SwitchWeapon()
-        {
-            _character.SwitchWeapon();
-        }
         #endregion
 
 
