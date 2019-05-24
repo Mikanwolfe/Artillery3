@@ -4,13 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ArtillerySeries.src
+namespace Artillery
 {
-    public abstract class Command
+
+    public interface ICommand
     {
-        public Command() { }
-
-        public abstract void Execute(Character c); // TODO change to entity and make specialised classes
-
+        void Execute(ICharacter c);
+    }
+    public abstract class Command : ICommand
+    {
+        public abstract void Execute(ICharacter c);
     }
 }

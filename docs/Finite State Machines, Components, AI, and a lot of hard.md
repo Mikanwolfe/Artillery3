@@ -52,3 +52,4 @@ State Machine ->> Character: Updated!
 
 
 The final evolution would be a Finite State Machine with a hierarchal structure and possibly the 'utility' design (which uses weighting to decide the next step) and then a neural network to assign the weights. But that's for the AI section. 
+

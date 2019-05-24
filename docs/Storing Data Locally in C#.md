@@ -16,6 +16,20 @@ Verdict:
 
 
 
+
+
+## App.Config
+
+Will only use for tech specs. 
+
+https://stackoverflow.com/questions/1565898/app-config-vs-custom-xml-file
+
+See second ans
+
+![1557965923034](C:\repos\Artillery3\docs\Storing Data Locally in C#-assets\1557965923034.png)
+
+Hence, using a JSON for this is easier using newtonsoft.json
+
 ## Storing Data Locally in C#
 
 As with many games, A3 requires content to run. A3 defines classes and it's from those classes we create some objects to mess around with, and it's these objects that A3 just can't seem to get enough of.
@@ -51,6 +65,18 @@ XML Serialisation for saving the game though. Totally worth for the terrain and 
 
 
 App.Config for the config stuff and loading it into the constants static file. Constants is a bit of a pain  since it's constant, however, if we just keep it static and allow the variables to be edited we can work around the issue and change some things around as we move to MVC
+
+---
+
+The more important discussion was the difficulty in the implementation-level of config.
+
+Artillery uses a static class to store the constants since they can be access from anywhere within artillery, however, you can't serialise a static class as they occur at compile time and not necessarily during run-time, and also it just didn't work.
+
+The goal here was to make it that we could load constants from the .json file using Newton.JSON which would allow us flexibility when producing a larger game. To do this I drew from ideas in c# singleton implementation and created static members of a traditional class that would return the Constants object. This constants object is special since it outlines what the JSON file contains the NewtonSoft.JSON would use this as a template for all the values that are read to it (tokenisation). Hence, by creating a static constructor member that would return a singleton-esque runtime object, we can achieve almost global constants distributions throughout all of artillery by calling Artillery.Constants. 
+
+This also means that we can enforce what the JSON file contains, though it also makes it slightly harder to add new variables since they both have to be identical to work. There might not be a way to do it without the contract interface since it's what the compiler relies on when the code asks for constants, so in a way, it is an interesting use of a not-interface interface.
+
+
 
 ---
 

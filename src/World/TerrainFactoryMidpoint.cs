@@ -5,61 +5,36 @@ using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
 
-namespace ArtillerySeries.src
+namespace Artillery
 {
-    //TODO: Currently limited by window size, will have to expand to accomodate for 
-    //       Camera and camera movement.
-    public class TerrainFactoryMidpoint : TerrainFactory
+    class TerrainFactoryMidpoint : TerrainFactory
     {
+        #region Fields
+        int _averageTerrainHeight = Artillery.Constants.AverageTerrainHeight;
+        #endregion
 
-        int _averageTerrainHeight = Constants.AverageTerrainHeight;
-
-
-        public TerrainFactoryMidpoint(Rectangle windowRect, Rectangle terrainBox) 
-            : base(windowRect, terrainBox)
+        #region Constructor
+        public TerrainFactoryMidpoint(Rectangle windowRect, Rectangle terrainBox, Camera camera)
+            : base(windowRect, terrainBox, camera)
         {
+
         }
+        #endregion
 
-        public TerrainFactoryMidpoint(Rectangle windowRect, int terrainWidth, int terrainDepth)
-            : base(windowRect, new Rectangle() { Width = terrainWidth, Height = terrainDepth })
-        {
-        }
-
-        public TerrainFactoryMidpoint(Rectangle windowRect, int terrainWidth, int terrainDepth, Camera camera)
-            : base(windowRect, new Rectangle() { Width = terrainWidth, Height = terrainDepth }, camera)
-        {
-        }
-
-
-
+        #region Methods
         float RandDisplacement(float displacement)
         {
             return Random.Next((int)displacement * 2) - displacement;
         }
 
-        public override Terrain Generate(Color color, int averageTerrainHeight)
+        public override Terrain Generate(Color color, TerrainOptions options)
         {
-            _averageTerrainHeight = averageTerrainHeight;
-            return Generate(color);
-        }
-
-        public override Terrain Generate(Color color, int averageTerrainHeight, float reductionCoef)
-        {
-            _averageTerrainHeight = averageTerrainHeight;
-            ReductionCoef = reductionCoef;
-            return Generate(color);
+            throw new NotImplementedException();
         }
 
         public override Terrain Generate(Color color)
         {
             Console.WriteLine("Generating Midpoint terrain!");
-            /*
-             * There's quite the difference between maths and code oftentimes.
-             * This implementation of the midpoint displacement algorithm will treat 
-             *  each individual x-value in the 1-d array as a point.
-             *  
-             * These points will be the virtual line segments.
-             */
 
             int requiredExponent = PowerCeiling(2, TerrainBox.Width);
             int requiredWidth = (int)Math.Pow(2f, requiredExponent); //Should be 2^x - 1. e.g. 0..1024
@@ -69,19 +44,10 @@ namespace ArtillerySeries.src
             int xVal;
             float displacement = 200;
 
-            /* -- Terrain Generation, Start! -- */
-
-            /* -- Generating the starting and the ending points -- */
-            /*
-             * Legacy:
-            generatedMap[0] = WindowRect.Height * 2 / 3 + RandDisplacement(WindowRect.Height / 5);
-            generatedMap[requiredWidth] = WindowRect.Height * 2 / 3 + RandDisplacement(WindowRect.Height / 5);
-            */
-
             generatedMap[0] =
-                _averageTerrainHeight + RandDisplacement(Constants.BaseTerrainInitialDisplacement);
+                _averageTerrainHeight + RandDisplacement(Artillery.Constants.BaseTerrainInitialDisplacement);
             generatedMap[requiredWidth] =
-                _averageTerrainHeight + RandDisplacement(Constants.BaseTerrainInitialDisplacement);
+                _averageTerrainHeight + RandDisplacement(Artillery.Constants.BaseTerrainInitialDisplacement);
 
             for (int step = 0; step <= requiredExponent; step++)
             {
@@ -105,7 +71,7 @@ namespace ArtillerySeries.src
             };
             */
 
-            Terrain _terrain = new Terrain(WindowRect);
+            Terrain _terrain = new Terrain(WindowRect, Camera);
             _terrain.Map = new float[(int)TerrainBox.Width];
 
             for (int i = 0; i < _terrain.Map.Length; i++)
@@ -114,14 +80,19 @@ namespace ArtillerySeries.src
             }
             _terrain.Color = color;
 
-            if (CameraInstance != null)
+            if (Camera != null)
             {
-                _terrain.CameraInstance = CameraInstance;
+                _terrain.CameraInstance = Camera;
             }
 
 
 
             return _terrain;
         }
+        #endregion
+
+        #region Properties
+
+        #endregion
     }
 }

@@ -5,60 +5,66 @@ using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
 
-namespace ArtillerySeries.src
+namespace Artillery
 {
-    // A leaf node of the composite pattern used for entities.
-    // Entities are defined as any game thing that is not the UI.
-    // That should have its own composite tree or will be integrated here slowly.
-    // Entities have a position and angle, and face a certain direction, though they don't need to be utilised.
-    public abstract class Entity : DrawableObject, ICameraCanFocus
+    public enum Direction
     {
-        // PhysicsComponent _physicsComponent
+        Left,
+        Right
+    }
 
+    public abstract class Entity : UpdatableObject, IDrawableComponent, ICameraCanFocus
+    {
+
+        #region Fields
+        IDrawableComponent _drawableComponent;
+        bool _toBeRemoved;
         string _name;
         string _shortDesc;
         string _longDesc;
-        Point2D _pos;
-        FacingDirection _direction;
-        float _absAngle;
+        Vector _pos;
+        Direction _direction;
+        double _absAngle;
+        
+        #endregion
 
-        bool _enabled;
-
+        #region Constructor
         public Entity(string name)
         {
             _name = name;
-            _pos = new Point2D();
-            _direction = FacingDirection.Left;
+            _shortDesc = name;
+            _longDesc = " An entity, " + name;
+            Enabled = true;
+            _direction = Direction.Left;
             _absAngle = 0;
-            _enabled = true;
+            _pos = new Vector();
 
+            Artillery.Services.EntityManager.AddEntity(this);
+        }
+        #endregion
 
+        #region Methods
+        public override void Update()
+        {
+            
         }
 
+        public virtual void Draw()
+        {
+            _drawableComponent.Draw();
+        }
+        #endregion
+
+        #region Properties
         public string Name { get => _name; set => _name = value; }
-        public Point2D Pos { get => _pos; set => _pos = value; }
-        public virtual string ShortDesc { get => _name; set => _shortDesc = value; }
-        public virtual string LongDesc { get => "A " + _name; set => _longDesc = value; }
-        internal FacingDirection Direction { get => _direction; set => _direction = value; }
-        public float AbsoluteAngle { get => _absAngle; set => _absAngle = value; }
-
-        public abstract override void Draw();
-
-        public abstract override void Update();
-
-        public virtual void Damage(float damage)
-        {
-            //Base: Do nothing. Can't  be damaged.
-        }
-
-        public virtual void UpdatePosition(Point2D pos, FacingDirection direction, float absoluteAngle)
-        {
-            _absAngle = absoluteAngle;
-            _pos = pos;
-            _direction = direction;
-        }
-
-        public bool Enabled { get => _enabled; set => _enabled = value; }
+        public string ShortDesc { get => _shortDesc; set => _shortDesc = value; }
+        public string LongDesc { get => _longDesc; set => _longDesc = value; }
+        public Direction Direction { get => _direction; set => _direction = value; }
+        public double AbsAngle { get => _absAngle; set => _absAngle = value; }
+        public Vector Pos { get => _pos; set => _pos = value; }
+        public IDrawableComponent DrawableComponent { get => _drawableComponent; set => _drawableComponent = value; }
+        public bool ToBeRemoved { get => _toBeRemoved; set => _toBeRemoved = value; }
+        #endregion
 
     }
 }

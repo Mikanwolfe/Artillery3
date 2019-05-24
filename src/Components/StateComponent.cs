@@ -4,66 +4,52 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ArtillerySeries.src
+namespace Artillery
 {
-
-    /*
-     * 
-     * Since a few classes (Weapon, Projectile)
-     *  seem to use states, it seems to make sense
-     *  that we would have a dedicated state 
-     *  component to help with not needing to rewrite code.
-     *  
-     * Since I have a component I might as well go all the way. 
-     * 
-     */
-
-
     public interface IStateComponent<T>
     {
-        void SwitchState(T state);
-        T PeekState(); //Peek at state
-        void PushState(T state);
+        void SwitchState(T nextState);
+        T PeekState();
+        void PushState(T nextState);
         T PopState();
     }
 
-    public class StateComponent<T>
+    public class StateComponent<T> : IStateComponent<T>
     {
         Stack<T> _stateStack;
-        // T should refer to the enum used for the state.
 
         public StateComponent(T initState)
         {
             _stateStack = new Stack<T>();
-            Push(initState);
+            PushState(initState);
         }
 
-        public T Peek()
+        public T PeekState()
         {
-                return _stateStack.Peek();
+            return _stateStack.Peek();
         }
 
-        public T Pop()
+        public T PopState()
         {
             return _stateStack.Pop();
         }
 
-        public void Push(T state)
+        public void PushState(T nextState)
         {
             if (_stateStack.Count != 0)
-            { 
-                if (!_stateStack.Peek().Equals(state))
+            {
+                if (!_stateStack.Peek().Equals(nextState))
                 {
-                    _stateStack.Push(state);
+                    _stateStack.Push(nextState);
                 }
             }
             else
             {
-                _stateStack.Push(state);
+                _stateStack.Push(nextState);
             }
         }
 
-        public void Switch(T nextState)
+        public void SwitchState(T nextState)
         {
             if (!_stateStack.Peek().Equals(nextState))
             {

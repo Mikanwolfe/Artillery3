@@ -1,11 +1,14 @@
-﻿
-namespace Artillery
-{ 
+using System;
+
+namespace ArtillerySeries.src
+{
     public class GameMain
     {
+        
+
         public static void Main()
         {
-            Artillery Artillery3 = new Artillery();
+            ArtilleryGame Artillery3 = new ArtilleryGame();
             Artillery3.Run();
         }
     }
