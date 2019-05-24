@@ -86,6 +86,10 @@ Things that are entities:
 * They have a description
 * They have 
 
+
+
+
+
 ### SwinGame Wrappers
 
 POINT2D AND OTHER CLASSES ARE SEALED!!! WHAT A PAIN!!!
@@ -216,3 +220,22 @@ The UI actually uses the composite pattern and I do intend for it to stay this w
 
 The UI will be hard-coded to make my life easy.
 
+
+
+# the concept of characters and players 2
+
+Players and characters will be redefined in a3x.
+
+Characters have players, not players have characters. Characters have a Player object shows whether or not the AI is human. Or rather, that player object is what processes commands...?
+
+players contain a reference to characters, and players also have a preferred input handler which is called based on the character and therefore, there needs to be an inputhandler/ service. 
+
+Input handler will be redefined as inputmethod. 
+
+
+
+or
+
+rather, characters shouldn't be tied to input method.
+
+players inherit from characters (just in case they want to be an observer for example) and therefore contain the input method component.

@@ -63,6 +63,8 @@ namespace Artillery
 
             if (e.Enabled)
             {
+                e.Pos.X = Clamp(e.Pos.X, 0, _a3Data.LogicalTerrain.Map.Length);
+
                 if (e.GravityEnabled)
                     e.Vel.Y += Artillery.Constants.Gravity * e.WeightMult;
 

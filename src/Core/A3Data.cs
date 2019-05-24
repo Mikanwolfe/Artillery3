@@ -19,7 +19,7 @@ namespace Artillery
 
         ICommandStream _commandStream;
 
-        ICharacter _selectedPlayer;
+        IPlayer _selectedPlayer;
 
         private int _selectedPlayerIndex;
 
@@ -93,7 +93,7 @@ namespace Artillery
         public List<Terrain> BgTerrain { get => _bgTerrain; set => _bgTerrain = value; }
         public List<Entity> Entities { get => _entities; set => _entities = value; }
         public ICommandStream CommandStream { get => _commandStream; set => _commandStream = value; }
-        public ICharacter SelectedPlayer { get => _selectedPlayer; set => _selectedPlayer = value; }
+        public IPlayer SelectedPlayer { get => _selectedPlayer; set => _selectedPlayer = value; }
 
         #endregion
     }

@@ -8,17 +8,30 @@ using SwinGameSDK;
 namespace Artillery
 {
 
-    public interface IInputHandler
+    public interface IInputMethod
     {
         void HandleInput(A3Data a3Data);
     }
-    public class InputHandler : IInputHandler
+
+    public class AIInputMethod : IInputMethod
+    {
+        public AIInputMethod()
+        {
+        }
+
+        public void HandleInput(A3Data a3Data)
+        {
+            a3Data.CommandStream.AddCommand(new CommandMoveRight());
+        }
+    }
+
+    public class PlayerInputMethod : IInputMethod
     {
 
         private Dictionary<KeyCode, ICommand> _keyToCommands;
         private List<KeyCode> _registeredKeys;
 
-        public InputHandler()
+        public PlayerInputMethod()
         {
             _keyToCommands = new Dictionary<KeyCode, ICommand>();// Newtonsoft should be able to (de)serialise this
             _registeredKeys = new List<KeyCode>();

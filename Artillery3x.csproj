@@ -161,7 +161,9 @@
     <Compile Include="src\Core\ZeroVector.cs" />
     <Compile Include="src\Components\PhysicsComponent.cs" />
     <Compile Include="src\Components\StateComponent.cs" />
+    <Compile Include="src\Entities\Player.cs" />
     <Compile Include="src\Managers\CommandProcessor.cs" />
+    <Compile Include="src\Managers\InputHandler.cs" />
     <Compile Include="src\Managers\PhysicsEngine.cs" />
     <Compile Include="src\Managers\EntityManager.cs" />
     <Compile Include="src\Managers\Services.cs" />
@@ -171,7 +173,7 @@
     <Compile Include="src\Core\Vector.cs" />
     <Compile Include="src\GameMain.cs" />
     <Compile Include="src\Core\UpdatableObject.cs" />
-    <Compile Include="src\Commands\InputHandler.cs" />
+    <Compile Include="src\Managers\InputMethod.cs" />
     <Compile Include="src\Core\Camera.cs" />
     <Compile Include="src\World\Terrain.cs" />
     <Compile Include="src\Utilities.cs" />
