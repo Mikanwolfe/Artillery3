@@ -17,7 +17,7 @@ namespace Artillery
         #region Fields
         private IPhysicsComponent _physicsComponent;
         StateComponent<ProjectileState> _stateComponent;
-        IWeapon _parentWeapon;
+        Weapon _parentWeapon;
 
         float _explRad = 10;
         float _baseDamage;
@@ -25,7 +25,7 @@ namespace Artillery
         #endregion
 
         #region Constructor
-        public Projectile(string name, IWeapon parentWeapon, Vector pos, Vector vel, float damage, float explRad, float damageRad) : base(name)
+        public Projectile(string name, Weapon parentWeapon, Vector pos, Vector vel, float damage, float explRad, float damageRad) : base(name)
         {
             _parentWeapon = parentWeapon;
             _physicsComponent = new PhysicsComponent(this)

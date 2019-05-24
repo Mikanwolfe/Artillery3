@@ -1,4 +1,5 @@
 ﻿using System;
+using SwinGameSDK;
 
 namespace Artillery
 {
@@ -35,6 +36,27 @@ namespace Artillery
             if (value > max)
                 return max;
             return value;
+        }
+
+        public static void DrawTextCentre(string text, Color color, float x, float y)
+        {
+            SwinGame.DrawText(text, color, x - (text.Length * 3.5f), y);
+        }
+
+        public static void DrawTextCentre(string text, Color color, Point2D pt)
+        {
+            DrawTextCentre(text, color, pt.X, pt.Y);
+        }
+
+
+        public static float Rad(float deg)
+        {
+            return deg * (float)Math.PI / 180;
+        }
+
+        public static float Deg(float rad)
+        {
+            return (rad * 180 / (float)Math.PI) % 360f;
         }
     }
 }

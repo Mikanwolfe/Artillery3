@@ -157,6 +157,7 @@
     <Compile Include="src\Commands\CommandCharacters.cs" />
     <Compile Include="src\Entities\Character.cs" />
     <Compile Include="src\Components\DamageableComponent.cs" />
+    <Compile Include="src\Components\DrawableSightComponent.cs" />
     <Compile Include="src\Entities\Entity.cs" />
     <Compile Include="src\Core\ZeroVector.cs" />
     <Compile Include="src\Components\PhysicsComponent.cs" />

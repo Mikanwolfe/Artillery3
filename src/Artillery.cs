@@ -137,6 +137,7 @@ namespace Artillery
         public int TerrainBoxPadding;
         public int BaseTerrainInitialDisplacement;
         public int NumBgTerrain;
+        public int WeaponChargeSpeed;
     }
 
 }
