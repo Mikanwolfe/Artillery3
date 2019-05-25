@@ -41,7 +41,7 @@ namespace ArtillerySeries.src
             _explRad = explRad;
             _damageRad = damageRad;
             
-            EntityManager.Instance.AddEntity(this);
+            Artillery3R.Services.EntityManager.AddEntity(this);
         }
 
         public float X { get => Pos.X; }
@@ -80,10 +80,10 @@ namespace ArtillerySeries.src
 
                 Pos = _physics.Position;
 
-                if ((Pos.X <= 0) || (Pos.X >= PhysicsEngine.Instance.Terrain.Map.Length - 1))
+                if ((Pos.X <= 0) || (Pos.X >= Artillery3R.Services.PhysicsEngine.Terrain.Map.Length - 1))
                     SwitchState(ProjectileState.Dead);
 
-                ParticleEngine.Instance.CreateTracer(
+                Artillery3R.Services.ParticleEngine.CreateTracer(
                     Pos,
                     Color.DarkMagenta,
                     3,
@@ -93,8 +93,8 @@ namespace ArtillerySeries.src
             } else
             {
                 Visible = false;
-                EntityManager.Instance.RemoveEntity(this);
-                PhysicsEngine.Instance.RemoveComponent(this);
+                Artillery3R.Services.EntityManager.RemoveEntity(this);
+                Artillery3R.Services.PhysicsEngine.RemoveComponent(this);
             }
             
         }
@@ -110,14 +110,14 @@ namespace ArtillerySeries.src
                 _crater[i] = _explRad * (float)(-1 * Math.Cos(_period * (i - Math.PI * 2)) + 1);
             }
 
-            PhysicsEngine.Instance.BlowUpTerrain(_crater, pt);
+            Artillery3R.Services.PhysicsEngine.BlowUpTerrain(_crater, pt);
         }
 
         public virtual void Explode(Point2D pt)
         {
             BlowUpTerrain(pt);
-            ParticleEngine.Instance.CreateFastExplosion(pt, 100);
-            EntityManager.Instance.DamageEntities(this, _baseDamage, (int)_damageRad, pt);
+            Artillery3R.Services.ParticleEngine.CreateFastExplosion(pt, 100);
+            Artillery3R.Services.EntityManager.DamageEntities(this, _baseDamage, (int)_damageRad, pt);
         }
 
         public void SwitchState(ProjectileState nextState)

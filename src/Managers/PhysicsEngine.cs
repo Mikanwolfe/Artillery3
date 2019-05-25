@@ -18,7 +18,7 @@ namespace ArtillerySeries.src
         Wind _wind;
 
         Rectangle _boundaryBox;
-        Rectangle _worldBox;
+        Rectangle _windowRect;
 
         Random _random = new Random();
         
@@ -26,7 +26,7 @@ namespace ArtillerySeries.src
         public PhysicsEngine(A3RData a3RData)
         {
             _a3RData = a3RData;
-
+            _windowRect = _a3RData.WindowRect;
             _components = new List<IPhysicsComponent>();
             _componentsToRemove = new List<IPhysicsComponent>();
             _wind = new Wind();

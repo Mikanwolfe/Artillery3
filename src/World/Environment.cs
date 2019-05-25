@@ -94,7 +94,7 @@ namespace ArtillerySeries.src
                 //fix. Also, wind mult for tracers = 0.
                 if (_particlePos < _windowRect.Height)
                 {
-                    _particleX = Clamp(_camera.Pos.X - 10, 0, PhysicsEngine.Instance.Terrain.Map.Length - 1);
+                    _particleX = Clamp(_camera.Pos.X - 10, 0, Artillery3R.Services.PhysicsEngine.Terrain.Map.Length - 1);
                     _particleY = _camera.Pos.Y + _windowRect.Height - _particlePos;
                 }
                 else if (_particlePos < (_windowRect.Height + _windowRect.Width))
@@ -104,7 +104,7 @@ namespace ArtillerySeries.src
                 }
                 else
                 {
-                    _particleX = Clamp(_camera.Pos.X + _windowRect.Width + 10, 0, PhysicsEngine.Instance.Terrain.Map.Length - 1);
+                    _particleX = Clamp(_camera.Pos.X + _windowRect.Width + 10, 0, Artillery3R.Services.PhysicsEngine.Terrain.Map.Length - 1);
                     _particleY = _camera.Pos.Y + _particlePos - _windowRect.Height - _windowRect.Width;
                 }
 
@@ -114,7 +114,7 @@ namespace ArtillerySeries.src
                     Y = _particleY
                 };
 
-                ParticleEngine.Instance.CreateNonCollideParticle(_particleSpawnPoint, Color.Black,
+                Artillery3R.Services.ParticleEngine.CreateNonCollideParticle(_particleSpawnPoint, Color.Black,
                 0f, 10f, 0.2f, 1);
             }
         }

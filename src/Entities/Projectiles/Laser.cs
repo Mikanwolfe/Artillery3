@@ -45,8 +45,8 @@ namespace ArtillerySeries.src
         {
             
             BlowUpTerrain(pt);
-            ParticleEngine.Instance.CreateLaserExplosion(pt, 100);
-            EntityManager.Instance.DamageEntities(this,BaseDamage, (int)DamageRad, pt);
+            Artillery3R.Services.ParticleEngine.CreateLaserExplosion(pt, 100);
+            Artillery3R.Services.EntityManager.DamageEntities(this,BaseDamage, (int)DamageRad, pt);
         }
 
         public override void Update()
@@ -63,8 +63,8 @@ namespace ArtillerySeries.src
             else
             {
                 Visible = false;
-                EntityManager.Instance.RemoveEntity(this);
-                PhysicsEngine.Instance.RemoveComponent(this);
+                Artillery3R.Services.EntityManager.RemoveEntity(this);
+                Artillery3R.Services.PhysicsEngine.RemoveComponent(this);
             }
         }
     }

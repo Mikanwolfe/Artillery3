@@ -43,7 +43,7 @@ namespace ArtillerySeries.src
             {
                 _particleDelayCount = 0;
 
-                ParticleEngine.Instance.CreateNonCollideParticle(Pos, _color, 2f, 2f, 0.5f, 1f);
+                Artillery3R.Services.ParticleEngine.CreateNonCollideParticle(Pos, _color, 2f, 2f, 0.5f, 1f);
 
             }
         }

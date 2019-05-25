@@ -56,15 +56,17 @@ namespace ArtillerySeries.src
 
         Sprite _windMarker;
 
-        public World(Rectangle windowRect, InputHandler inputHandler)
+        A3RData _a3RData;
+
+        public World(A3RData a3RData)
         {
-            _windowRect = windowRect;
+            _windowRect = a3RData.WindowRect;
             UserInterface.Instance.World = this;
             _camera = UserInterface.Instance.Camera;
             _cameraFocusPoint = new CameraFocusPoint();
             _logicalTerrain = new Terrain(_windowRect);
             _environment = new Environment(_windowRect, _camera);
-            _inputHandler = inputHandler;
+            //_inputHandler = inputHandler;
             _players = new List<Player>();
             _selectedPlayer = null;
             _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
@@ -92,7 +94,7 @@ namespace ArtillerySeries.src
 
             _environment.Initialise(preset);
             _logicalTerrain = _environment.Generate();
-            PhysicsEngine.Instance.Terrain = _logicalTerrain;
+            Artillery3R.Services.PhysicsEngine.Terrain = _logicalTerrain;
         }
 
         public void NewSession()
@@ -113,10 +115,10 @@ namespace ArtillerySeries.src
 
             foreach (Player p in _players)
             {
-                p.SetXPosition((int)RandBetween(Constants.CameraPadding, _logicalTerrain.Map.Length - 1 - Constants.CameraPadding));
+                p.SetXPosition((int)RandDoubleBetween(Constants.CameraPadding, _logicalTerrain.Map.Length - 1 - Constants.CameraPadding));
             }
 
-            PhysicsEngine.Instance.Settle();
+            Artillery3R.Services.PhysicsEngine.Settle();
             SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
         }
 
@@ -160,7 +162,7 @@ namespace ArtillerySeries.src
 
             if (_turnCount % 4 == 0)
             {
-                PhysicsEngine.Instance.SetWind();
+                Artillery3R.Services.PhysicsEngine.SetWind();
             }
         }
 
@@ -170,7 +172,7 @@ namespace ArtillerySeries.src
             {
                 _playerCommand = _inputHandler.HandleInput();
                 if (_playerCommand != null)
-                    _playerCommand.Execute(_selectedPlayer.Character);
+                    _playerCommand.Execute(_a3RData);
             }
 
         }
@@ -215,7 +217,7 @@ namespace ArtillerySeries.src
             _camera.Update();
             _environment.Update();
 
-            PhysicsEngine.Instance.SetBoundaryBoxPos(_camera.Pos);
+            Artillery3R.Services.PhysicsEngine.SetBoundaryBoxPos(_camera.Pos);
 
             foreach(Player p in _players)
             {
@@ -225,7 +227,7 @@ namespace ArtillerySeries.src
             _windMarker.X = _camera.Pos.X + (_windowRect.Width / 2) - 50;
             _windMarker.Y = _camera.Pos.Y + 50;
 
-            _windMarker.Rotation = PhysicsEngine.Instance.WindMarkerDirection + 180;
+            _windMarker.Rotation = Artillery3R.Services.PhysicsEngine.WindMarkerDirection + 180;
             _satellite.Update();
 
             switch (PeekState())

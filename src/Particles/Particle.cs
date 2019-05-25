@@ -71,8 +71,8 @@ namespace ArtillerySeries.src
                 {
                     Enabled = false;
                     Visible = false;
-                    ParticleEngine.Instance.RemoveParticle(this);
-                    PhysicsEngine.Instance.RemoveComponent(this);
+                    Artillery3R.Services.ParticleEngine.RemoveParticle(this);
+                    Artillery3R.Services.PhysicsEngine.RemoveComponent(this);
                 }
 
                 _color = SwinGame.RGBAColor(_color.R, _color.G, _color.B, (byte)(255 * _life / _maxLife));
@@ -80,15 +80,15 @@ namespace ArtillerySeries.src
 
                 if (_damage != 0f)
                 {
-                    EntityManager.Instance.DamageEntities(this, _damage, (int)_radius, Pos);
+                    Artillery3R.Services.EntityManager.DamageEntities(this, _damage, (int)_radius, Pos);
                 }
 
                 Pos = _physics.Position;
             } else
             {
                 _physics = null;
-                PhysicsEngine.Instance.RemoveComponent(this);
-                ParticleEngine.Instance.RemoveParticle(this);
+                Artillery3R.Services.PhysicsEngine.RemoveComponent(this);
+                Artillery3R.Services.ParticleEngine.RemoveParticle(this);
             }
         }
 

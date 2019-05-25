@@ -80,7 +80,7 @@ namespace ArtillerySeries.src
             : this()
         {
             _entity = entity;
-            PhysicsEngine.Instance.AddComponent(_entity);
+            Artillery3R.Services.PhysicsEngine.AddComponent(_entity);
             _pos = ZeroPoint2D();
 
         }
@@ -89,7 +89,7 @@ namespace ArtillerySeries.src
             : this()
         {
             _entity = entity;
-            PhysicsEngine.Instance.AddComponent(_entity);
+            Artillery3R.Services.PhysicsEngine.AddComponent(_entity);
             _pos = pos;
 
         }

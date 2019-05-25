@@ -16,4 +16,3 @@ namespace ArtillerySeries.src
         public abstract void Execute(A3RData a3RData);
     }
 }
-}

@@ -79,7 +79,7 @@ namespace ArtillerySeries.src
                         if (dealtDamage > 1)
                         {
                             int roundedDamage = (int)dealtDamage;
-                            ParticleEngine.Instance.CreateDamageText(e.Pos, Color.White, 6f, roundedDamage.ToString(), 0);
+                            Artillery3R.Services.ParticleEngine.CreateDamageText(e.Pos, Color.White, 6f, roundedDamage.ToString(), 0);
                         }
                         e.Damage(dealtDamage);
                     }

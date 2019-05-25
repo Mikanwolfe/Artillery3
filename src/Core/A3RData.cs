@@ -34,18 +34,12 @@ namespace ArtillerySeries.src
             Height = Constants.WindowHeight
         };
 
-        Rectangle _terrainBox = new Rectangle()
-        {
-            Width = Constants.TerrainWidth + Constants.TerrainBoxPadding,
-            Height = Constants.TerrainHeight + Constants.TerrainBoxPadding
-        };
-
         Rectangle _boundaryBox;
 
         Camera _camera;
 
         Terrain _logicalTerrain;
-        List<Terrain> _bgTerrain = new List<Terrain>(Constants.NumBgTerrain);
+        List<Terrain> _bgTerrain = new List<Terrain>(Constants.NumberParallaxBackgrounds);
 
         TerrainFactory _terrainFactory;
 
@@ -56,7 +50,7 @@ namespace ArtillerySeries.src
         public A3RData()
         {
             _camera = new Camera(_windowRect);
-            _terrainFactory = new TerrainFactoryMidpoint(_windowRect, _terrainBox, _camera);
+            //_terrainFactory = new TerrainFactoryMidpoint(_windowRect, _terrainBox, _camera);
 
             _entities = new List<Entity>();
 

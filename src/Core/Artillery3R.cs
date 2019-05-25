@@ -77,11 +77,12 @@ namespace ArtillerySeries.src
 
     
 
-    class Artillery3R : IStateComponent<MenuState>
+    class Artillery3R : IStateComponent<MenuState> // 3 Revised, Reimplemented, Retrofit...
     {
+        A3RData _a3RData;
         Rectangle _windowRect;
         World _world;
-        InputHandler _inputHandler;
+        //InputHandler _inputHandler;
         StateComponent<MenuState> _stateComponent;
         UIEventArgs _uiEventArgs;
 
@@ -98,18 +99,15 @@ namespace ArtillerySeries.src
         public Artillery3R()
         {
             LoadResources();
+            _a3RData = new A3RData();
 
-            _windowRect = new Rectangle
-            {
-                Width = Constants.WindowWidth,
-                Height = Constants.WindowHeight
-            };
+            _windowRect = _a3RData.WindowRect;
 
             Artillery3R.Services.PhysicsEngine.SetWindowRect(_windowRect);
             UserInterface.Instance.SetWindowRect(_windowRect);
             UserInterface.Instance.OnNotifyUIEvent = NotifyUIEvent;
 
-            _inputHandler = new InputHandler();
+            //_inputHandler = new InputHandler();
             _stateComponent = new StateComponent<MenuState>(MenuState.MainMenu);
 
             
@@ -280,9 +278,7 @@ namespace ArtillerySeries.src
                         _world.HandleInput();
 
 
-                        ParticleEngine.Instance.Update();
-                        PhysicsEngine.Instance.Update();
-                        EntityManager.Instance.Update();
+                        Artillery3R.Services.Update();
                         UserInterface.Instance.Update();
                         _world.Update();
 
@@ -290,8 +286,7 @@ namespace ArtillerySeries.src
                         SwinGame.DrawFramerate(0, 0);
 
                         _world.Draw();
-                        ParticleEngine.Instance.Draw();
-                        EntityManager.Instance.Draw();
+                        Artillery3R.Services.Draw();
                         _world.DrawSatellite();
                         UserInterface.Instance.Draw();
 
@@ -308,10 +303,10 @@ namespace ArtillerySeries.src
         }
         public void InitialiseCombatStage()
         {
-            
-            _world = new World(_windowRect, _inputHandler);
+
+            _world = new World(_a3RData);
             _world.OnNotifyGameEnded = EndCombatStage;
-            ParticleEngine.Instance.Clear();
+            Artillery3R.Services.ParticleEngine.Clear();
 
             UserInterface.Instance.Initialise(MenuState.CombatStage);
 
@@ -335,9 +330,9 @@ namespace ArtillerySeries.src
 
         public void ExitCombatStage()
         {
-            PhysicsEngine.Instance.Clear();
-            EntityManager.Instance.Clear();
-            ParticleEngine.Instance.Clear();
+            Artillery3R.Services.PhysicsEngine.Clear();
+            Artillery3R.Services.EntityManager.Clear();
+            Artillery3R.Services.ParticleEngine.Clear();
 
         }
         public void SwitchState(MenuState nextState)

@@ -36,9 +36,12 @@
     <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyLibsToOut</PrepareForRunDependsOn>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="src\Commands\CommandStream.cs" />
     <Compile Include="src\Entities\Projectiles\AcidProjectile.cs" />
-    <Compile Include="src\Services.cs" />
-    <Compile Include="src\Utilities.cs" />
+    <Compile Include="src\Core\A3RData.cs" />
+    <Compile Include="src\Managers\CommandProcessor.cs" />
+    <Compile Include="src\Managers\Services.cs" />
+    <Compile Include="src\Core\Utilities.cs" />
     <Compile Include="src\User Interface\UI_ShopMenu.cs" />
     <Compile Include="src\World\Camera.cs" />
     <Compile Include="src\World\CameraFocusPoint.cs" />
@@ -55,9 +58,9 @@
     <Compile Include="src\World\Environment.cs" />
     <Compile Include="src\World\EnvironmentPreset.cs" />
     <Compile Include="src\GameMain.cs" />
-    <Compile Include="src\Artillery3R.cs" />
+    <Compile Include="src\Core\Artillery3R.cs" />
     <Compile Include="src\Entities\Players\Hull.cs" />
-    <Compile Include="src\InputHandler.cs" />
+    <Compile Include="src\Core\InputHandler.cs" />
     <Compile Include="src\Entities\Projectiles\Laser.cs" />
     <Compile Include="src\Commands\MoveLeftCommand.cs" />
     <Compile Include="src\Commands\MoveRightCommand.cs" />

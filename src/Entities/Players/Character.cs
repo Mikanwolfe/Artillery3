@@ -55,7 +55,7 @@ namespace ArtillerySeries.src
             _maxArmour = armour;
             _maxHealth = health;            
 
-            EntityManager.Instance.AddEntity(this);
+            Artillery3R.Services.EntityManager.AddEntity(this);
 
             _state = new StateComponent<CharacterState>(CharacterState.Idle);
 
@@ -236,15 +236,15 @@ namespace ArtillerySeries.src
             if (_smokeCount > 10)
             {
                 if (_health / _maxHealth < 0.8)
-                    ParticleEngine.Instance.CreateSmokeParticle(Pos, Color.Grey, 4f, 0.6f);
+                    Artillery3R.Services.ParticleEngine.CreateSmokeParticle(Pos, Color.Grey, 4f, 0.6f);
 
                 if (_health / _maxHealth < 0.5)
-                    ParticleEngine.Instance.CreateSmokeParticle(Pos, Color.Black, 3f, 0.5f);
+                    Artillery3R.Services.ParticleEngine.CreateSmokeParticle(Pos, Color.Black, 3f, 0.5f);
 
                 if (_health / _maxHealth < 0.3)
                 {
-                    ParticleEngine.Instance.CreateSmokeParticle(Pos, Color.Orange, 3f, 0.5f);
-                    ParticleEngine.Instance.CreateSmokeParticle(Pos, Color.Yellow, 3f, 0.5f);
+                    Artillery3R.Services.ParticleEngine.CreateSmokeParticle(Pos, Color.Orange, 3f, 0.5f);
+                    Artillery3R.Services.ParticleEngine.CreateSmokeParticle(Pos, Color.Yellow, 3f, 0.5f);
                 }
 
 
@@ -279,7 +279,7 @@ namespace ArtillerySeries.src
                 default:
                     if (nextState == CharacterState.Dead)
                     {
-                        ParticleEngine.Instance.CreateFastExplosion(Pos, 100);
+                        Artillery3R.Services.ParticleEngine.CreateFastExplosion(Pos, 100);
                         //DO more die stuff
 
                     }

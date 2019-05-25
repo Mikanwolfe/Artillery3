@@ -73,9 +73,9 @@ namespace ArtillerySeries.src
             }
         }
 
-        public void Initialise(A3RData a3Data)
+        public void Initialise(A3RData a3RData)
         {
-            _a3RData = a3Data;
+            _a3RData = a3RData;
             _entityManager = new EntityManager(_a3RData);
             _physicsEngine = new PhysicsEngine(_a3RData);
 

@@ -21,7 +21,7 @@ namespace ArtillerySeries.src
         public override void Explode(Point2D pt)
         {
             BlowUpTerrain(pt);
-            ParticleEngine.Instance.CreateAcidExplosion(pt, 100);
+            Artillery3R.Services.ParticleEngine.CreateAcidExplosion(pt, 100);
         }
 
     }
