@@ -37,7 +37,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="src\Entities\Projectiles\AcidProjectile.cs" />
-    <Compile Include="src\ArtilleryFunctions.cs" />
+    <Compile Include="src\Services.cs" />
+    <Compile Include="src\Utilities.cs" />
     <Compile Include="src\User Interface\UI_ShopMenu.cs" />
     <Compile Include="src\World\Camera.cs" />
     <Compile Include="src\World\CameraFocusPoint.cs" />
@@ -54,7 +55,7 @@
     <Compile Include="src\World\Environment.cs" />
     <Compile Include="src\World\EnvironmentPreset.cs" />
     <Compile Include="src\GameMain.cs" />
-    <Compile Include="src\ArtilleryGame.cs" />
+    <Compile Include="src\Artillery3R.cs" />
     <Compile Include="src\Entities\Players\Hull.cs" />
     <Compile Include="src\InputHandler.cs" />
     <Compile Include="src\Entities\Projectiles\Laser.cs" />

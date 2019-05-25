@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static ArtillerySeries.src.ArtilleryFunctions;
+using static ArtillerySeries.src.Utilities;
 using SwinGameSDK;
 
 namespace ArtillerySeries.src

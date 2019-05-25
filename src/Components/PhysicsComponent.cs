@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.ArtilleryGame;
+using static ArtillerySeries.src.Artillery3R;
 
 namespace ArtillerySeries.src
 {
@@ -94,7 +94,7 @@ namespace ArtillerySeries.src
 
         }
 
-        public void Simulate()
+        public void Update()
         {
             if (_vel.X > 0)
                 _facing = FacingDirection.Right;

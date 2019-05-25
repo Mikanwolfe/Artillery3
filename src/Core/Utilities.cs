@@ -7,7 +7,7 @@ using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
-    public static class ArtilleryFunctions
+    public static class Utilities
     {
         /*
          * To add:  
@@ -28,9 +28,14 @@ namespace ArtillerySeries.src
                 Y = (float)_random.NextDouble() * magnitude
             };
         }
-        public static double RandBetween(double min, double max)
+        public static double RandDoubleBetween(double min, double max)
         {
-            return ParticleEngine.Instance.RandDoubleBetween(min, max);
+            return _random.NextDouble() * (max - min) + min;
+        }
+
+        public static float RandFloatBetween(float min, float max)
+        {
+            return (float)RandDoubleBetween(min, max);
         }
 
         public static Point2D AddPoint2D(Point2D a, Point2D b)

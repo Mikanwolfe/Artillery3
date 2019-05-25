@@ -4,48 +4,32 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.ArtilleryFunctions;
+using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
-    /*
-    * A singleton for physics calculations and simulations.
-    * Being a singleton allows components to self-register themselves
-    * as components of the physics engine.
-    */
     public class PhysicsEngine
     {
-        
-        private static PhysicsEngine instance;
+        A3RData _a3RData;
+
         List<IPhysicsComponent> _components;
         List<IPhysicsComponent> _componentsToRemove;
         Terrain _terrain;
         Wind _wind;
-        Rectangle _windowRect;
+
         Rectangle _boundaryBox;
         Rectangle _worldBox;
 
         Random _random = new Random();
         
-       
-
-        private PhysicsEngine()
+      
+        public PhysicsEngine(A3RData a3RData)
         {
-            instance = this;
+            _a3RData = a3RData;
+
             _components = new List<IPhysicsComponent>();
             _componentsToRemove = new List<IPhysicsComponent>();
             _wind = new Wind();
-        }
-
-        public static PhysicsEngine Instance
-        {
-            get
-            {
-                if (instance == null)
-                    instance = new PhysicsEngine();
-                return instance;
-
-            }
         }
 
         public Terrain Terrain
@@ -67,7 +51,7 @@ namespace ArtillerySeries.src
         }
         public Rectangle BoundaryBox { get => _boundaryBox; }
 
-        public void Simulate()
+        public void Update()
         {
 
             //Console.WriteLine("BoundaryBox: X{0} y{1}", _boundaryBox.X, _boundaryBox.Y);
@@ -131,7 +115,7 @@ namespace ArtillerySeries.src
                         p.Physics.VelY += p.Physics.AccY;
                         //p.Physics.VelX *= Constants.VelocityLoss;
 
-                        p.Physics.Simulate();
+                        p.Physics.Update();
 
                         //Console.WriteLine("Wind: {0} at {1}*", _wind.Magnitude, Deg(_wind.Direction));
 
@@ -222,7 +206,7 @@ namespace ArtillerySeries.src
 
         public void SetBoundaryBoxPos(Point2D pt)
         {
-            _boundaryBox.X = Clamp(pt.X - Constants.BoundaryBoxPadding, 0, PhysicsEngine.Instance.Terrain.Map.Length);
+            _boundaryBox.X = Clamp(pt.X - Constants.BoundaryBoxPadding, 0, Terrain.Map.Length);
             _boundaryBox.Y = pt.Y - Constants.BoundaryBoxPadding;
         }
         public void SetBoundaryBoxPos(int x, int y)

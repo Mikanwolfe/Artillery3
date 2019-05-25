@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.ArtilleryFunctions;
+using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
@@ -77,7 +77,7 @@ namespace ArtillerySeries.src
 
     
 
-    class ArtilleryGame : IStateComponent<MenuState>
+    class Artillery3R : IStateComponent<MenuState>
     {
         Rectangle _windowRect;
         World _world;
@@ -87,7 +87,15 @@ namespace ArtillerySeries.src
 
         bool userExitRequested = false;
 
-        public ArtilleryGame()
+        public static Services Services
+        {
+            get
+            {
+                return Services.Instance;
+            }
+        }
+
+        public Artillery3R()
         {
             LoadResources();
 
@@ -97,7 +105,7 @@ namespace ArtillerySeries.src
                 Height = Constants.WindowHeight
             };
 
-            PhysicsEngine.Instance.SetWindowRect(_windowRect);
+            Artillery3R.Services.PhysicsEngine.SetWindowRect(_windowRect);
             UserInterface.Instance.SetWindowRect(_windowRect);
             UserInterface.Instance.OnNotifyUIEvent = NotifyUIEvent;
 
@@ -273,7 +281,7 @@ namespace ArtillerySeries.src
 
 
                         ParticleEngine.Instance.Update();
-                        PhysicsEngine.Instance.Simulate();
+                        PhysicsEngine.Instance.Update();
                         EntityManager.Instance.Update();
                         UserInterface.Instance.Update();
                         _world.Update();

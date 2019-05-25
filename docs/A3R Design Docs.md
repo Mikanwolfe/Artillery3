@@ -111,3 +111,13 @@ I will, of course, need a nice name for the AI system. For now, we'll coin the A
 
 ## Artillery 3
 
+> I started out not knowing how to program in OO, seriously, -- I did engineering first and that turned out to be my greatest strength and flaw.
+
+The design of Artillery 3 was an iterative one; the designed evolved as I learnt more and more about OO-programming. Many of the systems seen in A3 are the result of many hours of reading on my tablet and a few test programs, though most of the testing was one within A3 itself. A lot of A3 is actually based off the real world, with objects purportedly making sense as if they were designed as real-world objects!
+
+This can be seen in a number of places, but the most obvious one would simply be the implementation of `Artillery.World`. This class represents the World of artillery--or rather, the combat. Strict adherence to encapsulation implied that only the `World` had access to the players and that, later on, when I started to implement the UI system, I came into massive issues trying to get the UI to accept what was essentially `World` information or to send it from `Artillery.UserInterface` to `Artillery` to `Artillery.World` through convoluted pathways. This drove home the importance of design which A3X later implemented, however, this example shows that OO was more than just objects.
+
+> A3L showed me that the most real-world way of designing objects isn't always the best. Object-Oriented Design in itself, is an art.
+
+
+

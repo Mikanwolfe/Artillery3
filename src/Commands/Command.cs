@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-    public abstract class Command
+
+    public interface ICommand
     {
-        public Command() { }
-
-        public abstract void Execute(Character c); // TODO change to entity and make specialised classes
-
+        void Execute(A3RData a3RData);
     }
+    public abstract class Command : ICommand
+    {
+        public abstract void Execute(A3RData a3RData);
+    }
+}
 }

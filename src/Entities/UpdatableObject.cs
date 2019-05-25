@@ -10,16 +10,15 @@ namespace ArtillerySeries.src
     public interface IUpdatable
     {
         void Update();
+        bool Enabled { get; set; }
     }
 
 
     public abstract class UpdatableObject : IUpdatable
     {
-        public UpdatableObject()
-        {
-        }
         public abstract void Update();
 
+        public bool Enabled { get; set; } = true;
 
     }
 }

@@ -8,7 +8,7 @@ namespace ArtillerySeries.src
 
         public static void Main()
         {
-            ArtilleryGame Artillery3 = new ArtilleryGame();
+            Artillery3R Artillery3 = new Artillery3R();
             Artillery3.Run();
         }
     }

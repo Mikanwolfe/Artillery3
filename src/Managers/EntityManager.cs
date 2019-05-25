@@ -13,26 +13,19 @@ namespace ArtillerySeries.src
     */
     public class EntityManager
     {
-        private static EntityManager instance;
+
+        A3RData _a3RData;
+
         private static List<Entity> _entities;
         private static List<Entity> _entitiesToRemove;
         private static List<Entity> _entitiesToAdd;
-        private EntityManager()
+        public EntityManager(A3RData a3RData)
         {
-            instance = this;
+            _a3RData = a3RData;
+
             _entities = new List<Entity>();
             _entitiesToRemove = new List<Entity>();
             _entitiesToAdd = new List<Entity>();
-        }
-
-        public static EntityManager Instance
-        {
-            get
-            {
-                if (instance == null)
-                    instance = new EntityManager();
-                return instance;
-            }
         }
 
         public List<Entity> Entities { get => _entities; }

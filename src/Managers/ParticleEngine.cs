@@ -4,34 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.ArtilleryFunctions;
+using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
     public class ParticleEngine
     {
+        A3RData _a3RData;
 
-        private static ParticleEngine instance;
         List<Particle> _particles;
         List<Particle> _particlesToRemove;
         Random _random;
 
-        private ParticleEngine()
+        public ParticleEngine(A3RData a3RData)
         {
-            instance = this;
+            _a3RData = a3RData;
+
             _particles = new List<Particle>();
             _particlesToRemove = new List<Particle>();
             _random = new Random();
-        }
-
-        public static ParticleEngine Instance
-        {
-            get
-            {
-                if (instance == null)
-                    instance = new ParticleEngine();
-                return instance;
-            }
         }
 
         /* ----------------------------------------------
@@ -271,7 +262,7 @@ namespace ArtillerySeries.src
             {
                 p.Update();
 
-                if (!WithinBoundary(p.Pos, PhysicsEngine.Instance.BoundaryBox))
+                if (!WithinBoundary(p.Pos, Services.Instance.PhysicsEngine.BoundaryBox))
                     RemoveParticle(p);
             }
 
