@@ -47,7 +47,7 @@ namespace ArtillerySeries.src
             SwinGame.StartReadingText(Color.Black, 20, SwinGame.FontNamed("guiFont"),
                             (int)Width(0.5f), (int)Height(0.4f));
 
-            _players = new List<Player>();
+            _players = Artillery3R.Services.A3RData.Players;
 
         }
 
@@ -233,7 +233,7 @@ namespace ArtillerySeries.src
                     if (currentIndexPlayer > numberPlayers)
                     {
                         Console.WriteLine("Called to finish!");
-                        UserInterface.Instance.FinishedPlayerSelection(_players);
+                        UserInterface.Instance.FinishedPlayerSelection();
                     }
                     else
                     {

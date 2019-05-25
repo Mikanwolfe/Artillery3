@@ -24,6 +24,7 @@ namespace ArtillerySeries.src
 
         private int _selectedPlayerIndex;
 
+        List<Player> _players;
         List<Entity> _entities;
 
         Random _random = new Random();
@@ -50,7 +51,7 @@ namespace ArtillerySeries.src
         public A3RData()
         {
             _camera = new Camera(_windowRect);
-            //_terrainFactory = new TerrainFactoryMidpoint(_windowRect, _terrainBox, _camera);
+            _players = new List<Player>();
 
             _entities = new List<Entity>();
 
@@ -87,6 +88,7 @@ namespace ArtillerySeries.src
         public ICommandStream CommandStream { get => _commandStream; set => _commandStream = value; }
         public Player SelectedPlayer { get => _selectedPlayer; set => _selectedPlayer = value; }
         public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
+        public List<Player> Players { get => _players; set => _players = value; }
 
         #endregion
     }

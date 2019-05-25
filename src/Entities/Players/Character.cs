@@ -31,6 +31,7 @@ namespace ArtillerySeries.src
         PhysicsComponent _physics;
         StateComponent<CharacterState> _state;
         bool _selected;
+        bool _isChargingWeapon, _wasChargingWeapon;
 
         Weapon _selectedWeapon;
         Weapon _weapon;
@@ -98,6 +99,7 @@ namespace ArtillerySeries.src
 
         public void ChargeWeapon()
         {
+            _isChargingWeapon = true;
             if (PeekState() == CharacterState.Idle)
             {
                 _selectedWeapon.Charge();
@@ -137,6 +139,8 @@ namespace ArtillerySeries.src
             {
                 w.Reload();
             }
+            _wasChargingWeapon = false;
+            _isChargingWeapon = false;
             _state.Switch(CharacterState.Idle);
         }
 
@@ -221,6 +225,15 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
+
+            if (_isChargingWeapon)
+                _wasChargingWeapon = true;
+
+            if (_wasChargingWeapon && !_isChargingWeapon)
+                FireWeapon();
+
+            _isChargingWeapon = false;
+
 
             Direction = _physics.Facing;
             Pos = _physics.Position;

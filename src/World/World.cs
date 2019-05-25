@@ -23,9 +23,11 @@ namespace ArtillerySeries.src
 
     public class World : IStateComponent<WorldState>
     {
+
+        #region Fields
         Rectangle _windowRect;
         Terrain _logicalTerrain;
-        
+
         Command _playerCommand;
         InputHandler _inputHandler;
         StateComponent<WorldState> _state;
@@ -52,8 +54,12 @@ namespace ArtillerySeries.src
 
         A3RData _a3RData;
 
+        #endregion
+
+        #region Constructor
         public World(A3RData a3RData)
         {
+            _a3RData = a3RData;
             _windowRect = a3RData.WindowRect;
             UserInterface.Instance.World = this;
             _camera = UserInterface.Instance.Camera;
@@ -71,11 +77,15 @@ namespace ArtillerySeries.src
 
             _satellite = new Satellite("Maia", Constants.TerrainWidth / 2, -300);
 
+            _inputHandler = new InputHandler();
 
-            
 
             _turnCount = 0;
         }
+        #endregion
+
+        #region Methods
+
 
         public void AddPlayer(Player p)
         {
@@ -133,10 +143,10 @@ namespace ArtillerySeries.src
                 }
                 if (_playersAlive <= 1)
                 {
-                    if(PeekState() != WorldState.ShowWinScreen)
-                      SwitchState(WorldState.ShowWinScreen);
+                    if (PeekState() != WorldState.ShowWinScreen)
+                        SwitchState(WorldState.ShowWinScreen);
                 }
-                    
+
 
                 int nextPlayer = Clamp((_players.IndexOf(_selectedPlayer) + 1) % _players.Count, 0, _players.Count - 1);
                 _selectedPlayer = _players[nextPlayer];
@@ -146,7 +156,8 @@ namespace ArtillerySeries.src
 
                 _selectedPlayer.SwitchState(PlayerState.Idle);
                 _selectedPlayer.NewTurn();
-                
+                _a3RData.SelectedPlayer = _selectedPlayer;
+
             }
 
             UserInterface.Instance.NewPlayerTurn();
@@ -213,10 +224,11 @@ namespace ArtillerySeries.src
         {
             _camera.Update();
             _environment.Update();
+            _inputHandler.HandleInput(_a3RData);
 
             Artillery3R.Services.PhysicsEngine.SetBoundaryBoxPos(_camera.Pos);
 
-            foreach(Player p in _players)
+            foreach (Player p in _players)
             {
                 p.Update();
             }
@@ -253,7 +265,7 @@ namespace ArtillerySeries.src
 
             _environment.Draw();
             _logicalTerrain.Draw();
-            
+
 
             //SwinGame.DrawBitmap("windMarker", _camera.Pos.X + (_windowRect.Width / 2), _camera.Pos.Y + 50);
             _windMarker.Draw();
@@ -283,7 +295,7 @@ namespace ArtillerySeries.src
             switch (state)
             {
                 case WorldState.ShowWinScreen:
-                    foreach(Player p in _players)
+                    foreach (Player p in _players)
                     {
                         if (p.isCharAlive)
                             _selectedPlayer = p;
@@ -318,9 +330,13 @@ namespace ArtillerySeries.src
         {
             return _state.Pop();
         }
+        #endregion
 
+        #region Properties
         public Color SkyColor { get => _environment.Preset.BgColor; }
         public Player SelectedPlayer { get => _selectedPlayer; set => _selectedPlayer = value; }
         public NotifyGameEnded OnNotifyGameEnded { get => onNotifyGameEnded; set => onNotifyGameEnded = value; }
+        #endregion
+
     }
 }

@@ -53,10 +53,9 @@ namespace ArtillerySeries.src
             onNotifyUIEvent(uiEventArgs);
         }
 
-        public void FinishedPlayerSelection(List<Player> players)
+        public void FinishedPlayerSelection()
         {
             UIEventArgs eventArgs = new UIEventArgs(UIEvent.StartCombat);
-            eventArgs.Players = players;
             onNotifyUIEvent(eventArgs);
         }
 

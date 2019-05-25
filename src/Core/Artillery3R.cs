@@ -311,7 +311,7 @@ namespace ArtillerySeries.src
             UserInterface.Instance.Initialise(MenuState.CombatStage);
 
 
-            List<Player> players = _uiEventArgs.Players;
+            List<Player> players = _a3RData.Players;
             foreach (Player p in players)
             {
                 p.SetWorld(_world);

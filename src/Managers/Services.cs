@@ -115,6 +115,7 @@ namespace ArtillerySeries.src
         public PhysicsEngine PhysicsEngine { get => _physicsEngine; set => _physicsEngine = value; }
         public ParticleEngine ParticleEngine { get => _particleEngine; set => _particleEngine = value; }
         public bool Enabled { get => _enabled; set => _enabled = value; }
+        public A3RData A3RData { get => _a3RData; set => _a3RData = value; }
         #endregion
     }
 }
