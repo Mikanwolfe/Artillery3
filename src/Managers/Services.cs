@@ -52,6 +52,7 @@ namespace ArtillerySeries.src
         public void Update()
         {
             _entityManager.Update();
+            _particleEngine.Update();
             _physicsEngine.Update();
             _commandProcessor.Update(_a3RData);
 
@@ -65,6 +66,7 @@ namespace ArtillerySeries.src
         public void Draw()
         {
             _entityManager.Draw();
+            _particleEngine.Draw();
 
             foreach (IServices s in _services)
             {

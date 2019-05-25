@@ -20,7 +20,7 @@ namespace ArtillerySeries.src
         {
             _a3RData = a3RData;
 
-            _particles = new List<Particle>();
+            _particles = new List<Particle>(500);
             _particlesToRemove = new List<Particle>();
             _random = new Random();
         }
