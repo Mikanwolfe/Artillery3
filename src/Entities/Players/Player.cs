@@ -29,10 +29,11 @@ namespace ArtillerySeries.src
         #endregion
 
         #region Constructor
-        public Player(string name, World world)
+        public Player(string name, World world, IInputMethod inputMethod)
             : base(name)
         {
             //The world is always an observer for the player.
+            _inputMethod = inputMethod;
             _observerComponent = new ObserverComponent();
             _observerComponent.AddObserver(world.ObserverInstance);
             _observerComponent.AddObserver(UserInterface.Instance.ObserverInstance);

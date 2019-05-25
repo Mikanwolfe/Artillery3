@@ -23,12 +23,6 @@ namespace ArtillerySeries.src
 
     public class World : IStateComponent<WorldState>
     {
-
-        /*
-         * Does the world need a player manager? I don't think so.
-         * All the functions should be built here i reckon.
-         * 
-         */
         Rectangle _windowRect;
         Terrain _logicalTerrain;
         
@@ -166,6 +160,8 @@ namespace ArtillerySeries.src
             }
         }
 
+
+        /*
         public void HandleInput()
         {
             if (PeekState() != WorldState.ShowWinScreen)
@@ -176,6 +172,7 @@ namespace ArtillerySeries.src
             }
 
         }
+        */
 
         public void FocusOnPlayer()
         {

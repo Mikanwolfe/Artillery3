@@ -78,6 +78,7 @@ namespace ArtillerySeries.src
             _a3RData = a3RData;
             _entityManager = new EntityManager(_a3RData);
             _physicsEngine = new PhysicsEngine(_a3RData);
+            _particleEngine = new ParticleEngine(_a3RData);
 
             _commandProcessor = new CommandProcessor();
         }

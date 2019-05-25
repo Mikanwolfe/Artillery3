@@ -275,7 +275,7 @@ namespace ArtillerySeries.src
 
                     case MenuState.CombatStage:
 
-                        _world.HandleInput();
+                        //_world.HandleInput();
 
 
                         Artillery3R.Services.Update();
