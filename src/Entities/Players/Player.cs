@@ -19,11 +19,16 @@ namespace ArtillerySeries.src
     }
     public class Player : Entity, IStateComponent<PlayerState>
     {
-        Character _character; //This may expand to include mutliple characters
+
+        #region Fields
+        Character _character;
         StateComponent<PlayerState> _state;
         ObserverComponent _observerComponent;
+        IInputMethod _inputMethod;
         double _observeDelay;
+        #endregion
 
+        #region Constructor
         public Player(string name, World world)
             : base(name)
         {
@@ -33,16 +38,19 @@ namespace ArtillerySeries.src
             _observerComponent.AddObserver(UserInterface.Instance.ObserverInstance);
             _state = new StateComponent<PlayerState>(PlayerState.Idle);
             _observeDelay = 0;
-            
+
         }
 
-        public Player(string name)
+        public Player(string name, IInputMethod inputMethod)
             : base(name)
         {
+            _inputMethod = inputMethod;
             _state = new StateComponent<PlayerState>(PlayerState.Idle);
             _observeDelay = 0;
         }
+        #endregion
 
+        #region Methods
         public void SetWorld(World world)
         {
             _observerComponent = new ObserverComponent();
@@ -83,9 +91,6 @@ namespace ArtillerySeries.src
             _character.Initialise();
         }
 
-        //Make this into SelectedCharacter with AddCharacter later? should i have AddCharacter now?
-        public Character Character { get => _character; set => _character = value; }
-
         public void SwitchState(PlayerState state)
         {
             // State machine transition code goes here
@@ -99,7 +104,7 @@ namespace ArtillerySeries.src
             {
 
                 case PlayerState.Idle:
-                    if(state == PlayerState.ObserveProjectile)
+                    if (state == PlayerState.ObserveProjectile)
                     {
                         _observeDelay = Constants.CameraAfterExplosionDelay;
                     }
@@ -108,14 +113,14 @@ namespace ArtillerySeries.src
                 case PlayerState.ObserveProjectile:
                     if (state == PlayerState.ObserveSatellite)
                         _observerComponent.Notify(this, ObserverEvent.FocusOnSatellite);
-                        _observeDelay = Constants.CameraAfterExplosionDelay * 1.2;
+                    _observeDelay = Constants.CameraAfterExplosionDelay * 1.2;
                     break;
 
                 case PlayerState.ObserveSatellite:
                     if (state == PlayerState.ObserveSatelliteStrike)
                         _observerComponent.Notify(this, ObserverEvent.FocusOnSatelliteStrike);
-                        _observerComponent.Notify(this, ObserverEvent.FireSatellite);
-                        _observeDelay = Constants.CameraAfterExplosionDelay * 1.2;
+                    _observerComponent.Notify(this, ObserverEvent.FireSatellite);
+                    _observeDelay = Constants.CameraAfterExplosionDelay * 1.2;
                     break;
 
                 case PlayerState.ObserveSatelliteStrike:
@@ -170,19 +175,21 @@ namespace ArtillerySeries.src
 
 
                 case PlayerState.ObserveProjectile:
-                    if (_observeDelay < 0)                                                                                                                 
+                    if (_observeDelay < 0)
                     {
                         if (_character.PeekState() == CharacterState.EndTurn)
                         {
                             if (_character.UsesSatellite)
                             {
                                 SwitchState(PlayerState.ObserveSatellite);
-                            } else
+                            }
+                            else
                             {
                                 SwitchState(PlayerState.EndTurn);
                             }
-                            
-                        } else
+
+                        }
+                        else
                         {
                             _observerComponent.Notify(this, ObserverEvent.FocusOnPlayer);
                             SwitchState(PlayerState.Idle);
@@ -204,8 +211,7 @@ namespace ArtillerySeries.src
                     }
                     break;
 
-
-            }        
+            }
         }
 
         public PlayerState PeekState()
@@ -223,6 +229,13 @@ namespace ArtillerySeries.src
             _state.Push(state);
         }
 
+        #endregion
+
+        #region Properties
+        public Character Character { get => _character; set => _character = value; }
+        public IInputMethod InputMethod { get => _inputMethod; set => _inputMethod = value; }
+        #endregion
 
     }
+
 }

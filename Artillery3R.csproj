@@ -47,11 +47,9 @@
     <Compile Include="src\World\CameraFocusPoint.cs" />
     <Compile Include="src\World\CelestialBody.cs" />
     <Compile Include="src\Entities\Players\Character.cs" />
-    <Compile Include="src\Commands\ChargeWeaponCommand.cs" />
+    <Compile Include="src\Commands\CharacterCommands.cs" />
     <Compile Include="src\Commands\Command.cs" />
-    <Compile Include="src\Commands\DepressWeaponCommand.cs" />
     <Compile Include="src\Entities\DrawableObject.cs" />
-    <Compile Include="src\Commands\ElevateWeaponCommand.cs" />
     <Compile Include="src\Entities\Entity.cs" />
     <Compile Include="src\Entities\EntityAssembly.cs" />
     <Compile Include="src\Managers\EntityManager.cs" />
@@ -62,8 +60,6 @@
     <Compile Include="src\Entities\Players\Hull.cs" />
     <Compile Include="src\Core\InputHandler.cs" />
     <Compile Include="src\Entities\Projectiles\Laser.cs" />
-    <Compile Include="src\Commands\MoveLeftCommand.cs" />
-    <Compile Include="src\Commands\MoveRightCommand.cs" />
     <Compile Include="src\Components\Observer.cs" />
     <Compile Include="src\Components\ObserverComponent.cs" />
     <Compile Include="src\Particles\Particle.cs" />
@@ -75,7 +71,6 @@
     <Compile Include="src\Entities\Projectiles\ProjectileFactory.cs" />
     <Compile Include="src\World\Satellite.cs" />
     <Compile Include="src\Components\StateComponent.cs" />
-    <Compile Include="src\Commands\SwitchWeaponCommand.cs" />
     <Compile Include="src\World\Terrain.cs" />
     <Compile Include="src\World\TerrainFactory.cs" />
     <Compile Include="src\World\TerrainFactoryMidpoint.cs" />
@@ -98,7 +93,6 @@
     <Compile Include="src\User Interface\UserInterfaceObserver.cs" />
     <Compile Include="src\Entities\Players\Vehicle.cs" />
     <Compile Include="src\Entities\Players\Weapons\Weapon.cs" />
-    <Compile Include="src\Commands\FireWeaponCommand.cs" />
     <Compile Include="src\Entities\Players\Weapons\WeaponAcidCannon.cs" />
     <Compile Include="src\World\Wind.cs" />
     <Compile Include="src\World\World.cs" />

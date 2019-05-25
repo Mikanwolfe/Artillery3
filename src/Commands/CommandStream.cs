@@ -41,5 +41,8 @@ namespace ArtillerySeries.src
         {
             _commands.Clear();
         }
+
+        public string Name => "command_stream";
+
     }
 }

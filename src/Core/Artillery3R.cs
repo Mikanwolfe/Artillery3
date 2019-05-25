@@ -82,7 +82,6 @@ namespace ArtillerySeries.src
         A3RData _a3RData;
         Rectangle _windowRect;
         World _world;
-        //InputHandler _inputHandler;
         StateComponent<MenuState> _stateComponent;
         UIEventArgs _uiEventArgs;
 
@@ -100,6 +99,7 @@ namespace ArtillerySeries.src
         {
             LoadResources();
             _a3RData = new A3RData();
+            Services.Initialise(_a3RData);
 
             _windowRect = _a3RData.WindowRect;
 
