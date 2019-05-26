@@ -57,7 +57,8 @@ namespace ArtillerySeries.src
                 if (SwinGame.KeyDown(k))
                 {
                     if (a3RData.SelectedPlayer != null)
-                        _keyToCommands[k].Execute(a3RData);
+                        //_keyToCommands[k].Execute(a3RData);
+                        a3RData.CommandStream.AddCommand(_keyToCommands[k]);
                     else
                         throw new MissingMemberException("selectedPlayer not found", "a3Data.SelectedPlayer");
                     //We can fix this later

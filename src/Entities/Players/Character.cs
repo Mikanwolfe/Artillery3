@@ -50,7 +50,7 @@ namespace ArtillerySeries.src
             _physics = new PhysicsComponent(this);
             _selected = false;
             _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f, ProjectileType.MachineGun);
-            _weapon2 = new WeaponAcidCannon(30f, 70f);
+            _weapon.UsesSatellite = true;
             _weaponList = new List<Weapon>();
 
             _maxArmour = armour;
@@ -66,7 +66,6 @@ namespace ArtillerySeries.src
 
 
             _weaponList.Add(_weapon);
-            _weaponList.Add(_weapon2);
 
             _smokeCount = 0;
 

@@ -119,5 +119,3 @@ This can be seen in a number of places, but the most obvious one would simply be
 
 > A3L showed me that the most real-world way of designing objects isn't always the best. Object-Oriented Design in itself, is an art.
 
-
-

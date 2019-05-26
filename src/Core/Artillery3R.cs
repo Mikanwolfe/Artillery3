@@ -8,7 +8,7 @@ using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
-
+    //next: clean up so we only use one wep and then move to creating the AI system.
     public static class Constants
     {
         public const float Gravity = 0.6f;

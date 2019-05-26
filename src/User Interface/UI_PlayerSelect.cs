@@ -157,7 +157,7 @@ namespace ArtillerySeries.src
                     autoLoader.ProjectilesFiredPerTurn = 3;
                     autoLoader.BaseDamage = 80;
                     autoLoader.UsesSatellite = true;
-                    newCharacter.AddWeapon(autoLoader);
+                    //newCharacter.AddWeapon(autoLoader);
 
                     _players[currentIndexPlayer-1].Character = newCharacter;
                     Console.WriteLine("GTW Selected!");
