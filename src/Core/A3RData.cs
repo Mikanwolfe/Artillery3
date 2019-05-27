@@ -39,7 +39,9 @@ namespace ArtillerySeries.src
 
         Camera _camera;
 
-        Terrain _logicalTerrain;
+        Terrain _terrain;
+        Wind _wind;
+
         List<Terrain> _bgTerrain = new List<Terrain>(Constants.NumberParallaxBackgrounds);
 
         TerrainFactory _terrainFactory;
@@ -56,6 +58,9 @@ namespace ArtillerySeries.src
             _entities = new List<Entity>();
 
             _commandStream = new CommandStream();
+
+            _wind = new Wind();
+            
 
         }
 
@@ -74,7 +79,7 @@ namespace ArtillerySeries.src
 
         public void GenerateTerrain()
         {
-            _logicalTerrain = _terrainFactory.Generate(Color.Green);
+            //_logicalTerrain = _terrainFactory.Generate(Color.Green);
         }
 
         #endregion
@@ -82,13 +87,14 @@ namespace ArtillerySeries.src
         #region Properties
 
         public TerrainFactory TerrainFactory { get => _terrainFactory; set => _terrainFactory = value; }
-        public Terrain LogicalTerrain { get => _logicalTerrain; set => _logicalTerrain = value; }
         public List<Terrain> BgTerrain { get => _bgTerrain; set => _bgTerrain = value; }
         public List<Entity> Entities { get => _entities; set => _entities = value; }
         public ICommandStream CommandStream { get => _commandStream; set => _commandStream = value; }
         public Player SelectedPlayer { get => _selectedPlayer; set => _selectedPlayer = value; }
         public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
         public List<Player> Players { get => _players; set => _players = value; }
+        public Wind Wind { get => _wind; set => _wind = value; }
+        public Terrain Terrain { get => _terrain; set => _terrain = value; }
 
         #endregion
     }

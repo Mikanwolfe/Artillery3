@@ -10,40 +10,44 @@ namespace ArtillerySeries.src
 {
     public class PhysicsEngine
     {
+
+        #region Fields
         A3RData _a3RData;
 
         List<IPhysicsComponent> _components;
         List<IPhysicsComponent> _componentsToRemove;
-        Terrain _terrain;
-        Wind _wind;
 
         Rectangle _boundaryBox;
         Rectangle _windowRect;
 
         Random _random = new Random();
-        
-      
+        #endregion
+
+        #region Constructor
+
         public PhysicsEngine(A3RData a3RData)
         {
             _a3RData = a3RData;
             _windowRect = _a3RData.WindowRect;
             _components = new List<IPhysicsComponent>();
             _componentsToRemove = new List<IPhysicsComponent>();
-            _wind = new Wind();
         }
+        #endregion
+
+        #region Methods
 
         public Terrain Terrain
         {
-            get => _terrain;
+            get => _a3RData.Terrain;
             set
             {
-                _terrain = value;
+                _a3RData.Terrain = value;
 
                 _boundaryBox = new Rectangle()
                 {
                     X = 0,
-                    Y = Constants.WorldMaxHeight + Constants.TerrainDepth - _windowRect.Height,
-                    Width = _terrain.Map.Length,
+                    Y = Constants.WorldMaxHeight + Constants.TerrainDepth - _a3RData.WindowRect.Height,
+                    Width = _a3RData.Terrain.Map.Length,
                     Height = Constants.WorldMaxHeight + Constants.TerrainDepth
                 };
 
@@ -55,7 +59,7 @@ namespace ArtillerySeries.src
         {
 
             //Console.WriteLine("BoundaryBox: X{0} y{1}", _boundaryBox.X, _boundaryBox.Y);
-            if (_terrain == null)
+            if (_a3RData.Terrain == null)
                 throw new MissingMemberException("No terrain to simulate with! Nothing to stop falls!");
             //make this not an exception!!
             foreach (IPhysicsComponent p in _components)
@@ -70,10 +74,10 @@ namespace ArtillerySeries.src
                         {
                             p.Physics.VelY += Constants.Gravity * p.Physics.Weight;
                         }
-                        if ((p.Physics.Position.Y >= _terrain.Map[(int)p.Physics.Position.X]) && p.Physics.CanCollideWithGround)
+                        if ((p.Physics.Position.Y >= _a3RData.Terrain.Map[(int)p.Physics.Position.X]) && p.Physics.CanCollideWithGround)
                         {
                             p.Physics.VelY = 0;
-                            p.Physics.Y = _terrain.Map[(int)p.Physics.Position.X];
+                            p.Physics.Y = _a3RData.Terrain.Map[(int)p.Physics.Position.X];
                             p.Physics.OnGround = true;
 
                         }
@@ -86,8 +90,8 @@ namespace ArtillerySeries.src
                         {
                             int x = (int)p.Physics.X;
 
-                            float p1 = _terrain.Map[Clamp((int)(x - 1), 0, _terrain.Map.Length - 1)];
-                            float p2 = _terrain.Map[Clamp((int)(x + 1), 0, _terrain.Map.Length - 1)];
+                            float p1 = _a3RData.Terrain.Map[Clamp((int)(x - 1), 0, _a3RData.Terrain.Map.Length - 1)];
+                            float p2 = _a3RData.Terrain.Map[Clamp((int)(x + 1), 0, _a3RData.Terrain.Map.Length - 1)];
 
                             p.Physics.VelX *= (float)Math.Cos(p.Physics.RelAngleToGround);
                             p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
@@ -96,11 +100,12 @@ namespace ArtillerySeries.src
                                 p.Physics.VelX *= (1 - p.Physics.FricCoefficient);
 
                             p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
-                        } else
+                        }
+                        else
                         {
-
-                            p.Physics.VelX += _wind.X * p.Physics.WindFrictionMult;
-                            p.Physics.VelY += _wind.Y * p.Physics.WindFrictionMult;
+                            
+                            p.Physics.VelX += _a3RData.Wind.X * p.Physics.WindFrictionMult;
+                            p.Physics.VelY += _a3RData.Wind.Y * p.Physics.WindFrictionMult;
 
                         }
 
@@ -110,22 +115,20 @@ namespace ArtillerySeries.src
                         p.Physics.Y += p.Physics.VelY;
 
 
-                        p.Physics.X = Clamp(p.Physics.X, 0, _terrain.Map.Length - 1);
+                        p.Physics.X = Clamp(p.Physics.X, 0, _a3RData.Terrain.Map.Length - 1);
                         p.Physics.VelX += p.Physics.AccX;
                         p.Physics.VelY += p.Physics.AccY;
                         //p.Physics.VelX *= Constants.VelocityLoss;
 
                         p.Physics.Update();
 
-                        //Console.WriteLine("Wind: {0} at {1}*", _wind.Magnitude, Deg(_wind.Direction));
+                        //Console.WriteLine("Wind: {0} at {1}*",_a3RData.Wind.Magnitude, Deg(a3RData.Wind.Direction));
 
 
-                        if (SwinGame.KeyTyped(KeyCode.BKey))
-                            _wind.SetWind();
 
                     }
 
-                    _wind.Update();
+                    //_a3RData.Wind.Update();
                 }
             }
 
@@ -151,20 +154,20 @@ namespace ArtillerySeries.src
         }
         public void Settle()
         {
-            foreach(IPhysicsComponent p in _components)
+            foreach (IPhysicsComponent p in _components)
             {
-                p.Physics.Y = _terrain.Map[(int)p.Physics.X];
+                p.Physics.Y = _a3RData.Terrain.Map[(int)p.Physics.X];
             }
         }
 
         public void BlowUpTerrain(float[] crater, Point2D pos)
         {
             int xPos;
-            for(int i = 0; i < crater.Length -1; i++)
+            for (int i = 0; i < crater.Length - 1; i++)
             {
                 xPos = (int)pos.X - (crater.Length / 2) + i;
-                xPos = Clamp(xPos, 0, _terrain.Map.Length - 1);
-                _terrain.Map[xPos] += crater[i];
+                xPos = Clamp(xPos, 0, _a3RData.Terrain.Map.Length - 1);
+                _a3RData.Terrain.Map[xPos] += crater[i];
             }
         }
 
@@ -183,17 +186,17 @@ namespace ArtillerySeries.src
 
         public void SetWind()
         {
-            _wind.SetWind();
+            //_a3RData.Wind.SetWind();
         }
 
         public void SetWind(float direction, float magnitude)
         {
-            _wind.SetWind(direction, magnitude);
+            //_a3RData.Wind.SetWind(direction, magnitude);
         }
 
         public void SetWindowRect(Rectangle windowRect)
         {
-            _windowRect = windowRect;
+            _a3RData.WindowRect = windowRect;
 
             _boundaryBox = new Rectangle()
             {
@@ -211,11 +214,15 @@ namespace ArtillerySeries.src
         }
         public void SetBoundaryBoxPos(int x, int y)
         {
-            _boundaryBox.X = Clamp(x - Constants.BoundaryBoxPadding, 0, _terrain.Map.Length - 1);
+            _boundaryBox.X = Clamp(x - Constants.BoundaryBoxPadding, 0, _a3RData.Terrain.Map.Length - 1);
             _boundaryBox.Y = y - Constants.BoundaryBoxPadding;
         }
+        #endregion
 
-        public float WindDirectionDeg { get => _wind.DirectionInDeg; }
-        public float WindMarkerDirection { get => _wind.MarkerDirection; }
+        #region Properties
+        public float WindDirectionDeg { get => _a3RData.Wind.DirectionInDeg; }
+        public float WindMarkerDirection { get => _a3RData.Wind.MarkerDirection; }
+        #endregion
+
     }
 }
