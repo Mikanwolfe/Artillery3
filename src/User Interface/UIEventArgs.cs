@@ -9,6 +9,7 @@ namespace ArtillerySeries.src
 
     public enum UIEvent
     {
+        MainMenu,
         StartGame,
         StartCombat,
         LoadGame,

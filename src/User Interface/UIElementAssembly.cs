@@ -10,8 +10,11 @@ namespace ArtillerySeries.src
     {
 
         List<UIElement> _uiElements;
-        public UIElementAssembly()
+        A3RData _a3RData;
+
+        public UIElementAssembly(A3RData a3RData)
         {
+            _a3RData = a3RData;
             _uiElements = new List<UIElement>();
         }
 
@@ -40,5 +43,10 @@ namespace ArtillerySeries.src
                 e.Update();
             }
         }
+
+        public A3RData A3RData { get => _a3RData; set => _a3RData = value; }
+        public float Height(float percent) { return _a3RData.WindowRect.Height * percent; }
+        public float Width(float percent) { return _a3RData.WindowRect.Width * percent; }
+
     }
 }

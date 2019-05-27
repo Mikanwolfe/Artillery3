@@ -21,12 +21,11 @@ namespace ArtillerySeries.src
 
     public delegate void NotifyGameEnded();
 
-    public class CombatGameState
+    public class CombatGameState : GameState
     {
 
         #region Fields
         Rectangle _windowRect;
-        Terrain _logicalTerrain;
 
         Command _playerCommand;
         InputHandler _inputHandler;
@@ -50,30 +49,28 @@ namespace ArtillerySeries.src
         Satellite _satellite;
         NotifyGameEnded onNotifyGameEnded;
 
-        Sprite _windMarker;
-
         A3RData _a3RData;
 
         #endregion
 
         #region Constructor
-        public World(A3RData a3RData)
+        public CombatGameState(A3RData a3RData)
+            : base(a3RData)
         {
             _a3RData = a3RData;
             _windowRect = a3RData.WindowRect;
-            UserInterface.Instance.World = this;
-            _camera = UserInterface.Instance.Camera;
+
             _cameraFocusPoint = new CameraFocusPoint();
-            _logicalTerrain = new Terrain(_windowRect);
+            
             _environment = new Environment(_windowRect, _camera);
             //_inputHandler = inputHandler;
             _players = new List<Player>();
             _selectedPlayer = null;
             _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
-            _observer = new WorldObserver(this);
+            //_observer = new WorldObserver(this);
             _random = new Random();
 
-            _windMarker = SwinGame.CreateSprite(SwinGame.BitmapNamed("windMarker"));
+            //_windMarker = SwinGame.CreateSprite(SwinGame.BitmapNamed("windMarker"));
 
             _satellite = new Satellite("Maia", Constants.TerrainWidth / 2, -300);
 
@@ -97,8 +94,8 @@ namespace ArtillerySeries.src
             //Generates the terrain + sky
 
             _environment.Initialise(preset);
-            _logicalTerrain = _environment.Generate();
-            Artillery3R.Services.PhysicsEngine.Terrain = _logicalTerrain;
+            //_logicalTerrain = _environment.Generate();
+            //Artillery3R.Services.PhysicsEngine.Terrain = _logicalTerrain;
         }
 
         public void NewSession()
@@ -119,7 +116,7 @@ namespace ArtillerySeries.src
 
             foreach (Player p in _players)
             {
-                p.SetXPosition((int)RandDoubleBetween(Constants.CameraPadding, _logicalTerrain.Map.Length - 1 - Constants.CameraPadding));
+                //p.SetXPosition((int)RandDoubleBetween(Constants.CameraPadding, _logicalTerrain.Map.Length - 1 - Constants.CameraPadding));
             }
 
             Artillery3R.Services.PhysicsEngine.Settle();
@@ -160,7 +157,7 @@ namespace ArtillerySeries.src
 
             }
 
-            UserInterface.Instance.NewPlayerTurn();
+            //UserInterface.Instance.NewPlayerTurn();
             _satellite.NewTurn();
 
             _turnCount++;
@@ -233,10 +230,10 @@ namespace ArtillerySeries.src
                 p.Update();
             }
 
-            _windMarker.X = _camera.Pos.X + (_windowRect.Width / 2) - 50;
-            _windMarker.Y = _camera.Pos.Y + 50;
+            //_windMarker.X = _camera.Pos.X + (_windowRect.Width / 2) - 50;
+            //_windMarker.Y = _camera.Pos.Y + 50;
 
-            _windMarker.Rotation = Artillery3R.Services.PhysicsEngine.WindMarkerDirection + 180;
+            //_windMarker.Rotation = Artillery3R.Services.PhysicsEngine.WindMarkerDirection + 180;
             _satellite.Update();
 
             switch (PeekState())
@@ -264,11 +261,11 @@ namespace ArtillerySeries.src
         {
 
             _environment.Draw();
-            _logicalTerrain.Draw();
+            //_logicalTerrain.Draw();
 
 
             //SwinGame.DrawBitmap("windMarker", _camera.Pos.X + (_windowRect.Width / 2), _camera.Pos.Y + 50);
-            _windMarker.Draw();
+            //_windMarker.Draw();
 
             SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
             _selectedPlayer.Draw();

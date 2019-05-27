@@ -30,7 +30,8 @@ namespace ArtillerySeries.src
         int currentIndexPlayer;
 
 
-        public UI_PlayerSelect()
+        public UI_PlayerSelect(A3RData a3RData)
+            :base (a3RData)
         {
             _stateComponent = new StateComponent<PlayerSelectState>(PlayerSelectState.ReadingNumberPlayers);
 

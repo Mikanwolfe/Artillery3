@@ -34,7 +34,6 @@ namespace ArtillerySeries.src
             _width = width;
             _height = height;
             _color = clr;
-            Camera = UserInterface.Instance.Camera;
         }
 
         public UI_LoadingBar(int width, int height, Color clr, float x, float y)

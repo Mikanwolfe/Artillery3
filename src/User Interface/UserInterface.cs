@@ -48,6 +48,14 @@ namespace ArtillerySeries.src
         }
 
 
+        public void ChangeGameState(UIElementAssembly _uiAssembly)
+        {
+            _uiElements.Clear();
+            _uiElements.Add(_uiAssembly);
+        }
+
+
+
         #endregion
 
         #region Methods
@@ -56,17 +64,25 @@ namespace ArtillerySeries.src
             onNotifyUIEvent(uiEventArgs);
         }
 
+        /*
         public void FinishedPlayerSelection()
         {
             UIEventArgs eventArgs = new UIEventArgs(UIEvent.StartCombat);
             onNotifyUIEvent(eventArgs);
         }
+        */
+
+        
+
+
         public void Initialise(A3RData a3RData)
         {
             _a3RData = a3RData;
             _uiElements.Clear();
 
         }
+
+
 
         /*
        _currentState = MenuState.MainMenu;
@@ -96,7 +112,7 @@ namespace ArtillerySeries.src
        }
    }
    */
-
+   /*
         public void ShowWinScreen()
         {
             _camera.Zero();
@@ -108,6 +124,8 @@ namespace ArtillerySeries.src
         {
             UpdatePreviousWeaponCharge();
         }
+        */
+
 
         public void AddElement(UIElement element)
         {
@@ -130,7 +148,7 @@ namespace ArtillerySeries.src
             }
         }
 
-
+        /*
 
         public void UpdateChargeBar()
         {
@@ -142,7 +160,7 @@ namespace ArtillerySeries.src
         {
             _uiCombat.ClearChargeBar();
         }
-
+        */
 
 
         /*

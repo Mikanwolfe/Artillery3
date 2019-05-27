@@ -30,14 +30,20 @@ namespace ArtillerySeries.src
         #endregion
 
         #region Methods
+        public virtual void EnterState()
+        {
+            UserInterface.Instance.ChangeGameState(_uiModule);
+        }
+
+        public virtual void ExitState()
+        {
+        }
         public virtual void Draw()
         {
-            
         }
 
         public virtual void Update()
         {
-            
         }
         #endregion
 

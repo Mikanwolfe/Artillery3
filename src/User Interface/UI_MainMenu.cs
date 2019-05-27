@@ -10,11 +10,12 @@ namespace ArtillerySeries.src
 {
     public class UI_MainMenu : UIElementAssembly
     {
-        Rectangle _windowRect = UserInterface.Instance.WindowRect;
         UI_Button _playButton;
 
-        public UI_MainMenu()
+        public UI_MainMenu(A3RData a3RData) : base (a3RData)
         {
+
+            Rectangle _windowRect = A3RData.WindowRect;
 
             UI_DynamicImage _menuGradient = new UI_DynamicImage(0, 0, -5000, 0, 10, SwinGame.BitmapNamed("menuGradientFull"));
             AddElement(_menuGradient);
@@ -49,7 +50,6 @@ namespace ArtillerySeries.src
             _playButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
             AddElement(_playButton);
 
-            
         }
     }
 }

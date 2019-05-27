@@ -7,40 +7,43 @@ using System.Threading.Tasks;
 namespace ArtillerySeries.src
 {
 
-    public class WorldObserver : Observer
+    public class CombatStateObserver : Observer
     {
-        World _world;
-        public WorldObserver(World world)
+        CombatGameState _combatGameState;
+        public CombatStateObserver(CombatGameState combatGameState)
         {
-            _world = world;
+            _combatGameState = combatGameState;
         }
         public override void OnNotify(Entity entity, ObserverEvent observerEvent)
         {
 
+            //we might be able to do a dict with method pointers/
+            // ceebs tho
+
             switch (observerEvent)
             {
                 case ObserverEvent.PlayerEndedTurn:
-                    _world.EndPlayerTurn();
+                    _combatGameState.EndPlayerTurn();
                     break;
 
                 case ObserverEvent.PlayerFiredProjectile:
-                    _world.CharacterFiredProjectile(entity);
+                    _combatGameState.CharacterFiredProjectile(entity);
                     break;
 
                 case ObserverEvent.FocusOnPlayer:
-                    _world.FocusOnPlayer();
+                    _combatGameState.FocusOnPlayer();
                     break;
 
                 case ObserverEvent.FocusOnSatellite:
-                    _world.FocusOnSatellite();
+                    _combatGameState.FocusOnSatellite();
                     break;
 
                 case ObserverEvent.FocusOnSatelliteStrike:
-                    _world.FocusOnSatelliteStrike();
+                    _combatGameState.FocusOnSatelliteStrike();
                     break;
 
                 case ObserverEvent.FireSatellite:
-                    _world.FireSatellite();
+                    _combatGameState.FireSatellite();
                     break;
 
             }

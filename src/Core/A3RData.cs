@@ -45,6 +45,9 @@ namespace ArtillerySeries.src
         List<Terrain> _bgTerrain = new List<Terrain>(Constants.NumberParallaxBackgrounds);
 
         TerrainFactory _terrainFactory;
+        Terrain _logicalTerrain;
+
+        bool _userExitRequested = false;
 
         #endregion
 
@@ -75,6 +78,7 @@ namespace ArtillerySeries.src
         {
             //Shuffle players that are alive, make sure to let the 
             // right character know they're selected.
+            // Does a deck shuffle itself? No obviously not. But then, we have to teach people to shuffle.
         }
 
         public void GenerateTerrain()
@@ -95,6 +99,7 @@ namespace ArtillerySeries.src
         public List<Player> Players { get => _players; set => _players = value; }
         public Wind Wind { get => _wind; set => _wind = value; }
         public Terrain Terrain { get => _terrain; set => _terrain = value; }
+        public bool UserExitRequested { get => _userExitRequested; set => _userExitRequested = value; }
 
         #endregion
     }

@@ -11,15 +11,17 @@ namespace ArtillerySeries.src
     public class UI_Combat : UIElementAssembly
     {
 
-        //Include a minimap here too!!
-
+        A3RData _a3RData;
 
         UI_LoadingBar _playerChargeBar;
-        public UI_Combat()
+        public UI_Combat(A3RData a3RData)
+            : base(a3RData)
         {
+            _a3RData = a3RData;
+
             _playerChargeBar = new UI_LoadingBar(400, 30, Color.Orange, 
-                (int)(UserInterface.Instance.WindowRect.Width * 0.7),
-                (int)(UserInterface.Instance.WindowRect.Height * 0.88));
+                (int)(_a3RData.WindowRect.Width * 0.7),
+                (int)(_a3RData.WindowRect.Height * 0.88));
 
 
             AddElement(_playerChargeBar);

@@ -8,12 +8,11 @@ using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
-    //next: clean up so we only use one wep and then move to creating the AI system.
     public static class Constants
     {
         public const float Gravity = 0.6f;
         public const float VelocityLoss = 1f;
-        public const string Data = "data.xml";
+        public const string Data = "data.json";
 
         public const int WindowHeight = 900;
         public const int WindowWidth = WindowHeight * 16 / 9;
@@ -66,8 +65,7 @@ namespace ArtillerySeries.src
         A3RData _a3RData;
         Rectangle _windowRect;
         UIEventArgs _uiEventArgs;
-
-        bool userExitRequested = false;
+        
 
         GameState _gameState;
 
@@ -86,17 +84,15 @@ namespace ArtillerySeries.src
             LoadResources();
             _a3RData = new A3RData();
             Services.Initialise(_a3RData);
-
             _windowRect = _a3RData.WindowRect;
-
             UserInterface.Instance.OnNotifyUIEvent = NotifyUIEvent;
 
             _gameStateTranstitions = new Dictionary<UIEvent, GameState>();
             _gameStateTranstitions.Add(UIEvent.StartGame, new PlayerSelectGameState(_a3RData));
+            _gameStateTranstitions.Add(UIEvent.MainMenu, new MainMenuGameState(_a3RData));
 
             //TODO: Add in the rest of the UI transitions here
 
-            
         }
 
         public void NotifyUIEvent(UIEventArgs uiEventArgs)
@@ -105,7 +101,9 @@ namespace ArtillerySeries.src
 
            try
             {
+                _gameState.ExitState();
                 _gameState = _gameStateTranstitions[uiEventArgs.Event];
+                _gameState.EnterState();
             }
             catch (Exception e)
             {
@@ -139,23 +137,6 @@ namespace ArtillerySeries.src
             SwinGame.LoadFontNamed("guiFont", "maven_pro_regular.ttf", 12);
         }
 
-        
-        public void HandleInput()
-        {
-            //for core all-around things like the options and esc menu.
-            //THIS SHOULD BE UNDER SERVICES.
-            if (SwinGame.KeyTyped(KeyCode.EscapeKey))
-            {
-                if (PeekState() == MenuState.EscMenu)
-                    PopState();
-                else if (PeekState() != MenuState.EscMenu)
-                    PushState(MenuState.EscMenu);
-
-                
-            }
-                
-
-        }
 
         public void Run()
         {
@@ -166,191 +147,25 @@ namespace ArtillerySeries.src
             LoadResources();
             SwinGame.ClearScreen(Color.White);
 
+            _gameState = _gameStateTranstitions[UIEvent.MainMenu];
             
-
-            SwitchState(MenuState.MainMenu);
-
-            
-
-            while (!SwinGame.WindowCloseRequested() && !userExitRequested)
+            while (!SwinGame.WindowCloseRequested() && !_a3RData.UserExitRequested)
             {
 
                 SwinGame.ProcessEvents();
-                HandleInput();
+                Services.Update();
 
-                switch (PeekState())
-
-                { 
-                    case MenuState.ShopState:
-                        SwinGame.ClearScreen(Color.White);
-                        SwinGame.DrawFramerate(0, 0);
-
-                        SwinGame.DrawText("This is the shop menu!", Color.Black, 10, 500);
-
-                        break;
-
-                    case MenuState.PlayerSelectState:
-
-                        UserInterface.Instance.Update();
-
-                        SwinGame.ClearScreen(Color.White);
-                        SwinGame.DrawFramerate(0, 0);
-
-                        UserInterface.Instance.Draw();
-                        
-
-                        break;
-
-                    case MenuState.LoadState:
-                        MenuState _holdState = PopState();
-                        if (_holdState != MenuState.LoadState)
-                            throw new Exception("Stack... Exception... Menustate!");
-                        _holdState = PopState();
-                        SwitchState(_holdState);
-
-
-                        break;
-
-                    case MenuState.EscMenu:
-
-                        SwinGame.ClearScreen(Color.White);
-                        SwinGame.DrawFramerate(0, 0);
-                        SwinGame.DrawText("Esc Menu",Color.Black, 10, 500);
-                        SwinGame.MoveCameraTo(0, 0);
-
-                        break;
-
-                    case MenuState.Exit:
-
-                        userExitRequested = true;
-
-                        break;
-
-                    case MenuState.MainMenu:
-
-
-                        UserInterface.Instance.Update();
-
-                        SwinGame.ClearScreen(Color.White);
-                        SwinGame.DrawFramerate(0, 0);
-
-                        UserInterface.Instance.Draw();
-
-
-
-
-                        if (SwinGame.KeyTyped(KeyCode.KKey))
-                            SwitchState(MenuState.CombatStage);
-
-
-                        break;
-
-                    case MenuState.CombatStage:
-
-                        //_world.HandleInput();
-
-
-                        Artillery3R.Services.Update();
-                        UserInterface.Instance.Update();
-                        _world.Update();
-
-                        SwinGame.ClearScreen(_world.SkyColor);
-                        SwinGame.DrawFramerate(0, 0);
-
-                        _world.Draw();
-                        Artillery3R.Services.Draw();
-                        _world.DrawSatellite();
-                        UserInterface.Instance.Draw();
-
-                        if (SwinGame.KeyTyped(KeyCode.KKey))
-                            SwitchState(MenuState.MainMenu);
-
-                        break;
-                }
+                _gameState.Update();
+                _gameState.Draw();
+                
                 SwinGame.RefreshScreen(60);
             }
 
             SwinGame.CloseAudio();
             SwinGame.ReleaseAllResources();
         }
-        public void InitialiseCombatStage()
-        {
 
-            _world = new World(_a3RData);
-            _world.OnNotifyGameEnded = EndCombatStage;
-            Artillery3R.Services.ParticleEngine.Clear();
-
-            UserInterface.Instance.Initialise(MenuState.CombatStage);
-
-
-            List<Player> players = _a3RData.Players;
-            foreach (Player p in players)
-            {
-                p.SetWorld(_world);
-                p.Initiallise();
-                _world.AddPlayer(p);
-            }
-            
-            _world.CyclePlayers();
-            _world.NewSession();
-        }
-
-        public void EndCombatStage()
-        {
-            SwitchState(MenuState.ShopState);
-        }
-
-        public void ExitCombatStage()
-        {
-            Artillery3R.Services.PhysicsEngine.Clear();
-            Artillery3R.Services.EntityManager.Clear();
-            Artillery3R.Services.ParticleEngine.Clear();
-
-        }
-        public void SwitchState(MenuState nextState)
-        {
-            UserInterface.Instance.Initialise(nextState);
-            switch (PeekState())
-            {
-
-                case MenuState.PlayerSelectState:
-                    if (nextState == MenuState.CombatStage)
-                    {
-                        InitialiseCombatStage();
-                    }
-                    break;
-
-
-                case MenuState.CombatStage:
-                    ExitCombatStage();
-
-                    
-                    if (nextState == MenuState.ShopState)
-                    {
-                        
-                    }
-                    break;
-
-
-
-
-            }
-            _stateComponent.Switch(nextState);
-        }
-
-        public MenuState PeekState()
-        {
-            return _stateComponent.Peek();
-        }
-
-        public void PushState(MenuState state)
-        {
-            _stateComponent.Push(state);
-        }
-
-        public MenuState PopState()
-        {
-            return _stateComponent.Pop();
-        }
+        public string Version => "Artillery 3Rx, When A3L, A3R, and A3X fall through. Rx Rises."; 
+        
     }
 }
