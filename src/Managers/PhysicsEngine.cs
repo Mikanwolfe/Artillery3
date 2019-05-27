@@ -58,7 +58,6 @@ namespace ArtillerySeries.src
         public void Update()
         {
 
-            //Console.WriteLine("BoundaryBox: X{0} y{1}", _boundaryBox.X, _boundaryBox.Y);
             if (_a3RData.Terrain == null)
                 throw new MissingMemberException("No terrain to simulate with! Nothing to stop falls!");
             //make this not an exception!!
@@ -108,9 +107,6 @@ namespace ArtillerySeries.src
                             p.Physics.VelY += _a3RData.Wind.Y * p.Physics.WindFrictionMult;
 
                         }
-
-                        //p.Physics.Position.Add(p.Physics.Velocity);
-                        //p.Physics.Velocity.Add(p.Physics.Acceleration);
                         p.Physics.X += p.Physics.VelX;
                         p.Physics.Y += p.Physics.VelY;
 
@@ -118,17 +114,10 @@ namespace ArtillerySeries.src
                         p.Physics.X = Clamp(p.Physics.X, 0, _a3RData.Terrain.Map.Length - 1);
                         p.Physics.VelX += p.Physics.AccX;
                         p.Physics.VelY += p.Physics.AccY;
-                        //p.Physics.VelX *= Constants.VelocityLoss;
 
                         p.Physics.Update();
 
-                        //Console.WriteLine("Wind: {0} at {1}*",_a3RData.Wind.Magnitude, Deg(a3RData.Wind.Direction));
-
-
-
                     }
-
-                    //_a3RData.Wind.Update();
                 }
             }
 
@@ -179,19 +168,16 @@ namespace ArtillerySeries.src
 
         public void RemoveComponent(IPhysicsComponent component)
         {
-            //_components.Remove(component);
             component.Physics.Enabled = false;
             _componentsToRemove.Add(component);
         }
 
         public void SetWind()
         {
-            //_a3RData.Wind.SetWind();
         }
 
         public void SetWind(float direction, float magnitude)
         {
-            //_a3RData.Wind.SetWind(direction, magnitude);
         }
 
         public void SetWindowRect(Rectangle windowRect)

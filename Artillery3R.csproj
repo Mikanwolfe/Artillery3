@@ -214,6 +214,12 @@
     <Content Include="Resources\sounds\magicSorcery_Short1_edit.wav" />
     <Content Include="Resources\sounds\satellite_prep.wav" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Hatsuyuki.Core\Hatsuyuki.Core.csproj">
+      <Project>{30c193c3-2153-467b-bdfa-8b75c4532aa0}</Project>
+      <Name>Hatsuyuki.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Target Name="CopyLibsToOut">
     <Copy SourceFiles="@(WinLibs)" DestinationFolder="$(OutDir)" />
   </Target>
