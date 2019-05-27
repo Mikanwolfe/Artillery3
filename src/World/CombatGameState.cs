@@ -21,7 +21,7 @@ namespace ArtillerySeries.src
 
     public delegate void NotifyGameEnded();
 
-    public class World : IStateComponent<WorldState>
+    public class CombatGameState
     {
 
         #region Fields

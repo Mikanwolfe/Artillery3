@@ -42,6 +42,7 @@
     <Compile Include="src\Core\Vector.cs" />
     <Compile Include="src\Entities\Projectiles\AcidProjectile.cs" />
     <Compile Include="src\Core\A3RData.cs" />
+    <Compile Include="src\GameState.cs" />
     <Compile Include="src\Managers\CommandProcessor.cs" />
     <Compile Include="src\Managers\Services.cs" />
     <Compile Include="src\Core\Utilities.cs" />
@@ -98,7 +99,7 @@
     <Compile Include="src\Entities\Players\Weapons\Weapon.cs" />
     <Compile Include="src\Entities\Players\Weapons\WeaponAcidCannon.cs" />
     <Compile Include="src\World\Wind.cs" />
-    <Compile Include="src\World\World.cs" />
+    <Compile Include="src\World\CombatGameState.cs" />
     <Compile Include="src\Components\WorldObserver.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -59,33 +59,19 @@ namespace ArtillerySeries.src
         public const float BaseVehicleWeight = 1000f; //Arbitrary units
         public const int VectorSightSize = 20;
     }
-    
-    public enum MenuState
-    {
-        MainMenu,
-        PlayerSelectState,
-        CombatStage,
-        ShopState,
-        EscMenu,
-        Exit,
-        //Intermittent
-        LoadState,
-        //Unused:
-        OptionsMenu, //Will require pushdown
-        Credits
-    }
+   
 
-    
-
-    class Artillery3R : IStateComponent<MenuState> // 3 Revised, Reimplemented, Retrofit...
+    public class Artillery3R  // 3 Revised, Reimplemented, Retrofit...
     {
         A3RData _a3RData;
         Rectangle _windowRect;
-        World _world;
-        StateComponent<MenuState> _stateComponent;
         UIEventArgs _uiEventArgs;
 
         bool userExitRequested = false;
+
+        GameState _gameState;
+
+        Dictionary<UIEvent, GameState> _gameStateTranstitions;
 
         public static Services Services
         {
@@ -103,42 +89,28 @@ namespace ArtillerySeries.src
 
             _windowRect = _a3RData.WindowRect;
 
-            Artillery3R.Services.PhysicsEngine.SetWindowRect(_windowRect);
-            UserInterface.Instance.SetWindowRect(_windowRect);
             UserInterface.Instance.OnNotifyUIEvent = NotifyUIEvent;
 
-            //_inputHandler = new InputHandler();
-            _stateComponent = new StateComponent<MenuState>(MenuState.MainMenu);
+            _gameStateTranstitions = new Dictionary<UIEvent, GameState>();
+            _gameStateTranstitions.Add(UIEvent.StartGame, new PlayerSelectGameState(_a3RData));
+
+            //TODO: Add in the rest of the UI transitions here
 
             
         }
 
-        public void NotifyUIEvent(UIEventArgs uiEvent)
+        public void NotifyUIEvent(UIEventArgs uiEventArgs)
         {
-            Console.WriteLine("Arty has been called for a UI Event {0}", uiEvent.Event);
-            _uiEventArgs = uiEvent;
+            Console.WriteLine("Arty has been called for a UI Event {0}", uiEventArgs.Event);
 
-            switch (uiEvent.Event)
+           try
             {
-                case UIEvent.StartGame:
-                    PushState(MenuState.PlayerSelectState);
-                    PushState(MenuState.LoadState);
-                    break;
-
-
-                case UIEvent.Exit:
-                    PushState(MenuState.Exit);
-                    PushState(MenuState.LoadState);
-                    break;
-
-                case UIEvent.StartCombat:
-                    PushState(MenuState.CombatStage);
-                    PushState(MenuState.LoadState);
-                    break;
-
-
+                _gameState = _gameStateTranstitions[uiEventArgs.Event];
             }
-
+            catch (Exception e)
+            {
+                Console.WriteLine("Could not find game state for UIEventArg: " + e.Message);
+            }
         }
 
 
@@ -171,7 +143,7 @@ namespace ArtillerySeries.src
         public void HandleInput()
         {
             //for core all-around things like the options and esc menu.
-
+            //THIS SHOULD BE UNDER SERVICES.
             if (SwinGame.KeyTyped(KeyCode.EscapeKey))
             {
                 if (PeekState() == MenuState.EscMenu)

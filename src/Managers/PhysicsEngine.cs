@@ -31,6 +31,7 @@ namespace ArtillerySeries.src
             _windowRect = _a3RData.WindowRect;
             _components = new List<IPhysicsComponent>();
             _componentsToRemove = new List<IPhysicsComponent>();
+
         }
         #endregion
 
@@ -45,12 +46,11 @@ namespace ArtillerySeries.src
 
                 _boundaryBox = new Rectangle()
                 {
-                    X = 0,
-                    Y = Constants.WorldMaxHeight + Constants.TerrainDepth - _a3RData.WindowRect.Height,
-                    Width = _a3RData.Terrain.Map.Length,
-                    Height = Constants.WorldMaxHeight + Constants.TerrainDepth
+                    X = -Constants.BoundaryBoxPadding,
+                    Y = -Constants.BoundaryBoxPadding,
+                    Width = _windowRect.Width + Constants.BoundaryBoxPadding * 2,
+                    Height = _windowRect.Height + Constants.BoundaryBoxPadding * 2
                 };
-
             }
         }
         public Rectangle BoundaryBox { get => _boundaryBox; }
@@ -194,18 +194,6 @@ namespace ArtillerySeries.src
             //_a3RData.Wind.SetWind(direction, magnitude);
         }
 
-        public void SetWindowRect(Rectangle windowRect)
-        {
-            _a3RData.WindowRect = windowRect;
-
-            _boundaryBox = new Rectangle()
-            {
-                X = -Constants.BoundaryBoxPadding,
-                Y = -Constants.BoundaryBoxPadding,
-                Width = windowRect.Width + Constants.BoundaryBoxPadding * 2,
-                Height = windowRect.Height + Constants.BoundaryBoxPadding * 2
-            };
-        }
 
         public void SetBoundaryBoxPos(Point2D pt)
         {

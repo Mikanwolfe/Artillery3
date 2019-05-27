@@ -6,15 +6,12 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
-
-
-    public class GameState
+    public class PlayerSelectGameState : GameState
     {
-
-        A3RData _a3RData;
-        public GameState(A3RData a3RData)
+        public PlayerSelectGameState(A3RData a3RData) 
+            : base(a3RData)
         {
-            _a3RData = a3RData;
+            _uiModule = new UIElementAssembly();
         }
     }
 }

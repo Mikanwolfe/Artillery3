@@ -11,6 +11,29 @@ namespace ArtillerySeries.src
     {
         
     }
+
+    public class ServicesModule : IServices
+    {
+        bool _enabled;
+
+        private A3RData _a3RData;
+        public ServicesModule(A3RData a3RData)
+        {
+            _a3RData = a3RData;
+        }
+
+        public virtual void Draw()
+        {
+        }
+
+        public virtual void Update()
+        {
+        }
+
+        public bool Enabled { get => _enabled; set => _enabled = value; }
+        public A3RData A3RData { get => _a3RData; set => _a3RData = value; }
+    }
+
     public class Services : IServices
     {
 
@@ -23,7 +46,7 @@ namespace ArtillerySeries.src
 
         private bool _enabled = true;
 
-        private List<IServices> _services;
+        private List<ServicesModule> _services;
 
         private A3RData _a3RData;
 
@@ -33,7 +56,7 @@ namespace ArtillerySeries.src
         private Services()
         {
             _instance = this;
-            _services = new List<IServices>();
+            _services = new List<ServicesModule>();
         }
         public static Services Instance
         {
@@ -85,7 +108,7 @@ namespace ArtillerySeries.src
             _commandProcessor = new CommandProcessor();
         }
 
-        public void AddService(IServices service)
+        public void AddService(ServicesModule service)
         {
             _services.Add(service);
         }
