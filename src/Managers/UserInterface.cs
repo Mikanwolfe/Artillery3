@@ -14,8 +14,6 @@ namespace ArtillerySeries.src
     {
         List<UIElement> _uiElements;
         private static UserInterface instance;
-        Rectangle _windowRect;
-        World _world; // remove this and replace with ui args
         Observer _observerInstance;
 
         UI_Combat _uiCombat;
@@ -23,11 +21,10 @@ namespace ArtillerySeries.src
         UI_PlayerSelect _uiPlayerSelect;
         MenuState _currentState;
 
-        
+        A3RData _a3RData;
 
         NotifyGame onNotifyUIEvent;
 
-        Camera _camera;
 
         private UserInterface()
         {
@@ -70,6 +67,7 @@ namespace ArtillerySeries.src
         public World World { get => _world; set => _world = value; }
         public Observer ObserverInstance { get => _observerInstance; set => _observerInstance = value; }
         public NotifyGame OnNotifyUIEvent { get => onNotifyUIEvent; set => onNotifyUIEvent = value; }
+        public A3RData A3RData { set => _a3RData = value; }
 
         public void SetWindowRect(Rectangle windowRect)
         {
