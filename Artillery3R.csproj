@@ -216,7 +216,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Hatsuyuki.Core\Hatsuyuki.Core.csproj">
-      <Project>{30c193c3-2153-467b-bdfa-8b75c4532aa0}</Project>
+      <Project>{be0868bd-3576-4620-9ace-d1d104e2bbf8}</Project>
       <Name>Hatsuyuki.Core</Name>
     </ProjectReference>
   </ItemGroup>

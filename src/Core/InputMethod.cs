@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using Hatsuyuki.Core;
 
 namespace ArtillerySeries.src
 {
@@ -35,7 +36,10 @@ namespace ArtillerySeries.src
         {
             _keyToCommands = new Dictionary<KeyCode, ICommand>();// Newtonsoft should be able to (de)serialise this
             _registeredKeys = new List<KeyCode>();
-            //For now, we'll do this:
+
+            HatsuyukiAI _ai = new HatsuyukiAI();
+            Console.WriteLine(_ai.Greeting);
+
 
             _keyToCommands.Add(KeyCode.RightKey, new MoveRightCommand());
             _keyToCommands.Add(KeyCode.LeftKey, new MoveLeftCommand());

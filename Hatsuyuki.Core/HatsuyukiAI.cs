@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Hatsuyuki.Core
 {
-    public class Class1
+    public class HatsuyukiAI
     {
+        public string Greeting => "This is Hatsuyuki.Core!";
     }
 }
