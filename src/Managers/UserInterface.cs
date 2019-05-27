@@ -12,6 +12,9 @@ namespace ArtillerySeries.src
     public delegate void NotifyGame(UIEventArgs uiEvent);
     public class UserInterface
     {
+
+        //State determines Userinterface, however, since this isn't going to be too easy to fix up we'll have the states 
+        // call upon the UI to change.
         List<UIElement> _uiElements;
         private static UserInterface instance;
         Observer _observerInstance;
@@ -61,45 +64,23 @@ namespace ArtillerySeries.src
             _uiCombat.SetPlayerPreviousPercentage(_world.SelectedPlayer.Character.PreviousWeaponChargePercentage);
         }
 
-
-        public Camera Camera { get => _camera; set => _camera = value; }
-        public Rectangle WindowRect { get => _windowRect; }
-        public World World { get => _world; set => _world = value; }
         public Observer ObserverInstance { get => _observerInstance; set => _observerInstance = value; }
         public NotifyGame OnNotifyUIEvent { get => onNotifyUIEvent; set => onNotifyUIEvent = value; }
         public A3RData A3RData { set => _a3RData = value; }
 
-        public void SetWindowRect(Rectangle windowRect)
+
+        public void Initialise(A3RData a3RData)
         {
-            _windowRect = windowRect;
-            _camera = new Camera(windowRect);
+            _a3RData = a3RData;
+            _uiElements.Clear();
+
         }
-
-        public void Initialise(MenuState menuState)
-        {
-
-            if (_camera != null)
-            {
-                SwinGame.SetCameraPos(ZeroPoint2D());
-                for (float i = 0; i < 1; i += 0.1f)
-                {
-                    SwinGame.FillRectangle(SwinGame.RGBAFloatColor(1, 1, 1, i), _camera.Pos.X, _camera.Pos.Y, WindowRect.Width, WindowRect.Height);
-                    SwinGame.RefreshScreen(60);
-                }
-            } else
-            {
-                SwinGame.SetCameraPos(ZeroPoint2D());
-                for (float i = 0; i < 1; i += 0.1f)
-                {
-                    SwinGame.FillRectangle(SwinGame.RGBAFloatColor(1, 1, 1, i), 0, 0, WindowRect.Width, WindowRect.Height);
-                    SwinGame.RefreshScreen(60);
-                }
-            }
-            
+            /*
+            _currentState = MenuState.MainMenu;
 
 
             _uiElements.Clear();
-            _currentState = menuState;
+            _currentState
 
             switch (menuState)
             {
@@ -121,6 +102,7 @@ namespace ArtillerySeries.src
                     break;
             }
         }
+        */
 
         public void ShowWinScreen()
         {
