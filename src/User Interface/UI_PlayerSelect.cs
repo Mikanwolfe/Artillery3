@@ -221,7 +221,8 @@ namespace ArtillerySeries.src
                        
                         if (!SwinGame.ReadingText())
                         {
-                            Player player = new Player(SwinGame.EndReadingText(), new PlayerInputMethod());
+                            Player player = new Player(SwinGame.EndReadingText());
+                            player.InputMethod = new PlayerInputMethod(player, Artillery3R.Services.A3RData);
                             _players.Add(player);
                             SwitchState(PlayerSelectState.ReadingPlayers);
                         }

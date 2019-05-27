@@ -119,3 +119,35 @@ This can be seen in a number of places, but the most obvious one would simply be
 
 > A3L showed me that the most real-world way of designing objects isn't always the best. Object-Oriented Design in itself, is an art.
 
+---
+
+# Hatsuyuki System
+
+As a test bench for the AI component, the Hatsuyuki system represents a separate DLL library containing the core logic utilised for artillery. For the sake of simplicity, I will be 'soldering certain lamps to the wall', which will be discussed in a later section.
+
+The significance of the DLL Library (Yes, I will be referring to it as 'DLL Library')  is for modularity. OOP programs are designed to be modular in nature through encapsulation and information hiding. Though Hatsuyuki at first will be a rather straightforward and highly coupled system, I am to slowly decouple the system to increase the usefulness outside of Artillery.
+
+##  Introduction 
+
+Artificial intelligence in games is a crucial component
+
+
+
+## Current AI Systems
+
+
+
+## Implementation of Hatsuyuki
+
+
+
+
+
+---
+
+Hatsuyuki is too broad and unfeasible. Back to the drawing board.
+
+the high distinction project might as well just be A3R at this point. It's get that HD and leave.
+
+
+

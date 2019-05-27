@@ -15,13 +15,16 @@ namespace ArtillerySeries.src
     public abstract class Command : ICommand
     {
         private string _name;
+        Player _player;
 
-        public Command(string name)
+        public Command(Player p, string name)
         {
+            _player = p;
             _name = name;
         }
 
         public string Name { get => _name; set => _name = value; }
+        public Player Player { get => _player; set => _player = value; }
 
         public abstract void Execute(A3RData a3RData);
     }

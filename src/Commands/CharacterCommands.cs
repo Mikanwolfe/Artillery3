@@ -9,91 +9,91 @@ namespace ArtillerySeries.src
     public class ChargeWeaponCommand
     : Command
     {
-        public ChargeWeaponCommand()
-            : base("charge_weapon")
+        public ChargeWeaponCommand(Player p)
+            : base(p, "charge_weapon")
         {
         }
 
         public override void Execute(A3RData a3RData)
         {
-            a3RData.SelectedPlayer.Character.ChargeWeapon();
+            Player.Character.ChargeWeapon();
         }
     }
     public class DepressWeaponCommand
         : Command
     {
-        public DepressWeaponCommand()
-            : base("depress_weapon")
+        public DepressWeaponCommand(Player p)
+            : base(p, "depress_weapon")
         {
         }
         public override void Execute(A3RData a3RData)
         {
-            a3RData.SelectedPlayer.Character.DepressWeapon();
+            Player.Character.DepressWeapon();
         }
     }
 
     public class ElevateWeaponCommand
         : Command
     {
-        public ElevateWeaponCommand() 
-            : base("elevate_weapon")
+        public ElevateWeaponCommand(Player p) 
+            : base(p, "elevate_weapon")
         {
         }
 
         public override void Execute(A3RData a3RData)
         {
-            a3RData.SelectedPlayer.Character.ElevateWeapon();
+            Player.Character.ElevateWeapon();
         }
     }
 
     public class FireWeaponCommand : Command
     {
-        public FireWeaponCommand()
-            : base("fire_weapon")
+        public FireWeaponCommand(Player p)
+            : base(p, "fire_weapon")
         {
         }
 
         public override void Execute(A3RData a3RData)
         {
-            a3RData.SelectedPlayer.Character.FireWeapon();
+            Player.Character.FireWeapon();
         }
     }
     public class MoveLeftCommand
         : Command
     {
-        public MoveLeftCommand()
-            : base("move_left")
+        public MoveLeftCommand(Player p)
+            : base(p, "move_left")
         {
         }
 
         public override void Execute(A3RData a3RData)
         {
-            a3RData.SelectedPlayer.Character.MoveLeft();
+            Player.Character.MoveLeft();
         }
 
     }
     public class MoveRightCommand : Command
     {
-        public MoveRightCommand()
-            : base("move_right")
+        public MoveRightCommand(Player p)
+            : base(p, "move_right")
         {
         }
 
         public override void Execute(A3RData a3RData)
         {
-            a3RData.SelectedPlayer.Character.MoveRight();
+            Player.Character.MoveRight();
         }
     }
     public class SwitchWeaponCommand
         : Command
     {
-        public SwitchWeaponCommand()
-            : base("switch_weapon")
+        public SwitchWeaponCommand(Player p)
+            : base(p, "switch_weapon")
         {
         }
         public override void Execute(A3RData a3RData)
         {
-            a3RData.SelectedPlayer.Character.SwitchWeapon();
+            Player.Character.SwitchWeapon();
         }
     }
 }

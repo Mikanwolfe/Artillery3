@@ -24,16 +24,15 @@ namespace ArtillerySeries.src
         Character _character;
         StateComponent<PlayerState> _state;
         ObserverComponent _observerComponent;
-        IInputMethod _inputMethod;
+        InputMethod _inputMethod;
         double _observeDelay;
         #endregion
 
         #region Constructor
-        public Player(string name, World world, IInputMethod inputMethod)
+        public Player(string name, World world)
             : base(name)
         {
             //The world is always an observer for the player.
-            _inputMethod = inputMethod;
             _observerComponent = new ObserverComponent();
             _observerComponent.AddObserver(world.ObserverInstance);
             _observerComponent.AddObserver(UserInterface.Instance.ObserverInstance);
@@ -42,10 +41,9 @@ namespace ArtillerySeries.src
 
         }
 
-        public Player(string name, IInputMethod inputMethod)
+        public Player(string name)
             : base(name)
         {
-            _inputMethod = inputMethod;
             _state = new StateComponent<PlayerState>(PlayerState.Idle);
             _observeDelay = 0;
         }
@@ -234,7 +232,7 @@ namespace ArtillerySeries.src
 
         #region Properties
         public Character Character { get => _character; set => _character = value; }
-        public IInputMethod InputMethod { get => _inputMethod; set => _inputMethod = value; }
+        public InputMethod InputMethod { get => _inputMethod; set => _inputMethod = value; }
         #endregion
 
     }
