@@ -48,6 +48,7 @@
     <Compile Include="src\Managers\EscMenuService.cs" />
     <Compile Include="src\Managers\Services.cs" />
     <Compile Include="src\Core\Utilities.cs" />
+    <Compile Include="src\User Interface\UI_PlayerSelectScreen.cs" />
     <Compile Include="src\User Interface\UI_ShopMenu.cs" />
     <Compile Include="src\World\Camera.cs" />
     <Compile Include="src\World\CameraFocusPoint.cs" />

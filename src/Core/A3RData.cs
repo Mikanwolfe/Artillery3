@@ -24,6 +24,7 @@ namespace ArtillerySeries.src
 
         private int _selectedPlayerIndex;
 
+        int _numberOfPlayers;
         List<Player> _players;
         List<Entity> _entities;
 
@@ -101,6 +102,7 @@ namespace ArtillerySeries.src
         public Terrain Terrain { get => _terrain; set => _terrain = value; }
         public bool UserExitRequested { get => _userExitRequested; set => _userExitRequested = value; }
         public Camera Camera { get => _camera; set => _camera = value; }
+        public int NumberOfPlayers { get => _numberOfPlayers; set => _numberOfPlayers = value; }
 
         #endregion
     }

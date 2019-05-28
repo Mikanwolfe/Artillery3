@@ -16,7 +16,7 @@ namespace ArtillerySeries.src
         ReadingPlayerCharacters,
         Finishing
     }
-    public class UI_PlayerSelect : UIElementAssembly, IStateComponent<PlayerSelectState>
+    public class UI_PlayerSelect_Legacy : UIElementAssembly, IStateComponent<PlayerSelectState>
     {
         
         UI_Text textElement;
@@ -30,7 +30,7 @@ namespace ArtillerySeries.src
         int currentIndexPlayer;
 
 
-        public UI_PlayerSelect(A3RData a3RData)
+        public UI_PlayerSelect_Legacy(A3RData a3RData)
             :base (a3RData)
         {
             _stateComponent = new StateComponent<PlayerSelectState>(PlayerSelectState.ReadingNumberPlayers);
