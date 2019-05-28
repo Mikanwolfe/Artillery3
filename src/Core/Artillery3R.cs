@@ -10,6 +10,8 @@ namespace ArtillerySeries.src
 {
     public static class Constants
     {
+        public const int MaxNumberPlayers = 10;
+
         public const float Gravity = 0.6f;
         public const float VelocityLoss = 1f;
         public const string Data = "data.json";
@@ -140,7 +142,7 @@ namespace ArtillerySeries.src
             SwinGame.LoadSoundEffectNamed("satellite_prep", "satellite_prep.wav");
             SwinGame.LoadSoundEffectNamed("menuSound", "koikenmenu.ogg");
 
-            SwinGame.LoadFontNamed("guiFont", "maven_pro_regular.ttf", 12);
+            SwinGame.LoadFontNamed("guiFont", "cour.ttf", 12);
         }
 
 

@@ -10,7 +10,7 @@ namespace ArtillerySeries.src
     {
         public MainMenuGameState(A3RData a3RData) : base(a3RData)
         {
-            _uiModule = new UI_MainMenu(A3RData);
+            UIModule = new UI_MainMenu(A3RData);
         }
     }
 }

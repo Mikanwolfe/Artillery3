@@ -18,7 +18,7 @@ namespace ArtillerySeries.src
         #region Fields
         bool _enabled;
         A3RData _a3RData;
-        protected UIElementAssembly _uiModule;
+        UIElementAssembly _uiModule;
         #endregion
 
         #region Constructor
@@ -32,7 +32,7 @@ namespace ArtillerySeries.src
         #region Methods
         public virtual void EnterState()
         {
-            UserInterface.Instance.ChangeGameState(_uiModule);
+            UserInterface.Instance.ChangeGameState(this);
         }
 
         public virtual void ExitState()
@@ -50,6 +50,7 @@ namespace ArtillerySeries.src
         #region Properties
         public bool Enabled { get => _enabled; set => _enabled = value; }
         public A3RData A3RData { get => _a3RData; set => _a3RData = value; }
+        public UIElementAssembly UIModule { get => _uiModule; set => _uiModule = value; }
 
         #endregion
     }

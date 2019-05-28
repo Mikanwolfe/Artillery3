@@ -22,11 +22,13 @@ namespace ArtillerySeries.src
         private static UserInterface instance;
         Observer _observerInstance;
 
-        
+        GameState _currentState;
 
         A3RData _a3RData;
 
         NotifyGame onNotifyUIEvent;
+
+        bool _queueRefresh = false;
         #endregion
 
         #region Constructor
@@ -48,10 +50,11 @@ namespace ArtillerySeries.src
         }
 
 
-        public void ChangeGameState(UIElementAssembly _uiAssembly)
+        public void ChangeGameState(GameState gameState)
         {
+            _currentState = gameState;
             _uiElements.Clear();
-            _uiElements.Add(_uiAssembly);
+            _uiElements.Add(_currentState.UIModule);
         }
 
 
@@ -64,16 +67,10 @@ namespace ArtillerySeries.src
             onNotifyUIEvent(uiEventArgs);
         }
 
-        /*
-        public void FinishedPlayerSelection()
+        public void RefreshUI()
         {
-            UIEventArgs eventArgs = new UIEventArgs(UIEvent.StartCombat);
-            onNotifyUIEvent(eventArgs);
+            _queueRefresh = true;
         }
-        */
-
-        
-
 
         public void Initialise(A3RData a3RData)
         {
@@ -84,49 +81,6 @@ namespace ArtillerySeries.src
 
 
 
-        /*
-       _currentState = MenuState.MainMenu;
-
-
-       _uiElements.Clear();
-       _currentState
-
-       switch (menuState)
-       {
-
-           case MenuState.MainMenu:
-               _uiMainMenu = new UI_MainMenu();
-               AddElement(_uiMainMenu);
-               break;
-
-
-           case MenuState.PlayerSelectState:
-               _uiPlayerSelect = new UI_PlayerSelect();
-               AddElement(_uiPlayerSelect);
-               break;
-
-           case MenuState.CombatStage:
-               _uiCombat = new UI_Combat();
-               AddElement(_uiCombat);
-               break;
-       }
-   }
-   */
-   /*
-        public void ShowWinScreen()
-        {
-            _camera.Zero();
-
-
-        }
-
-        public void NewPlayerTurn()
-        {
-            UpdatePreviousWeaponCharge();
-        }
-        */
-
-
         public void AddElement(UIElement element)
         {
             _uiElements.Add(element);
@@ -134,6 +88,13 @@ namespace ArtillerySeries.src
 
         public void Update()
         {
+            if (_queueRefresh)
+            {
+                _uiElements.Clear();
+                _uiElements.Add(_currentState.UIModule);
+                _queueRefresh = false;
+            }
+
             foreach (UIElement e in _uiElements)
             {
                 e.Update();
@@ -147,28 +108,6 @@ namespace ArtillerySeries.src
                 e.Draw();
             }
         }
-
-        /*
-
-        public void UpdateChargeBar()
-        {
-            _uiCombat.UpdatePlayerChargeBar(_world.SelectedPlayer.WeaponChargePercentage);
-
-        }
-
-        public void ClearChargeBar()
-        {
-            _uiCombat.ClearChargeBar();
-        }
-        */
-
-
-        /*
-        public void UpdatePreviousWeaponCharge()
-        {
-            _uiCombat.SetPlayerPreviousPercentage(_world.SelectedPlayer.Character.PreviousWeaponChargePercentage);
-        }
-        */
 
         #endregion
 
