@@ -24,10 +24,10 @@ namespace ArtillerySeries.src
             AddElement(_playerText);
 
             _isComputerPlayer = new UI_CheckBox(Camera, 
-                new Vector(Width(0.6f), Height(0.45f)), "Computer Player?");
+                new Vector(Width(0.59f), Height(0.397f)), "Computer Player?");
 
             AddElement(_isComputerPlayer);
-
+            _inputMethodKey = new Dictionary<bool, IInputMethod>();
             _inputMethodKey.Add(true, new AIInputMethod());
             _inputMethodKey.Add(false, new PlayerInputMethod());
 
@@ -54,6 +54,8 @@ namespace ArtillerySeries.src
                     _inputMethodKey[_isComputerPlayer.Checked]);
                 A3RData.Players.Add(_player);
                 _playerIndex++;
+                _readingPlayerName = false;
+                _isComputerPlayer.Checked = false;
 
             }
 

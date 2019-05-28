@@ -36,6 +36,12 @@ namespace ArtillerySeries.src
         {
 
         }
+
+        public Vector(Vector pt)
+            : this(pt.X, pt.Y)
+        {
+
+        }
         #endregion
 
         #region Methods

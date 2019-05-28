@@ -13,8 +13,8 @@ namespace ArtillerySeries.src
         Bitmap _bitmap;
         Bitmap _selectedBitmap;
 
-        int _height = 20;
-        int _width = 20;
+        int _height = 15;
+        int _width = 15;
         string _text;
 
         Color _baseColor = Color.Black;
@@ -22,6 +22,8 @@ namespace ArtillerySeries.src
 
         Rectangle _buttonArea;
         Rectangle _fillArea;
+
+        Vector _textPos;
 
         bool _checked = false;
 
@@ -37,7 +39,8 @@ namespace ArtillerySeries.src
             : base(camera)
         {
             _text = text;
-            
+            Pos = pos.ToPoint2D;
+            _textPos = new Vector(pos.X + 20, pos.Y+4);
 
             _buttonArea = new Rectangle()
             {
@@ -64,6 +67,7 @@ namespace ArtillerySeries.src
             if (_bitmap == null)
             {
                 SwinGame.DrawRectangle(_baseColor, _buttonArea);
+                SwinGame.DrawText(_text, Color.Black, _textPos.X, _textPos.Y);
                 if (_checked)
                 {
                     SwinGame.FillRectangle(_highlightColor, _fillArea);
