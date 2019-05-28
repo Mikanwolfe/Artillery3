@@ -66,8 +66,8 @@ namespace ArtillerySeries.src
         Rectangle _windowRect;
         UIEventArgs _uiEventArgs;
         
-
-        GameState _gameState;
+        Stack<GameState> _gameState;
+        GameState _currentState;
 
         Dictionary<UIEvent, GameState> _gameStateTranstitions;
 
@@ -87,6 +87,8 @@ namespace ArtillerySeries.src
             _windowRect = _a3RData.WindowRect;
             UserInterface.Instance.OnNotifyUIEvent = NotifyUIEvent;
 
+            _gameState = new Stack<GameState>();
+
             _gameStateTranstitions = new Dictionary<UIEvent, GameState>();
             _gameStateTranstitions.Add(UIEvent.StartGame, new PlayerSelectGameState(_a3RData));
             _gameStateTranstitions.Add(UIEvent.MainMenu, new MainMenuGameState(_a3RData));
@@ -99,11 +101,15 @@ namespace ArtillerySeries.src
         {
             Console.WriteLine("Arty has been called for a UI Event {0}", uiEventArgs.Event);
 
+            
+
+
            try
             {
-                _gameState.ExitState();
-                _gameState = _gameStateTranstitions[uiEventArgs.Event];
-                _gameState.EnterState();
+                //Push the next state, and then the loading state.
+                // if the game is in the loading state it's then going to load the state properly.
+                _gameState.Push(_gameStateTranstitions[uiEventArgs.Event]);
+                _gameState.Push(new LoadingGameState(_gameState));
             }
             catch (Exception e)
             {
@@ -147,21 +153,24 @@ namespace ArtillerySeries.src
             LoadResources();
             SwinGame.ClearScreen(Color.White);
 
-            _gameState = _gameStateTranstitions[UIEvent.MainMenu];
-            _gameState.EnterState();
+
+            _gameState.Push(_gameStateTranstitions[UIEvent.MainMenu]);
+            _currentState = _gameState.Peek();
+            _currentState.EnterState();
 
             while (!SwinGame.WindowCloseRequested() && !_a3RData.UserExitRequested)
             {
+                _currentState = _gameState.Peek();
 
                 SwinGame.ProcessEvents();
                 //Services.Update();
 
-                _gameState.Update();
+                _currentState.Update();
                 UserInterface.Instance.Update();
 
                 SwinGame.ClearScreen(Color.White);
                 UserInterface.Instance.Draw();
-                _gameState.Draw();
+                _currentState.Draw();
                 SwinGame.RefreshScreen(60);
             }
 

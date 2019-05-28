@@ -39,7 +39,8 @@
     <Compile Include="src\Commands\CommandStream.cs" />
     <Compile Include="src\Core\InputHandler.cs" />
     <Compile Include="src\Core\InputMethod.cs" />
-    <Compile Include="src\Core\MainMenuGameState.cs" />
+    <Compile Include="src\GameStates\LoadingGameState.cs" />
+    <Compile Include="src\GameStates\MainMenuGameState.cs" />
     <Compile Include="src\Core\Vector.cs" />
     <Compile Include="src\Entities\Projectiles\AcidProjectile.cs" />
     <Compile Include="src\Core\A3RData.cs" />
@@ -74,7 +75,7 @@
     <Compile Include="src\Entities\Projectiles\Projectile.cs" />
     <Compile Include="src\Entities\Projectiles\ProjectileFactory.cs" />
     <Compile Include="src\World\GameState.cs" />
-    <Compile Include="src\Core\PlayerSelectGameState.cs" />
+    <Compile Include="src\GameStates\PlayerSelectGameState.cs" />
     <Compile Include="src\World\Satellite.cs" />
     <Compile Include="src\Components\StateComponent.cs" />
     <Compile Include="src\World\Terrain.cs" />
