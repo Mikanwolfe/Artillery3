@@ -12,7 +12,7 @@ namespace ArtillerySeries.src
 
 
 
-    public delegate void NotifyGame(UIEventArgs uiEvent);
+    public delegate void UIEventOccurred(UIEventArgs uiEvent);
     public class UserInterface
     {
 
@@ -26,7 +26,7 @@ namespace ArtillerySeries.src
 
         A3RData _a3RData;
 
-        NotifyGame onNotifyUIEvent;
+        UIEventOccurred onUIEvent;
 
         bool _queueRefresh = false;
         #endregion
@@ -64,7 +64,7 @@ namespace ArtillerySeries.src
         #region Methods
         public void NotifyUIEvent(object sender, UIEventArgs uiEventArgs)
         {
-            onNotifyUIEvent(uiEventArgs);
+            onUIEvent(uiEventArgs);
         }
 
         public void RefreshUI()
@@ -113,7 +113,7 @@ namespace ArtillerySeries.src
 
         #region Properties
         public Observer ObserverInstance { get => _observerInstance; set => _observerInstance = value; }
-        public NotifyGame OnNotifyUIEvent { get => onNotifyUIEvent; set => onNotifyUIEvent = value; }
+        public UIEventOccurred UIEventOccurred { get => onUIEvent; set => onUIEvent = value; }
         public A3RData A3RData { set => _a3RData = value; }
 
 

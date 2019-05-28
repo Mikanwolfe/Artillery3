@@ -31,12 +31,12 @@ namespace ArtillerySeries.src
                     UIModule = new UI_PlayerSelectNames(A3RData, PlayerSelectHandler);
                     break;
 
-                case PlayerSelect.PlayerNames: // Implies that we've just selected the no. of Players
+                case PlayerSelect.PlayerNames: // Implies that we've just named everyone
                     UIModule = new UI_PlayerSelectCharacters(A3RData, PlayerSelectHandler);
                     break;
 
-                case PlayerSelect.PlayerCharacters:
-                    //UserInterface.Instance.
+                case PlayerSelect.PlayerCharacters: // Finish char select, now play game.
+                    UserInterface.Instance.UIEventOccurred(new UIEventArgs(UIEvent.StartCombat));
                     break;
 
             }

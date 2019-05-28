@@ -87,7 +87,7 @@ namespace ArtillerySeries.src
             _a3RData = new A3RData();
             Services.Initialise(_a3RData);
             _windowRect = _a3RData.WindowRect;
-            UserInterface.Instance.OnNotifyUIEvent = NotifyUIEvent;
+            UserInterface.Instance.UIEventOccurred = UIEventOccured;
 
             _gameState = new Stack<GameState>();
 
@@ -99,12 +99,9 @@ namespace ArtillerySeries.src
 
         }
 
-        public void NotifyUIEvent(UIEventArgs uiEventArgs)
+        public void UIEventOccured(UIEventArgs uiEventArgs)
         {
             Console.WriteLine("Arty has been called for a UI Event {0}", uiEventArgs.Event);
-
-            
-
 
            try
             {

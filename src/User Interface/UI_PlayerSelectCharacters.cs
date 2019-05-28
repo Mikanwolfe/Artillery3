@@ -44,8 +44,11 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
-            _playerText.Text = "Player " + A3RData.Players[_playerIndex].Name + ":";
-
+            if (_playerIndex <= A3RData.NumberOfPlayers - 1)
+            {
+                _playerText.Text = "Player " + A3RData.Players[_playerIndex].Name + ":";
+            }
+            
             base.Update();
         }
 
@@ -55,36 +58,38 @@ namespace ArtillerySeries.src
             Character newCharacter;
 
             //make this into a json thing later
-
-            switch (uiEventArgs.Text)
+            if (_playerIndex < A3RData.NumberOfPlayers - 1)
             {
-                case "gwt":
-                    newCharacter = new Character("G.W. Tiger", 100, 250);
-                    Weapon autoLoader = new Weapon("BatChat Autoloader", 10, 85, ProjectileType.Shell);
-                    autoLoader.IsAutoloader = true;
-                    autoLoader.AutoloaderClip = 5;
-                    autoLoader.ProjectilesFiredPerTurn = 3;
-                    autoLoader.BaseDamage = 80;
-                    autoLoader.UsesSatellite = true;
-                    //newCharacter.AddWeapon(autoLoader);
 
-                    A3RData.Players[_playerIndex].Character = newCharacter;
-                    Console.WriteLine("GTW Selected!");
-                    break;
+                switch (uiEventArgs.Text)
+                {
+                    case "gwt":
+                        newCharacter = new Character("G.W. Tiger", 100, 250);
+                        Weapon autoLoader = new Weapon("BatChat Autoloader", 10, 85, ProjectileType.Shell);
+                        autoLoader.IsAutoloader = true;
+                        autoLoader.AutoloaderClip = 5;
+                        autoLoader.ProjectilesFiredPerTurn = 3;
+                        autoLoader.BaseDamage = 80;
+                        autoLoader.UsesSatellite = true;
+                        //newCharacter.AddWeapon(autoLoader);
 
-                case "obj":
-                    A3RData.Players[_playerIndex].Character = new Character("Object 15X", 100, 100);
-                    Console.WriteLine("Obj Selected!");
-                    break;
+                        A3RData.Players[_playerIndex].Character = newCharacter;
+                        Console.WriteLine("GTW Selected!");
+                        break;
 
-                case "int":
-                    A3RData.Players[_playerIndex].Character = new Character("Innocentia", 100, 100);
-                    Console.WriteLine("int Selected!");
-                    break;
+                    case "obj":
+                        A3RData.Players[_playerIndex].Character = new Character("Object 15X", 100, 100);
+                        Console.WriteLine("Obj Selected!");
+                        break;
+
+                    case "int":
+                        A3RData.Players[_playerIndex].Character = new Character("Innocentia", 100, 100);
+                        Console.WriteLine("int Selected!");
+                        break;
+                }
             }
 
             _playerIndex++;
-
 
             if (_playerIndex > A3RData.NumberOfPlayers - 1)
             {
