@@ -13,6 +13,9 @@ namespace ArtillerySeries.src
         int _playerIndex = 0;
         bool _readingPlayerName = false;
 
+        UI_CheckBox _isComputerPlayer;
+        Dictionary<bool, IInputMethod> _inputMethodKey;
+
         public UI_PlayerSelectNames(A3RData a3RData, endSelectStage endSelectStage) 
             : base(a3RData, endSelectStage)
         {
@@ -20,8 +23,14 @@ namespace ArtillerySeries.src
                 Color.Black, "Player X:", true);
             AddElement(_playerText);
 
+            _isComputerPlayer = new UI_CheckBox(Camera, 
+                new Vector(Width(0.6f), Height(0.45f)), "Computer Player?");
 
-            
+            AddElement(_isComputerPlayer);
+
+            _inputMethodKey.Add(true, new AIInputMethod());
+            _inputMethodKey.Add(false, new PlayerInputMethod());
+
         }
 
 
@@ -41,18 +50,17 @@ namespace ArtillerySeries.src
 
             if (!SwinGame.ReadingText())
             {
-                Player _player = new Player()
-                A3RData.Players.Add()
+                Player _player = new Player(SwinGame.EndReadingText(), 
+                    _inputMethodKey[_isComputerPlayer.Checked]);
+                A3RData.Players.Add(_player);
+                _playerIndex++;
 
             }
 
-            if (A3RData.NumberOfPlayers > 1)
+            if (_playerIndex > A3RData.NumberOfPlayers - 1)
             {
-                EndSelectStage(PlayerSelect.NumberPlayers);
+                EndSelectStage(PlayerSelect.PlayerNames);
             }
-
-
-
 
             base.Update();
         }

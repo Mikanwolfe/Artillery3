@@ -39,18 +39,11 @@ namespace ArtillerySeries.src
         public UI_Button(Camera camera, string text, float x, float y, UIEventArgs uiEvent)
             : base(camera)
         {
-            _buttonArea = new Rectangle()
-            {
-                X = Pos.X,
-                Y = Pos.Y,
-                Width = _width,
-                Height = _height
-            };
-
             _text = text;
             Pos = new Point2D() { X = x, Y = y };
 
             _uiEventArgs = uiEvent;
+
         }
 
         public UI_Button(Camera camera,string text, float x, float y, UIEvent uiEvent, Bitmap bitmap)
@@ -119,7 +112,13 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
-            
+            _buttonArea = new Rectangle()
+            {
+                X = Pos.X,
+                Y = Pos.Y,
+                Width = _width,
+                Height = _height
+            };
 
             if (MiddleAligned)
             {

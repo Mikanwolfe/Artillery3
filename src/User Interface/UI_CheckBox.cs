@@ -25,12 +25,15 @@ namespace ArtillerySeries.src
 
         bool _checked = false;
 
-        public UI_CheckBox(Camera camera, string text, bool isChecked)
-            : this(camera, text)
+        public bool Checked { get => _checked; set => _checked = value; }
+
+        public UI_CheckBox(Camera camera, Vector pos, string text, bool isChecked)
+            : this(camera, pos, text)
         {
+            Pos = pos.ToPoint2D;
             _checked = isChecked;
         }
-        public UI_CheckBox(Camera camera, string text)
+        public UI_CheckBox(Camera camera, Vector pos, string text)
             : base(camera)
         {
             _text = text;

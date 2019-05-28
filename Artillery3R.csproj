@@ -48,6 +48,7 @@
     <Compile Include="src\Managers\EscMenuService.cs" />
     <Compile Include="src\Managers\Services.cs" />
     <Compile Include="src\Core\Utilities.cs" />
+    <Compile Include="src\User Interface\UI_CheckBox.cs" />
     <Compile Include="src\User Interface\UI_PlayerSelectNames.cs" />
     <Compile Include="src\User Interface\UI_PlayerSelectNumberPlayers.cs" />
     <Compile Include="src\User Interface\UI_PlayerSelectScreen.cs" />
