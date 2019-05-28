@@ -32,7 +32,11 @@ namespace ArtillerySeries.src
                     break;
 
                 case PlayerSelect.PlayerNames: // Implies that we've just selected the no. of Players
-                    UIModule = new UIElementAssembly(A3RData);
+                    UIModule = new UI_PlayerSelectCharacters(A3RData, PlayerSelectHandler);
+                    break;
+
+                case PlayerSelect.PlayerCharacters:
+                    //UserInterface.Instance.
                     break;
 
             }
