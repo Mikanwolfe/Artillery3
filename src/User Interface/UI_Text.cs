@@ -15,7 +15,8 @@ namespace ArtillerySeries.src
         bool _isCentered = false;
         Color _color;
 
-        public UI_Text(float x, float y, Color txtColor, string text)
+        public UI_Text(Camera camera, float x, float y, Color txtColor, string text)
+            :base (camera)
         {
             _text = text;
             X = x;
@@ -24,8 +25,8 @@ namespace ArtillerySeries.src
             
         }
 
-        public UI_Text(float x, float y, Color txtColor, string text, bool isCentered)
-            : this(x, y, txtColor, text)
+        public UI_Text(Camera camera, float x, float y, Color txtColor, string text, bool isCentered)
+            : this(camera, x, y, txtColor, text)
         {
             _isCentered = isCentered;
         }

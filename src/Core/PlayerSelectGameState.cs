@@ -11,7 +11,7 @@ namespace ArtillerySeries.src
         public PlayerSelectGameState(A3RData a3RData) 
             : base(a3RData)
         {
-            _uiModule = new UIElementAssembly();
+            _uiModule = new UIElementAssembly(a3RData);
         }
     }
 }

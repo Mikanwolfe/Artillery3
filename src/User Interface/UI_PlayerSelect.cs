@@ -35,10 +35,10 @@ namespace ArtillerySeries.src
         {
             _stateComponent = new StateComponent<PlayerSelectState>(PlayerSelectState.ReadingNumberPlayers);
 
-            _menuLogo = new UI_StaticImage(Width(0.45f), Height(0.14f), SwinGame.BitmapNamed("menuLogo"));
+            _menuLogo = new UI_StaticImage(a3RData.Camera, Width(0.45f), Height(0.14f), SwinGame.BitmapNamed("menuLogo"));
             AddElement(_menuLogo);
 
-            textElement = new UI_Text(Width(0.5f), Height(0.35f),
+            textElement = new UI_Text(a3RData.Camera, Width(0.5f), Height(0.35f),
                 Color.Black, "Number of players:",true);
             AddElement(textElement);
 
@@ -83,7 +83,7 @@ namespace ArtillerySeries.src
                     
                     AddElement(_menuLogo);
 
-                    textElement = new UI_Text(Width(0.5f), Height(0.35f),
+                    textElement = new UI_Text(A3RData.Camera, Width(0.5f), Height(0.35f),
                             Color.Black, "Player " + currentIndexPlayer + "'s Name:", true);
                     AddElement(textElement);
 
@@ -101,27 +101,27 @@ namespace ArtillerySeries.src
 
                         UI_Button _uiButton;
 
-                        textElement = new UI_Text(Width(0.5f), Height(0.35f),
+                        textElement = new UI_Text(A3RData.Camera, Width(0.5f), Height(0.35f),
                                 Color.Black, "Select a Character", true);
                         AddElement(textElement);
 
-                        textElement = new UI_Text(Width(0.5f), Height(0.38f),
+                        textElement = new UI_Text(A3RData.Camera, Width(0.5f), Height(0.38f),
                                 Color.Black, _players[currentIndexPlayer].Name, true);
                         AddElement(textElement);
 
-                        _uiButton = new UI_Button("G.W. Tiger", Width(0.25f), Height(0.5f), new UIEventArgs("gwt"));
+                        _uiButton = new UI_Button(A3RData.Camera, "G.W. Tiger", Width(0.25f), Height(0.5f), new UIEventArgs("gwt"));
                         _uiButton.OnUIEvent += NotifyUIEvent;
                         _uiButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
                         _uiButton.MiddleAligned = true;
                         AddElement(_uiButton);
 
-                        _uiButton = new UI_Button("Object 15X", Width(0.5f), Height(0.5f), new UIEventArgs("obj"));
+                        _uiButton = new UI_Button(A3RData.Camera, "Object 15X", Width(0.5f), Height(0.5f), new UIEventArgs("obj"));
                         _uiButton.OnUIEvent += NotifyUIEvent;
                         _uiButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
                         _uiButton.MiddleAligned = true;
                         AddElement(_uiButton);
 
-                        _uiButton = new UI_Button("Innocentia", Width(0.75f), Height(0.5f), new UIEventArgs("int"));
+                        _uiButton = new UI_Button(A3RData.Camera, "Innocentia", Width(0.75f), Height(0.5f), new UIEventArgs("int"));
                         _uiButton.OnUIEvent += NotifyUIEvent;
                         _uiButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
                         _uiButton.MiddleAligned = true;
@@ -234,7 +234,7 @@ namespace ArtillerySeries.src
                     if (currentIndexPlayer > numberPlayers)
                     {
                         Console.WriteLine("Called to finish!");
-                        UserInterface.Instance.FinishedPlayerSelection();
+                        //UserInterface.Instance.FinishedPlayerSelection();
                     }
                     else
                     {

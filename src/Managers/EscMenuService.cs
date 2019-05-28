@@ -16,14 +16,5 @@ namespace ArtillerySeries.src.Managers
 
         }
 
-        public void Draw()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Update()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -15,7 +15,8 @@ namespace ArtillerySeries.src
         int _height = 40;
         int _width = 150;
 
-        public UI_StaticImage(float x, float y, Bitmap bitmap)
+        public UI_StaticImage(Camera camera, float x, float y, Bitmap bitmap)
+            : base(camera)
         {
             Visible = true;
             X = x;

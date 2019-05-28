@@ -13,6 +13,7 @@ namespace ArtillerySeries.src
         A3RData _a3RData;
 
         public UIElementAssembly(A3RData a3RData)
+            : base(a3RData.Camera)
         {
             _a3RData = a3RData;
             _uiElements = new List<UIElement>();

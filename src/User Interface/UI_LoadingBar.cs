@@ -15,20 +15,23 @@ namespace ArtillerySeries.src
         int _width, _height;
         Color _color;
         float _playerPreviousPercentage;
+        
 
 
-        public UI_LoadingBar()
-            : this(70, 20)
-        {
+        public UI_LoadingBar(Camera camera)
+            : this(camera, 70, 20)
+        { 
+
         }
 
-        public UI_LoadingBar(int width, int height)
-            : this(width, height, Color.Orange, ZeroPoint2D())
+        public UI_LoadingBar(Camera camera, int width, int height)
+            : this(camera, width, height, Color.Orange, ZeroPoint2D())
         {
             
         }
 
-        public UI_LoadingBar(int width, int height, Color clr, Point2D pos)
+        public UI_LoadingBar(Camera camera, int width, int height, Color clr, Point2D pos)
+            : base(camera)
         {
             Pos = pos;
             _width = width;
@@ -36,8 +39,8 @@ namespace ArtillerySeries.src
             _color = clr;
         }
 
-        public UI_LoadingBar(int width, int height, Color clr, float x, float y)
-            : this(width, height, clr, new Point2D() { X = x, Y = y })
+        public UI_LoadingBar(Camera camera, int width, int height, Color clr, float x, float y)
+            : this(camera ,width, height, clr, new Point2D() { X = x, Y = y })
         {
         }
 

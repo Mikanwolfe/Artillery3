@@ -23,8 +23,8 @@ namespace ArtillerySeries.src
         float _animationCount = 0;
         StateComponent<DynamicImageState> _stateComponent;
 
-        public UI_DynamicImage(float x, float y, float startX, float startY, int easeSpeed, Bitmap bitmap) 
-            : base(startX, startY, bitmap)
+        public UI_DynamicImage(Camera camera, float x, float y, float startX, float startY, int easeSpeed, Bitmap bitmap) 
+            : base(camera, startX, startY, bitmap)
         {
             _targetX = x;
             _targetY = y;

@@ -100,6 +100,7 @@ namespace ArtillerySeries.src
         public Wind Wind { get => _wind; set => _wind = value; }
         public Terrain Terrain { get => _terrain; set => _terrain = value; }
         public bool UserExitRequested { get => _userExitRequested; set => _userExitRequested = value; }
+        public Camera Camera { get => _camera; set => _camera = value; }
 
         #endregion
     }

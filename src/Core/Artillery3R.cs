@@ -148,16 +148,20 @@ namespace ArtillerySeries.src
             SwinGame.ClearScreen(Color.White);
 
             _gameState = _gameStateTranstitions[UIEvent.MainMenu];
-            
+            _gameState.EnterState();
+
             while (!SwinGame.WindowCloseRequested() && !_a3RData.UserExitRequested)
             {
 
                 SwinGame.ProcessEvents();
-                Services.Update();
+                //Services.Update();
 
                 _gameState.Update();
+                UserInterface.Instance.Update();
+
+                SwinGame.ClearScreen(Color.White);
+                UserInterface.Instance.Draw();
                 _gameState.Draw();
-                
                 SwinGame.RefreshScreen(60);
             }
 

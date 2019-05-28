@@ -10,7 +10,10 @@ namespace ArtillerySeries.src
 {
     public class UI_ShopMenu : UIElementAssembly
     {
-        Rectangle _windowRect = UserInterface.Instance.WindowRect;
+        public UI_ShopMenu(A3RData a3RData)
+            : base(a3RData)
+        {
+        }
         //I just need this to work.
     }
 }

@@ -8,7 +8,8 @@ namespace ArtillerySeries.src
 {
     class UI_WinScreen : UIElementAssembly
     {
-        public UI_WinScreen()
+        public UI_WinScreen(A3RData a3RData)
+            : base(a3RData)
         {
 
 

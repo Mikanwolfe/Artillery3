@@ -19,6 +19,7 @@ namespace ArtillerySeries.src
         {
             switch (observerEvent)
             {
+                /*
                 case ObserverEvent.PlayerIsChargingWeapon:
                     _ui.UpdateChargeBar();
                     break;
@@ -27,7 +28,7 @@ namespace ArtillerySeries.src
                     _ui.ClearChargeBar();
                     _ui.UpdatePreviousWeaponCharge();
                     break;
-
+                    */
 
             }
         }

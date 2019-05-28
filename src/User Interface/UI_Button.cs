@@ -33,7 +33,8 @@ namespace ArtillerySeries.src
         public SoundEffect MouseOverSoundEffect { get => _mouseOverSoundEffect; set => _mouseOverSoundEffect = value; }
         public bool MiddleAligned { get => _middleAligned; set => _middleAligned = value; }
 
-        public UI_Button(string text, float x, float y, UIEvent uiEvent)
+        public UI_Button(Camera camera, string text, float x, float y, UIEvent uiEvent)
+            : base(camera)
         {
             _text = text;
             Pos = new Point2D() { X = x, Y = y };
@@ -41,7 +42,8 @@ namespace ArtillerySeries.src
             _uiEventArgs = new UIEventArgs(uiEvent);
         }
 
-        public UI_Button(string text, float x, float y, UIEventArgs uiEvent)
+        public UI_Button(Camera camera, string text, float x, float y, UIEventArgs uiEvent)
+            : base(camera)
         {
             _text = text;
             Pos = new Point2D() { X = x, Y = y };
@@ -49,8 +51,8 @@ namespace ArtillerySeries.src
             _uiEventArgs = uiEvent;
         }
 
-        public UI_Button(string text, float x, float y, UIEvent uiEvent, Bitmap bitmap)
-            : this(text, x, y, uiEvent)
+        public UI_Button(Camera camera,string text, float x, float y, UIEvent uiEvent, Bitmap bitmap)
+            : this(camera, text, x, y, uiEvent)
         {
             _bitmap = bitmap;
             if (_bitmap != null)
@@ -61,8 +63,8 @@ namespace ArtillerySeries.src
             }
         }
 
-        public UI_Button(string text, float x, float y, UIEvent uiEvent, Bitmap bitmap, Bitmap selectedBitmap)
-            : this(text, x, y, uiEvent, bitmap)
+        public UI_Button(Camera camera, string text, float x, float y, UIEvent uiEvent, Bitmap bitmap, Bitmap selectedBitmap)
+            : this(camera, text, x, y, uiEvent, bitmap)
         {
             _selectedBitmap = selectedBitmap;
 

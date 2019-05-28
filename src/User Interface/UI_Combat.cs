@@ -19,7 +19,7 @@ namespace ArtillerySeries.src
         {
             _a3RData = a3RData;
 
-            _playerChargeBar = new UI_LoadingBar(400, 30, Color.Orange, 
+            _playerChargeBar = new UI_LoadingBar(_a3RData.Camera, 400, 30, Color.Orange, 
                 (int)(_a3RData.WindowRect.Width * 0.7),
                 (int)(_a3RData.WindowRect.Height * 0.88));
 
