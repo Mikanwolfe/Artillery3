@@ -45,5 +45,7 @@ namespace ArtillerySeries.src
         public override void Update()
         {
         }
+
+        public string Text { get => _text; set => _text = value; }
     }
 }

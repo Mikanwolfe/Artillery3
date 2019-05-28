@@ -14,24 +14,18 @@ namespace ArtillerySeries.src
 
         Bitmap _bitmap;
         Bitmap _selectedBitmap;
-
         int _height = 40;
         int _width = 150;
         string _text;
         bool _isMouseOver = false;
-
+        Rectangle _buttonArea;
         bool _middleAligned = false;
-
         UIEventArgs _uiEventArgs;
-
-
         Color _baseColor = Color.Black;
         Color _highlightColor = Color.Orange;
-
         SoundEffect _mouseOverSoundEffect;
 
-        public SoundEffect MouseOverSoundEffect { get => _mouseOverSoundEffect; set => _mouseOverSoundEffect = value; }
-        public bool MiddleAligned { get => _middleAligned; set => _middleAligned = value; }
+
 
         public UI_Button(Camera camera, string text, float x, float y, UIEvent uiEvent)
             : base(camera)
@@ -45,6 +39,14 @@ namespace ArtillerySeries.src
         public UI_Button(Camera camera, string text, float x, float y, UIEventArgs uiEvent)
             : base(camera)
         {
+            _buttonArea = new Rectangle()
+            {
+                X = Pos.X,
+                Y = Pos.Y,
+                Width = _width,
+                Height = _height
+            };
+
             _text = text;
             Pos = new Point2D() { X = x, Y = y };
 
@@ -117,21 +119,15 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
-            Rectangle buttonArea = new Rectangle()
-            {
-                X = Pos.X,
-                Y = Pos.Y,
-                Width = _width,
-                Height = _height
-            };
+            
 
             if (MiddleAligned)
             {
-                buttonArea.X -= _width / 2;
-                buttonArea.Y -= _height / 2;
+                _buttonArea.X -= _width / 2;
+                _buttonArea.Y -= _height / 2;
             }
 
-            if (SwinGame.PointInRect(SwinGame.MousePosition(), buttonArea))
+            if (SwinGame.PointInRect(SwinGame.MousePosition(), _buttonArea))
             {
                 if (_isMouseOver == false)
                 {
@@ -152,5 +148,8 @@ namespace ArtillerySeries.src
                 OnUIEvent(this, _uiEventArgs);
             }
         }
+
+        public SoundEffect MouseOverSoundEffect { get => _mouseOverSoundEffect; set => _mouseOverSoundEffect = value; }
+        public bool MiddleAligned { get => _middleAligned; set => _middleAligned = value; }
     }
 }

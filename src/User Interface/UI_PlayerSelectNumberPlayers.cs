@@ -17,9 +17,6 @@ namespace ArtillerySeries.src
         {
             AddElement(new UI_Text(Camera, Width(0.5f), Height(0.35f),
                 Color.Black, "Number of players:", true));
-
-
-            
             A3RData.NumberOfPlayers = 0;
 
         }
@@ -53,6 +50,7 @@ namespace ArtillerySeries.src
 
             if (A3RData.NumberOfPlayers > 1)
             {
+                A3RData.Players = new List<Player>(A3RData.NumberOfPlayers); // Good example of "External Wiring"
                 EndSelectStage(PlayerSelect.NumberPlayers);
             }
 
