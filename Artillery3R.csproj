@@ -39,6 +39,7 @@
     <Compile Include="src\Commands\CommandStream.cs" />
     <Compile Include="src\Core\InputHandler.cs" />
     <Compile Include="src\Core\InputMethod.cs" />
+    <Compile Include="src\Entities\Players\Timer.cs" />
     <Compile Include="src\GameStates\LoadingGameState.cs" />
     <Compile Include="src\GameStates\MainMenuGameState.cs" />
     <Compile Include="src\Core\Vector.cs" />

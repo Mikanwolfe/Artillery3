@@ -24,6 +24,8 @@ namespace ArtillerySeries.src
         IPhysicsComponent, IStateComponent<CharacterState>
     {
 
+        Timer _switchWeaponTimer;
+
         float _health, _armour;
         float _maxHealth = 100, _maxArmour = 100;
 
@@ -46,12 +48,21 @@ namespace ArtillerySeries.src
         public Character(string name, int health, int armour)
             : base(name)
         {
+            _weaponList = new List<Weapon>();
 
             _physics = new PhysicsComponent(this);
             _selected = false;
-            _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f, ProjectileType.MachineGun);
+
+
+            _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f, ProjectileType.Shell);
             _weapon.UsesSatellite = true;
-            _weaponList = new List<Weapon>();
+            _weaponList.Add(_weapon);
+
+            _weapon = new Weapon("Base Weapon 2 -- Remove asap.", 0f, 50f, ProjectileType.Shell);
+            _weapon.ProjectilesFiredPerTurn = 3;
+            _weapon.AutoloaderClip = 3;
+            _weapon.UsesSatellite = false;
+            _weaponList.Add(_weapon);
 
             _maxArmour = armour;
             _maxHealth = health;            
@@ -64,8 +75,8 @@ namespace ArtillerySeries.src
             _selectedWeapon = _weapon;
             _physics.WindFrictionMult = 0.01f;
 
-
-            _weaponList.Add(_weapon);
+            _switchWeaponTimer = new Timer(20);
+            
 
             _smokeCount = 0;
 
@@ -155,10 +166,16 @@ namespace ArtillerySeries.src
 
         public void SwitchWeapon()
         {
-            if (_weaponList.Count != 1)
+
+            if (_switchWeaponTimer.Finished)
             {
-                if(!_selectedWeapon.AutoloaderFired)
-                    _selectedWeapon = _weaponList[(_weaponList.IndexOf(_selectedWeapon) + 1) % _weaponList.Count];
+                if (_weaponList.Count != 1)
+                {
+                    if (!_selectedWeapon.AutoloaderFired)
+                        _selectedWeapon = _weaponList[(_weaponList.IndexOf(_selectedWeapon) + 1) % _weaponList.Count];
+                }
+
+                _switchWeaponTimer.Reset();
             }
         }
 
@@ -224,6 +241,7 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
+            _switchWeaponTimer.Tick();
 
             if (_isChargingWeapon)
                 _wasChargingWeapon = true;
