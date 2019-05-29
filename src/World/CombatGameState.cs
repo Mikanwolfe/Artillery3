@@ -31,22 +31,19 @@ namespace ArtillerySeries.src
         StateComponent<CombatState> _state;
         Observer _observer;
 
-        
+
         string _presetEnvironment = Constants.EnvironmentPreset;
 
         Rectangle _windowRect;
 
-        Camera _camera;
         CameraFocusPoint _cameraFocusPoint;
 
         int _turnCount;
         int _winScreenCount;
 
-        List<Player> _players;
-        Player _selectedPlayer;
         int _playersAlive;
 
-        
+
         NotifyGameEnded onNotifyGameEnded;
 
 
@@ -62,11 +59,9 @@ namespace ArtillerySeries.src
             _windowRect = a3RData.WindowRect;
 
             _cameraFocusPoint = new CameraFocusPoint();
-            
-            A3RData.Environment = new Environment(_windowRect, _camera);
 
-            _players = A3RData.Players;
-            _selectedPlayer = null;
+            A3RData.Environment = new Environment(_windowRect, A3RData.Camera);
+
             _state = new StateComponent<CombatState>(CombatState.TrackingPlayer); //change to loading later
 
             A3RData.Satellite = new Satellite("Maia", Constants.TerrainWidth / 2, -300);
@@ -101,13 +96,14 @@ namespace ArtillerySeries.src
 
             foreach (Player p in A3RData.Players)
             {
+                p.LinkCombatState(this);
                 p.SetXPosition((int)RandDoubleBetween(Constants.CameraPadding, A3RData.Terrain.Map.Length - 1 - Constants.CameraPadding));
             }
 
-
+            A3RData.SelectedPlayer = A3RData.Players[0];
 
             Artillery3R.Services.PhysicsEngine.Settle();
-            SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
+            SwitchCameraFocus(A3RData.SelectedPlayer.Character as ICameraCanFocus);
 
             _turnCount = 0;
             base.EnterState();
@@ -117,52 +113,40 @@ namespace ArtillerySeries.src
         {
             //Generates the terrain + sky
 
-            
+
             //_logicalTerrain = _environment.Generate();
             //Artillery3R.Services.PhysicsEngine.Terrain = _logicalTerrain;
         }
 
-        public void NewSession()
-        {
-
-            
-        }
-
         public void CyclePlayers()
         {
-            if (_players.Count == 1)
+
+            _playersAlive = 0;
+
+            foreach (Player p in A3RData.Players)
             {
-                _selectedPlayer = _players[0];
+                if (p.IsAlive)
+                    _playersAlive++;
             }
-            else
+            if (_playersAlive <= 1)
             {
-
-                _playersAlive = 0;
-                foreach (Player p in _players)
-                {
-                    if (p.isCharAlive)
-                        _playersAlive++;
-                }
-                if (_playersAlive <= 1)
-                {
-                    if (PeekState() != CombatState.ShowWinScreen)
-                        SwitchState(CombatState.ShowWinScreen);
-                }
-
-
-                int nextPlayer = Clamp((_players.IndexOf(_selectedPlayer) + 1) % _players.Count, 0, _players.Count - 1);
-                _selectedPlayer = _players[nextPlayer];
-
-                if (!_selectedPlayer.isCharAlive)
-                    CyclePlayers();
-
-                _selectedPlayer.SwitchState(PlayerState.Idle);
-                _selectedPlayer.NewTurn();
-                _a3RData.SelectedPlayer = _selectedPlayer;
-
+                if (PeekState() != CombatState.ShowWinScreen)
+                    SwitchState(CombatState.ShowWinScreen);
             }
 
-            //UserInterface.Instance.NewPlayerTurn();
+            int currentPlayerIndex = A3RData.Players.IndexOf(A3RData.SelectedPlayer);
+            int nextPlayer = currentPlayerIndex++;
+
+            if (nextPlayer > A3RData.NumberOfPlayers - 1)
+            {
+                nextPlayer = 0;
+            }
+
+            A3RData.SelectedPlayer = A3RData.Players[nextPlayer];
+
+            A3RData.SelectedPlayer.SwitchState(PlayerState.Idle);
+            A3RData.SelectedPlayer.NewTurn();
+
             A3RData.Satellite.NewTurn();
 
             _turnCount++;
@@ -189,54 +173,56 @@ namespace ArtillerySeries.src
 
         public void FocusOnPlayer()
         {
-            SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
+            SwitchCameraFocus(A3RData.SelectedPlayer.Character as ICameraCanFocus);
         }
 
         public void EndPlayerTurn()
         {
             CyclePlayers();
-            SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
+            SwitchCameraFocus(A3RData.SelectedPlayer.Character as ICameraCanFocus);
         }
 
         public void CharacterFiredProjectile(Entity projectile)
         {
-            _camera.FocusCamera(projectile);
+            A3RData.Camera.FocusCamera(projectile);
             SwitchState(CombatState.TrackingProjectile);
         }
 
         public void FocusOnSatellite()
         {
-            _camera.FocusCamera(A3RData.Satellite);
-            A3RData.Satellite.LookAtPos(_selectedPlayer.Character.LastProjectilePosition);
+            A3RData.Camera.FocusCamera(A3RData.Satellite);
+            A3RData.Satellite.LookAtPos(A3RData.SelectedPlayer.Character.LastProjectilePosition);
         }
 
         public void FocusOnSatelliteStrike()
         {
-            _cameraFocusPoint.Pos = _selectedPlayer.Character.LastProjectilePosition;
-            _camera.FocusCamera(_cameraFocusPoint);
+            _cameraFocusPoint.Pos = A3RData.SelectedPlayer.Character.LastProjectilePosition;
+            A3RData.Camera.FocusCamera(_cameraFocusPoint);
         }
 
         public void FireSatellite()
         {
-            A3RData.Satellite.Fire(_selectedPlayer.Character.LastProjectilePosition);
+            A3RData.Satellite.Fire(A3RData.SelectedPlayer.Character.LastProjectilePosition);
         }
 
 
-        public void Update()
+        public override void Update()
         {
-            _camera.Update();
+            A3RData.Camera.Update();
             A3RData.Environment.Update();
             _inputHandler.HandleInput(_a3RData);
+            Artillery3R.Services.Update();
 
-            Artillery3R.Services.PhysicsEngine.SetBoundaryBoxPos(_camera.Pos);
 
-            foreach (Player p in _players)
+            Artillery3R.Services.PhysicsEngine.SetBoundaryBoxPos(A3RData.Camera.Pos);
+
+            foreach (Player p in A3RData.Players)
             {
                 p.Update();
             }
 
-            //_windMarker.X = _camera.Pos.X + (_windowRect.Width / 2) - 50;
-            //_windMarker.Y = _camera.Pos.Y + 50;
+            //_windMarker.X = A3RData.Camera.Pos.X + (_windowRect.Width / 2) - 50;
+            //_windMarker.Y = A3RData.Camera.Pos.Y + 50;
 
             //_windMarker.Rotation = Artillery3R.Services.PhysicsEngine.WindMarkerDirection + 180;
             A3RData.Satellite.Update();
@@ -264,22 +250,16 @@ namespace ArtillerySeries.src
 
         public override void Draw()
         {
-
+            SwinGame.ClearScreen(A3RData.Environment.SkyColor);
             A3RData.Environment.Draw();
             A3RData.Terrain.Draw();
 
-            
+            SwinGame.DrawText("Selected Player: " + A3RData.SelectedPlayer.Name, Color.Black, 50, 70);
+            A3RData.SelectedPlayer.Draw();
 
-
-            //SwinGame.DrawBitmap("windMarker", _camera.Pos.X + (_windowRect.Width / 2), _camera.Pos.Y + 50);
-            //_windMarker.Draw();
-
-            SwinGame.DrawText("Selected Player: " + _selectedPlayer.Name, Color.Black, 50, 70);
-            _selectedPlayer.Draw();
-
-            SwinGame.DrawText("World State: " + _state.Peek(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 40f);
-            SwinGame.DrawText("Player State: " + _selectedPlayer.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 50f);
-            SwinGame.DrawText("Character State: " + _selectedPlayer.Character.PeekState(), Color.Black, _camera.Pos.X + 20f, _camera.Pos.Y + 60f);
+            SwinGame.DrawText("World State: " + _state.Peek(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 40f);
+            SwinGame.DrawText("Player State: " + A3RData.SelectedPlayer.PeekState(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 50f);
+            SwinGame.DrawText("Character State: " + A3RData.SelectedPlayer.Character.PeekState(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 60f);
         }
 
         public Observer ObserverInstance
@@ -289,7 +269,7 @@ namespace ArtillerySeries.src
 
         public void SwitchCameraFocus(ICameraCanFocus focusPoint)
         {
-            _camera.FocusCamera(focusPoint);
+            A3RData.Camera.FocusCamera(focusPoint);
         }
 
         public void SwitchState(CombatState state)
@@ -299,10 +279,10 @@ namespace ArtillerySeries.src
             switch (state)
             {
                 case CombatState.ShowWinScreen:
-                    foreach (Player p in _players)
+                    foreach (Player p in A3RData.Players)
                     {
-                        if (p.isCharAlive)
-                            _selectedPlayer = p;
+                        if (p.IsAlive)
+                            A3RData.SelectedPlayer = p;
                     }
 
                     FocusOnPlayer();
@@ -338,7 +318,7 @@ namespace ArtillerySeries.src
 
         #region Properties
         public Color SkyColor { get => A3RData.Environment.Preset.BgColor; }
-        public Player SelectedPlayer { get => _selectedPlayer; set => _selectedPlayer = value; }
+        public Player SelectedPlayer { get => A3RData.SelectedPlayer; set => A3RData.SelectedPlayer = value; }
         public NotifyGameEnded OnNotifyGameEnded { get => onNotifyGameEnded; set => onNotifyGameEnded = value; }
         #endregion
 

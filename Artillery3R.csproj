@@ -71,7 +71,7 @@
     <Compile Include="src\Entities\Players\Hull.cs" />
     <Compile Include="src\Entities\Projectiles\Laser.cs" />
     <Compile Include="src\Components\Observer.cs" />
-    <Compile Include="src\Components\ObserverComponent.cs" />
+    <Compile Include="src\Components\SubjectComponent.cs" />
     <Compile Include="src\Particles\Particle.cs" />
     <Compile Include="src\Managers\ParticleEngine.cs" />
     <Compile Include="src\Components\PhysicsComponent.cs" />

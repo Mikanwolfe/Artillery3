@@ -23,7 +23,7 @@ namespace ArtillerySeries.src
         #region Fields
         Character _character;
         StateComponent<PlayerState> _state;
-        ObserverComponent _observerComponent;
+        SubjectComponent _subjectComponent;
         IInputMethod _inputMethod;
         double _observeDelay = 0;
         #endregion
@@ -40,9 +40,9 @@ namespace ArtillerySeries.src
         #region Methods
         public void LinkCombatState(CombatGameState combatGameState)
         {
-            _observerComponent = new ObserverComponent();
-            _observerComponent.AddObserver(combatGameState.ObserverInstance);
-            _observerComponent.AddObserver(UserInterface.Instance.ObserverInstance);
+            _subjectComponent = new SubjectComponent();
+            _subjectComponent.AddObserver(combatGameState.ObserverInstance);
+            _subjectComponent.AddObserver(UserInterface.Instance.ObserverInstance);
         }
 
         public float WeaponChargePercentage
@@ -56,16 +56,10 @@ namespace ArtillerySeries.src
         public void CharacterFired(Projectile projectile, Character parent)
         {
             SwitchState(PlayerState.ObserveProjectile);
-            _observerComponent.Notify(projectile, ObserverEvent.PlayerFiredProjectile);
+            _subjectComponent.Notify(projectile, ObserverEvent.PlayerFiredProjectile);
         }
 
-        public bool isCharAlive
-        {
-            get
-            {
-                return _character.isAlive;
-            }
-        }
+        
 
         public void NewTurn()
         {
@@ -84,7 +78,7 @@ namespace ArtillerySeries.src
 
             if (state == PlayerState.EndTurn)
             {
-                _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
+                _subjectComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
             }
 
             switch (_state.Peek())
@@ -99,20 +93,20 @@ namespace ArtillerySeries.src
                     break;
                 case PlayerState.ObserveProjectile:
                     if (state == PlayerState.ObserveSatellite)
-                        _observerComponent.Notify(this, ObserverEvent.FocusOnSatellite);
+                        _subjectComponent.Notify(this, ObserverEvent.FocusOnSatellite);
                     _observeDelay = Constants.CameraAfterExplosionDelay * 1.2;
                     break;
 
                 case PlayerState.ObserveSatellite:
                     if (state == PlayerState.ObserveSatelliteStrike)
-                        _observerComponent.Notify(this, ObserverEvent.FocusOnSatelliteStrike);
-                    _observerComponent.Notify(this, ObserverEvent.FireSatellite);
+                        _subjectComponent.Notify(this, ObserverEvent.FocusOnSatelliteStrike);
+                    _subjectComponent.Notify(this, ObserverEvent.FireSatellite);
                     _observeDelay = Constants.CameraAfterExplosionDelay * 1.2;
                     break;
 
                 case PlayerState.ObserveSatelliteStrike:
                     if (state == PlayerState.EndTurn)
-                        _observerComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
+                        _subjectComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
                     break;
             }
 
@@ -147,7 +141,7 @@ namespace ArtillerySeries.src
 
                     if (_character.PeekState() == CharacterState.Firing)
                     {
-                        _observerComponent.Notify(this, ObserverEvent.PlayerIsChargingWeapon);
+                        _subjectComponent.Notify(this, ObserverEvent.PlayerIsChargingWeapon);
 
                     }
 
@@ -178,7 +172,7 @@ namespace ArtillerySeries.src
                         }
                         else
                         {
-                            _observerComponent.Notify(this, ObserverEvent.FocusOnPlayer);
+                            _subjectComponent.Notify(this, ObserverEvent.FocusOnPlayer);
                             SwitchState(PlayerState.Idle);
                         }
                     }
@@ -221,7 +215,8 @@ namespace ArtillerySeries.src
         #region Properties
         public Character Character { get => _character; set => _character = value; }
         public IInputMethod InputMethod { get => _inputMethod; set => _inputMethod = value; }
-        
+        public bool IsAlive => _character.isAlive;
+
         #endregion
 
     }
