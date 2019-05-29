@@ -9,7 +9,7 @@ using static ArtillerySeries.src.Utilities;
 namespace ArtillerySeries.src
 {
 
-    public enum WorldState
+    public enum CombatState
     {
         Loading,
         TrackingPlayer,
@@ -25,16 +25,16 @@ namespace ArtillerySeries.src
     {
 
         #region Fields
-        Rectangle _windowRect;
 
         Command _playerCommand;
         InputHandler _inputHandler;
-        StateComponent<WorldState> _state;
-        Random _random;
+        StateComponent<CombatState> _state;
         Observer _observer;
 
-        Environment _environment;
+        
         string _presetEnvironment = Constants.EnvironmentPreset;
+
+        Rectangle _windowRect;
 
         Camera _camera;
         CameraFocusPoint _cameraFocusPoint;
@@ -46,8 +46,9 @@ namespace ArtillerySeries.src
         Player _selectedPlayer;
         int _playersAlive;
 
-        Satellite _satellite;
+        
         NotifyGameEnded onNotifyGameEnded;
+
 
         A3RData _a3RData;
 
@@ -62,20 +63,17 @@ namespace ArtillerySeries.src
 
             _cameraFocusPoint = new CameraFocusPoint();
             
-            _environment = new Environment(_windowRect, _camera);
-            //_inputHandler = inputHandler;
-            _players = new List<Player>();
+            A3RData.Environment = new Environment(_windowRect, _camera);
+
+            _players = A3RData.Players;
             _selectedPlayer = null;
-            _state = new StateComponent<WorldState>(WorldState.TrackingPlayer); //change to loading later
-            //_observer = new WorldObserver(this);
-            _random = new Random();
+            _state = new StateComponent<CombatState>(CombatState.TrackingPlayer); //change to loading later
 
-            //_windMarker = SwinGame.CreateSprite(SwinGame.BitmapNamed("windMarker"));
-
-            _satellite = new Satellite("Maia", Constants.TerrainWidth / 2, -300);
+            A3RData.Satellite = new Satellite("Maia", Constants.TerrainWidth / 2, -300);
 
             _inputHandler = new InputHandler();
 
+            UIModule = new UI_Combat(A3RData);
 
             _turnCount = 0;
         }
@@ -83,22 +81,7 @@ namespace ArtillerySeries.src
 
         #region Methods
 
-
-        public void AddPlayer(Player p)
-        {
-            _players.Add(p);
-        }
-
-        public void GenerateEnvironment(EnvironmentPreset preset)
-        {
-            //Generates the terrain + sky
-
-            _environment.Initialise(preset);
-            //_logicalTerrain = _environment.Generate();
-            //Artillery3R.Services.PhysicsEngine.Terrain = _logicalTerrain;
-        }
-
-        public void NewSession()
+        public override void EnterState()
         {
             EnvironmentPreset _temporaryPreset = new EnvironmentPreset("Sad Day", 3);
             _temporaryPreset.ParallaxBgCoef = new float[] { 0.70f, 0.65f, 0.55f };
@@ -108,19 +91,41 @@ namespace ArtillerySeries.src
             _temporaryPreset.BgColor = Color.CadetBlue;
             _temporaryPreset.CloudColor = Color.Gray;
 
-            _turnCount = 0;
+            //it should be A3RData's job to handle the environment.          
 
 
             GenerateEnvironment(_temporaryPreset);
 
+            A3RData.Environment.Initialise(_temporaryPreset);
+            A3RData.Terrain = A3RData.Environment.Generate();
 
-            foreach (Player p in _players)
+            foreach (Player p in A3RData.Players)
             {
-                //p.SetXPosition((int)RandDoubleBetween(Constants.CameraPadding, _logicalTerrain.Map.Length - 1 - Constants.CameraPadding));
+                p.SetXPosition((int)RandDoubleBetween(Constants.CameraPadding, A3RData.Terrain.Map.Length - 1 - Constants.CameraPadding));
             }
+
+
 
             Artillery3R.Services.PhysicsEngine.Settle();
             SwitchCameraFocus(_selectedPlayer.Character as ICameraCanFocus);
+
+            _turnCount = 0;
+            base.EnterState();
+        }
+
+        public void GenerateEnvironment(EnvironmentPreset preset)
+        {
+            //Generates the terrain + sky
+
+            
+            //_logicalTerrain = _environment.Generate();
+            //Artillery3R.Services.PhysicsEngine.Terrain = _logicalTerrain;
+        }
+
+        public void NewSession()
+        {
+
+            
         }
 
         public void CyclePlayers()
@@ -140,8 +145,8 @@ namespace ArtillerySeries.src
                 }
                 if (_playersAlive <= 1)
                 {
-                    if (PeekState() != WorldState.ShowWinScreen)
-                        SwitchState(WorldState.ShowWinScreen);
+                    if (PeekState() != CombatState.ShowWinScreen)
+                        SwitchState(CombatState.ShowWinScreen);
                 }
 
 
@@ -158,7 +163,7 @@ namespace ArtillerySeries.src
             }
 
             //UserInterface.Instance.NewPlayerTurn();
-            _satellite.NewTurn();
+            A3RData.Satellite.NewTurn();
 
             _turnCount++;
 
@@ -196,13 +201,13 @@ namespace ArtillerySeries.src
         public void CharacterFiredProjectile(Entity projectile)
         {
             _camera.FocusCamera(projectile);
-            SwitchState(WorldState.TrackingProjectile);
+            SwitchState(CombatState.TrackingProjectile);
         }
 
         public void FocusOnSatellite()
         {
-            _camera.FocusCamera(_satellite);
-            _satellite.LookAtPos(_selectedPlayer.Character.LastProjectilePosition);
+            _camera.FocusCamera(A3RData.Satellite);
+            A3RData.Satellite.LookAtPos(_selectedPlayer.Character.LastProjectilePosition);
         }
 
         public void FocusOnSatelliteStrike()
@@ -213,14 +218,14 @@ namespace ArtillerySeries.src
 
         public void FireSatellite()
         {
-            _satellite.Fire(_selectedPlayer.Character.LastProjectilePosition);
+            A3RData.Satellite.Fire(_selectedPlayer.Character.LastProjectilePosition);
         }
 
 
         public void Update()
         {
             _camera.Update();
-            _environment.Update();
+            A3RData.Environment.Update();
             _inputHandler.HandleInput(_a3RData);
 
             Artillery3R.Services.PhysicsEngine.SetBoundaryBoxPos(_camera.Pos);
@@ -234,16 +239,16 @@ namespace ArtillerySeries.src
             //_windMarker.Y = _camera.Pos.Y + 50;
 
             //_windMarker.Rotation = Artillery3R.Services.PhysicsEngine.WindMarkerDirection + 180;
-            _satellite.Update();
+            A3RData.Satellite.Update();
 
             switch (PeekState())
             {
-                case WorldState.ShowWinScreen:
+                case CombatState.ShowWinScreen:
                     _winScreenCount++;
 
 
                     if (_winScreenCount > 200)
-                        SwitchState(WorldState.EndGame);
+                        SwitchState(CombatState.EndGame);
 
                     break;
 
@@ -254,14 +259,16 @@ namespace ArtillerySeries.src
 
         public void DrawSatellite()
         {
-            _satellite.Draw();
+            A3RData.Satellite.Draw();
         }
 
-        public void Draw()
+        public override void Draw()
         {
 
-            _environment.Draw();
-            //_logicalTerrain.Draw();
+            A3RData.Environment.Draw();
+            A3RData.Terrain.Draw();
+
+            
 
 
             //SwinGame.DrawBitmap("windMarker", _camera.Pos.X + (_windowRect.Width / 2), _camera.Pos.Y + 50);
@@ -285,13 +292,13 @@ namespace ArtillerySeries.src
             _camera.FocusCamera(focusPoint);
         }
 
-        public void SwitchState(WorldState state)
+        public void SwitchState(CombatState state)
         {
             // State machine transition code goes here
 
             switch (state)
             {
-                case WorldState.ShowWinScreen:
+                case CombatState.ShowWinScreen:
                     foreach (Player p in _players)
                     {
                         if (p.isCharAlive)
@@ -302,7 +309,7 @@ namespace ArtillerySeries.src
                     _winScreenCount = 0;
                     break;
 
-                case WorldState.EndGame:
+                case CombatState.EndGame:
                     if (onNotifyGameEnded != null)
                     {
                         onNotifyGameEnded();
@@ -313,24 +320,24 @@ namespace ArtillerySeries.src
             _state.Switch(state);
         }
 
-        public WorldState PeekState()
+        public CombatState PeekState()
         {
             return _state.Peek();
         }
 
-        public void PushState(WorldState state)
+        public void PushState(CombatState state)
         {
             _state.Push(state);
         }
 
-        public WorldState PopState()
+        public CombatState PopState()
         {
             return _state.Pop();
         }
         #endregion
 
         #region Properties
-        public Color SkyColor { get => _environment.Preset.BgColor; }
+        public Color SkyColor { get => A3RData.Environment.Preset.BgColor; }
         public Player SelectedPlayer { get => _selectedPlayer; set => _selectedPlayer = value; }
         public NotifyGameEnded OnNotifyGameEnded { get => onNotifyGameEnded; set => onNotifyGameEnded = value; }
         #endregion

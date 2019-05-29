@@ -94,6 +94,7 @@ namespace ArtillerySeries.src
             _gameStateTranstitions = new Dictionary<UIEvent, GameState>();
             _gameStateTranstitions.Add(UIEvent.StartGame, new PlayerSelectGameState(_a3RData));
             _gameStateTranstitions.Add(UIEvent.MainMenu, new MainMenuGameState(_a3RData));
+            _gameStateTranstitions.Add(UIEvent.StartCombat, new CombatGameState(_a3RData));
 
             //TODO: Add in the rest of the UI transitions here
 

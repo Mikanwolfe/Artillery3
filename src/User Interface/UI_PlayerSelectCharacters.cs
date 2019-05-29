@@ -58,7 +58,7 @@ namespace ArtillerySeries.src
             Character newCharacter;
 
             //make this into a json thing later
-            if (_playerIndex < A3RData.NumberOfPlayers - 1)
+            if (_playerIndex < A3RData.NumberOfPlayers)
             {
 
                 switch (uiEventArgs.Text)

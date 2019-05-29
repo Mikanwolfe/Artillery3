@@ -40,7 +40,11 @@ namespace ArtillerySeries.src
 
         Camera _camera;
 
-        Terrain _terrain;
+        Satellite _satellite;
+
+        Environment _environment;
+
+        //Terrain _terrain;
         Wind _wind;
 
         List<Terrain> _bgTerrain = new List<Terrain>(Constants.NumberParallaxBackgrounds);
@@ -99,10 +103,13 @@ namespace ArtillerySeries.src
         public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
         public List<Player> Players { get => _players; set => _players = value; }
         public Wind Wind { get => _wind; set => _wind = value; }
-        public Terrain Terrain { get => _terrain; set => _terrain = value; }
+        //public Terrain Terrain { get => _terrain; set => _terrain = value; }
         public bool UserExitRequested { get => _userExitRequested; set => _userExitRequested = value; }
         public Camera Camera { get => _camera; set => _camera = value; }
         public int NumberOfPlayers { get => _numberOfPlayers; set => _numberOfPlayers = value; }
+        internal Satellite Satellite { get => _satellite; set => _satellite = value; }
+        public Environment Environment { get => _environment; set => _environment = value; }
+        public Terrain Terrain { get => _logicalTerrain; set => _logicalTerrain = value; }
 
         #endregion
     }

@@ -221,6 +221,7 @@ namespace ArtillerySeries.src
         #region Properties
         public Character Character { get => _character; set => _character = value; }
         public IInputMethod InputMethod { get => _inputMethod; set => _inputMethod = value; }
+        
         #endregion
 
     }
