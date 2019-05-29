@@ -44,13 +44,7 @@ namespace ArtillerySeries.src
             _subjectComponent.AddObserver(combatGameState.ObserverInstance);
         }
 
-        public float WeaponChargePercentage
-        {
-            get
-            {
-                return _character.WeaponChargePercentage;
-            }
-        }
+
 
         public void CharacterFired(Projectile projectile, Character parent)
         {
@@ -58,7 +52,7 @@ namespace ArtillerySeries.src
             _subjectComponent.Notify(projectile, ObserverEvent.PlayerFiredProjectile);
         }
 
-        
+
 
         public void NewTurn()
         {
@@ -215,6 +209,9 @@ namespace ArtillerySeries.src
         public Character Character { get => _character; set => _character = value; }
         public IInputMethod InputMethod { get => _inputMethod; set => _inputMethod = value; }
         public bool IsAlive => _character.isAlive;
+
+        public float PreviousWeaponCharge => _character.PreviousWeaponChargePercentage;
+        public float WeaponChargePercentage => _character.WeaponChargePercentage;
 
         #endregion
 

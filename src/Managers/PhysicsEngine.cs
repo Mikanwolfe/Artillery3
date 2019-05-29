@@ -50,10 +50,8 @@ namespace ArtillerySeries.src
         public void Update()
         {
 
-            //Console.WriteLine("BoundaryBox: X{0} y{1}", _boundaryBox.X, _boundaryBox.Y);
             if (_a3RData.Terrain == null)
                 throw new MissingMemberException("No terrain to simulate with! Nothing to stop falls!");
-            //make this not an exception!!
             foreach (IPhysicsComponent p in _components)
             {
                 if (!p.Physics.Enabled)

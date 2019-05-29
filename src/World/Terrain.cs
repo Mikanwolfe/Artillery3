@@ -91,14 +91,6 @@ namespace ArtillerySeries.src
                         SwinGame.DrawLine(_color, xPos, Constants.TerrainDepth, xPos, (int)Math.Round(_terrainMap[i]));
                 }
             }
-            else
-            {
-                throw new Exception("Camera doesn't exist. TODO: Fix this and turn camera into a need");
-                for (int i = 0; i < _terrainMap.Length; i++)
-                {
-                    SwinGame.DrawLine(_color, i, Constants.TerrainDepth, i, (int)Math.Round(_terrainMap[i]));
-                }
-            }
         }
     }
 }

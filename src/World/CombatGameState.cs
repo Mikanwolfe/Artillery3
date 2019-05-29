@@ -106,6 +106,7 @@ namespace ArtillerySeries.src
             }
 
             A3RData.SelectedPlayer = A3RData.Players[0];
+            A3RData.SelectedPlayer.NewTurn();
 
             Artillery3R.Services.PhysicsEngine.Settle();
             SwitchCameraFocus(A3RData.SelectedPlayer.Character as ICameraCanFocus);

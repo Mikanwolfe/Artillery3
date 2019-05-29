@@ -51,6 +51,8 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
+            _playerChargeBar.UpdateLoadingBar(A3RData.SelectedPlayer.WeaponChargePercentage);
+            _playerChargeBar.SetPlayerPreviousPercentage(A3RData.SelectedPlayer.PreviousWeaponCharge);
             base.Update();
         }
     }
