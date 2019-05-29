@@ -24,16 +24,12 @@ namespace ArtillerySeries.src
         {
             _color = color;
             _radius = radius;
-            Pos = new Point2D()
-            {
-                X = x,
-                Y = y
-            };
+            Pos = new Vector(x, y);
         }
 
         public override void Draw()
         {
-            SwinGame.FillCircle(_color, Pos, _radius);
+            SwinGame.FillCircle(_color, Pos.ToPoint2D, _radius);
         }
 
         public override void Update()

@@ -10,7 +10,7 @@ namespace ArtillerySeries.src
 {
     public class AcidProjectile : Projectile
     {
-        public AcidProjectile(string name, Weapon parentWeapon, Point2D pos, Point2D vel)
+        public AcidProjectile(string name, Weapon parentWeapon, Vector pos, Vector vel)
             : base(name, parentWeapon, pos, vel, 0, 12, 1)
         {
 
@@ -18,7 +18,7 @@ namespace ArtillerySeries.src
 
 
 
-        public override void Explode(Point2D pt)
+        public override void Explode(Vector pt)
         {
             BlowUpTerrain(pt);
             Artillery3R.Services.ParticleEngine.CreateAcidExplosion(pt, 100);

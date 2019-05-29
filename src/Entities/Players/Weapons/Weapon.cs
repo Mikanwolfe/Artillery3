@@ -55,8 +55,8 @@ namespace ArtillerySeries.src
          *    /I/           Relative is calculated using offset, changes depending on Physics.Facing
          *    / \           Need to define base position for offset.
          */
-        Point2D _offsetPosition;    //Used to calculate relative position to character.
-        Point2D _projectileSpawnOffset; //directional, can be set.
+        Vector _offsetPosition;    //Used to calculate relative position to character.
+        Vector _projectileSpawnOffset; //directional, can be set.
 
 
         float _weaponAngle = 0;
@@ -71,9 +71,9 @@ namespace ArtillerySeries.src
         bool _usesSatellite;
         int _autoloaderClip = 2;
         int _autoloaderAmmoLeft;
-        Point2D _projectilePos;
-        Point2D _projectileVel;
-        Point2D _lastProjectilePosition;
+        Vector _projectilePos;
+        Vector _projectileVel;
+        Vector _lastProjectilePosition;
 
         int _projectilesFiredPerTurn = 1;
 
@@ -87,11 +87,7 @@ namespace ArtillerySeries.src
         {
             _weaponCharge = 0;
             _state = WeaponState.IdleState;
-            _projectileSpawnOffset = new Point2D()
-            {
-                X = 0,
-                Y = -5
-            };
+            _projectileSpawnOffset = new Vector(0, -5);
             _projectileType = projectileType;
             _projectileFactory = new ProjectileFactory(_projectileType);
             _minWepAngleRad = Rad(minWepAngleDeg);
@@ -106,7 +102,7 @@ namespace ArtillerySeries.src
             get => _mainProjectile;
         }
 
-        public void LastProjectilePosition(Projectile p, Point2D pos)
+        public void LastProjectilePosition(Projectile p, Vector pos)
         {
             if (p == MainProjectile)
                 _lastProjectilePosition = pos;
@@ -158,9 +154,9 @@ namespace ArtillerySeries.src
             }
         }
 
-        public Point2D LastProjPos { get => _lastProjectilePosition; set => _lastProjectilePosition = value; }
-        public Point2D ProjectilePos { get => _projectilePos; set => _projectilePos = value; }
-        public Point2D ProjectileVel { get => _projectileVel; set => _projectileVel = value; }
+        public Vector LastProjPos { get => _lastProjectilePosition; set => _lastProjectilePosition = value; }
+        public Vector ProjectilePos { get => _projectilePos; set => _projectilePos = value; }
+        public Vector ProjectileVel { get => _projectileVel; set => _projectileVel = value; }
         public bool UsesSatellite { get => _usesSatellite; set => _usesSatellite = value; }
         public float BaseDamage { get => _baseDamage; set => _baseDamage = value; }
         public int ProjectilesFiredPerTurn { get => _projectilesFiredPerTurn; set
@@ -199,7 +195,7 @@ namespace ArtillerySeries.src
         public virtual void AimWeapon()
         {
             _state = WeaponState.FireState;
-            _projectileVel = new Point2D()
+            _projectileVel = new Vector()
             {
                 X = (float)(_weaponCharge * Math.Cos(_weaponAngle + _relativeAngle)),
                 Y = -1 * (float)(_weaponCharge * Math.Sin(_weaponAngle + _relativeAngle)),
@@ -207,7 +203,7 @@ namespace ArtillerySeries.src
             if (Direction == FacingDirection.Left)
                 _projectileVel.X *= -1;
 
-            _projectilePos = new Point2D()
+            _projectilePos = new Vector()
             {
                 X = _projectileSpawnOffset.X + Pos.X,
                 Y = _projectileSpawnOffset.Y + Pos.Y

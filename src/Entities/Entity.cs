@@ -51,14 +51,12 @@ namespace ArtillerySeries.src
             //Base: Do nothing. Can't  be damaged.
         }
 
-        public virtual void UpdatePosition(Point2D pos, FacingDirection direction, float absoluteAngle)
+        public virtual void UpdatePosition(Vector pos, FacingDirection direction, float absoluteAngle)
         {
             _absAngle = absoluteAngle;
             _pos = pos;
             _direction = direction;
         }
-
-        public bool Enabled { get => _enabled; set => _enabled = value; }
 
     }
 }

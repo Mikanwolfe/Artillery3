@@ -57,7 +57,7 @@ namespace ArtillerySeries.src
             return damage * (1 - damageDistance / maxDistance);
         }
 
-        float DamageFromDistance(float damage, Point2D pt1, Point2D pt2, float maxDistance)
+        float DamageFromDistance(float damage, Vector pt1, Vector pt2, float maxDistance)
         {
             float dX = Math.Abs(pt1.X - pt2.X);
             float dY = Math.Abs(pt1.Y - pt2.Y);
@@ -66,12 +66,12 @@ namespace ArtillerySeries.src
             return DamageFromDistance(damage, distance, maxDistance);
         }
 
-        public void DamageEntities(Entity parent, float damage, int radius, Point2D pt)
+        public void DamageEntities(Entity parent, float damage, int radius, Vector pt)
         {
             foreach(Entity e in _entities)
             {
                
-                if (SwinGame.PointInCircle(e.Pos, pt.X, pt.Y, radius))
+                if (SwinGame.PointInCircle(e.Pos.ToPoint2D, pt.X, pt.Y, radius))
                 {
                     if (e != parent)
                     {

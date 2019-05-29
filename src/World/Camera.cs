@@ -61,7 +61,7 @@ namespace ArtillerySeries.src
         {
             _focus = new CameraFocusPoint()
             {
-                Pos = ZeroPoint2D()
+                Pos = new Vector()
             };
         }
 

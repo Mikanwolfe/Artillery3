@@ -26,7 +26,7 @@ namespace ArtillerySeries.src
         float _angleDestination;
 
         Laser _laserProjectile;
-        Point2D _destination;
+        Vector _destination;
         Sprite _sprite;
 
         public Satellite(string name, float x, float y) 
@@ -37,14 +37,10 @@ namespace ArtillerySeries.src
             _damage = 40;
             _explRad = 15;
             _damageRad = 90;
-            Pos = new Point2D()
-            {
-                X = x,
-                Y = y
-            };
+            Pos = new Vector(x, y);
         }
 
-        public void Fire(Point2D destination)
+        public void Fire(Vector destination)
         {
             SwinGame.PlaySoundEffect("laser_satellite");
             _fireDelay = 2f;
@@ -56,7 +52,7 @@ namespace ArtillerySeries.src
             
         }
 
-        void FireLaser(Point2D destination)
+        void FireLaser(Vector destination)
         {
             Console.WriteLine("Satellite damage: {0}", _damage * _damageMultiplier);
             _laserProjectile = new Laser(Name + "'s Laser", null, Pos, destination, _damage * _damageMultiplier, _explRad, _damageRad);
@@ -65,7 +61,7 @@ namespace ArtillerySeries.src
             _damageMultiplier += Constants.SatelliteDamageIncPerTurn;
         }
 
-        public void LookAtPos(Point2D destination)
+        public void LookAtPos(Vector destination)
         {
             SwinGame.PlaySoundEffect("satellite_prep");
             _angleDestination = VectorDirection(Pos, destination);
@@ -73,9 +69,9 @@ namespace ArtillerySeries.src
 
         public override void Draw()
         {
-            SwinGame.FillCircle(_mainColor, Pos, 50);
-            SwinGame.FillCircle(_accentColor, Pos, 45);
-            SwinGame.FillCircle(_mainColor, Pos, 40);
+            SwinGame.FillCircle(_mainColor, Pos.ToPoint2D, 50);
+            SwinGame.FillCircle(_accentColor, Pos.ToPoint2D, 45);
+            SwinGame.FillCircle(_mainColor, Pos.ToPoint2D, 40);
             SwinGame.DrawText(Name + "-Class Low Orbit Ion Cannon", Color.White, Pos.X + 70, Pos.Y + 25); //Magic Numbers
             SwinGame.DrawText("Level: " + ((int)(_damageMultiplier)).ToString(), Color.White, Pos.X + 70, Pos.Y + 45); //Magic Numbers
            

@@ -9,10 +9,10 @@ namespace ArtillerySeries.src
 {
     public class CameraFocusPoint : ICameraCanFocus
     {
-        Point2D _pos;
+        Vector _pos;
         public CameraFocusPoint()
         {
         }
-        public Point2D Pos { get => _pos; set => _pos = value; }
+        public Vector Pos { get => _pos; set => _pos = value; }
     }
 }

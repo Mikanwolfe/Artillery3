@@ -35,7 +35,7 @@ namespace ArtillerySeries.src
         {
             if (_isCentered)
             {
-                DrawTextCentre(_text, _color, Pos.ToPoint2D);
+                DrawTextCentre(_text, _color, Pos);
             } else
             {
                 SwinGame.DrawText(_text, _color, X, Y);

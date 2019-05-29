@@ -22,8 +22,6 @@ namespace ArtillerySeries.src
 
         Player _selectedPlayer;
 
-        private int _selectedPlayerIndex;
-
         int _numberOfPlayers;
         List<Player> _players;
         List<Entity> _entities;
@@ -35,8 +33,6 @@ namespace ArtillerySeries.src
             Width = Constants.WindowWidth,
             Height = Constants.WindowHeight
         };
-
-        Rectangle _boundaryBox;
 
         Camera _camera;
 

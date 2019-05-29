@@ -78,18 +78,18 @@ namespace ArtillerySeries.src
             return (float)RandDoubleBetween(min, max);
         }
 
-        public void CreateSimpleParticle(Point2D pos, Color color)
+        public void CreateSimpleParticle(Vector pos, Color color)
         {
             CreateSimpleParticle(pos, color, 1f, 1f, 0f);
         }
-        public void CreateSimpleParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight)
+        public void CreateSimpleParticle(Vector pos, Color color, float speedMult, float lifeMult, float weight)
         {
             CreateSimpleParticle(pos, color, speedMult, lifeMult, weight, 1);
         }
 
-        public void CreateSimpleParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult)
+        public void CreateSimpleParticle(Vector pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult)
         {
-            Point2D velocity = Normalise(new Point2D()
+            Vector velocity = Normalise(new Vector()
             {
                 X = (float)RandDoubleBetween(-1, 1),
                 Y = (float)RandDoubleBetween(-1, 1)
@@ -107,9 +107,9 @@ namespace ArtillerySeries.src
                 windFricMult));
         }
 
-        public void CreateSmokeParticle(Point2D pos, Color color, float lifeMult, float sizeMult)
+        public void CreateSmokeParticle(Vector pos, Color color, float lifeMult, float sizeMult)
         {
-            Point2D velocity = Normalise(new Point2D()
+            Vector velocity = Normalise(new Vector()
             {
                 X = (float)RandDoubleBetween(-1, 1),
                 Y = (float)RandDoubleBetween(0, 1)
@@ -132,9 +132,9 @@ namespace ArtillerySeries.src
             _particles.Add(_particleToAdd);
         }
 
-        public void CreateNonCollideParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult)
+        public void CreateNonCollideParticle(Vector pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult)
         {
-            Point2D velocity = Normalise(new Point2D()
+            Vector velocity = Normalise(new Vector()
             {
                 X = (float)RandDoubleBetween(-1, 1),
                 Y = (float)RandDoubleBetween(-1, 1)
@@ -156,7 +156,7 @@ namespace ArtillerySeries.src
             _particles.Add(_particleToAdd);
         }
 
-        public void CreateDamageText(Point2D pos, Color color, float lifeMult, String text, float weight)
+        public void CreateDamageText(Vector pos, Color color, float lifeMult, String text, float weight)
         {
             TextParticle _textParticle = new TextParticle(
                 text, lifeMult, pos, color, weight);
@@ -167,9 +167,9 @@ namespace ArtillerySeries.src
             _particles.Add(_textParticle);
         }
 
-        public void CreateAcidParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult, float damage)
+        public void CreateAcidParticle(Vector pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult, float damage)
         {
-            Point2D velocity = Normalise(new Point2D()
+            Vector velocity = Normalise(new Vector()
             {
                 X = (float)RandDoubleBetween(-1, 1),
                 Y = (float)RandDoubleBetween(-1, 1)
@@ -193,12 +193,12 @@ namespace ArtillerySeries.src
         }
 
 
-        public void CreateTracer(Point2D pos, Color color, double radius, float lifeMult, float weight)
+        public void CreateTracer(Vector pos, Color color, double radius, float lifeMult, float weight)
         {
             _particles.Add(new Particle(
                 lifeMult,
                 pos,
-                ZeroPoint2D(),
+                ZeroVector(),
                 radius,
                 color,
                 weight,
@@ -209,7 +209,7 @@ namespace ArtillerySeries.src
          *           Effect creation methods
            ---------------------------------------------- */
 
-        public void CreateExplosion(Point2D pos, int numParticles)
+        public void CreateExplosion(Vector pos, int numParticles)
         {
             for (int i = 0; i < numParticles; i++)
             {
@@ -217,7 +217,7 @@ namespace ArtillerySeries.src
                 CreateSimpleParticle(pos, Roughly(Color.Yellow, 0.2f));
             }
         }
-        public void CreateFastExplosion(Point2D pos, int numParticles)
+        public void CreateFastExplosion(Vector pos, int numParticles)
         {
             for (int i = 0; i < numParticles; i++)
             {
@@ -227,7 +227,7 @@ namespace ArtillerySeries.src
             }
         }
 
-        public void CreateLaserExplosion(Point2D pos, int numParticles)
+        public void CreateLaserExplosion(Vector pos, int numParticles)
         {
             for (int i = 0; i < numParticles; i++)
             {
@@ -238,7 +238,7 @@ namespace ArtillerySeries.src
             }
         }
 
-        public void CreateAcidExplosion(Point2D pos, int numParticles)
+        public void CreateAcidExplosion(Vector pos, int numParticles)
         {
             for (int i = 0; i < numParticles; i++)
             {

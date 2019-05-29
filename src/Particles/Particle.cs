@@ -13,13 +13,13 @@ namespace ArtillerySeries.src
         double _radius;
         float _damage = 0;
 
-        public Particle(double life, Point2D pos, Point2D vel, double radius, Color color, float weight, float windFricMult)
+        public Particle(double life, Vector pos, Vector vel, double radius, Color color, float weight, float windFricMult)
             : this(life, pos, vel, radius, color, weight)
         {
             _physics.WindFrictionMult = windFricMult;
         }
 
-        public Particle(double life, Point2D pos, Point2D vel, double radius, Color color, float weight)
+        public Particle(double life, Vector pos, Vector vel, double radius, Color color, float weight)
             : base("particle")
         {
             _physics = new PhysicsComponent(this);
@@ -44,7 +44,7 @@ namespace ArtillerySeries.src
             }
         }
 
-        public Point2D Vel
+        public Vector Vel
         {
             get => _physics.Velocity;
             set => _physics.Velocity = value;
@@ -56,7 +56,7 @@ namespace ArtillerySeries.src
             {
                 if (_bitmap == null)
                 {
-                    SwinGame.FillCircle(_color, Pos, (int)_radius);
+                    SwinGame.FillCircle(_color, Pos.ToPoint2D, (int)_radius);
                 }
             }
 

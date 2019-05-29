@@ -25,7 +25,7 @@ namespace ArtillerySeries.src
     public class PhysicsComponent
     {
         IPhysicsComponent _entity;
-        Point2D _pos, _vel, _acc;
+        Vector _pos, _vel, _acc;
         //PHYSICS!!
         bool _enabled;
         float _weight;
@@ -66,8 +66,8 @@ namespace ArtillerySeries.src
         {
             _enabled = true;
             _gravityEnabled = true;
-            _vel = ZeroPoint2D();
-            _acc = ZeroPoint2D();
+            _vel = new Vector();
+            _acc = new Vector();
             _facing = FacingDirection.Right;
             _hasGroundFriction = true;
             _weight = 1f;
@@ -81,11 +81,11 @@ namespace ArtillerySeries.src
         {
             _entity = entity;
             Artillery3R.Services.PhysicsEngine.AddComponent(_entity);
-            _pos = ZeroPoint2D();
+            _pos = new Vector(); 
 
         }
 
-        public PhysicsComponent(IPhysicsComponent entity, Point2D pos)
+        public PhysicsComponent(IPhysicsComponent entity, Vector pos)
             : this()
         {
             _entity = entity;
@@ -110,9 +110,9 @@ namespace ArtillerySeries.src
             _acc.Y = 0;
         }
 
-        public Point2D Position { get => _pos; set => _pos = value; }
-        public Point2D Velocity { get => _vel; set => _vel = value; }
-        public Point2D Acceleration { get => _acc; set => _acc = value; }
+        public Vector Position { get => _pos; set => _pos = value; }
+        public Vector Velocity { get => _vel; set => _vel = value; }
+        public Vector Acceleration { get => _acc; set => _acc = value; }
         public bool GravityEnabled { get => _gravityEnabled; set => _gravityEnabled = value; }
         public float Weight { get => _weight; set => _weight = value; }
         public float Y { get => _pos.Y; set => _pos.Y = value; }

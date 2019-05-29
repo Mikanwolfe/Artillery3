@@ -349,7 +349,7 @@ namespace ArtillerySeries.src
             return _state.Pop();
         }
 
-        public Point2D LastProjectilePosition
+        public Vector LastProjectilePosition
         {
             get => _selectedWeapon.LastProjPos;
         }

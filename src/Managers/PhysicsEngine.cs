@@ -150,7 +150,7 @@ namespace ArtillerySeries.src
             }
         }
 
-        public void BlowUpTerrain(float[] crater, Point2D pos)
+        public void BlowUpTerrain(float[] crater, Vector pos)
         {
             int xPos;
             for (int i = 0; i < crater.Length - 1; i++)
@@ -185,7 +185,7 @@ namespace ArtillerySeries.src
         }
 
 
-        public void SetBoundaryBoxPos(Point2D pt)
+        public void SetBoundaryBoxPos(Vector pt)
         {
             _boundaryBox.X = Clamp(pt.X - Constants.BoundaryBoxPadding, 0, _a3RData.Terrain.Map.Length);
             _boundaryBox.Y = pt.Y - Constants.BoundaryBoxPadding;

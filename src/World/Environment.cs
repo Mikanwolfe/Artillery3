@@ -108,11 +108,7 @@ namespace ArtillerySeries.src
                     _particleY = _camera.Pos.Y + _particlePos - _windowRect.Height - _windowRect.Width;
                 }
 
-                Point2D _particleSpawnPoint = new Point2D()
-                {
-                    X = _particleX,
-                    Y = _particleY
-                };
+                Vector _particleSpawnPoint = new Vector(_particleX, _particleY);
 
                 Artillery3R.Services.ParticleEngine.CreateNonCollideParticle(_particleSpawnPoint, Color.Black,
                 0f, 10f, 0.2f, 1);

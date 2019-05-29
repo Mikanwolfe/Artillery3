@@ -20,6 +20,15 @@ namespace ArtillerySeries.src
 
         private static Random _random = new Random();
 
+        public static Vector RandomVector(float magnitude)
+        {
+            return new Vector()
+            {
+                X = (float)_random.NextDouble() * magnitude,
+                Y = (float)_random.NextDouble() * magnitude
+            };
+        }
+
         public static Point2D RandomPoint2D(float magnitude)
         {
             return new Point2D()
@@ -47,7 +56,7 @@ namespace ArtillerySeries.src
             };
         }
 
-        public static Point2D Normalise(Point2D vector)
+        public static Vector Normalise(Vector vector)
         {
             float x = vector.X;
             float y = vector.Y;
@@ -59,20 +68,28 @@ namespace ArtillerySeries.src
 
         public static float VectorDirection(Point2D to, Point2D from)
         {
-            Point2D vector = new Point2D()
-            {
-                X = from.X - to.X,
-                Y = from.Y - to.Y
-            };
+            return VectorDirection(new Vector(to), new Vector(from));
+        }
 
-            return VectorDirection(vector);
+        public static float VectorDirection(Vector to, Vector from)
+        {
+
+            return VectorDirection(new Vector(from.X - to.X, from.Y - to.Y));
         }
 
         public static float VectorDirection(Point2D vector)
         {
-            return (float)(Math.Tan((vector.Y / vector.X)) % (2*Math.PI));
+            return VectorDirection(new Vector(vector));
         }
 
+        public static float VectorDirection(Vector vector)
+        {
+            return (float)(Math.Tan((vector.Y / vector.X)) % (2 * Math.PI));
+        }
+        public static Vector ZeroVector()
+        {
+            return new Vector();
+        }
         public static Point2D ZeroPoint2D()
         {
             return new Point2D()
@@ -87,7 +104,7 @@ namespace ArtillerySeries.src
             SwinGame.DrawText(text, color, x - (text.Length * 3.5f), y);
         }
 
-        public static void DrawTextCentre(string text, Color color, Point2D pt)
+        public static void DrawTextCentre(string text, Color color, Vector pt)
         {
             DrawTextCentre(text, color, pt.X, pt.Y);
         }
@@ -121,9 +138,9 @@ namespace ArtillerySeries.src
             return value;
         }
 
-        public static bool WithinBoundary(Point2D pos, Rectangle boundary)
+        public static bool WithinBoundary(Vector pos, Rectangle boundary)
         {
-            if (SwinGame.PointInRect(pos, boundary))
+            if (SwinGame.PointInRect(pos.ToPoint2D, boundary))
                 return true;
 
             return false;

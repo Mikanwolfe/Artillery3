@@ -13,19 +13,12 @@ namespace ArtillerySeries.src
 
         string _text;
 
-        Point2D _vel = new Point2D()
-        {
-            Y = -2
-        };
+        Vector _vel = new Vector(0, -2);
 
-        public TextParticle(string text, double life, Point2D pos, Color color, float weight) 
-            : base(life, pos, ZeroPoint2D(), 0, color, weight)
+        public TextParticle(string text, double life, Vector pos, Color color, float weight) 
+            : base(life, pos, new Vector(), 0, color, weight)
         {
             _text = text;
-            Vel = new Point2D()
-            {
-                Y = -2
-            };
         }
         
 

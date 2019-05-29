@@ -12,16 +12,16 @@ namespace ArtillerySeries.src
     {
         int _rayCastStep;
 
-        Point2D _destination;
-        Point2D _direction;
+        Vector _destination;
+        Vector _direction;
 
         Color _color = Color.Ivory;
 
         float _lifeTime;
         float _maxLife;
 
-        public Laser(string name, Weapon parentWeapon, Point2D from, Point2D to, float damage, float explRad, float damageRad)
-            : base(name, parentWeapon, from, ZeroPoint2D(), damage, explRad, damageRad)
+        public Laser(string name, Weapon parentWeapon, Vector from, Vector to, float damage, float explRad, float damageRad)
+            : base(name, parentWeapon, from, new Vector(), damage, explRad, damageRad)
         {
             Physics.Enabled = false;
             _destination = to;
@@ -41,7 +41,7 @@ namespace ArtillerySeries.src
 
         }
 
-        public override void Explode(Point2D pt)
+        public override void Explode(Vector pt)
         {
             
             BlowUpTerrain(pt);

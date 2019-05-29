@@ -28,7 +28,7 @@ namespace ArtillerySeries.src
         float _damageRad;
 
 
-        public Projectile(string name, Weapon parentWeapon, Point2D pos, Point2D vel, float damage, float explRad, float damageRad) : base(name)
+        public Projectile(string name, Weapon parentWeapon, Vector pos, Vector vel, float damage, float explRad, float damageRad) : base(name)
         {
             _parentWeapon = parentWeapon;
             _physics = new PhysicsComponent(this);
@@ -60,7 +60,7 @@ namespace ArtillerySeries.src
             {
                 if (_bitmap == null)
                 {
-                    SwinGame.FillCircle(Color.DarkMagenta, Pos, 3);
+                    SwinGame.FillCircle(Color.DarkMagenta, Pos.ToPoint2D, 3);
 
                 }
 
@@ -99,7 +99,7 @@ namespace ArtillerySeries.src
             
         }
 
-        public virtual void BlowUpTerrain(Point2D pt)
+        public virtual void BlowUpTerrain(Vector pt)
         {
             int width = ((int)_explRad * Constants.BaseExplosionDiaScaling) - 1;
             float[] _crater = new float[(int)width];
@@ -113,7 +113,7 @@ namespace ArtillerySeries.src
             Artillery3R.Services.PhysicsEngine.BlowUpTerrain(_crater, pt);
         }
 
-        public virtual void Explode(Point2D pt)
+        public virtual void Explode(Vector pt)
         {
             BlowUpTerrain(pt);
             Artillery3R.Services.ParticleEngine.CreateFastExplosion(pt, 100);
