@@ -150,18 +150,6 @@ namespace ArtillerySeries.src
         }
 
 
-        /*
-        public void HandleInput()
-        {
-            if (PeekState() != WorldState.ShowWinScreen)
-            {
-                _playerCommand = _inputHandler.HandleInput();
-                if (_playerCommand != null)
-                    _playerCommand.Execute(_a3RData);
-            }
-
-        }
-        */
 
         public void FocusOnPlayer()
         {
@@ -201,6 +189,7 @@ namespace ArtillerySeries.src
         public override void Update()
         {
             A3RData.Camera.Update();
+            A3RData.Wind.Update();
             A3RData.Environment.Update();
             _inputHandler.HandleInput(_a3RData);
             Artillery3R.Services.Update();

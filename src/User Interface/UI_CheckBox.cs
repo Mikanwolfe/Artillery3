@@ -32,14 +32,14 @@ namespace ArtillerySeries.src
         public UI_CheckBox(Camera camera, Vector pos, string text, bool isChecked)
             : this(camera, pos, text)
         {
-            Pos = pos.ToPoint2D;
+            Pos = pos;
             _checked = isChecked;
         }
         public UI_CheckBox(Camera camera, Vector pos, string text)
             : base(camera)
         {
             _text = text;
-            Pos = pos.ToPoint2D;
+            Pos = pos;
             _textPos = new Vector(pos.X + 20, pos.Y+4);
 
             _buttonArea = new Rectangle()

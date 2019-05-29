@@ -176,12 +176,12 @@ namespace ArtillerySeries.src
 
         public void SetWind()
         {
-            //_a3RData.Wind.SetWind();
+            _a3RData.Wind.SetWind();
         }
 
         public void SetWind(float direction, float magnitude)
         {
-            //_a3RData.Wind.SetWind(direction, magnitude);
+            _a3RData.Wind.SetWind(direction, magnitude);
         }
 
 

@@ -19,8 +19,8 @@ namespace ArtillerySeries.src
             :base (camera)
         {
             _text = text;
-            X = x;
-            Y = y;
+           Pos.X = x;
+           Pos.Y = y;
             _color = txtColor;
             
         }
@@ -35,7 +35,7 @@ namespace ArtillerySeries.src
         {
             if (_isCentered)
             {
-                DrawTextCentre(_text, _color, Pos);
+                DrawTextCentre(_text, _color, Pos.ToPoint2D);
             } else
             {
                 SwinGame.DrawText(_text, _color, X, Y);

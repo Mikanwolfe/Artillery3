@@ -103,7 +103,6 @@ namespace ArtillerySeries.src
         public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
         public List<Player> Players { get => _players; set => _players = value; }
         public Wind Wind { get => _wind; set => _wind = value; }
-        //public Terrain Terrain { get => _terrain; set => _terrain = value; }
         public bool UserExitRequested { get => _userExitRequested; set => _userExitRequested = value; }
         public Camera Camera { get => _camera; set => _camera = value; }
         public int NumberOfPlayers { get => _numberOfPlayers; set => _numberOfPlayers = value; }

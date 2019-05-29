@@ -26,6 +26,8 @@ namespace ArtillerySeries.src
 
             AddElement(_playerChargeBar);
 
+            AddElement(new UI_WindMarker(_a3RData.Camera));
+
         }
 
         public void UpdatePlayerChargeBar(float percentage)

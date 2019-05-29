@@ -31,7 +31,8 @@ namespace ArtillerySeries.src
             : base(camera)
         {
             _text = text;
-            Pos = new Point2D() { X = x, Y = y };
+            Pos.X = x;
+            Pos.Y = y;
 
             _uiEventArgs = new UIEventArgs(uiEvent);
         }
@@ -40,7 +41,8 @@ namespace ArtillerySeries.src
             : base(camera)
         {
             _text = text;
-            Pos = new Point2D() { X = x, Y = y };
+            Pos.X = x;
+            Pos.Y = y;
 
             _uiEventArgs = uiEvent;
 

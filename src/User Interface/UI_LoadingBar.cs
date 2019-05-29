@@ -33,7 +33,7 @@ namespace ArtillerySeries.src
         public UI_LoadingBar(Camera camera, int width, int height, Color clr, Point2D pos)
             : base(camera)
         {
-            Pos = pos;
+            Pos = new Vector(pos);
             _width = width;
             _height = height;
             _color = clr;

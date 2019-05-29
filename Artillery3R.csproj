@@ -106,6 +106,7 @@
     <Compile Include="src\Entities\Players\Vehicle.cs" />
     <Compile Include="src\Entities\Players\Weapons\Weapon.cs" />
     <Compile Include="src\Entities\Players\Weapons\WeaponAcidCannon.cs" />
+    <Compile Include="src\User Interface\UI_WindMarker.cs" />
     <Compile Include="src\World\Wind.cs" />
     <Compile Include="src\World\CombatGameState.cs" />
     <Compile Include="src\Components\CombatStateObserver.cs" />
