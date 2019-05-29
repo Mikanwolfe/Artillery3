@@ -32,28 +32,20 @@ namespace ArtillerySeries.src
             _components = new List<IPhysicsComponent>();
             _componentsToRemove = new List<IPhysicsComponent>();
 
+            _boundaryBox = new Rectangle()
+            {
+                X = -Constants.BoundaryBoxPadding,
+                Y = -Constants.BoundaryBoxPadding,
+                Width = _a3RData.WindowRect.Width + Constants.BoundaryBoxPadding * 2,
+                Height = _a3RData.WindowRect.Height + Constants.BoundaryBoxPadding * 2
+            };
+
+
         }
         #endregion
 
         #region Methods
-
-        public Terrain Terrain
-        {
-            get => _a3RData.Terrain;
-            set
-            {
-                _a3RData.Terrain = value;
-
-                _boundaryBox = new Rectangle()
-                {
-                    X = -Constants.BoundaryBoxPadding,
-                    Y = -Constants.BoundaryBoxPadding,
-                    Width = _windowRect.Width + Constants.BoundaryBoxPadding * 2,
-                    Height = _windowRect.Height + Constants.BoundaryBoxPadding * 2
-                };
-            }
-        }
-        public Rectangle BoundaryBox { get => _boundaryBox; }
+        
 
         public void Update()
         {
@@ -142,8 +134,8 @@ namespace ArtillerySeries.src
 
         public bool IsUnderTerrain(Point2D pt)
         {
-            int x = (int)Clamp(pt.X, 0, Terrain.Map.Length - 1);
-            if (pt.Y < Terrain.Map[x])
+            int x = (int)Clamp(pt.X, 0, _a3RData.Terrain.Map.Length - 1);
+            if (pt.Y < _a3RData.Terrain.Map[x])
                 return true;
             return false;
         }
@@ -197,7 +189,7 @@ namespace ArtillerySeries.src
 
         public void SetBoundaryBoxPos(Point2D pt)
         {
-            _boundaryBox.X = Clamp(pt.X - Constants.BoundaryBoxPadding, 0, Terrain.Map.Length);
+            _boundaryBox.X = Clamp(pt.X - Constants.BoundaryBoxPadding, 0, _a3RData.Terrain.Map.Length);
             _boundaryBox.Y = pt.Y - Constants.BoundaryBoxPadding;
         }
         public void SetBoundaryBoxPos(int x, int y)
@@ -210,6 +202,9 @@ namespace ArtillerySeries.src
         #region Properties
         public float WindDirectionDeg { get => _a3RData.Wind.DirectionInDeg; }
         public float WindMarkerDirection { get => _a3RData.Wind.MarkerDirection; }
+        public Rectangle BoundaryBox { get => _boundaryBox; }
+
+        public Terrain Terrain => _a3RData.Terrain; 
         #endregion
 
     }

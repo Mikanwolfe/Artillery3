@@ -345,6 +345,10 @@ namespace ArtillerySeries.src
         {
             get => _selectedWeapon.PreviousWeaponChargePercentage;
         }
+        public float MaxHealth { get => _maxHealth; set => _maxHealth = value; }
+        public float MaxArmour { get => _maxArmour; set => _maxArmour = value; }
+        public float Health { get => _health; set => _health = value; }
+        public float Armour { get => _armour; set => _armour = value; }
 
         public override void Damage(float damage)
         {

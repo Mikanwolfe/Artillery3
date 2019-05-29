@@ -169,8 +169,8 @@ namespace ArtillerySeries.src
                 UserInterface.Instance.Update();
 
                 SwinGame.ClearScreen(Color.White);
-                UserInterface.Instance.Draw();
                 _currentState.Draw();
+                UserInterface.Instance.Draw();
                 SwinGame.RefreshScreen(60);
             }
 

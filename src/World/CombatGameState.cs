@@ -100,6 +100,9 @@ namespace ArtillerySeries.src
             {
                 p.LinkCombatState(this);
                 p.SetXPosition((int)RandDoubleBetween(Constants.CameraPadding, A3RData.Terrain.Map.Length - 1 - Constants.CameraPadding));
+                p.Initiallise();
+                //p.Character.Health = p.Character.MaxHealth;
+                //p.Character.Armour = p.Character.MaxArmour;
             }
 
             A3RData.SelectedPlayer = A3RData.Players[0];
@@ -255,6 +258,9 @@ namespace ArtillerySeries.src
             SwinGame.ClearScreen(A3RData.Environment.SkyColor);
             A3RData.Environment.Draw();
             A3RData.Terrain.Draw();
+
+            Artillery3R.Services.Draw();
+            DrawSatellite();
 
             SwinGame.DrawText("Selected Player: " + A3RData.SelectedPlayer.Name, Color.Black, 50, 70);
             A3RData.SelectedPlayer.Draw();
