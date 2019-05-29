@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
-using static ArtillerySeries.src.Artillery3R;
+using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
@@ -25,7 +25,9 @@ namespace ArtillerySeries.src
     public class PhysicsComponent
     {
         IPhysicsComponent _entity;
-        Vector _pos, _vel, _acc;
+        Vector _pos;
+        Vector _vel;
+        Vector _acc;
         //PHYSICS!!
         bool _enabled;
         float _weight;
@@ -45,27 +47,11 @@ namespace ArtillerySeries.src
          */ 
         
 
-
-        void ZeroPoint2D(Point2D point)
-        {
-            point.X = 0;
-            point.Y = 0;
-        }
-
-        Point2D ZeroPoint2D()
-        {
-            Point2D point = new Point2D
-            {
-                X = 0,
-                Y = 0
-            };
-            return point;
-        }
-
         PhysicsComponent()
         {
             _enabled = true;
             _gravityEnabled = true;
+            _pos = new Vector();
             _vel = new Vector();
             _acc = new Vector();
             _facing = FacingDirection.Right;
@@ -110,17 +96,13 @@ namespace ArtillerySeries.src
             _acc.Y = 0;
         }
 
-        public Vector Position { get => _pos; set => _pos = value; }
-        public Vector Velocity { get => _vel; set => _vel = value; }
-        public Vector Acceleration { get => _acc; set => _acc = value; }
-        public bool GravityEnabled { get => _gravityEnabled; set => _gravityEnabled = value; }
-        public float Weight { get => _weight; set => _weight = value; }
+        public Vector Pos { get => _pos; set => _pos = value; }
         public float Y { get => _pos.Y; set => _pos.Y = value; }
         public float X { get => _pos.X; set => _pos.X = value; }
-        public float VelX { get => _vel.X; set => _vel.X = value; }
-        public float VelY { get => _vel.Y; set => _vel.Y = value; }
-        public float AccX { get => _acc.X; set => _acc.X = value; }
-        public float AccY { get => _acc.Y; set => _acc.Y = value; }
+        public Vector Vel{ get => _vel; set => _vel = value; }
+        public Vector Acc{ get => _acc; set => _acc = value; }
+        public bool GravityEnabled { get => _gravityEnabled; set => _gravityEnabled = value; }
+        public float Weight { get => _weight; set => _weight = value; }
         public bool OnGround { get => _onGround; set => _onGround = value; }
         public float AbsAngleToGround { get => _absAngleToGround; set => _absAngleToGround = value; }
         public float RelAngleToGround { get => _relativeAngleToGround; set => _relativeAngleToGround = value; }

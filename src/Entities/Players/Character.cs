@@ -136,7 +136,7 @@ namespace ArtillerySeries.src
         {
             if ((PeekState() == CharacterState.Idle) || (PeekState() == CharacterState.Walking))
             if (_physics.OnGround)
-                _physics.AccX = acc;
+                _physics.Acc.X = acc;
         }
 
         public bool Selected { get => _selected; set => _selected = value; }
@@ -253,7 +253,7 @@ namespace ArtillerySeries.src
 
 
             Direction = _physics.Facing;
-            Pos = _physics.Position;
+            Pos = _physics.Pos;
             AbsoluteAngle = _physics.AbsAngleToGround;
 
             if (PeekState() != CharacterState.Dead)

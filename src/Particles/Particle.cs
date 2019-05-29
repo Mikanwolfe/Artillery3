@@ -23,8 +23,8 @@ namespace ArtillerySeries.src
             : base("particle")
         {
             _physics = new PhysicsComponent(this);
-            _physics.Velocity = vel;
-            _physics.Position = pos;
+            _physics.Vel = vel;
+            _physics.Pos = pos;
 
             _maxLife = life;
             _life = life;
@@ -46,8 +46,8 @@ namespace ArtillerySeries.src
 
         public Vector Vel
         {
-            get => _physics.Velocity;
-            set => _physics.Velocity = value;
+            get => _physics.Vel;
+            set => _physics.Vel= value;
         }
 
         public override void Draw()
@@ -83,7 +83,7 @@ namespace ArtillerySeries.src
                     Artillery3R.Services.EntityManager.DamageEntities(this, _damage, (int)_radius, Pos);
                 }
 
-                Pos = _physics.Position;
+                Pos = _physics.Pos;
             } else
             {
                 _physics = null;

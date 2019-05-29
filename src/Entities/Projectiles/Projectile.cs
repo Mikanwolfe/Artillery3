@@ -32,9 +32,9 @@ namespace ArtillerySeries.src
         {
             _parentWeapon = parentWeapon;
             _physics = new PhysicsComponent(this);
-            _physics.Velocity = vel;
+            _physics.Vel= vel;
             Pos = pos;
-            _physics.Position = pos;
+            _physics.Pos= pos;
             _state = new StateComponent<ProjectileState>(ProjectileState.Alive);
 
             _baseDamage = damage;
@@ -78,7 +78,7 @@ namespace ArtillerySeries.src
                 }
 
 
-                Pos = _physics.Position;
+                Pos = _physics.Pos;
 
                 if ((Pos.X <= 0) || (Pos.X >= Artillery3R.Services.PhysicsEngine.Terrain.Map.Length - 1))
                     SwitchState(ProjectileState.Dead);

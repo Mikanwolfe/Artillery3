@@ -62,12 +62,12 @@ namespace ArtillerySeries.src
                     {
                         if (p.Physics.GravityEnabled)
                         {
-                            p.Physics.VelY += Constants.Gravity * p.Physics.Weight;
+                            p.Physics.Vel.Y += Constants.Gravity * p.Physics.Weight;
                         }
-                        if ((p.Physics.Position.Y >= _a3RData.Terrain.Map[(int)p.Physics.Position.X]) && p.Physics.CanCollideWithGround)
+                        if ((p.Physics.Pos.Y >= _a3RData.Terrain.Map[(int)p.Physics.Pos.X]) && p.Physics.CanCollideWithGround)
                         {
-                            p.Physics.VelY = 0;
-                            p.Physics.Y = _a3RData.Terrain.Map[(int)p.Physics.Position.X];
+                            p.Physics.Vel.Y = 0;
+                            p.Physics.Y = _a3RData.Terrain.Map[(int)p.Physics.X];
                             p.Physics.OnGround = true;
 
                         }
@@ -83,31 +83,31 @@ namespace ArtillerySeries.src
                             float p1 = _a3RData.Terrain.Map[Clamp((int)(x - 1), 0, _a3RData.Terrain.Map.Length - 1)];
                             float p2 = _a3RData.Terrain.Map[Clamp((int)(x + 1), 0, _a3RData.Terrain.Map.Length - 1)];
 
-                            p.Physics.VelX *= (float)Math.Cos(p.Physics.RelAngleToGround);
-                            p.Physics.VelY *= (float)Math.Cos(p.Physics.RelAngleToGround);
+                            p.Physics.Vel.X *= (float)Math.Cos(p.Physics.RelAngleToGround);
+                            p.Physics.Vel.Y *= (float)Math.Cos(p.Physics.RelAngleToGround);
 
                             if (p.Physics.HasGroundFriction)
-                                p.Physics.VelX *= (1 - p.Physics.FricCoefficient);
+                                p.Physics.Vel.X *= (1 - p.Physics.FricCoefficient);
 
                             p.Physics.AbsAngleToGround = (float)Math.Atan((p1 - p2) / (3));
                         }
                         else
                         {
                             
-                            p.Physics.VelX += _a3RData.Wind.X * p.Physics.WindFrictionMult;
-                            p.Physics.VelY += _a3RData.Wind.Y * p.Physics.WindFrictionMult;
+                            p.Physics.Vel.X += _a3RData.Wind.X * p.Physics.WindFrictionMult;
+                            p.Physics.Vel.Y += _a3RData.Wind.Y * p.Physics.WindFrictionMult;
 
                         }
 
                         //p.Physics.Position.Add(p.Physics.Velocity);
                         //p.Physics.Velocity.Add(p.Physics.Acceleration);
-                        p.Physics.X += p.Physics.VelX;
-                        p.Physics.Y += p.Physics.VelY;
+                        p.Physics.X += p.Physics.Vel.X;
+                        p.Physics.Y += p.Physics.Vel.Y;
 
 
                         p.Physics.X = Clamp(p.Physics.X, 0, _a3RData.Terrain.Map.Length - 1);
-                        p.Physics.VelX += p.Physics.AccX;
-                        p.Physics.VelY += p.Physics.AccY;
+                        p.Physics.Vel.X += p.Physics.Acc.X;
+                        p.Physics.Vel.Y += p.Physics.Acc.Y;
                         //p.Physics.VelX *= Constants.VelocityLoss;
 
                         p.Physics.Update();
