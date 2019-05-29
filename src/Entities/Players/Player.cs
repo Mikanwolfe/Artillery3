@@ -42,7 +42,6 @@ namespace ArtillerySeries.src
         {
             _subjectComponent = new SubjectComponent();
             _subjectComponent.AddObserver(combatGameState.ObserverInstance);
-            _subjectComponent.AddObserver(UserInterface.Instance.ObserverInstance);
         }
 
         public float WeaponChargePercentage

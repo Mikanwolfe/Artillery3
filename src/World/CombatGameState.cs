@@ -68,6 +68,8 @@ namespace ArtillerySeries.src
 
             _inputHandler = new InputHandler();
 
+            _observer = new CombatStateObserver(this);
+
             UIModule = new UI_Combat(A3RData);
 
             _turnCount = 0;
@@ -262,10 +264,7 @@ namespace ArtillerySeries.src
             SwinGame.DrawText("Character State: " + A3RData.SelectedPlayer.Character.PeekState(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 60f);
         }
 
-        public Observer ObserverInstance
-        {
-            get => _observer;
-        }
+        
 
         public void SwitchCameraFocus(ICameraCanFocus focusPoint)
         {
@@ -320,6 +319,9 @@ namespace ArtillerySeries.src
         public Color SkyColor { get => A3RData.Environment.Preset.BgColor; }
         public Player SelectedPlayer { get => A3RData.SelectedPlayer; set => A3RData.SelectedPlayer = value; }
         public NotifyGameEnded OnNotifyGameEnded { get => onNotifyGameEnded; set => onNotifyGameEnded = value; }
+
+        public Observer ObserverInstance => _observer;
+       
         #endregion
 
     }
