@@ -11,12 +11,12 @@ namespace ArtillerySeries.src
 
     public interface ICameraCanFocus
     {
-        Point2D Pos { get; }
+        Vector Pos { get; }
     }
     public class Camera : UpdatableObject
     {
         Rectangle _windowRect;
-        Point2D _pos;
+        Vector _pos;
         double _easeSpeed;
         ICameraCanFocus _focus;
 
@@ -27,7 +27,7 @@ namespace ArtillerySeries.src
         public Camera(Rectangle windowRect)
         {
             _windowRect = windowRect;
-            _pos = new Point2D();
+            _pos = new Vector();
             _easeSpeed = Constants.CameraEaseSpeed;
 
             OffsetX = -1 * _windowRect.Width / 2;
@@ -36,7 +36,7 @@ namespace ArtillerySeries.src
         }
 
         public double EaseSpeed { get => _easeSpeed; set => _easeSpeed = value; }
-        public Point2D Pos { get => _pos; }
+        public Vector Pos { get => _pos; }
         public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
 
         public void CenterCameraAtFocus()
@@ -69,7 +69,7 @@ namespace ArtillerySeries.src
         public override void Update()
         {
             CenterCameraAtFocus();
-            SwinGame.MoveCameraTo(Pos);
+            SwinGame.MoveCameraTo(Pos.ToPoint2D);
         }
     }
 }

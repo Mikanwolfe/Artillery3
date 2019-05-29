@@ -144,6 +144,7 @@ namespace ArtillerySeries.src
         }
 
 
+
         public void Run()
         {
             SwinGame.OpenAudio();
@@ -167,6 +168,13 @@ namespace ArtillerySeries.src
 
                 _currentState.Update();
                 UserInterface.Instance.Update();
+
+                #region Developer Region
+
+                if (SwinGame.KeyDown(KeyCode.LKey)) _a3RData.Camera.Pos.X += 1;
+
+
+                #endregion
 
                 SwinGame.ClearScreen(Color.White);
                 _currentState.Draw();
