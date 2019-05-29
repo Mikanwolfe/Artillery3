@@ -88,11 +88,6 @@ namespace ArtillerySeries.src
             _temporaryPreset.BgColor = Color.CadetBlue;
             _temporaryPreset.CloudColor = Color.Gray;
 
-            //it should be A3RData's job to handle the environment.          
-
-
-            GenerateEnvironment(_temporaryPreset);
-
             A3RData.Environment.Initialise(_temporaryPreset);
             A3RData.Terrain = A3RData.Environment.Generate();
 
@@ -115,15 +110,6 @@ namespace ArtillerySeries.src
             base.EnterState();
         }
 
-        public void GenerateEnvironment(EnvironmentPreset preset)
-        {
-            //Generates the terrain + sky
-
-
-            //_logicalTerrain = _environment.Generate();
-            //Artillery3R.Services.PhysicsEngine.Terrain = _logicalTerrain;
-        }
-
         public void CyclePlayers()
         {
 
@@ -141,7 +127,7 @@ namespace ArtillerySeries.src
             }
 
             int currentPlayerIndex = A3RData.Players.IndexOf(A3RData.SelectedPlayer);
-            int nextPlayer = currentPlayerIndex++;
+            int nextPlayer = currentPlayerIndex + 1;
 
             if (nextPlayer > A3RData.NumberOfPlayers - 1)
             {
