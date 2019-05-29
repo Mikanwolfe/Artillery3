@@ -202,9 +202,6 @@ namespace ArtillerySeries.src
                 p.Update();
             }
 
-            //_windMarker.X = A3RData.Camera.Pos.X + (_windowRect.Width / 2) - 50;
-            //_windMarker.Y = A3RData.Camera.Pos.Y + 50;
-
             //_windMarker.Rotation = Artillery3R.Services.PhysicsEngine.WindMarkerDirection + 180;
             A3RData.Satellite.Update();
 

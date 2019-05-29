@@ -26,7 +26,7 @@ namespace ArtillerySeries.src
 
             AddElement(_playerChargeBar);
 
-            AddElement(new UI_WindMarker(_a3RData.Camera));
+            AddElement(new UI_WindMarker(_a3RData.Camera, _a3RData.Wind));
 
         }
 

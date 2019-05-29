@@ -31,7 +31,7 @@ namespace ArtillerySeries.src
 
         public void Update()
         {
-            _markerDirection += (_direction - _markerDirection) / 2000;
+            _markerDirection += (_direction - _markerDirection) / 20;
         }
 
         public void SetWind()
