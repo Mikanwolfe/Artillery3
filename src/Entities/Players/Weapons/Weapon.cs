@@ -227,7 +227,7 @@ namespace ArtillerySeries.src
         public virtual void FireProjectile()
         {
             //Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, _baseDamage, 15, 35);
-            _mainProjectile = _projectileFactory.FireProjectile(this, _projectilePos, _projectileVel, _baseDamage, 15, 35);
+            _mainProjectile = _projectileFactory.FireProjectile(this, _projectilePos, _projectileVel, _baseDamage, 15, 55);
         }
 
         public void SetProjectile(Projectile projectile)

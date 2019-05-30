@@ -209,7 +209,7 @@ namespace ArtillerySeries.src
         public Character Character { get => _character; set => _character = value; }
         public IInputMethod InputMethod { get => _inputMethod; set => _inputMethod = value; }
         public bool IsAlive => _character.isAlive;
-
+        public new Point2D Pos => Character.Pos;
         public float PreviousWeaponCharge => _character.PreviousWeaponChargePercentage;
         public float WeaponChargePercentage => _character.WeaponChargePercentage;
 

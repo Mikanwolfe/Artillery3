@@ -46,6 +46,10 @@ namespace ArtillerySeries.src
 
         #region Methods
 
+        public override string ToString()
+        {
+            return "Vector(" + _x + ", " + _y + ")";
+        }
         public void Normalise()
         {
             float magnitude = (float)Math.Sqrt((_x * _x) + (_y * _y));
