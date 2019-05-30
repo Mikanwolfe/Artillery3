@@ -17,6 +17,11 @@ namespace ArtillerySeries.src
             : base(a3RData)
         {
             _notifyPlayerFinishedShop = notifyPlayerFinishedShop;
+
+            AddElement(new UI_StaticImage(a3RData.Camera, Width(0.5f), Height(0.24f), SwinGame.BitmapNamed("menuLogo")));
+
+
+
         }
 
         

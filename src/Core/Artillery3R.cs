@@ -12,6 +12,8 @@ namespace ArtillerySeries.src
     {
         public const int MaxNumberPlayers = 10;
 
+        public const int ScrollSpeed = 20;
+
         public const float Gravity = 0.6f;
         public const float VelocityLoss = 1f;
         public const string Data = "data.json";
@@ -70,6 +72,8 @@ namespace ArtillerySeries.src
         
         Stack<GameState> _gameState;
         GameState _currentState;
+
+        CameraFocusPoint _devFocusPoint;
 
         Dictionary<UIEvent, GameState> _gameStateTransitions;
 
@@ -171,7 +175,20 @@ namespace ArtillerySeries.src
 
                 #region Developer Region
 
-                if (SwinGame.KeyDown(KeyCode.LKey)) _a3RData.Camera.Pos.X += 1;
+                if (SwinGame.KeyDown(KeyCode.MKey))
+                {
+                    _devFocusPoint = new CameraFocusPoint();
+                    Clamp(_devFocusPoint.Pos.X, _a3RData.WindowRect.Width / 2, _a3RData.Terrain.Map.Length - _a3RData.WindowRect.Width / 2);
+                    _devFocusPoint.Pos = _a3RData.Camera.Focus.Pos;
+                    _a3RData.Camera.FocusCamera(_devFocusPoint);
+                }
+
+                
+
+                if (SwinGame.KeyDown(KeyCode.LKey)) _devFocusPoint.Vector.X += 10;
+                if (SwinGame.KeyDown(KeyCode.JKey)) _devFocusPoint.Vector.X -= 10;
+                if (SwinGame.KeyDown(KeyCode.IKey)) _devFocusPoint.Vector.Y -= 10;
+                if (SwinGame.KeyDown(KeyCode.KKey)) _devFocusPoint.Vector.Y += 10;
 
 
                 #endregion

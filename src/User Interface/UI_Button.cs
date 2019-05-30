@@ -25,6 +25,9 @@ namespace ArtillerySeries.src
         Color _highlightColor = Color.Orange;
         SoundEffect _mouseOverSoundEffect;
 
+        bool _fadesIn = false;
+        int _fadeCount = 0;
+
 
 
         public UI_Button(Camera camera, string text, float x, float y, UIEvent uiEvent)
@@ -65,6 +68,12 @@ namespace ArtillerySeries.src
         {
             _selectedBitmap = selectedBitmap;
 
+        }
+
+        public void SetFadeIn(int fadeDuration)
+        {
+            _fadesIn = true;
+            _fadeCount = 0;
         }
 
         public override void Draw()
@@ -114,6 +123,11 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
+            if (_fadesIn)
+                _fadeCount++;
+
+            _fadeCount = Clamp(_fadeCount, 0, 100);
+
             _buttonArea = new Rectangle()
             {
                 X = Pos.X,

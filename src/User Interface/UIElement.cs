@@ -18,7 +18,7 @@ namespace ArtillerySeries.src
             _camera = camera;
             _pos = new Vector();
         }
-      
+
         public float X { get => Pos.X; set => Pos.X = value; }
         public float Y { get => Pos.Y; set => Pos.Y = value; }
         public Camera Camera { get => _camera; set => _camera = value; }

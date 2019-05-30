@@ -21,7 +21,6 @@ namespace ArtillerySeries.src
     {
         UIEvent _uiEvent;
         string _text;
-        List<Player> _players;
         public UIEventArgs(UIEvent uiEvent)
         {
             _uiEvent = uiEvent;
@@ -34,6 +33,5 @@ namespace ArtillerySeries.src
 
         public UIEvent Event { get => _uiEvent; set => _uiEvent = value; }
         public string Text { get => _text; set => _text = value; }
-        public List<Player> Players { get => _players; set => _players = value; }
     }
 }

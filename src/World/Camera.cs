@@ -38,6 +38,7 @@ namespace ArtillerySeries.src
         public double EaseSpeed { get => _easeSpeed; set => _easeSpeed = value; }
         public Vector Pos { get => _pos; }
         public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
+        public ICameraCanFocus Focus { get => _focus; }
 
         public void CenterCameraAtFocus()
         {
@@ -61,7 +62,11 @@ namespace ArtillerySeries.src
         {
             _focus = new CameraFocusPoint()
             {
-                Pos = ZeroPoint2D()
+                Pos = new Point2D()
+                {
+                    X = _windowRect.Width / 2,
+                    Y = _windowRect.Height / 2
+                }
             };
         }
 
