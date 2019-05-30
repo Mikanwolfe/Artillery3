@@ -12,6 +12,7 @@ namespace ArtillerySeries.src
         MainMenu,
         StartGame,
         StartCombat,
+        EndCombat,
         LoadGame,
         Options,
         Exit

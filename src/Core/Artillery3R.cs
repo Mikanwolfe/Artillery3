@@ -71,7 +71,7 @@ namespace ArtillerySeries.src
         Stack<GameState> _gameState;
         GameState _currentState;
 
-        Dictionary<UIEvent, GameState> _gameStateTranstitions;
+        Dictionary<UIEvent, GameState> _gameStateTransitions;
 
         public static Services Services
         {
@@ -91,10 +91,11 @@ namespace ArtillerySeries.src
 
             _gameState = new Stack<GameState>();
 
-            _gameStateTranstitions = new Dictionary<UIEvent, GameState>();
-            _gameStateTranstitions.Add(UIEvent.StartGame, new PlayerSelectGameState(_a3RData));
-            _gameStateTranstitions.Add(UIEvent.MainMenu, new MainMenuGameState(_a3RData));
-            _gameStateTranstitions.Add(UIEvent.StartCombat, new CombatGameState(_a3RData));
+            _gameStateTransitions = new Dictionary<UIEvent, GameState>();
+            _gameStateTransitions.Add(UIEvent.StartGame, new PlayerSelectGameState(_a3RData));
+            _gameStateTransitions.Add(UIEvent.MainMenu, new MainMenuGameState(_a3RData));
+            _gameStateTransitions.Add(UIEvent.StartCombat, new CombatGameState(_a3RData));
+            //_gameStateTransitions.Add(UIEvent.EndCombat, new ShopGameState(_a3RData));
 
             //TODO: Add in the rest of the UI transitions here
 
@@ -108,7 +109,7 @@ namespace ArtillerySeries.src
             {
                 //Push the next state, and then the loading state.
                 // if the game is in the loading state it's then going to load the state properly.
-                _gameState.Push(_gameStateTranstitions[uiEventArgs.Event]);
+                _gameState.Push(_gameStateTransitions[uiEventArgs.Event]);
                 _gameState.Push(new LoadingGameState(_gameState));
             }
             catch (Exception e)
@@ -155,7 +156,7 @@ namespace ArtillerySeries.src
             SwinGame.ClearScreen(Color.White);
 
 
-            _gameState.Push(_gameStateTranstitions[UIEvent.MainMenu]);
+            _gameState.Push(_gameStateTransitions[UIEvent.MainMenu]);
             _currentState = _gameState.Peek();
             _currentState.EnterState();
 

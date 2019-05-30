@@ -31,6 +31,8 @@ namespace ArtillerySeries.src
         StateComponent<CombatState> _state;
         Observer _observer;
 
+        Timer _winCounterTimer;
+
 
         string _presetEnvironment = Constants.EnvironmentPreset;
 
@@ -96,8 +98,6 @@ namespace ArtillerySeries.src
                 p.LinkCombatState(this);
                 p.SetXPosition((int)RandDoubleBetween(Constants.CameraPadding, A3RData.Terrain.Map.Length - 1 - Constants.CameraPadding));
                 p.Initiallise();
-                //p.Character.Health = p.Character.MaxHealth;
-                //p.Character.Armour = p.Character.MaxArmour;
             }
 
             A3RData.SelectedPlayer = A3RData.Players[0];
@@ -105,6 +105,9 @@ namespace ArtillerySeries.src
 
             Artillery3R.Services.PhysicsEngine.Settle();
             SwitchCameraFocus(A3RData.SelectedPlayer.Character as ICameraCanFocus);
+
+            _winCounterTimer = new Timer(60, NotifyCombatEndedGame);
+            _winCounterTimer.Enabled = false;
 
             _turnCount = 0;
             base.EnterState();
@@ -120,32 +123,38 @@ namespace ArtillerySeries.src
                 if (p.IsAlive)
                     _playersAlive++;
             }
+            Console.WriteLine("Players alive: " + _playersAlive);
             if (_playersAlive <= 1)
             {
+
                 if (PeekState() != CombatState.ShowWinScreen)
                     SwitchState(CombatState.ShowWinScreen);
             }
 
-            int currentPlayerIndex = A3RData.Players.IndexOf(A3RData.SelectedPlayer);
-            int nextPlayer = currentPlayerIndex + 1;
-
-            if (nextPlayer > A3RData.NumberOfPlayers - 1)
+            if (PeekState() != CombatState.ShowWinScreen)
             {
-                nextPlayer = 0;
-            }
+                int currentPlayerIndex = A3RData.Players.IndexOf(A3RData.SelectedPlayer);
+                int nextPlayer = currentPlayerIndex + 1;
 
-            A3RData.SelectedPlayer = A3RData.Players[nextPlayer];
+                if (nextPlayer > A3RData.NumberOfPlayers - 1)
+                {
+                    nextPlayer = 0;
+                }
 
-            A3RData.SelectedPlayer.SwitchState(PlayerState.Idle);
-            A3RData.SelectedPlayer.NewTurn();
+                A3RData.SelectedPlayer = A3RData.Players[nextPlayer];
 
-            A3RData.Satellite.NewTurn();
+                A3RData.SelectedPlayer.SwitchState(PlayerState.Idle);
+                A3RData.SelectedPlayer.NewTurn();
 
-            _turnCount++;
+                A3RData.Satellite.NewTurn();
 
-            if (_turnCount % 4 == 0)
-            {
-                Artillery3R.Services.PhysicsEngine.SetWind();
+                _turnCount++;
+
+                if (_turnCount % 4 == 0)
+                {
+                    Artillery3R.Services.PhysicsEngine.SetWind();
+                }
+
             }
         }
 
@@ -194,6 +203,8 @@ namespace ArtillerySeries.src
             _inputHandler.HandleInput(_a3RData);
             Artillery3R.Services.Update();
 
+            _winCounterTimer.Tick();
+
 
             Artillery3R.Services.PhysicsEngine.SetBoundaryBoxPos(A3RData.Camera.Pos.ToPoint2D);
 
@@ -202,17 +213,11 @@ namespace ArtillerySeries.src
                 p.Update();
             }
 
-            //_windMarker.Rotation = Artillery3R.Services.PhysicsEngine.WindMarkerDirection + 180;
             A3RData.Satellite.Update();
 
             switch (PeekState())
             {
                 case CombatState.ShowWinScreen:
-                    _winScreenCount++;
-
-
-                    if (_winScreenCount > 200)
-                        SwitchState(CombatState.EndGame);
 
                     break;
 
@@ -243,11 +248,20 @@ namespace ArtillerySeries.src
             SwinGame.DrawText("Character State: " + A3RData.SelectedPlayer.Character.PeekState(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 60f);
         }
 
-        
+
 
         public void SwitchCameraFocus(ICameraCanFocus focusPoint)
         {
             A3RData.Camera.FocusCamera(focusPoint);
+        }
+
+        public void NotifyCombatEndedGame()
+        {
+            Console.WriteLine("Combat just ended");
+            onNotifyGameEnded?.Invoke();
+            _winCounterTimer.Enabled = false;
+
+            UserInterface.Instance.NotifyUIEvent(this, new UIEventArgs(UIEvent.EndCombat));
         }
 
         public void SwitchState(CombatState state)
@@ -262,16 +276,12 @@ namespace ArtillerySeries.src
                         if (p.IsAlive)
                             A3RData.SelectedPlayer = p;
                     }
-
+                    _winCounterTimer.Enabled = true;
                     FocusOnPlayer();
-                    _winScreenCount = 0;
+                    _inputHandler.Enabled = false;
                     break;
 
                 case CombatState.EndGame:
-                    if (onNotifyGameEnded != null)
-                    {
-                        onNotifyGameEnded();
-                    }
                     break;
             }
 
@@ -300,7 +310,7 @@ namespace ArtillerySeries.src
         public NotifyGameEnded OnNotifyGameEnded { get => onNotifyGameEnded; set => onNotifyGameEnded = value; }
 
         public Observer ObserverInstance => _observer;
-       
+
         #endregion
 
     }

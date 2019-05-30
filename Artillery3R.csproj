@@ -45,6 +45,7 @@
     <Compile Include="src\Core\Vector.cs" />
     <Compile Include="src\Entities\Projectiles\AcidProjectile.cs" />
     <Compile Include="src\Core\A3RData.cs" />
+    <Compile Include="src\GameStates\ShopGameState.cs" />
     <Compile Include="src\Managers\CommandProcessor.cs" />
     <Compile Include="src\Managers\EscMenuService.cs" />
     <Compile Include="src\Managers\Services.cs" />

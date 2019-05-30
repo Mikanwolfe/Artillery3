@@ -6,11 +6,16 @@ using System.Threading.Tasks;
 
 namespace ArtillerySeries.src
 {
+
+    public delegate void OnTimeUp();
     public class Timer
     {
 
         private int _count;
         private int _countTo;
+        private bool _enabled = true;
+
+        OnTimeUp _onTimeUp;
 
         public Timer(int countTo)
         {
@@ -18,10 +23,21 @@ namespace ArtillerySeries.src
             _count = 0;
         }
 
+        public Timer(int countTo, OnTimeUp onTimeUp)
+            : this(countTo)
+        {
+            _onTimeUp = onTimeUp;
+        }
+
         public void Tick()
-        {   
-            if (!Finished)
-                _count++;
+        {
+            if (Enabled)
+            {
+                if (!Finished)
+                    _count++;
+                else
+                    _onTimeUp?.Invoke();
+            }
         }
 
         public void Reset()
@@ -31,7 +47,9 @@ namespace ArtillerySeries.src
 
 
         public bool Finished => (_count >= _countTo);
-        public int Count => _count; 
-        public int CountTo => _countTo; 
+        public int Count => _count;
+        public int CountTo => _countTo;
+
+        public bool Enabled { get => _enabled; set => _enabled = value; }
     }
 }
