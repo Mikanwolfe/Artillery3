@@ -11,7 +11,7 @@ namespace ArtillerySeries.src
 
     public interface ICameraCanFocus
     {
-        Vector Pos { get; }
+        Point2D Pos { get; }
     }
     public class Camera : UpdatableObject
     {

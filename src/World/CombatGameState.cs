@@ -195,7 +195,7 @@ namespace ArtillerySeries.src
             Artillery3R.Services.Update();
 
 
-            Artillery3R.Services.PhysicsEngine.SetBoundaryBoxPos(A3RData.Camera.Pos);
+            Artillery3R.Services.PhysicsEngine.SetBoundaryBoxPos(A3RData.Camera.Pos.ToPoint2D);
 
             foreach (Player p in A3RData.Players)
             {

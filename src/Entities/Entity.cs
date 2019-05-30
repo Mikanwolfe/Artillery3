@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
@@ -18,7 +19,7 @@ namespace ArtillerySeries.src
         string _name;
         string _shortDesc;
         string _longDesc;
-        Vector _pos;
+        Point2D _pos;
         FacingDirection _direction;
         float _absAngle;
 
@@ -27,7 +28,7 @@ namespace ArtillerySeries.src
         public Entity(string name)
         {
             _name = name;
-            _pos = new Vector();
+            _pos = ZeroPoint2D();
             _direction = FacingDirection.Left;
             _absAngle = 0;
             _enabled = true;
@@ -36,7 +37,7 @@ namespace ArtillerySeries.src
         }
 
         public string Name { get => _name; set => _name = value; }
-        public Vector Pos { get => _pos; set => _pos = value; }
+        public Point2D Pos { get => _pos; set => _pos = value; }
         public virtual string ShortDesc { get => _name; set => _shortDesc = value; }
         public virtual string LongDesc { get => "A " + _name; set => _longDesc = value; }
         internal FacingDirection Direction { get => _direction; set => _direction = value; }
