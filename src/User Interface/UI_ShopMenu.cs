@@ -10,10 +10,14 @@ namespace ArtillerySeries.src
 {
     public class UI_ShopMenu : UIElementAssembly
     {
-        public UI_ShopMenu(A3RData a3RData)
+        NotifyPlayerFinishedShop _notifyPlayerFinishedShop;
+        public UI_ShopMenu(A3RData a3RData, NotifyPlayerFinishedShop notifyPlayerFinishedShop)
             : base(a3RData)
         {
+            _notifyPlayerFinishedShop = notifyPlayerFinishedShop;
         }
-        //I just need this to work.
+
+        
+
     }
 }

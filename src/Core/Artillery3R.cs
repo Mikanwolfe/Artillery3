@@ -95,7 +95,7 @@ namespace ArtillerySeries.src
             _gameStateTransitions.Add(UIEvent.StartGame, new PlayerSelectGameState(_a3RData));
             _gameStateTransitions.Add(UIEvent.MainMenu, new MainMenuGameState(_a3RData));
             _gameStateTransitions.Add(UIEvent.StartCombat, new CombatGameState(_a3RData));
-            //_gameStateTransitions.Add(UIEvent.EndCombat, new ShopGameState(_a3RData));
+            _gameStateTransitions.Add(UIEvent.EndCombat, new ShopGameState(_a3RData));
 
             //TODO: Add in the rest of the UI transitions here
 
@@ -165,7 +165,6 @@ namespace ArtillerySeries.src
                 _currentState = _gameState.Peek();
 
                 SwinGame.ProcessEvents();
-                //Services.Update();
 
                 _currentState.Update();
                 UserInterface.Instance.Update();
@@ -187,7 +186,7 @@ namespace ArtillerySeries.src
             SwinGame.ReleaseAllResources();
         }
 
-        public string Version => "Artillery 3Rx, When A3L, A3R, and A3X fall through. Rx Rises."; 
+        public string Version => "A3S -- I ran out of letters and A3Rx2 is a bit much"; 
         
     }
 }
