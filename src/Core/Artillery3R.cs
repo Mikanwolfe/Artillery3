@@ -12,7 +12,7 @@ namespace ArtillerySeries.src
     {
         public const int MaxNumberPlayers = 10;
 
-        public const int ScrollSpeed = 20;
+        public const int ScrollSpeed = 30;
 
         public const float Gravity = 0.6f;
         public const float VelocityLoss = 1f;
@@ -43,7 +43,7 @@ namespace ArtillerySeries.src
 
         public const int AverageTerrainHeight = (int)(TerrainDepth * 0.6);
         public const int BaseTerrainInitialDisplacement = (int)(0.1 * TerrainDepth);
-               
+
         public const double ParticleLifeDispersion = 0.05;
 
         public const int NumberParallaxBackgrounds = 3;
@@ -51,7 +51,7 @@ namespace ArtillerySeries.src
 
         //For now we'll have consts inside here, i'll incorporate xml support later.
 
-        
+
         public const int InvalidPlayerCircleRadius = 3;
         public const float PlayerSpeed = 1.5f;
         public const float BaseExplosionRadius = 10;
@@ -62,18 +62,19 @@ namespace ArtillerySeries.src
         public const float BaseVehicleWeight = 1000f; //Arbitrary units
         public const int VectorSightSize = 20;
     }
-   
+
 
     public class Artillery3R  // 3 Revised, Reimplemented, Retrofit...
     {
         A3RData _a3RData;
         Rectangle _windowRect;
         UIEventArgs _uiEventArgs;
-        
+
         Stack<GameState> _gameState;
         GameState _currentState;
 
         CameraFocusPoint _devFocusPoint;
+        CameraFocusPoint _mouseFocusPoint;
 
         Dictionary<UIEvent, GameState> _gameStateTransitions;
 
@@ -109,7 +110,7 @@ namespace ArtillerySeries.src
         {
             Console.WriteLine("Arty has been called for a UI Event {0}", uiEventArgs.Event);
 
-           try
+            try
             {
                 //Push the next state, and then the loading state.
                 // if the game is in the loading state it's then going to load the state properly.
@@ -183,12 +184,21 @@ namespace ArtillerySeries.src
                     _a3RData.Camera.FocusCamera(_devFocusPoint);
                 }
 
-                
+
 
                 if (SwinGame.KeyDown(KeyCode.LKey)) _devFocusPoint.Vector.X += 10;
                 if (SwinGame.KeyDown(KeyCode.JKey)) _devFocusPoint.Vector.X -= 10;
                 if (SwinGame.KeyDown(KeyCode.IKey)) _devFocusPoint.Vector.Y -= 10;
                 if (SwinGame.KeyDown(KeyCode.KKey)) _devFocusPoint.Vector.Y += 10;
+
+                if (SwinGame.MouseDown(MouseButton.RightButton))
+                {
+                    if (_mouseFocusPoint == null)
+                        _mouseFocusPoint = new CameraFocusPoint();
+                    _mouseFocusPoint.Vector.X = SwinGame.MouseX() + _a3RData.Camera.Pos.X;
+                    _mouseFocusPoint.Vector.Y = SwinGame.MouseY() + _a3RData.Camera.Pos.Y;
+                    _a3RData.Camera.FocusCamera(_mouseFocusPoint);
+                }
 
 
                 #endregion
@@ -203,7 +213,7 @@ namespace ArtillerySeries.src
             SwinGame.ReleaseAllResources();
         }
 
-        public string Version => "A3S -- I ran out of letters and A3Rx2 is a bit much"; 
-        
+        public string Version => "A3S -- I ran out of letters and A3Rx2 is a bit much";
+
     }
 }

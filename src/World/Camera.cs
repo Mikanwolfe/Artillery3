@@ -20,6 +20,8 @@ namespace ArtillerySeries.src
         double _easeSpeed;
         ICameraCanFocus _focus;
 
+        bool _focusLock;
+
 
         float OffsetX, OffsetY;
 
@@ -30,6 +32,8 @@ namespace ArtillerySeries.src
             _pos = new Vector();
             _easeSpeed = Constants.CameraEaseSpeed;
 
+            _focusLock = false;
+
             OffsetX = -1 * _windowRect.Width / 2;
             OffsetY = -1 * _windowRect.Height / 2;
 
@@ -39,6 +43,7 @@ namespace ArtillerySeries.src
         public Vector Pos { get => _pos; }
         public Rectangle WindowRect { get => _windowRect; set => _windowRect = value; }
         public ICameraCanFocus Focus { get => _focus; }
+        public bool FocusLock { get => _focusLock; set => _focusLock = value; }
 
         public void CenterCameraAtFocus()
         {
@@ -55,7 +60,8 @@ namespace ArtillerySeries.src
 
         public void FocusCamera(ICameraCanFocus focusPoint)
         {
-            _focus = focusPoint;
+            if (!_focusLock)
+                _focus = focusPoint;
         }
 
         public void Zero()

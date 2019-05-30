@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
@@ -11,6 +12,7 @@ namespace ArtillerySeries.src
     public class ShopGameState : GameState
     {
         int _currentPlayerIndex;
+        int _scrollAccel = 0;
 
         CameraFocusPoint _scrollingPoint;
 
@@ -27,6 +29,7 @@ namespace ArtillerySeries.src
         {
             Console.WriteLine("Welcome to the shop!");
             A3RData.Camera.FocusCamera(_scrollingPoint);
+            A3RData.Camera.FocusLock = true;
 
             _currentPlayerIndex = 0;
             base.EnterState();
@@ -37,22 +40,19 @@ namespace ArtillerySeries.src
             _scrollingPoint.Vector.X = A3RData.WindowRect.Width / 2;
             A3RData.Camera.Update();
 
+            _scrollAccel--;
+            _scrollAccel = Clamp(_scrollAccel, 0, 50);
 
-            /*
-             * Turn these into commands later!!
-             */
-
-            //Console.WriteLine();
 
             if (SwinGame.MouseWheelScroll().Y < 0)
             {
-                _scrollingPoint.Vector.Y += Constants.ScrollSpeed;
-                Console.WriteLine("Scrolling down!");
+                _scrollingPoint.Vector.Y += Constants.ScrollSpeed + _scrollAccel;
+                _scrollAccel += 10;
             }
             else if (SwinGame.MouseWheelScroll().Y > 0)
             {
-                _scrollingPoint.Vector.Y -= Constants.ScrollSpeed;
-                Console.WriteLine("Scrolling up!");
+                _scrollingPoint.Vector.Y -= Constants.ScrollSpeed + _scrollAccel;
+                _scrollAccel += 10;
             }
 
 
