@@ -11,6 +11,8 @@ namespace ArtillerySeries.src
     public class UI_ShopMenu : UIElementAssembly
     {
         NotifyPlayerFinishedShop _notifyPlayerFinishedShop;
+
+        
         public UI_ShopMenu(A3RData a3RData, NotifyPlayerFinishedShop notifyPlayerFinishedShop)
             : base(a3RData)
         {

@@ -110,7 +110,7 @@ namespace ArtillerySeries.src
                 //Push the next state, and then the loading state.
                 // if the game is in the loading state it's then going to load the state properly.
                 _gameState.Push(_gameStateTransitions[uiEventArgs.Event]);
-                _gameState.Push(new LoadingGameState(_gameState));
+                _gameState.Push(new LoadingGameState(_gameState, _a3RData));
             }
             catch (Exception e)
             {

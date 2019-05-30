@@ -10,9 +10,11 @@ namespace ArtillerySeries.src
     public class LoadingGameState : GameState
     {
         Stack<GameState> _gameStates;
-        public LoadingGameState(Stack<GameState> gameStates) : base(null)
+        A3RData _a3RData;
+        public LoadingGameState(Stack<GameState> gameStates, A3RData a3RData) : base(null)
         {
             _gameStates = gameStates;
+            _a3RData = a3RData;
         }
 
         public override void Update()
@@ -31,7 +33,7 @@ namespace ArtillerySeries.src
             {
                 i += 0.05f;
                 Color _rectColour = SwinGame.RGBAFloatColor(1f, 1f, 1f, i);
-                SwinGame.FillRectangle(_rectColour,0,0,2000,2000);
+                SwinGame.FillRectangle(_rectColour,_a3RData.Camera.Pos.X, _a3RData.Camera.Pos.Y, 2000,2000);
 
                 SwinGame.RefreshScreen(60);
             }

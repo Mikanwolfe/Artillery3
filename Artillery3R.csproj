@@ -82,7 +82,7 @@
     <Compile Include="src\Entities\Players\Player.cs" />
     <Compile Include="src\Entities\Projectiles\Projectile.cs" />
     <Compile Include="src\Entities\Projectiles\ProjectileFactory.cs" />
-    <Compile Include="src\World\GameState.cs" />
+    <Compile Include="src\GameStates\GameState.cs" />
     <Compile Include="src\GameStates\PlayerSelectGameState.cs" />
     <Compile Include="src\World\Satellite.cs" />
     <Compile Include="src\Components\StateComponent.cs" />

@@ -26,7 +26,6 @@ namespace ArtillerySeries.src
         {
             Enabled = true;
             _a3RData = a3RData;
-            _uiModule = new UIElementAssembly(A3RData);
         }
         #endregion
 

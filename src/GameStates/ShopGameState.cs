@@ -10,7 +10,14 @@ namespace ArtillerySeries.src
     public class ShopGameState : GameState
     {
 
-        
+        public override void EnterState()
+        {
+            Console.WriteLine("Welcome to the shop!");
+
+            //play transitions and whatnot
+
+            base.EnterState();
+        }
 
         public ShopGameState(A3RData a3RData) 
             : base(a3RData)

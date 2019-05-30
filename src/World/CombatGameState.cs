@@ -106,7 +106,7 @@ namespace ArtillerySeries.src
             Artillery3R.Services.PhysicsEngine.Settle();
             SwitchCameraFocus(A3RData.SelectedPlayer.Character as ICameraCanFocus);
 
-            _winCounterTimer = new Timer(60, NotifyCombatEndedGame);
+            _winCounterTimer = new Timer(200, NotifyCombatEndedGame);
             _winCounterTimer.Enabled = false;
 
             _turnCount = 0;
