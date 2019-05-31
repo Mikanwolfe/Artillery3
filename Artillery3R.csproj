@@ -52,11 +52,14 @@
     <Compile Include="src\Core\Utilities.cs" />
     <Compile Include="src\User Interface\UI_Box.cs" />
     <Compile Include="src\User Interface\UI_CheckBox.cs" />
+    <Compile Include="src\User Interface\UI_EquipBox.cs" />
     <Compile Include="src\User Interface\UI_Minimap.cs" />
     <Compile Include="src\User Interface\UI_PlayerSelectCharacters.cs" />
     <Compile Include="src\User Interface\UI_PlayerSelectNames.cs" />
     <Compile Include="src\User Interface\UI_PlayerSelectNumberPlayers.cs" />
     <Compile Include="src\User Interface\UI_PlayerSelectScreen.cs" />
+    <Compile Include="src\User Interface\UI_SelectableTextBox.cs" />
+    <Compile Include="src\User Interface\UI_ShopButton.cs" />
     <Compile Include="src\User Interface\UI_ShopMenu.cs" />
     <Compile Include="src\User Interface\UI_TextBox.cs" />
     <Compile Include="src\World\Camera.cs" />

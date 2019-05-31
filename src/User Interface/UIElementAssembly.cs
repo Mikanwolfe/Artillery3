@@ -46,6 +46,8 @@ namespace ArtillerySeries.src
         }
 
         public A3RData A3RData { get => _a3RData; set => _a3RData = value; }
+        public List<UIElement> UIElements { get => _uiElements; set => _uiElements = value; }
+
         public float Height(float percent) { return _a3RData.WindowRect.Height * percent; }
         public float Width(float percent) { return _a3RData.WindowRect.Width * percent; }
 

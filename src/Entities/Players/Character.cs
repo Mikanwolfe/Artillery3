@@ -24,10 +24,15 @@ namespace ArtillerySeries.src
         IPhysicsComponent, IStateComponent<CharacterState>
     {
 
+        #region Fields
+
         Timer _switchWeaponTimer;
 
         float _health, _armour;
         float _maxHealth = 100, _maxArmour = 100;
+
+        int _weaponCapacity = 4;
+        int _inventoryCapacity = 4;
 
         Bitmap _charBitmap; // use sprites
         PhysicsComponent _physics;
@@ -38,17 +43,22 @@ namespace ArtillerySeries.src
         Weapon _selectedWeapon;
         Weapon _weapon;
         Weapon _weapon2;
-        List<Weapon> _weaponList;
+        private List<Weapon> _weaponList;
+        private List<Weapon> _inventory;
 
         public delegate void NotifyFiring(Projectile projectile, Character parent);
 
         NotifyFiring notifyFiring;
         int _smokeCount;
-       
+        #endregion
+
+        #region Constructor
+
         public Character(string name, int health, int armour)
             : base(name)
         {
-            _weaponList = new List<Weapon>();
+            _weaponList = new List<Weapon>(_inventoryCapacity);
+            _inventory = new List<Weapon>(_weaponCapacity);
 
             _physics = new PhysicsComponent(this);
             _selected = false;
@@ -65,7 +75,7 @@ namespace ArtillerySeries.src
             _weaponList.Add(_weapon);
 
             _maxArmour = armour;
-            _maxHealth = health;            
+            _maxHealth = health;
 
             Artillery3R.Services.EntityManager.AddEntity(this);
 
@@ -76,12 +86,27 @@ namespace ArtillerySeries.src
             _physics.WindFrictionMult = 0.01f;
 
             _switchWeaponTimer = new Timer(20);
-            
+
 
             _smokeCount = 0;
 
         }
+        #endregion
 
+        #region Methods
+        public override void Damage(float damage)
+        {
+            if (_armour > 0)
+            {
+                _armour -= damage;
+                _armour = Clamp(_armour, 0, _maxArmour);
+            }
+            else
+            {
+                _health -= damage;
+                _health = Clamp(_health, 0, _maxHealth);
+            }
+        }
         public void Initialise()
         {
             _armour = _maxArmour;
@@ -114,7 +139,8 @@ namespace ArtillerySeries.src
             {
                 _selectedWeapon.Charge();
                 SwitchState(CharacterState.Firing);
-            } else if (PeekState() == CharacterState.Firing)
+            }
+            else if (PeekState() == CharacterState.Firing)
                 _selectedWeapon.Charge();
         }
 
@@ -135,13 +161,9 @@ namespace ArtillerySeries.src
         void Move(float acc)
         {
             if ((PeekState() == CharacterState.Idle) || (PeekState() == CharacterState.Walking))
-            if (_physics.OnGround)
-                _physics.AccX = acc;
+                if (_physics.OnGround)
+                    _physics.AccX = acc;
         }
-
-        public bool Selected { get => _selected; set => _selected = value; }
-
-        PhysicsComponent IPhysicsComponent.Physics { get => _physics; set => _physics = value; }
 
         public void NewTurn()
         {
@@ -234,7 +256,7 @@ namespace ArtillerySeries.src
             float angle = (float)(_physics.AbsAngleToGround * 180 / Math.PI);
             angle = (float)(_physics.RelAngleToGround * 180 / Math.PI);
 
-            
+
 
             base.Draw(); // Draws the sub-entities
         }
@@ -316,8 +338,16 @@ namespace ArtillerySeries.src
                     break;
             }
             _state.Switch(nextState);
-            
+
         }
+        #endregion
+
+        #region Properties
+
+        public bool Selected { get => _selected; set => _selected = value; }
+
+        PhysicsComponent IPhysicsComponent.Physics { get => _physics; set => _physics = value; }
+
 
         public Projectile MainProjectile
         {
@@ -367,18 +397,14 @@ namespace ArtillerySeries.src
         public float MaxArmour { get => _maxArmour; set => _maxArmour = value; }
         public float Health { get => _health; set => _health = value; }
         public float Armour { get => _armour; set => _armour = value; }
+        public int WeaponCapacity { get => _weaponCapacity; set => _weaponCapacity = value; }
+        public List<Weapon> Inventory { get => _inventory; set => _inventory = value; }
+        public List<Weapon> WeaponList { get => _weaponList; set => _weaponList = value; }
 
-        public override void Damage(float damage)
-        {
-            if (_armour > 0)
-            {
-                _armour -= damage;
-                _armour = Clamp(_armour, 0, _maxArmour);
-            } else
-            {
-                _health -= damage;
-                _health = Clamp(_health, 0, _maxHealth);
-            }
-        }
+
+        #endregion
+
+
+
     }
 }

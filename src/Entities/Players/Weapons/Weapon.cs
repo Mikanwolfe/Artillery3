@@ -171,6 +171,8 @@ namespace ArtillerySeries.src
 
         }
 
+        public ProjectileType ProjectileType { get => _projectileType; set => _projectileType = value; }
+
         public void DepressWeapon()
         {
             _weaponAngle = Clamp(_weaponAngle - Rad(1f), _minWepAngleRad, _maxWepAngleRad);
