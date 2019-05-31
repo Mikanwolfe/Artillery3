@@ -135,6 +135,7 @@ namespace ArtillerySeries.src
             SwinGame.LoadBitmapNamed("loadButton", "menu_load.png");
             SwinGame.LoadBitmapNamed("optionsButton", "menu_options.png");
             SwinGame.LoadBitmapNamed("exitButton", "menu_exit.png");
+            SwinGame.LoadBitmapNamed("shopBg", "shopbg.jpg");
 
             SwinGame.LoadBitmapNamed("startButtonSelected", "menu_start_selected.png");
             SwinGame.LoadBitmapNamed("loadButtonSelected", "menu_load_selected.png");
@@ -147,6 +148,7 @@ namespace ArtillerySeries.src
             SwinGame.LoadSoundEffectNamed("menuSound", "koikenmenu.ogg");
 
             SwinGame.LoadFontNamed("guiFont", "cour.ttf", 12);
+            SwinGame.LoadFontNamed("winnerFont", "maven_pro_regular.ttf", 25);
         }
 
 
@@ -176,6 +178,7 @@ namespace ArtillerySeries.src
 
                 #region Developer Region
 
+                /*
                 if (SwinGame.KeyDown(KeyCode.MKey))
                 {
                     _devFocusPoint = new CameraFocusPoint();
@@ -183,13 +186,13 @@ namespace ArtillerySeries.src
                     _devFocusPoint.Pos = _a3RData.Camera.Focus.Pos;
                     _a3RData.Camera.FocusCamera(_devFocusPoint);
                 }
+                */
 
 
-
-                if (SwinGame.KeyDown(KeyCode.LKey)) _devFocusPoint.Vector.X += 10;
-                if (SwinGame.KeyDown(KeyCode.JKey)) _devFocusPoint.Vector.X -= 10;
-                if (SwinGame.KeyDown(KeyCode.IKey)) _devFocusPoint.Vector.Y -= 10;
-                if (SwinGame.KeyDown(KeyCode.KKey)) _devFocusPoint.Vector.Y += 10;
+                //if (SwinGame.KeyDown(KeyCode.LKey)) _devFocusPoint.Vector.X += 10;
+                //if (SwinGame.KeyDown(KeyCode.JKey)) _devFocusPoint.Vector.X -= 10;
+                //if (SwinGame.KeyDown(KeyCode.IKey)) _devFocusPoint.Vector.Y -= 10;
+                //if (SwinGame.KeyDown(KeyCode.KKey)) _devFocusPoint.Vector.Y += 10;
 
                 if (SwinGame.MouseDown(MouseButton.RightButton))
                 {

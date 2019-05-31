@@ -12,9 +12,15 @@ namespace ArtillerySeries.src
         int _playerIndex = 0;
         UI_Text _playerText;
 
+        UI_StaticImage _background;
+
         public UI_PlayerSelectCharacters(A3RData a3RData, endSelectStage endSelectStage)
             : base(a3RData, endSelectStage)
         {
+
+            _background = new UI_StaticImage(Camera, 0, 0, SwinGame.BitmapNamed("shopBg"));
+            AddElement(_background);
+
             _playerText = new UI_Text(Camera, Width(0.5f), Height(0.38f),
                 Color.Black, "Player X:", true);
             AddElement(_playerText);

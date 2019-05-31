@@ -17,6 +17,7 @@ namespace ArtillerySeries.src
 
         protected Color _color;
         protected Color _targetColor;
+        protected Color _textColor;
         byte _colorAlpha;
 
         public UI_Box(A3RData a3RData, int width, int height, Vector pos) 
@@ -25,7 +26,8 @@ namespace ArtillerySeries.src
             _width = width;
             _height = height;
             Pos = pos;
-            _color = Color.Black;
+            _color = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.5f);
+            _textColor = Color.White;
 
             _colorAlpha = 0;
         }
@@ -36,16 +38,16 @@ namespace ArtillerySeries.src
         {
             if (_onScreen)
             {
-                SwinGame.DrawRectangle(_targetColor, A3RData.Camera.Pos.X + Pos.X, A3RData.Camera.Pos.Y + Pos.Y, _width, _height);
+                SwinGame.FillRectangle(_targetColor, A3RData.Camera.Pos.X + Pos.X, A3RData.Camera.Pos.Y + Pos.Y, _width, _height);
                 if (_text != null)
                 {
-                    SwinGame.DrawText(_text, _targetColor, A3RData.Camera.Pos.X + Pos.X, A3RData.Camera.Pos.Y + Pos.Y);
+                    SwinGame.DrawText(_text, _textColor, A3RData.Camera.Pos.X + Pos.X, A3RData.Camera.Pos.Y + Pos.Y);
                 }
             }
             else
             {
                 SwinGame.DrawRectangle(_targetColor, Pos.X, Pos.Y, _width, _height);
-                SwinGame.DrawText(_text, _targetColor, Pos.X, Pos.Y);
+                SwinGame.DrawText(_text, Color.White, Pos.X, Pos.Y);
             }
             
             base.Draw();
@@ -53,13 +55,13 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
-            if (_colorAlpha < 250)
+            if (_colorAlpha < _color.A)
             {
                 _colorAlpha+=2;
             }
             else
             {
-                _colorAlpha = 255;
+                _colorAlpha = _color.A;
             }
 
             _targetColor = SwinGame.RGBAColor(_color.R, _color.B, _color.G, _colorAlpha);

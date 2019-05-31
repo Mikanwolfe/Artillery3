@@ -47,9 +47,9 @@ namespace ArtillerySeries.src
             if (_alphaValue > 0)
             {
                 SwinGame.FillRectangle(SwinGame.RGBAColor(
-                Color.LightSeaGreen.R,
-                Color.LightSeaGreen.G,
-                Color.LightSeaGreen.B,
+                Color.LightPink.R,
+                Color.LightPink.G,
+                Color.LightPink.B,
                 _alphaValue), _rectangleArea);
             }
 
@@ -57,7 +57,7 @@ namespace ArtillerySeries.src
 
             if (_mouseOver || _mouseSelected)
             {
-                SwinGame.DrawRectangle(Color.LightSeaGreen, _rectangleArea);
+                SwinGame.DrawRectangle(Color.LightPink, _rectangleArea);
             }
 
         }

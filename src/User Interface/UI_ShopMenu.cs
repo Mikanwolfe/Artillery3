@@ -15,6 +15,8 @@ namespace ArtillerySeries.src
         UI_TextBox _statBox;
         UI_Box _equipBox;
 
+        Bitmap _shopBackground;
+
         Player _selPlayer;
 
         string _playerName, _characterName;
@@ -24,6 +26,8 @@ namespace ArtillerySeries.src
             : base(a3RData)
         {
             _notifyPlayerFinishedShop = notifyPlayerFinishedShop;
+
+            _shopBackground = SwinGame.BitmapNamed("shopBg");
 
             AddElement(new UI_StaticImage(a3RData.Camera, Width(0.5f), Height(0.24f), SwinGame.BitmapNamed("menuLogo")));
 
@@ -49,6 +53,15 @@ namespace ArtillerySeries.src
             _selPlayer = A3RData.SelectedPlayer;
 
 
+        }
+
+        public override void Draw()
+        {
+            _shopBackground?.Draw(Camera.Pos.X, Camera.Pos.Y * 0.7f);
+            
+
+
+            base.Draw();
         }
 
         public void FinishShopButton()

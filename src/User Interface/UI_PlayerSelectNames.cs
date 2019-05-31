@@ -13,12 +13,18 @@ namespace ArtillerySeries.src
         int _playerIndex = 0;
         bool _readingPlayerName = false;
 
+        UI_StaticImage _background;
+
         UI_CheckBox _isComputerPlayer;
         Dictionary<bool, IInputMethod> _inputMethodKey;
 
         public UI_PlayerSelectNames(A3RData a3RData, endSelectStage endSelectStage) 
             : base(a3RData, endSelectStage)
         {
+            _background = new UI_StaticImage(Camera, 0, 0, SwinGame.BitmapNamed("shopBg"));
+            AddElement(_background);
+
+
             _playerText = new UI_Text(Camera, Width(0.5f), Height(0.35f),
                 Color.Black, "Player X:", true);
             AddElement(_playerText);

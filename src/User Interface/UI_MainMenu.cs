@@ -15,6 +15,7 @@ namespace ArtillerySeries.src
         public UI_MainMenu(A3RData a3RData) : base (a3RData)
         {
 
+            AddElement(new UI_StaticImage(Camera, 0, 0, SwinGame.BitmapNamed("shopBg")));
             Rectangle _windowRect = A3RData.WindowRect;
 
             UI_DynamicImage _menuGradient = new UI_DynamicImage(A3RData.Camera, 0, 0, -5000, 0, 10, SwinGame.BitmapNamed("menuGradientFull"));

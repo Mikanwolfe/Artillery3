@@ -33,7 +33,8 @@ namespace ArtillerySeries.src
         {
             cursor = 0;
 
-            
+            base.Draw();
+
             foreach (string s in _textStrings)
             {
                 if (_specialCharacters.ContainsKey(s))
@@ -49,7 +50,7 @@ namespace ArtillerySeries.src
                     }
                     else
                     {
-                        SwinGame.DrawText(s, _targetColor, A3RData.Camera.Pos.X + Pos.X + _padding,
+                        SwinGame.DrawText(s, _textColor, A3RData.Camera.Pos.X + Pos.X + _padding,
                             A3RData.Camera.Pos.Y + Pos.Y + _padding + cursor * 15);
                     }
 
@@ -58,7 +59,7 @@ namespace ArtillerySeries.src
                 cursor++;
             }
 
-            base.Draw();
+            
         }
 
         public void HorizontalRule()
