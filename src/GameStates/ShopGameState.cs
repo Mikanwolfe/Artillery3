@@ -19,14 +19,15 @@ namespace ArtillerySeries.src
         public ShopGameState(A3RData a3RData) 
             : base(a3RData)
         {
-            UIModule = new UI_ShopMenu(a3RData, NextPlayerShop);
-            _scrollingPoint = new CameraFocusPoint();
-            _scrollingPoint.Vector.Y = A3RData.WindowRect.Height / 2;
 
         }
 
         public override void EnterState()
         {
+            UIModule = new UI_ShopMenu(A3RData, NextPlayerShop);
+            _scrollingPoint = new CameraFocusPoint();
+            _scrollingPoint.Vector.Y = A3RData.WindowRect.Height / 2;
+
             Console.WriteLine("Welcome to the shop!");
             A3RData.Camera.FocusCamera(_scrollingPoint);
             A3RData.Camera.FocusLock = true;
