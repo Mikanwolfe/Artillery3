@@ -64,10 +64,29 @@ namespace ArtillerySeries.src
 
         public void NextPlayerShop()
         {
-            if (_currentPlayerIndex >= A3RData.NumberOfPlayers)
+            _currentPlayerIndex++;
+            Console.WriteLine("player index: " + _currentPlayerIndex);
+            Console.WriteLine("number of players: " + A3RData.NumberOfPlayers);
+            if (_currentPlayerIndex > A3RData.NumberOfPlayers - 1)
             {
+                A3RData.Camera.FocusLock = false;
                 UserInterface.Instance.NotifyUIEvent(this, new UIEventArgs(UIEvent.StartCombat));
             }
+            
+
+            A3RData.SelectedPlayer = A3RData.Players[_currentPlayerIndex];
+
+            
+
+            UIModule = new UI_ShopMenu(A3RData, NextPlayerShop);
+            _scrollingPoint = new CameraFocusPoint();
+            _scrollingPoint.Vector.Y = A3RData.WindowRect.Height / 2;
+
+            A3RData.Camera.FocusLock = false;
+            A3RData.Camera.FocusCamera(_scrollingPoint);
+            A3RData.Camera.FocusLock = true;
+
+            UserInterface.Instance.RefreshUI();
         }
 
 

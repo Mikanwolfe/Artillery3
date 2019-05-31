@@ -31,16 +31,18 @@ namespace ArtillerySeries.src
 
         public override void Draw()
         {
+            cursor = 0;
+
             
-            //SwinGame pix font characters are about 7px wide.
             foreach (string s in _textStrings)
             {
-                if (_specialCharacters[s] != null)
+                if (_specialCharacters.ContainsKey(s))
                 {
                     _specialCharacters[s]();
                 }
                 else
                 {
+                    //SwinGame pix font characters are about 7px wide.
                     if (s.Length * 7 > _width - 2 * _padding)
                     {
 
@@ -56,7 +58,6 @@ namespace ArtillerySeries.src
                 cursor++;
             }
 
-
             base.Draw();
         }
 
@@ -65,7 +66,8 @@ namespace ArtillerySeries.src
 
             float x1 = A3RData.Camera.Pos.X + Pos.X + _padding;
             float x2 = A3RData.Camera.Pos.X + Pos.X  + _width - _padding;
-            float y = A3RData.Camera.Pos.Y + Pos.Y + _padding + cursor * 15 - 7;
+            float y = A3RData.Camera.Pos.Y + Pos.Y + _padding + cursor * 15 + 3;
+            cursor++;
             SwinGame.DrawLine(_targetColor, x1, y, x2, y);
         }
 

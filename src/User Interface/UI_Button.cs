@@ -8,9 +8,14 @@ using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
+
     class UI_Button : UIElement
     {
         public event EventHandler<UIEventArgs> OnUIEvent;
+
+        public delegate void OnButtonEvent();
+
+        OnButtonEvent _buttonEvent;
 
         Bitmap _bitmap;
         Bitmap _selectedBitmap;
@@ -25,10 +30,23 @@ namespace ArtillerySeries.src
         Color _highlightColor = Color.Orange;
         SoundEffect _mouseOverSoundEffect;
 
+        Vector _cameraPos;
+        bool _onScreen = false;
+
+
         bool _fadesIn = false;
         int _fadeCount = 0;
 
+        public UI_Button(Camera camera, string text, float x, float y, OnButtonEvent onButtonEvent)
+            : base(camera)
+        {
+            _text = text;
+            Pos.X = x;
+            Pos.Y = y;
+            _buttonEvent = onButtonEvent;
+            _cameraPos = new Vector();
 
+        }
 
         public UI_Button(Camera camera, string text, float x, float y, UIEvent uiEvent)
             : base(camera)
@@ -36,6 +54,7 @@ namespace ArtillerySeries.src
             _text = text;
             Pos.X = x;
             Pos.Y = y;
+            _cameraPos = new Vector();
 
             _uiEventArgs = new UIEventArgs(uiEvent);
         }
@@ -46,12 +65,13 @@ namespace ArtillerySeries.src
             _text = text;
             Pos.X = x;
             Pos.Y = y;
+            _cameraPos = new Vector();
 
             _uiEventArgs = uiEvent;
 
         }
 
-        public UI_Button(Camera camera,string text, float x, float y, UIEvent uiEvent, Bitmap bitmap)
+        public UI_Button(Camera camera, string text, float x, float y, UIEvent uiEvent, Bitmap bitmap)
             : this(camera, text, x, y, uiEvent)
         {
             _bitmap = bitmap;
@@ -70,6 +90,11 @@ namespace ArtillerySeries.src
 
         }
 
+        public void LockToScreen()
+        {
+            _onScreen = true;
+        }
+
         public void SetFadeIn(int fadeDuration)
         {
             _fadesIn = true;
@@ -80,49 +105,51 @@ namespace ArtillerySeries.src
         {
             if (_bitmap == null)
             {
+
+
                 if (_isMouseOver)
                 {
-                    if (_middleAligned)
-                        SwinGame.DrawRectangle(_highlightColor, Pos.X - _width / 2, Pos.Y - _height / 2, _width, _height);
-                    else
-                        SwinGame.DrawRectangle(_highlightColor, Pos.X, Pos.Y, _width, _height);
+                    SwinGame.DrawRectangle(_highlightColor, _buttonArea);
                 }
                 else
                 {
-                    if (_middleAligned)
-                        SwinGame.DrawRectangle(_baseColor, Pos.X - _width / 2, Pos.Y - _height / 2, _width, _height);
-                    else
-                        SwinGame.DrawRectangle(_baseColor, Pos.X, Pos.Y, _width, _height);
+                    SwinGame.DrawRectangle(_baseColor, _buttonArea);
                 }
 
                 if (_middleAligned)
-                    DrawTextCentre(_text, Color.Black, Pos.X - 5, Pos.Y  - 5);
+                    DrawTextCentre(_text, Color.Black, Pos.X - 5 + _cameraPos.X, Pos.Y + _cameraPos.Y - 5);
                 else
-                    DrawTextCentre(_text, Color.Black, Pos.X + _width / 2 - 5, Pos.Y + _height / 2 - 5);
+                    DrawTextCentre(_text, Color.Black, Pos.X + _cameraPos.X + _width / 2 - 5, Pos.Y + _cameraPos.Y + _height / 2 - 5);
             }
             else
             {
                 if (_selectedBitmap == null)
                 {
                     if (_middleAligned)
-                        SwinGame.DrawRectangle(_highlightColor, Pos.X - _width / 2, Pos.Y - _height / 2, _width, _height);
+                        SwinGame.DrawRectangle(_highlightColor, Pos.X - _width / 2 + _cameraPos.X,
+                            Pos.Y - _height / 2 + _cameraPos.Y, _width, _height);
                     else
-                        SwinGame.DrawRectangle(_highlightColor, Pos.X, Pos.Y, _width, _height);
+                        SwinGame.DrawRectangle(_highlightColor, Pos.X + _cameraPos.X, Pos.Y + _cameraPos.Y, _width, _height);
 
-                    SwinGame.DrawBitmap(_bitmap, Pos.X, Pos.Y);
+                    SwinGame.DrawBitmap(_bitmap, Pos.X + _cameraPos.X, Pos.Y + _cameraPos.Y);
                 }
                 else
                 {
                     if (_isMouseOver)
-                        SwinGame.DrawBitmap(_selectedBitmap, Pos.X, Pos.Y);
-                    else 
-                        SwinGame.DrawBitmap(_bitmap, Pos.X, Pos.Y);
+                        SwinGame.DrawBitmap(_selectedBitmap, Pos.X + _cameraPos.X, Pos.Y + _cameraPos.Y);
+                    else
+                        SwinGame.DrawBitmap(_bitmap, Pos.X + _cameraPos.X, Pos.Y + _cameraPos.Y);
                 }
             }
         }
 
         public override void Update()
         {
+            if (_onScreen)
+            {
+                _cameraPos = Camera.Pos;
+            }
+
             if (_fadesIn)
                 _fadeCount++;
 
@@ -130,8 +157,8 @@ namespace ArtillerySeries.src
 
             _buttonArea = new Rectangle()
             {
-                X = Pos.X,
-                Y = Pos.Y,
+                X = Pos.X + _cameraPos.X,
+                Y = Pos.Y + _cameraPos.Y,
                 Width = _width,
                 Height = _height
             };
@@ -142,7 +169,21 @@ namespace ArtillerySeries.src
                 _buttonArea.Y -= _height / 2;
             }
 
-            if (SwinGame.PointInRect(SwinGame.MousePosition(), _buttonArea))
+            Rectangle _activeMouseRect= new Rectangle()
+            {
+                X = Pos.X,
+                Y = Pos.Y,
+                Width = _width,
+                Height = _height
+            };
+
+            if (MiddleAligned)
+            {
+                _activeMouseRect.X -= _width / 2;
+                _activeMouseRect.Y -= _height / 2;
+            }
+
+            if (SwinGame.PointInRect(SwinGame.MousePosition(), _activeMouseRect))
             {
                 if (_isMouseOver == false)
                 {
@@ -158,9 +199,10 @@ namespace ArtillerySeries.src
             else
                 _isMouseOver = false;
 
-            if (_isMouseOver && SwinGame.MouseClicked(MouseButton.LeftButton) && OnUIEvent != null)
+            if (_isMouseOver && SwinGame.MouseClicked(MouseButton.LeftButton))
             {
-                OnUIEvent(this, _uiEventArgs);
+                OnUIEvent?.Invoke(this, _uiEventArgs);
+                _buttonEvent?.Invoke();
             }
         }
 
