@@ -24,6 +24,9 @@ namespace ArtillerySeries.src
 
         public override void EnterState()
         {
+            _currentPlayerIndex = 0;
+            A3RData.SelectedPlayer = A3RData.Players[_currentPlayerIndex];
+
             UIModule = new UI_ShopMenu(A3RData, NextPlayerShop);
             _scrollingPoint = new CameraFocusPoint();
             _scrollingPoint.Vector.Y = A3RData.WindowRect.Height / 2;
@@ -32,7 +35,7 @@ namespace ArtillerySeries.src
             A3RData.Camera.FocusCamera(_scrollingPoint);
             A3RData.Camera.FocusLock = true;
 
-            _currentPlayerIndex = 0;
+            
             base.EnterState();
         }
 
@@ -72,11 +75,10 @@ namespace ArtillerySeries.src
                 A3RData.Camera.FocusLock = false;
                 UserInterface.Instance.NotifyUIEvent(this, new UIEventArgs(UIEvent.StartCombat));
             }
-            
-
-            A3RData.SelectedPlayer = A3RData.Players[_currentPlayerIndex];
-
-            
+            else
+            {
+                A3RData.SelectedPlayer = A3RData.Players[_currentPlayerIndex];
+            }
 
             UIModule = new UI_ShopMenu(A3RData, NextPlayerShop);
             _scrollingPoint = new CameraFocusPoint();
