@@ -22,8 +22,8 @@ namespace ArtillerySeries.src
             foreach (Weapon w in A3RData.SelectedPlayer.Character.WeaponList)
             {
 
-                UI_SelectableTextBox _weaponBox = new UI_SelectableTextBox(A3RData, 260, 70,
-                    new Vector(Pos.X + 20, Pos.Y + cursor * (70 + 20) + 20));
+                UI_SelectableTextBox _weaponBox = new UI_SelectableTextBox(A3RData, 260, 80,
+                    new Vector(Pos.X + 20, Pos.Y + cursor * (80 + 20) + 20));
                 _weaponBox.AddText(w.Name);
                 _weaponBox.AddText("Damage: " + w.BaseDamage);
                 _weaponBox.AddText("Type: " + w.ProjectileType);

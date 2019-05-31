@@ -50,7 +50,7 @@ namespace ArtillerySeries.src
                     }
                     else
                     {
-                        SwinGame.DrawText(s, _textColor, A3RData.Camera.Pos.X + Pos.X + _padding,
+                        SwinGame.DrawText(s, _textColor, SwinGame.FontNamed("smallFont"), A3RData.Camera.Pos.X + Pos.X + _padding,
                             A3RData.Camera.Pos.Y + Pos.Y + _padding + cursor * 15);
                     }
 

@@ -83,25 +83,14 @@ namespace ArtillerySeries.src
             _shopWeapons = new List<Weapon>();
 
             Weapon _howitzer = new Weapon("152mm/22 Howitzer", 0, 40, ProjectileType.Shell);
-            _howitzer.BaseDamage = 300;
+            _howitzer.BaseDamage = 200;
             _howitzer.AimDispersion = 5;
             _howitzer.WeaponMaxCharge = 30;
             _howitzer.DamageRad = 60;
-            _howitzer.Rarity = 3;
+            _howitzer.Rarity = 1;
             _howitzer.ShortDesc = "A big gun with a short barrel; sacrifices range and accuracy for big boom.";
             _howitzer.LongDesc = "A well-worn 152mm howitzer";
             _shopWeapons.Add(_howitzer);
-
-            Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 90, ProjectileType.Shell);
-            _batchat155.AutoloaderClip = 5;
-            _batchat155.WeaponMaxCharge = 70;
-            _batchat155.BaseDamage = 90;
-            _batchat155.DamageRad = 20;
-            _batchat155.UsesSatellite = true;
-            _batchat155.Rarity = 6;
-            _batchat155.ShortDesc = "An experimental autoloading weapon. Incredibly accurate, doesn't pack a punch.";
-            _batchat155.LongDesc = "B.C. 155/58, a 5-Round Autoloading Artillery.";
-            _shopWeapons.Add(_batchat155);
 
             Weapon _coilgun = new Weapon("90mm Coilgun", -10, 40, ProjectileType.Gun);
             _coilgun.AutoloaderClip = 2;
@@ -115,6 +104,40 @@ namespace ArtillerySeries.src
             _coilgun.LongDesc = "Less artillery gun and more machine gun.";
             _shopWeapons.Add(_coilgun);
 
+            Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 90, ProjectileType.Shell);
+            _batchat155.AutoloaderClip = 5;
+            _batchat155.WeaponMaxCharge = 70;
+            _batchat155.BaseDamage = 90;
+            _batchat155.DamageRad = 20;
+            _batchat155.Rarity = 3;
+            _batchat155.ShortDesc = "An experimental autoloading weapon. Incredibly accurate, doesn't pack a punch.";
+            _batchat155.LongDesc = "B.C. 155/58, a 5-Round Autoloading Artillery.";
+            _shopWeapons.Add(_batchat155);
+
+            Weapon _objLaser = new Weapon("90mm Neko-15X Laser", -5, 90, ProjectileType.Laser);
+            _objLaser.AutoloaderClip = 1;
+            _objLaser.WeaponMaxCharge = 50;
+            _objLaser.BaseDamage = 150;
+            _objLaser.DamageRad = 10;
+            _objLaser.ExplRad = 5;
+            _objLaser.UsesSatellite = true;
+            _objLaser.Rarity = 6;
+            _objLaser.ShortDesc = "A technologically advanced laser developed from the Neko-15X project. Top Secret.";
+            _objLaser.LongDesc = "Fires lasers similar to Maia, however, has low explosion radius.";
+            _shopWeapons.Add(_objLaser);
+
+
+            Weapon _massDriver = new Weapon("210mm Kinetic Mass Driver", 0, 20, ProjectileType.Shell);
+            _massDriver.AutoloaderClip = 2;
+            _massDriver.WeaponMaxCharge = 90;
+            _massDriver.BaseDamage = 200;
+            _massDriver.DamageRad = 80;
+            _massDriver.UsesSatellite = true;
+            _massDriver.Rarity = 7;
+            _massDriver.ShortDesc = "A mysterious weapon by the Kotona Umbress, it fires entire titanium rods.";
+            _massDriver.LongDesc = "Hplding two rounds, it's was salvaged from a KTNS Hatsuyuki, a corvette.";
+            _shopWeapons.Add(_massDriver);
+
             _rarityReference = new Dictionary<int, Color>();
             _rarityReference.Add(1, Color.SteelBlue);
             _rarityReference.Add(2, Color.ForestGreen);
@@ -122,6 +145,7 @@ namespace ArtillerySeries.src
             _rarityReference.Add(4, Color.Pink);
             _rarityReference.Add(5, Color.Purple);
             _rarityReference.Add(6, Color.DarkCyan);
+            _rarityReference.Add(7, Color.White);
 
             _rarityWords = new Dictionary<int, string>();
             _rarityWords.Add(1, "Common");
@@ -130,6 +154,7 @@ namespace ArtillerySeries.src
             _rarityWords.Add(4, "Epic");
             _rarityWords.Add(5, "Mythical");
             _rarityWords.Add(6, "Legendary");
+            _rarityWords.Add(7, "Godly");
 
 
 

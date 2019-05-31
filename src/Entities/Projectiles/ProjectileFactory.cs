@@ -13,7 +13,8 @@ namespace ArtillerySeries.src
     {
         Shell,
         Gun,
-        Missile
+        Missile,
+        Laser
     }
 
     public class ProjectileFactory : UpdatableObject

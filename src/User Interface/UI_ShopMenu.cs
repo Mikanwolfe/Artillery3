@@ -82,11 +82,12 @@ namespace ArtillerySeries.src
             _statBox.AddText(" ");
             _statBox.AddText(_playerName);
             _statBox.AddText(_characterName);
+            _statBox.AddText(" ");
             _statBox.AddText("---");
             _statBox.AddText("Health:  " + _selPlayer.Character.MaxHealth);
             _statBox.AddText("Armour:  " + _selPlayer.Character.MaxArmour);
             _statBox.AddText("Money : $" + _selPlayer.Money);
-            _statBox.AddText("");
+            _statBox.AddText(" ");
             _statBox.AddText(_selPlayer.Character.LongDesc);
             _statBox.AddText("---");
             _statBox.AddText("Additional stats will go here");

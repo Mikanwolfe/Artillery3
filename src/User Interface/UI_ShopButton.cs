@@ -104,7 +104,7 @@ namespace ArtillerySeries.src
                 , SwinGame.FontNamed("smallFont"), Pos.X + 25, Pos.Y + _mainBox.Height - 30);
             SwinGame.DrawText(_rarityWords[_itemBeingBought.Rarity].Substring(0, 1) 
                 + ItemBeingBought.ProjectileType.ToString().Substring(0,1).ToLower(), 
-                _rarityReference[_itemBeingBought.Rarity], SwinGame.FontNamed("bigFont"), Pos.X + 20, Pos.Y + -15);
+                _rarityReference[_itemBeingBought.Rarity], SwinGame.FontNamed("bigFont"), Pos.X + 20, Pos.Y + 15);
 
             if (_mouseOver || _mouseSelected)
             {
