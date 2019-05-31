@@ -64,6 +64,8 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
+            if (!Enabled)
+                _physics.Enabled = false;
             if (Enabled)
             {
                 _life -= Constants.ParticleLifeDispersion;

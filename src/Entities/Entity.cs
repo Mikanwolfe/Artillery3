@@ -23,15 +23,12 @@ namespace ArtillerySeries.src
         FacingDirection _direction;
         float _absAngle;
 
-        bool _enabled;
-
         public Entity(string name)
         {
             _name = name;
             _pos = ZeroPoint2D();
             _direction = FacingDirection.Left;
             _absAngle = 0;
-            _enabled = true;
 
 
         }
@@ -58,8 +55,6 @@ namespace ArtillerySeries.src
             _pos = pos;
             _direction = direction;
         }
-
-        public bool Enabled { get => _enabled; set => _enabled = value; }
 
     }
 }
