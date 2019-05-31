@@ -22,6 +22,8 @@ namespace ArtillerySeries.src
         string _playerName, _characterName;
 
         
+
+        
         public UI_ShopMenu(A3RData a3RData, NotifyPlayerFinishedShop notifyPlayerFinishedShop)
             : base(a3RData)
         {
@@ -55,6 +57,8 @@ namespace ArtillerySeries.src
 
 
         }
+
+        
 
         public override void Draw()
         {

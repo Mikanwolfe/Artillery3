@@ -70,26 +70,19 @@ namespace ArtillerySeries.src
                 switch (uiEventArgs.Text)
                 {
                     case "gwt":
-                        newCharacter = new Character("G.W. Tiger", 100, 250);
-                        Weapon autoLoader = new Weapon("BatChat Autoloader", 10, 85, ProjectileType.Shell);
-                        autoLoader.IsAutoloader = true;
-                        autoLoader.AutoloaderClip = 5;
-                        autoLoader.ProjectilesFiredPerTurn = 3;
-                        autoLoader.BaseDamage = 80;
-                        autoLoader.UsesSatellite = true;
-                        //newCharacter.AddWeapon(autoLoader);
+                        newCharacter = new Character("G.W. Tiger", 100, 50);
 
                         A3RData.Players[_playerIndex].Character = newCharacter;
                         Console.WriteLine("GTW Selected!");
                         break;
 
                     case "obj":
-                        A3RData.Players[_playerIndex].Character = new Character("Object 15X", 100, 100);
+                        A3RData.Players[_playerIndex].Character = new Character("Object 15X", 100, 50);
                         Console.WriteLine("Obj Selected!");
                         break;
 
                     case "int":
-                        A3RData.Players[_playerIndex].Character = new Character("Innocentia", 100, 100);
+                        A3RData.Players[_playerIndex].Character = new Character("Innocentia", 100, 50);
                         Console.WriteLine("int Selected!");
                         break;
                 }

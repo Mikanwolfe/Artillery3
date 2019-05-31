@@ -25,20 +25,11 @@ namespace ArtillerySeries.src
         FireState,
     }
 
-    /*
-     * Normally Weapon should be an EntityAssembly since it contains
-     * entities but here, it contains only one entity. It *must* contain one SightComponent entity.
-     * Hence, a special kind of entity called Weapon contains only one SightComponent entity with
-     *  manaual implementation to update the position and direction of sight.
-     * 
-     */
 
     public class Weapon : Entity, IWeapon
     {
-        //Entity has position and direction, however
-        // it needs to know the relative angle for drawing itself and the sight.
-        // No wait, entities need to know about relative direction anyway. e.g. shields.
 
+        #region Fields
 
         Bitmap _bitmap;
         Sprite _sprite;
@@ -62,10 +53,13 @@ namespace ArtillerySeries.src
         float _weaponAngle = 0;
         float _minWepAngleRad = 0;
         float _maxWepAngleRad = 0;
-        float _relativeAngle = 0 ;
+        float _relativeAngle = 0;
         float _weaponCharge = 0;
         float _weaponMaxCharge = 50;
         float _previousCharge = 0;
+        float _damageRad = 30;
+        float _explRad = 15;
+        float _aimDispersion = 0;
         float _baseDamage = 100;
         bool _isAutoloader = true; //Autoloader, not AutoLoader. Look it up.
         bool _usesSatellite;
@@ -80,10 +74,11 @@ namespace ArtillerySeries.src
         ProjectileType _projectileType;
 
         ProjectileFactory _projectileFactory;
+        #endregion
 
-
-        public Weapon (string name, float minWepAngleDeg, float maxWepAngleDeg, ProjectileType projectileType)
-            : base(name)
+        #region Constructor
+        public Weapon(string name, float minWepAngleDeg, float maxWepAngleDeg, ProjectileType projectileType)
+    : base(name)
         {
             _weaponCharge = 0;
             _state = WeaponState.IdleState;
@@ -94,84 +89,21 @@ namespace ArtillerySeries.src
             };
             _projectileType = projectileType;
             _projectileFactory = new ProjectileFactory(_projectileType);
+            _projectileFactory.AimDispersion = _aimDispersion;
             _minWepAngleRad = Rad(minWepAngleDeg);
             _maxWepAngleRad = Rad(maxWepAngleDeg);
             _weaponAngle = _minWepAngleRad;
             _usesSatellite = false;
-            
-        }
-        
-        public Projectile MainProjectile
-        {
-            get => _mainProjectile;
-        }
 
+        }
+        #endregion
+
+        #region Methods
         public void LastProjectilePosition(Projectile p, Point2D pos)
         {
             if (p == MainProjectile)
                 _lastProjectilePosition = pos;
         }
-
-        public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
-        public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
-        public bool IsAutoloader { get => _isAutoloader; set => _isAutoloader = value; }
-        public int AutoloaderClip { get => _autoloaderClip; set => _autoloaderClip = value; }
-        public int AutoloaderAmmoLeft { get => _autoloaderAmmoLeft; }
-
-        public float WeaponChargePercentage
-        {
-            get
-            {
-                return _weaponCharge / _weaponMaxCharge;
-            }
-        }
-
-        public float PreviousWeaponChargePercentage
-        {
-            get
-            {
-                return _previousCharge / _weaponMaxCharge;
-            }
-        }
-
-
-        public bool AutoloaderFired
-        {
-            get
-            {
-                if (_isAutoloader)
-                    if (_autoloaderAmmoLeft < _autoloaderClip)
-                        return true;
-
-                return false;
-            }
-        }
-        public bool AutoloaderFinishedFiring
-        {
-            get
-            {
-                if (_isAutoloader)
-                    if(_autoloaderAmmoLeft <= 0)
-                        return true;
-
-                return false;
-            }
-        }
-
-        public Point2D LastProjPos { get => _lastProjectilePosition; set => _lastProjectilePosition = value; }
-        public Point2D ProjectilePos { get => _projectilePos; set => _projectilePos = value; }
-        public Point2D ProjectileVel { get => _projectileVel; set => _projectileVel = value; }
-        public bool UsesSatellite { get => _usesSatellite; set => _usesSatellite = value; }
-        public float BaseDamage { get => _baseDamage; set => _baseDamage = value; }
-        public int ProjectilesFiredPerTurn { get => _projectilesFiredPerTurn; set
-            {
-                _projectilesFiredPerTurn = value;
-                _projectileFactory.ProjectilesFiredPerTurn = value;
-            }
-
-        }
-
-        public ProjectileType ProjectileType { get => _projectileType; set => _projectileType = value; }
 
         public void DepressWeapon()
         {
@@ -229,23 +161,23 @@ namespace ArtillerySeries.src
         public virtual void FireProjectile()
         {
             //Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, _baseDamage, 15, 35);
-            _mainProjectile = _projectileFactory.FireProjectile(this, _projectilePos, _projectileVel, _baseDamage, 15, 55);
+            _mainProjectile = _projectileFactory.FireProjectile(this, _projectilePos, _projectileVel, _baseDamage, _explRad, _damageRad);
         }
 
         public void SetProjectile(Projectile projectile)
         {
             //_mainProjectile = projectile;
         }
-        
+
 
         public override void Draw()
         {
-            
+
         }
 
         public void DrawAutoloaderClip()
         {
-            if(_isAutoloader)
+            if (_isAutoloader)
             {
                 if (_sprite == null)
                 {
@@ -291,7 +223,7 @@ namespace ArtillerySeries.src
         public override void Update()
         {
             _projectileFactory.Update();
-            
+
 
             _previousState = _state;
 
@@ -318,7 +250,80 @@ namespace ArtillerySeries.src
                 _relativeAngle = AbsoluteAngle * -1;
 
         }
+        #endregion
 
+        #region Properties
+
+        public Projectile MainProjectile
+        {
+            get => _mainProjectile;
+        }
+        public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
+        public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
+        public bool IsAutoloader { get => _isAutoloader; set => _isAutoloader = value; }
+        public int AutoloaderClip { get => _autoloaderClip; set => _autoloaderClip = value; }
+        public int AutoloaderAmmoLeft { get => _autoloaderAmmoLeft; }
+
+        public float WeaponChargePercentage
+        {
+            get
+            {
+                return _weaponCharge / _weaponMaxCharge;
+            }
+        }
+
+        public float PreviousWeaponChargePercentage
+        {
+            get
+            {
+                return _previousCharge / _weaponMaxCharge;
+            }
+        }
+
+
+        public bool AutoloaderFired
+        {
+            get
+            {
+                if (_isAutoloader)
+                    if (_autoloaderAmmoLeft < _autoloaderClip)
+                        return true;
+
+                return false;
+            }
+        }
+        public bool AutoloaderFinishedFiring
+        {
+            get
+            {
+                if (_isAutoloader)
+                    if (_autoloaderAmmoLeft <= 0)
+                        return true;
+
+                return false;
+            }
+        }
+
+        public Point2D LastProjPos { get => _lastProjectilePosition; set => _lastProjectilePosition = value; }
+        public Point2D ProjectilePos { get => _projectilePos; set => _projectilePos = value; }
+        public Point2D ProjectileVel { get => _projectileVel; set => _projectileVel = value; }
+        public bool UsesSatellite { get => _usesSatellite; set => _usesSatellite = value; }
+        public float BaseDamage { get => _baseDamage; set => _baseDamage = value; }
+        public int ProjectilesFiredPerTurn
+        {
+            get => _projectilesFiredPerTurn; set
+            {
+                _projectilesFiredPerTurn = value;
+                _projectileFactory.ProjectilesFiredPerTurn = value;
+            }
+
+        }
+
+        public ProjectileType ProjectileType { get => _projectileType; set => _projectileType = value; }
+        public float ExplRad { get => _explRad; set => _explRad = value; }
+        public float DamageRad { get => _damageRad; set => _damageRad = value; }
+        public float AimDispersion { get => _aimDispersion; set => _aimDispersion = value; }
+        #endregion
 
     }
 }

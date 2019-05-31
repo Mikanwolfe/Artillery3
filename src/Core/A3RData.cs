@@ -47,12 +47,20 @@ namespace ArtillerySeries.src
         //Terrain _terrain;
         Wind _wind;
 
+        
+
         List<Terrain> _bgTerrain = new List<Terrain>(Constants.NumberParallaxBackgrounds);
 
         TerrainFactory _terrainFactory;
         Terrain _logicalTerrain;
 
         bool _userExitRequested = false;
+
+
+        #region Shop Items
+        List<Weapon> _shopWeapons;
+
+        #endregion
 
         #endregion
 
@@ -68,7 +76,22 @@ namespace ArtillerySeries.src
             _commandStream = new CommandStream();
 
             _wind = new Wind();
-            
+
+            _shopWeapons = new List<Weapon>();
+
+            Weapon _howitzer = new Weapon("152mm Howitzer", 10, 90, ProjectileType.Shell);
+            _howitzer.BaseDamage = 300;
+            _howitzer.DamageRad = 60;
+            _shopWeapons.Add(_howitzer);
+
+            Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 90, ProjectileType.Shell);
+            _batchat155.AutoloaderClip = 5;
+            _batchat155.BaseDamage = 90;
+            _batchat155.DamageRad = 20;
+            _batchat155.UsesSatellite = true;
+            _shopWeapons.Add(_batchat155);
+
+
 
         }
 
@@ -109,6 +132,7 @@ namespace ArtillerySeries.src
         internal Satellite Satellite { get => _satellite; set => _satellite = value; }
         public Environment Environment { get => _environment; set => _environment = value; }
         public Terrain Terrain { get => _logicalTerrain; set => _logicalTerrain = value; }
+        public List<Weapon> ShopWeapons { get => _shopWeapons; set => _shopWeapons = value; }
 
         #endregion
     }

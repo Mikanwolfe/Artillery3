@@ -20,12 +20,23 @@ namespace ArtillerySeries.src
 
         Color _iconBoxHighlight;
 
+        int _cost;
+
+        object _itemBeingBought;
+
         private bool _mouseOver;
         private bool _mouseSelected;
 
         byte _alphaValueIncrement = 1;
 
         Rectangle _mainBox;
+
+        Rectangle _iconBox;
+
+        public object ItemBeingBought { get => _itemBeingBought; set => _itemBeingBought = value; }
+        public int Cost { get => _cost; set => _cost = value; }
+        public Color IconBoxHighlight { get => _iconBoxHighlight; set => _iconBoxHighlight = value; }
+
         public UI_ShopButton(Camera camera, Vector pos) 
             : base(camera)
         {
@@ -47,6 +58,14 @@ namespace ArtillerySeries.src
                 Width = 850,
                 Height = 120
             };
+
+            _iconBox = new Rectangle()
+            {
+                X = Pos.X,
+                Y = Pos.Y,
+                Width = 100,
+                Height = 100
+            };
         }
 
         public override void Draw()
@@ -55,6 +74,8 @@ namespace ArtillerySeries.src
 
             SwinGame.FillRectangle(_boxColor, _mainBox);
             SwinGame.FillRectangle(_highlightColor, _mainBox);
+
+            SwinGame.DrawRectangle(_iconBoxHighlight, _iconBox);
 
             if (_mouseOver || _mouseSelected)
             {

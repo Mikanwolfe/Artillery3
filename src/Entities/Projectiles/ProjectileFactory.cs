@@ -24,6 +24,7 @@ namespace ArtillerySeries.src
         int _projectilesFiredPerTurn = 1;
         int _firingDelay = 15;
         int _firingCounter;
+        float _aimDispersion;
 
         Weapon _parentWeapon;
         Point2D _projectilePos;
@@ -39,11 +40,11 @@ namespace ArtillerySeries.src
             _projectilesLeftToFire = 0;
             _firingCounter = 0;
 
-
-
-
         }
         public int ProjectilesFiredPerTurn { get => _projectilesFiredPerTurn; set => _projectilesFiredPerTurn = value; }
+        public float DamageRad { get => _damageRad; set => _damageRad = value; }
+        public float ExplRad { get => _explRad; set => _explRad = value; }
+        public float AimDispersion { get => _aimDispersion; set => _aimDispersion = value; }
 
         public Projectile FireProjectile(Weapon parentWeapon, Point2D projectilePos, Point2D projectileVel, float damage, float explRad, float damageRad)
         {
@@ -55,7 +56,7 @@ namespace ArtillerySeries.src
             _damageRad = damageRad;
 
             _projectilesLeftToFire = _projectilesFiredPerTurn;
-            return FireProjectileSequence(_parentWeapon, _projectilePos, _projectileVel, _damage, _explRad, _damageRad);
+            return FireProjectileSequence(_parentWeapon, _projectilePos, AddPoint2D(_projectileVel, RandomPoint2D(_aimDispersion)), _damage, _explRad, _damageRad);
             
         }
 
@@ -107,7 +108,7 @@ namespace ArtillerySeries.src
             {
                 if (_projectilesLeftToFire > 0)
                 {
-                    FireProjectileSequence(_parentWeapon, _projectilePos, AddPoint2D(_projectileVel,RandomPoint2D(4f)),
+                    FireProjectileSequence(_parentWeapon, _projectilePos, AddPoint2D(_projectileVel,RandomPoint2D(_aimDispersion)),
                         _damage, _explRad, _damageRad);
                 }
             }
