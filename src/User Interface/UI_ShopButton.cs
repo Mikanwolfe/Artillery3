@@ -132,7 +132,7 @@ namespace ArtillerySeries.src
                     Pos.X + 140, Pos.Y + 90);
                 SwinGame.DrawText("Dispersion: " + ItemBeingBought.AimDispersion, _textColor, SwinGame.FontNamed("shopFont"),
                     Pos.X + 380, Pos.Y + 50);
-                SwinGame.DrawText("Explosion Radius: " + ItemBeingBought.DamageRad, _textColor, SwinGame.FontNamed("shopFont"),
+                SwinGame.DrawText("Gun Range: " + ItemBeingBought.MinWepDeg + " - " + ItemBeingBought.MaxWepDeg, _textColor, SwinGame.FontNamed("shopFont"),
                     Pos.X + 380, Pos.Y + 70);
                 SwinGame.DrawText("Clip: " + ItemBeingBought.AutoloaderClip, _textColor, SwinGame.FontNamed("shopFont"),
                     Pos.X + 380, Pos.Y + 90);

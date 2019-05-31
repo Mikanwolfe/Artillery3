@@ -100,15 +100,15 @@ namespace ArtillerySeries.src
             _coilgun.BaseDamage = 40;
             _coilgun.DamageRad = 20;
             _coilgun.Rarity = 2;
-            _coilgun.ShortDesc = "An coilgun developed my LFS technologies. Fires four rounds at once.";
+            _coilgun.ShortDesc = "A high-speed coilgun developed by CLS-T. Fires four rounds at once.";
             _coilgun.LongDesc = "Less artillery gun and more machine gun.";
             _shopWeapons.Add(_coilgun);
 
-            Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 90, ProjectileType.Shell);
+            Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 80, ProjectileType.Shell);
             _batchat155.AutoloaderClip = 5;
             _batchat155.WeaponMaxCharge = 70;
             _batchat155.AimDispersion = 0.5f;
-            _batchat155.BaseDamage = 90;
+            _batchat155.BaseDamage = 110;
             _batchat155.DamageRad = 20;
             _batchat155.Rarity = 3;
             _batchat155.ShortDesc = "An experimental autoloading weapon. Incredibly accurate, doesn't pack a punch.";
@@ -126,6 +126,18 @@ namespace ArtillerySeries.src
             _gwtCannon.LongDesc = "High damage, long range, but surprisingly bad accuracy. ";
             _shopWeapons.Add(_gwtCannon);
 
+            Weapon _yamatoTurret = new Weapon("460mm/18.1in Type 94 Triple Turret", -5, 90, ProjectileType.Shell);
+            _yamatoTurret.AutoloaderClip = 1;
+            _yamatoTurret.WeaponMaxCharge = 120;
+            _yamatoTurret.ProjectilesFiredPerTurn = 3;
+            _yamatoTurret.AimDispersion = 4f;
+            _yamatoTurret.BaseDamage = 300;
+            _yamatoTurret.DamageRad = 50;
+            _yamatoTurret.Rarity = 5;
+            _yamatoTurret.ShortDesc = "A miniaturised version of the Yamato's triple-turrets. For cute girls.";
+            _yamatoTurret.LongDesc = "High damage, long range, but even worse accuracy!";
+            _shopWeapons.Add(_yamatoTurret);
+
             Weapon _objLaser = new Weapon("90mm Neko-15X Laser", 0, 50, ProjectileType.Laser);
             _objLaser.AutoloaderClip = 1;
             _objLaser.WeaponMaxCharge = 50;
@@ -142,9 +154,9 @@ namespace ArtillerySeries.src
 
             Weapon _massDriver = new Weapon("210mm Kinetic Mass Driver", 0, 20, ProjectileType.Shell);
             _massDriver.AutoloaderClip = 2;
-            _massDriver.WeaponMaxCharge = 90;
+            _massDriver.WeaponMaxCharge = 400;
             _massDriver.AimDispersion = 0.001f;
-            _massDriver.BaseDamage = 200;
+            _massDriver.BaseDamage = 500;
             _massDriver.DamageRad = 80;
             _massDriver.UsesSatellite = true;
             _massDriver.Rarity = 7;

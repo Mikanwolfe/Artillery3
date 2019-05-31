@@ -320,6 +320,9 @@ namespace ArtillerySeries.src
 
         }
 
+        public int MinWepDeg { get => (int)Deg(_minWepAngleRad);  }
+        public int MaxWepDeg { get => (int)Deg(_maxWepAngleRad);  }
+
         public ProjectileType ProjectileType { get => _projectileType; set => _projectileType = value; }
         public float ExplRad { get => _explRad; set => _explRad = value; }
         public float DamageRad { get => _damageRad; set => _damageRad = value; }
