@@ -90,6 +90,7 @@ namespace ArtillerySeries.src
             _howitzer.Rarity = 1;
             _howitzer.ShortDesc = "A big gun with a short barrel; sacrifices range and accuracy for big boom.";
             _howitzer.LongDesc = "A well-worn 152mm howitzer";
+            _howitzer.Cost = 700;
             _shopWeapons.Add(_howitzer);
 
             Weapon _coilgun = new Weapon("90mm Coilgun", -10, 40, ProjectileType.Gun);
@@ -102,6 +103,7 @@ namespace ArtillerySeries.src
             _coilgun.Rarity = 2;
             _coilgun.ShortDesc = "A high-speed coilgun developed by CLS-T. Fires four rounds at once.";
             _coilgun.LongDesc = "Less artillery gun and more machine gun.";
+            _coilgun.Cost = 1000;
             _shopWeapons.Add(_coilgun);
 
             Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 80, ProjectileType.Shell);
@@ -113,6 +115,7 @@ namespace ArtillerySeries.src
             _batchat155.Rarity = 3;
             _batchat155.ShortDesc = "An experimental autoloading weapon. Incredibly accurate, doesn't pack a punch.";
             _batchat155.LongDesc = "B.C. 155/58, a 5-Round Autoloading Artillery.";
+            _batchat155.Cost = 2610;
             _shopWeapons.Add(_batchat155);
 
             Weapon _gwtCannon = new Weapon("290mm/64 G.W. Tiger", -5, 90, ProjectileType.Shell);
@@ -124,6 +127,7 @@ namespace ArtillerySeries.src
             _gwtCannon.Rarity = 4;
             _gwtCannon.ShortDesc = "A weapon developed from the G.W. Tiger program, a deadly weapon, if it hits.";
             _gwtCannon.LongDesc = "High damage, long range, but surprisingly bad accuracy. ";
+            _gwtCannon.Cost = 5540;
             _shopWeapons.Add(_gwtCannon);
 
             Weapon _yamatoTurret = new Weapon("460mm/18.1in Type 94 Triple Turret", -5, 90, ProjectileType.Shell);
@@ -136,6 +140,7 @@ namespace ArtillerySeries.src
             _yamatoTurret.Rarity = 5;
             _yamatoTurret.ShortDesc = "A miniaturised version of the Yamato's triple-turrets. For cute girls.";
             _yamatoTurret.LongDesc = "High damage, long range, but even worse accuracy!";
+            _yamatoTurret.Cost = 8760;
             _shopWeapons.Add(_yamatoTurret);
 
             Weapon _objLaser = new Weapon("90mm Neko-15X Laser", 0, 50, ProjectileType.Laser);
@@ -149,6 +154,7 @@ namespace ArtillerySeries.src
             _objLaser.Rarity = 6;
             _objLaser.ShortDesc = "A technologically advanced laser developed from the Neko-15X project. Top Secret.";
             _objLaser.LongDesc = "Fires lasers similar to Maia, however, has low explosion radius.";
+            _objLaser.Cost = 16800;
             _shopWeapons.Add(_objLaser);
 
 
@@ -162,6 +168,7 @@ namespace ArtillerySeries.src
             _massDriver.Rarity = 7;
             _massDriver.ShortDesc = "A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.";
             _massDriver.LongDesc = "Holding two rounds, it was salvaged from KTNS Hatsuyuki.";
+            _massDriver.Cost = 35420;
             _shopWeapons.Add(_massDriver);
 
             _rarityReference = new Dictionary<int, Color>();

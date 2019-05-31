@@ -111,6 +111,8 @@ namespace ArtillerySeries.src
                 SwinGame.DrawRectangle(_targetHighlightColor, _mainBox);
             }
 
+            
+
             if (!_mouseSelected)
             {
                 SwinGame.DrawText(ItemBeingBought.Name, _rarityReference[_itemBeingBought.Rarity],
@@ -136,14 +138,16 @@ namespace ArtillerySeries.src
                     Pos.X + 380, Pos.Y + 70);
                 SwinGame.DrawText("Clip: " + ItemBeingBought.AutoloaderClip, _textColor, SwinGame.FontNamed("shopFont"),
                     Pos.X + 380, Pos.Y + 90);
-
             }
-            
+
+            SwinGame.DrawText("Price: ", _textColor, SwinGame.FontNamed("shopFont"),
+                    Pos.X + 760, Pos.Y + 35);
+            SwinGame.DrawText("$" + ItemBeingBought.Cost.ToString("N0"), _textColor, SwinGame.FontNamed("winnerFont"),
+                    Pos.X + 760, Pos.Y + 55);
 
 
 
 
-            
         }
 
         public Color UpdateColor(Color c, Color target)
