@@ -9,7 +9,7 @@ namespace ArtillerySeries.src
 {
     class UI_SelectableTextBox : UI_TextBox
     {
-        public bool _mouseOver;
+        private bool _mouseOver;
         private Color _highlightColour;
         Rectangle _activeMouseArea;
         Rectangle _rectangleArea;

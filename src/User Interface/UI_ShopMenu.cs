@@ -44,6 +44,7 @@ namespace ArtillerySeries.src
             _playerName = A3RData.SelectedPlayer.Name;
             _characterName = A3RData.SelectedPlayer.Character.Name;
 
+            AddElement(new UI_ShopItems(A3RData));
 
             AddElement(_nextButton);
             AddElement(_equipBox);
