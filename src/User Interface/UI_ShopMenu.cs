@@ -31,6 +31,7 @@ namespace ArtillerySeries.src
             _equipBox = new UI_TextBox(A3RData, 300, 600, new Vector(Width(1) - 320, 20));
 
             UI_Button _nextButton = new UI_Button(Camera, "Next", Width(1) -170, Height(1)-60, FinishShopButton);
+            _nextButton.Width = 300;
             _nextButton.MouseOverSoundEffect = SwinGame.SoundEffectNamed("menuSound");
             _nextButton.MiddleAligned = true;
             _nextButton.LockToScreen();

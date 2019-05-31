@@ -82,6 +82,13 @@ namespace ArtillerySeries.src
 
         public override void EnterState()
         {
+            A3RData.Camera.FocusLock = false;
+            _inputHandler.Enabled = true;
+            _state.Switch(CombatState.TrackingPlayer);
+
+            Artillery3R.Services.PhysicsEngine.Clear();
+            Artillery3R.Services.ParticleEngine.Clear();
+
             EnvironmentPreset _temporaryPreset = new EnvironmentPreset("Sad Day", 3);
             _temporaryPreset.ParallaxBgCoef = new float[] { 0.70f, 0.65f, 0.55f };
             _temporaryPreset.ParallaxBgColor = new Color[] {SwinGame.RGBAFloatColor(0f, 0.2f, 0f, 1),
@@ -90,11 +97,13 @@ namespace ArtillerySeries.src
             _temporaryPreset.BgColor = Color.CadetBlue;
             _temporaryPreset.CloudColor = Color.Gray;
 
+            A3RData.Environment = new Environment(_windowRect, A3RData.Camera);
             A3RData.Environment.Initialise(_temporaryPreset);
             A3RData.Terrain = A3RData.Environment.Generate();
 
             foreach (Player p in A3RData.Players)
             {
+                Artillery3R.Services.PhysicsEngine.AddComponent(p.Character as IPhysicsComponent);
                 p.LinkCombatState(this);
                 p.SetXPosition((int)RandDoubleBetween(Constants.CameraPadding, A3RData.Terrain.Map.Length - 1 - Constants.CameraPadding));
                 p.Initiallise();

@@ -208,5 +208,7 @@ namespace ArtillerySeries.src
 
         public SoundEffect MouseOverSoundEffect { get => _mouseOverSoundEffect; set => _mouseOverSoundEffect = value; }
         public bool MiddleAligned { get => _middleAligned; set => _middleAligned = value; }
+        public int Height { get => _height; set => _height = value; }
+        public int Width { get => _width; set => _width = value; }
     }
 }
