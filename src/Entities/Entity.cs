@@ -30,13 +30,16 @@ namespace ArtillerySeries.src
             _direction = FacingDirection.Left;
             _absAngle = 0;
 
+            _shortDesc = "Entity " + _name;
+            _longDesc = "This object is an entity of the " + name + " class.";
+
 
         }
 
         public string Name { get => _name; set => _name = value; }
         public Point2D Pos { get => _pos; set => _pos = value; }
-        public virtual string ShortDesc { get => _name; set => _shortDesc = value; }
-        public virtual string LongDesc { get => "A " + _name; set => _longDesc = value; }
+        public virtual string ShortDesc { get => _shortDesc; set => _shortDesc = value; }
+        public virtual string LongDesc { get => _longDesc; set => _longDesc = value; }
         internal FacingDirection Direction { get => _direction; set => _direction = value; }
         public float AbsoluteAngle { get => _absAngle; set => _absAngle = value; }
 

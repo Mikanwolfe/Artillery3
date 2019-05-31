@@ -149,6 +149,7 @@ namespace ArtillerySeries.src
 
             SwinGame.LoadFontNamed("guiFont", "cour.ttf", 12);
             SwinGame.LoadFontNamed("winnerFont", "maven_pro_regular.ttf", 25);
+            SwinGame.LoadFontNamed("shopFont", "maven_pro_regular.ttf", 16);
         }
 
 

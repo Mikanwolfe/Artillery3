@@ -54,6 +54,8 @@ namespace ArtillerySeries.src
         TerrainFactory _terrainFactory;
         Terrain _logicalTerrain;
 
+        Dictionary<int, Color> _rarityReference;
+
         bool _userExitRequested = false;
 
 
@@ -79,17 +81,34 @@ namespace ArtillerySeries.src
 
             _shopWeapons = new List<Weapon>();
 
-            Weapon _howitzer = new Weapon("152mm Howitzer", 10, 90, ProjectileType.Shell);
+            Weapon _howitzer = new Weapon("152mm/22 Howitzer", 10, 90, ProjectileType.Shell);
             _howitzer.BaseDamage = 300;
+            _howitzer.AimDispersion = 5;
+            _howitzer.WeaponMaxCharge = 30;
             _howitzer.DamageRad = 60;
+            _howitzer.Rarity = 3;
+            _howitzer.ShortDesc = "A big gun with a short barrel; sacrifices range and accuracy for big boom.";
+            _howitzer.LongDesc = "A well-worn 152mm howitzer";
             _shopWeapons.Add(_howitzer);
 
             Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 90, ProjectileType.Shell);
             _batchat155.AutoloaderClip = 5;
+            _batchat155.WeaponMaxCharge = 70;
             _batchat155.BaseDamage = 90;
             _batchat155.DamageRad = 20;
             _batchat155.UsesSatellite = true;
+            _batchat155.Rarity = 4;
+            _batchat155.ShortDesc = "An experimental autoloading weapon. Incredibly accurate, doesn't pack a punch.";
+            _batchat155.LongDesc = "Long range, smaller shells.";
             _shopWeapons.Add(_batchat155);
+
+            _rarityReference = new Dictionary<int, Color>();
+            _rarityReference.Add(1, Color.SteelBlue);
+            _rarityReference.Add(2, Color.ForestGreen);
+            _rarityReference.Add(3, Color.OrangeRed);
+            _rarityReference.Add(4, Color.HotPink);
+            _rarityReference.Add(5, Color.Purple);
+            _rarityReference.Add(6, Color.Cyan);
 
 
 
@@ -133,6 +152,7 @@ namespace ArtillerySeries.src
         public Environment Environment { get => _environment; set => _environment = value; }
         public Terrain Terrain { get => _logicalTerrain; set => _logicalTerrain = value; }
         public List<Weapon> ShopWeapons { get => _shopWeapons; set => _shopWeapons = value; }
+        public Dictionary<int, Color> RarityReference { get => _rarityReference; set => _rarityReference = value; }
 
         #endregion
     }

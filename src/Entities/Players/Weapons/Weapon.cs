@@ -26,7 +26,7 @@ namespace ArtillerySeries.src
     }
 
 
-    public class Weapon : Entity, IWeapon
+    public class Weapon : Entity, IWeapon, ShoppableItem
     {
 
         #region Fields
@@ -58,6 +58,8 @@ namespace ArtillerySeries.src
         float _weaponMaxCharge = 50;
         float _previousCharge = 0;
         float _damageRad = 30;
+        int _cost = 700;
+        int rarity = 1;
         float _explRad = 15;
         float _aimDispersion = 0;
         float _baseDamage = 100;
@@ -323,6 +325,9 @@ namespace ArtillerySeries.src
         public float ExplRad { get => _explRad; set => _explRad = value; }
         public float DamageRad { get => _damageRad; set => _damageRad = value; }
         public float AimDispersion { get => _aimDispersion; set => _aimDispersion = value; }
+        public int Cost { get => _cost; set => _cost = value; }
+        public int Rarity { get => rarity; set => rarity = value; }
+        public float WeaponMaxCharge { get => _weaponMaxCharge; set => _weaponMaxCharge = value; }
         #endregion
 
     }

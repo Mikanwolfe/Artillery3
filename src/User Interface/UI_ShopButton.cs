@@ -8,6 +8,15 @@ using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
+
+    public interface ShoppableItem
+    {
+        string Name { get;  }
+        string ShortDesc { get;  }
+        string LongDesc { get;  }
+        int Rarity { get; }
+        int Cost { get; }
+    }
     class UI_ShopButton : UIElement
     {
         Color _boxColor;
@@ -22,7 +31,7 @@ namespace ArtillerySeries.src
 
         int _cost;
 
-        object _itemBeingBought;
+        ShoppableItem _itemBeingBought;
 
         private bool _mouseOver;
         private bool _mouseSelected;
@@ -30,20 +39,26 @@ namespace ArtillerySeries.src
         byte _alphaValueIncrement = 1;
 
         Rectangle _mainBox;
-
+        Rectangle _buyBox;
         Rectangle _iconBox;
 
-        public object ItemBeingBought { get => _itemBeingBought; set => _itemBeingBought = value; }
+        Dictionary<int, Color> _rarityReference;
+
+        public ShoppableItem ItemBeingBought { get => _itemBeingBought; set => _itemBeingBought = value; }
         public int Cost { get => _cost; set => _cost = value; }
         public Color IconBoxHighlight { get => _iconBoxHighlight; set => _iconBoxHighlight = value; }
 
-        public UI_ShopButton(Camera camera, Vector pos) 
+        public UI_ShopButton(Camera camera, Vector pos, Dictionary<int, Color> rarityReference) 
             : base(camera)
         {
             _targetBoxColor = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f);
             _targetTextColor = Color.White;
             _targetHighlightColor = Color.Pink;
-            
+
+            _iconBoxHighlight = Color.Black;
+
+            _rarityReference = rarityReference;
+
 
             _boxColor = SwinGame.RGBAFloatColor(0,0,0,0);
             _textColor = SwinGame.RGBAFloatColor(0, 0, 0, 0);
@@ -55,14 +70,22 @@ namespace ArtillerySeries.src
             {
                 X = Pos.X,
                 Y = Pos.Y,
-                Width = 850,
+                Width = 750,
                 Height = 120
+            };
+
+            _buyBox = new Rectangle()
+            {
+                X = Pos.X + _mainBox.Width + 20,
+                Y = Pos.Y,
+                Width = _mainBox.Height,
+                Height = _mainBox.Height
             };
 
             _iconBox = new Rectangle()
             {
-                X = Pos.X,
-                Y = Pos.Y,
+                X = Pos.X + 10,
+                Y = Pos.Y + 10,
                 Width = 100,
                 Height = 100
             };
@@ -71,11 +94,19 @@ namespace ArtillerySeries.src
         public override void Draw()
         {
 
+            SwinGame.DrawText(ItemBeingBought.Name, _rarityReference[_itemBeingBought.Rarity],
+                SwinGame.FontNamed("winnerFont"), Pos.X + 130, Pos.Y + 35);
+
+            SwinGame.DrawText(ItemBeingBought.ShortDesc, _textColor, SwinGame.FontNamed("shopFont"),
+                Pos.X + 130, Pos.Y + 75);
+
+
+
 
             SwinGame.FillRectangle(_boxColor, _mainBox);
             SwinGame.FillRectangle(_highlightColor, _mainBox);
 
-            SwinGame.DrawRectangle(_iconBoxHighlight, _iconBox);
+            SwinGame.DrawRectangle(_rarityReference[_itemBeingBought.Rarity], _iconBox);
 
             if (_mouseOver || _mouseSelected)
             {
