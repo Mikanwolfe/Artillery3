@@ -21,9 +21,10 @@ namespace ArtillerySeries.src
 
         string _playerName, _characterName;
 
-        
+        UI_StaticImage _fadeFx;
 
-        
+
+
         public UI_ShopMenu(A3RData a3RData, NotifyPlayerFinishedShop notifyPlayerFinishedShop)
             : base(a3RData)
         {
@@ -43,6 +44,8 @@ namespace ArtillerySeries.src
             _nextButton.MiddleAligned = true;
             _nextButton.LockToScreen();
 
+            _fadeFx = new UI_StaticImage(Camera, 0, 0, SwinGame.BitmapNamed("fadeFx"));
+
             _playerName = A3RData.SelectedPlayer.Name;
             _characterName = A3RData.SelectedPlayer.Character.Name;
 
@@ -52,6 +55,8 @@ namespace ArtillerySeries.src
             AddElement(_equipBox);
             AddElement(_characterBox);
             AddElement(_statBox);
+
+            AddElement(_fadeFx);
 
             _selPlayer = A3RData.SelectedPlayer;
 
@@ -77,6 +82,9 @@ namespace ArtillerySeries.src
 
         public override void Update()
         {
+            _fadeFx.X = Camera.Pos.X;
+            _fadeFx.Y = Camera.Pos.Y;
+
             _statBox.Clear();
 
             _statBox.AddText(" ");

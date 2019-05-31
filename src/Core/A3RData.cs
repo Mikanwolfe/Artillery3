@@ -107,6 +107,7 @@ namespace ArtillerySeries.src
             Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 90, ProjectileType.Shell);
             _batchat155.AutoloaderClip = 5;
             _batchat155.WeaponMaxCharge = 70;
+            _batchat155.AimDispersion = 0.5f;
             _batchat155.BaseDamage = 90;
             _batchat155.DamageRad = 20;
             _batchat155.Rarity = 3;
@@ -114,10 +115,22 @@ namespace ArtillerySeries.src
             _batchat155.LongDesc = "B.C. 155/58, a 5-Round Autoloading Artillery.";
             _shopWeapons.Add(_batchat155);
 
-            Weapon _objLaser = new Weapon("90mm Neko-15X Laser", -5, 90, ProjectileType.Laser);
+            Weapon _gwtCannon = new Weapon("290mm/64 G.W. Tiger", -5, 90, ProjectileType.Shell);
+            _gwtCannon.AutoloaderClip = 1;
+            _gwtCannon.WeaponMaxCharge = 100;
+            _gwtCannon.AimDispersion = 2f;
+            _gwtCannon.BaseDamage = 300;
+            _gwtCannon.DamageRad = 50;
+            _gwtCannon.Rarity = 4;
+            _gwtCannon.ShortDesc = "A weapon developed from the G.W. Tiger program, a deadly weapon, if it hits.";
+            _gwtCannon.LongDesc = "High damage, long range, but surprisingly bad accuracy. ";
+            _shopWeapons.Add(_gwtCannon);
+
+            Weapon _objLaser = new Weapon("90mm Neko-15X Laser", 0, 50, ProjectileType.Laser);
             _objLaser.AutoloaderClip = 1;
             _objLaser.WeaponMaxCharge = 50;
             _objLaser.BaseDamage = 150;
+            _objLaser.AimDispersion = 1f;
             _objLaser.DamageRad = 10;
             _objLaser.ExplRad = 5;
             _objLaser.UsesSatellite = true;
@@ -130,19 +143,20 @@ namespace ArtillerySeries.src
             Weapon _massDriver = new Weapon("210mm Kinetic Mass Driver", 0, 20, ProjectileType.Shell);
             _massDriver.AutoloaderClip = 2;
             _massDriver.WeaponMaxCharge = 90;
+            _massDriver.AimDispersion = 0.001f;
             _massDriver.BaseDamage = 200;
             _massDriver.DamageRad = 80;
             _massDriver.UsesSatellite = true;
             _massDriver.Rarity = 7;
-            _massDriver.ShortDesc = "A mysterious weapon by the Kotona Umbress, it fires entire titanium rods.";
-            _massDriver.LongDesc = "Hplding two rounds, it's was salvaged from a KTNS Hatsuyuki, a corvette.";
+            _massDriver.ShortDesc = "A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.";
+            _massDriver.LongDesc = "Holding two rounds, it was salvaged from KTNS Hatsuyuki.";
             _shopWeapons.Add(_massDriver);
 
             _rarityReference = new Dictionary<int, Color>();
             _rarityReference.Add(1, Color.SteelBlue);
             _rarityReference.Add(2, Color.ForestGreen);
             _rarityReference.Add(3, Color.OrangeRed);
-            _rarityReference.Add(4, Color.Pink);
+            _rarityReference.Add(4, Color.DeepPink);
             _rarityReference.Add(5, Color.Purple);
             _rarityReference.Add(6, Color.DarkCyan);
             _rarityReference.Add(7, Color.White);

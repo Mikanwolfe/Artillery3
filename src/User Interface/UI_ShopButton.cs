@@ -128,7 +128,7 @@ namespace ArtillerySeries.src
                     Pos.X + 140, Pos.Y + 50);
                 SwinGame.DrawText("Range: " + ItemBeingBought.WeaponMaxCharge, _textColor, SwinGame.FontNamed("shopFont"),
                     Pos.X + 140, Pos.Y + 70);
-                SwinGame.DrawText("Shell Type: " + ItemBeingBought.ProjectileType, _textColor, SwinGame.FontNamed("shopFont"),
+                SwinGame.DrawText("Weapon Type: " + ItemBeingBought.ProjectileType, _textColor, SwinGame.FontNamed("shopFont"),
                     Pos.X + 140, Pos.Y + 90);
                 SwinGame.DrawText("Dispersion: " + ItemBeingBought.AimDispersion, _textColor, SwinGame.FontNamed("shopFont"),
                     Pos.X + 380, Pos.Y + 50);
