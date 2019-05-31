@@ -26,6 +26,7 @@ namespace ArtillerySeries.src
         SubjectComponent _subjectComponent;
         IInputMethod _inputMethod;
         double _observeDelay = 0;
+        private int money;
         #endregion
 
         #region Constructor
@@ -212,6 +213,8 @@ namespace ArtillerySeries.src
         public new Point2D Pos => Character.Pos;
         public float PreviousWeaponCharge => _character.PreviousWeaponChargePercentage;
         public float WeaponChargePercentage => _character.WeaponChargePercentage;
+
+        public int Money { get => money; set => money = value; }
 
         #endregion
 

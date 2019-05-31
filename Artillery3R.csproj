@@ -46,6 +46,7 @@
     <Compile Include="src\Entities\Projectiles\AcidProjectile.cs" />
     <Compile Include="src\Core\A3RData.cs" />
     <Compile Include="src\GameStates\ShopGameState.cs" />
+    <Compile Include="src\Managers\Achievements.cs" />
     <Compile Include="src\Managers\CommandProcessor.cs" />
     <Compile Include="src\Managers\EscMenuService.cs" />
     <Compile Include="src\Managers\Services.cs" />
@@ -62,6 +63,7 @@
     <Compile Include="src\User Interface\UI_ShopButton.cs" />
     <Compile Include="src\User Interface\UI_ShopMenu.cs" />
     <Compile Include="src\User Interface\UI_TextBox.cs" />
+    <Compile Include="src\User Interface\UI_WinUI.cs" />
     <Compile Include="src\World\Camera.cs" />
     <Compile Include="src\World\CameraFocusPoint.cs" />
     <Compile Include="src\World\CelestialBody.cs" />

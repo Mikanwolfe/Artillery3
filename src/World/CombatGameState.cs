@@ -270,6 +270,13 @@ namespace ArtillerySeries.src
             onNotifyGameEnded?.Invoke();
             _winCounterTimer.Enabled = false;
 
+            foreach (Player p in A3RData.Players)
+            {
+                p.Money += 500 + Artillery3R.Services.Achievements.Damage / 3;
+            }
+
+            Artillery3R.Services.Achievements.Damage = 0;
+
             UserInterface.Instance.NotifyUIEvent(this, new UIEventArgs(UIEvent.EndCombat));
         }
 
@@ -288,6 +295,7 @@ namespace ArtillerySeries.src
                     _winCounterTimer.Enabled = true;
                     FocusOnPlayer();
                     _inputHandler.Enabled = false;
+                    UserInterface.Instance.AddElement(new UI_WinUI(A3RData));
                     break;
 
                 case CombatState.EndGame:

@@ -67,8 +67,8 @@ namespace ArtillerySeries.src
             _rectangleArea.X = Pos.X + Camera.Pos.X;
             _rectangleArea.Y = Pos.Y + Camera.Pos.Y;
 
-            if (_alphaValue > 5)
-                _alphaValue -= 4;
+            if (_alphaValue > 6)
+                _alphaValue -= 6;
             else
                 _alphaValue = 0;
 

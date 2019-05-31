@@ -21,7 +21,7 @@ namespace ArtillerySeries.src
 
             foreach (Weapon w in A3RData.SelectedPlayer.Character.WeaponList)
             {
-                
+
                 UI_SelectableTextBox _weaponBox = new UI_SelectableTextBox(A3RData, 260, 70,
                     new Vector(Pos.X + 20, Pos.Y + cursor * (70 + 20) + 20));
                 _weaponBox.AddText(w.Name);
@@ -47,17 +47,36 @@ namespace ArtillerySeries.src
         {
             int _selectedWeaponsCount = 0;
 
+            UI_SelectableTextBox _firstSelection = null;
+            UI_SelectableTextBox _secondSelection = null;
+
             foreach (UIElement e in UIElements)
             {
                 if ((e as UI_SelectableTextBox).Selected)
+                {
                     _selectedWeaponsCount++;
+                    if (_firstSelection == null)
+                        _firstSelection = e as UI_SelectableTextBox;
+                    else
+                        _secondSelection = e as UI_SelectableTextBox;
+                }
+
             }
 
             Console.WriteLine("Number of weapons selected:" + _selectedWeaponsCount);
 
             if (_selectedWeaponsCount == 2)
             {
-                
+                Weapon _temp = _uiToWeapon[_firstSelection];
+
+                _uiToWeapon[_firstSelection] = _uiToWeapon[_secondSelection];
+                _uiToWeapon[_secondSelection] = _temp;
+
+                foreach (UIElement e in UIElements)
+                {
+                    (e as UI_SelectableTextBox).Selected = false;
+                }
+
             }
         }
 

@@ -43,6 +43,7 @@ namespace ArtillerySeries.src
         private PhysicsEngine _physicsEngine;
         private ParticleEngine _particleEngine;
         private ICommandProcessor _commandProcessor;
+        private Achievements _achievements;
 
         private bool _enabled = true;
 
@@ -106,6 +107,7 @@ namespace ArtillerySeries.src
             _particleEngine = new ParticleEngine(_a3RData);
 
             _commandProcessor = new CommandProcessor();
+            _achievements = new Achievements(_a3RData);
         }
 
         public void AddService(ServicesModule service)
@@ -141,6 +143,7 @@ namespace ArtillerySeries.src
         public ParticleEngine ParticleEngine { get => _particleEngine; set => _particleEngine = value; }
         public bool Enabled { get => _enabled; set => _enabled = value; }
         public A3RData A3RData { get => _a3RData; set => _a3RData = value; }
+        public Achievements Achievements { get => _achievements; set => _achievements = value; }
         #endregion
     }
 }

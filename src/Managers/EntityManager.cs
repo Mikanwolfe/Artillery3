@@ -19,6 +19,7 @@ namespace ArtillerySeries.src
         private static List<Entity> _entities;
         private static List<Entity> _entitiesToRemove;
         private static List<Entity> _entitiesToAdd;
+
         public EntityManager(A3RData a3RData)
         {
             _a3RData = a3RData;
@@ -68,6 +69,7 @@ namespace ArtillerySeries.src
 
         public void DamageEntities(Entity parent, float damage, int radius, Point2D pt)
         {
+            Artillery3R.Services.Achievements.Damage += (int)damage;
             foreach(Entity e in _entities)
             {
                
