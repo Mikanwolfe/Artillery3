@@ -12,7 +12,7 @@ namespace ArtillerySeries.src
     public enum ProjectileType
     {
         Shell,
-        MachineGun,
+        Gun,
         Missile
     }
 
@@ -80,10 +80,10 @@ namespace ArtillerySeries.src
 
                     break;
 
-                case ProjectileType.MachineGun:
+                case ProjectileType.Gun:
 
 
-                    mainProjectile = new Projectile(parentWeapon.Name +  "Machinegun Round", parentWeapon,
+                    mainProjectile = new Projectile(parentWeapon.Name +  "Gun Round", parentWeapon,
                         projectilePos, projectileVel, damage, explRad, damageRad);
                     break;
 

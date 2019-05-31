@@ -12,7 +12,6 @@ namespace ArtillerySeries.src
         public WeaponAcidCannon(float minWepAngleDeg, float maxWepAngleDeg) 
             : base("Acid Cannon", minWepAngleDeg, maxWepAngleDeg, ProjectileType.Shell)
         {
-            IsAutoloader = false;
             UsesSatellite = true;
         }
 

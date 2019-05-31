@@ -31,7 +31,7 @@ namespace ArtillerySeries.src
 
         int _cost;
 
-        ShoppableItem _itemBeingBought;
+        Weapon _itemBeingBought;
 
         private bool _mouseOver;
         private bool _mouseSelected;
@@ -43,12 +43,13 @@ namespace ArtillerySeries.src
         Rectangle _iconBox;
 
         Dictionary<int, Color> _rarityReference;
+        Dictionary<int, String> _rarityWords;
 
-        public ShoppableItem ItemBeingBought { get => _itemBeingBought; set => _itemBeingBought = value; }
+        public Weapon ItemBeingBought { get => _itemBeingBought; set => _itemBeingBought = value; }
         public int Cost { get => _cost; set => _cost = value; }
         public Color IconBoxHighlight { get => _iconBoxHighlight; set => _iconBoxHighlight = value; }
 
-        public UI_ShopButton(Camera camera, Vector pos, Dictionary<int, Color> rarityReference) 
+        public UI_ShopButton(Camera camera, Vector pos, Dictionary<int, Color> rarityReference, Dictionary<int, String> rarityWords) 
             : base(camera)
         {
             _targetBoxColor = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f);
@@ -58,6 +59,7 @@ namespace ArtillerySeries.src
             _iconBoxHighlight = Color.Black;
 
             _rarityReference = rarityReference;
+            _rarityWords = rarityWords;
 
 
             _boxColor = SwinGame.RGBAFloatColor(0,0,0,0);
@@ -70,7 +72,7 @@ namespace ArtillerySeries.src
             {
                 X = Pos.X,
                 Y = Pos.Y,
-                Width = 750,
+                Width = 730,
                 Height = 120
             };
 
@@ -93,25 +95,55 @@ namespace ArtillerySeries.src
 
         public override void Draw()
         {
-
-            SwinGame.DrawText(ItemBeingBought.Name, _rarityReference[_itemBeingBought.Rarity],
-                SwinGame.FontNamed("winnerFont"), Pos.X + 130, Pos.Y + 35);
-
-            SwinGame.DrawText(ItemBeingBought.ShortDesc, _textColor, SwinGame.FontNamed("shopFont"),
-                Pos.X + 130, Pos.Y + 75);
-
-
-
-
             SwinGame.FillRectangle(_boxColor, _mainBox);
+            SwinGame.FillRectangle(_boxColor, _buyBox);
             SwinGame.FillRectangle(_highlightColor, _mainBox);
 
             SwinGame.DrawRectangle(_rarityReference[_itemBeingBought.Rarity], _iconBox);
+            SwinGame.DrawText(_rarityWords[_itemBeingBought.Rarity], _rarityReference[_itemBeingBought.Rarity]
+                , SwinGame.FontNamed("smallFont"), Pos.X + 25, Pos.Y + _mainBox.Height - 30);
+            SwinGame.DrawText(_rarityWords[_itemBeingBought.Rarity].Substring(0, 1) 
+                + ItemBeingBought.ProjectileType.ToString().Substring(0,1).ToLower(), 
+                _rarityReference[_itemBeingBought.Rarity], SwinGame.FontNamed("bigFont"), Pos.X + 20, Pos.Y + -15);
 
             if (_mouseOver || _mouseSelected)
             {
                 SwinGame.DrawRectangle(_targetHighlightColor, _mainBox);
             }
+
+            if (!_mouseSelected)
+            {
+                SwinGame.DrawText(ItemBeingBought.Name, _rarityReference[_itemBeingBought.Rarity],
+                SwinGame.FontNamed("winnerFont"), Pos.X + 130, Pos.Y + 35);
+
+                SwinGame.DrawText(ItemBeingBought.ShortDesc, _textColor, SwinGame.FontNamed("shopFont"),
+                    Pos.X + 130, Pos.Y + 75);
+            }
+            else
+            {
+                _textColor = Color.White;
+                SwinGame.DrawText(ItemBeingBought.LongDesc, _textColor, SwinGame.FontNamed("shopFont"),
+                    Pos.X + 130, Pos.Y + 20);
+                SwinGame.DrawText("Damage: " + ItemBeingBought.BaseDamage, _textColor, SwinGame.FontNamed("shopFont"),
+                    Pos.X + 140, Pos.Y + 50);
+                SwinGame.DrawText("Range: " + ItemBeingBought.WeaponMaxCharge, _textColor, SwinGame.FontNamed("shopFont"),
+                    Pos.X + 140, Pos.Y + 70);
+                SwinGame.DrawText("Shell Type: " + ItemBeingBought.ProjectileType, _textColor, SwinGame.FontNamed("shopFont"),
+                    Pos.X + 140, Pos.Y + 90);
+                SwinGame.DrawText("Dispersion: " + ItemBeingBought.AimDispersion, _textColor, SwinGame.FontNamed("shopFont"),
+                    Pos.X + 380, Pos.Y + 50);
+                SwinGame.DrawText("Explosion Radius: " + ItemBeingBought.DamageRad, _textColor, SwinGame.FontNamed("shopFont"),
+                    Pos.X + 380, Pos.Y + 70);
+                SwinGame.DrawText("Clip: " + ItemBeingBought.AutoloaderClip, _textColor, SwinGame.FontNamed("shopFont"),
+                    Pos.X + 380, Pos.Y + 90);
+
+            }
+            
+
+
+
+
+            
         }
 
         public Color UpdateColor(Color c, Color target)

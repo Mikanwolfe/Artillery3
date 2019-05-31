@@ -15,7 +15,7 @@ namespace ArtillerySeries.src
             
             foreach(Weapon w in A3RData.ShopWeapons)
             {
-                UI_ShopButton shopButton = new UI_ShopButton(Camera, new Vector(Width(0.31f), Height(0.45f) + cursor * 140), A3RData.RarityReference);
+                UI_ShopButton shopButton = new UI_ShopButton(Camera, new Vector(Width(0.285f), Height(0.45f) + cursor * 140), A3RData.RarityReference, A3RData.RarityWords);
                 shopButton.ItemBeingBought = w;
                 
                 AddElement(shopButton);

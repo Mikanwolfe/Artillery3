@@ -63,9 +63,8 @@ namespace ArtillerySeries.src
         float _explRad = 15;
         float _aimDispersion = 0;
         float _baseDamage = 100;
-        bool _isAutoloader = true; //Autoloader, not AutoLoader. Look it up.
         bool _usesSatellite;
-        int _autoloaderClip = 2;
+        int _autoloaderClip = 1;
         int _autoloaderAmmoLeft;
         Point2D _projectilePos;
         Point2D _projectileVel;
@@ -152,7 +151,7 @@ namespace ArtillerySeries.src
             _previousCharge = _weaponCharge;
             _weaponCharge = 0;
 
-            if (_isAutoloader)
+            if (IsAutoloader)
             {
                 _autoloaderAmmoLeft--;
             }
@@ -179,7 +178,7 @@ namespace ArtillerySeries.src
 
         public void DrawAutoloaderClip()
         {
-            if (_isAutoloader)
+            if (IsAutoloader)
             {
                 if (_sprite == null)
                 {
@@ -262,7 +261,7 @@ namespace ArtillerySeries.src
         }
         public override string ShortDesc { get => base.ShortDesc; set => base.ShortDesc = value; }
         public override string LongDesc { get => base.LongDesc; set => base.LongDesc = value; }
-        public bool IsAutoloader { get => _isAutoloader; set => _isAutoloader = value; }
+        public bool IsAutoloader { get => (_autoloaderClip > 1); }
         public int AutoloaderClip { get => _autoloaderClip; set => _autoloaderClip = value; }
         public int AutoloaderAmmoLeft { get => _autoloaderAmmoLeft; }
 
@@ -287,7 +286,7 @@ namespace ArtillerySeries.src
         {
             get
             {
-                if (_isAutoloader)
+                if (IsAutoloader)
                     if (_autoloaderAmmoLeft < _autoloaderClip)
                         return true;
 
@@ -298,7 +297,7 @@ namespace ArtillerySeries.src
         {
             get
             {
-                if (_isAutoloader)
+                if (IsAutoloader)
                     if (_autoloaderAmmoLeft <= 0)
                         return true;
 

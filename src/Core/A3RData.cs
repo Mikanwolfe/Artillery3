@@ -55,6 +55,7 @@ namespace ArtillerySeries.src
         Terrain _logicalTerrain;
 
         Dictionary<int, Color> _rarityReference;
+        Dictionary<int, String> _rarityWords;
 
         bool _userExitRequested = false;
 
@@ -81,7 +82,7 @@ namespace ArtillerySeries.src
 
             _shopWeapons = new List<Weapon>();
 
-            Weapon _howitzer = new Weapon("152mm/22 Howitzer", 10, 90, ProjectileType.Shell);
+            Weapon _howitzer = new Weapon("152mm/22 Howitzer", 0, 40, ProjectileType.Shell);
             _howitzer.BaseDamage = 300;
             _howitzer.AimDispersion = 5;
             _howitzer.WeaponMaxCharge = 30;
@@ -97,18 +98,38 @@ namespace ArtillerySeries.src
             _batchat155.BaseDamage = 90;
             _batchat155.DamageRad = 20;
             _batchat155.UsesSatellite = true;
-            _batchat155.Rarity = 4;
+            _batchat155.Rarity = 6;
             _batchat155.ShortDesc = "An experimental autoloading weapon. Incredibly accurate, doesn't pack a punch.";
-            _batchat155.LongDesc = "Long range, smaller shells.";
+            _batchat155.LongDesc = "B.C. 155/58, a 5-Round Autoloading Artillery.";
             _shopWeapons.Add(_batchat155);
+
+            Weapon _coilgun = new Weapon("90mm Coilgun", -10, 40, ProjectileType.Gun);
+            _coilgun.AutoloaderClip = 2;
+            _coilgun.AimDispersion = 3;
+            _coilgun.ProjectilesFiredPerTurn = 4;
+            _coilgun.WeaponMaxCharge = 40;
+            _coilgun.BaseDamage = 40;
+            _coilgun.DamageRad = 20;
+            _coilgun.Rarity = 2;
+            _coilgun.ShortDesc = "An coilgun developed my LFS technologies. Fires four rounds at once.";
+            _coilgun.LongDesc = "Less artillery gun and more machine gun.";
+            _shopWeapons.Add(_coilgun);
 
             _rarityReference = new Dictionary<int, Color>();
             _rarityReference.Add(1, Color.SteelBlue);
             _rarityReference.Add(2, Color.ForestGreen);
             _rarityReference.Add(3, Color.OrangeRed);
-            _rarityReference.Add(4, Color.HotPink);
+            _rarityReference.Add(4, Color.Pink);
             _rarityReference.Add(5, Color.Purple);
-            _rarityReference.Add(6, Color.Cyan);
+            _rarityReference.Add(6, Color.DarkCyan);
+
+            _rarityWords = new Dictionary<int, string>();
+            _rarityWords.Add(1, "Common");
+            _rarityWords.Add(2, "Uncommon");
+            _rarityWords.Add(3, "Rare");
+            _rarityWords.Add(4, "Epic");
+            _rarityWords.Add(5, "Mythical");
+            _rarityWords.Add(6, "Legendary");
 
 
 
@@ -153,6 +174,7 @@ namespace ArtillerySeries.src
         public Terrain Terrain { get => _logicalTerrain; set => _logicalTerrain = value; }
         public List<Weapon> ShopWeapons { get => _shopWeapons; set => _shopWeapons = value; }
         public Dictionary<int, Color> RarityReference { get => _rarityReference; set => _rarityReference = value; }
+        public Dictionary<int, string> RarityWords { get => _rarityWords; set => _rarityWords = value; }
 
         #endregion
     }
