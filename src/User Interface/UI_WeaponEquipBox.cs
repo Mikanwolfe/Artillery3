@@ -28,6 +28,12 @@ namespace ArtillerySeries.src
         Color _textColor;
         Color _targetTextColor;
 
+        Color _detailsRarityColor;
+        Color _targetDetailsRarityColor;
+
+        Color _detailsTextColor;
+        Color _targetDetailsTextColor;
+
         Color _highlightMainColor;
         Color _highlightMoveColor;
         Color _targetHighlightColor;
@@ -36,10 +42,16 @@ namespace ArtillerySeries.src
         private bool _mouseSelectedMain, _mouseSelectedMove;
         private bool _isActive;
 
+        private int _animationCount;
+
         Color _isActiveColor;
 
         private Rectangle _moveBox;
         private Rectangle _mainBox;
+
+        private Rectangle _detailsBox;
+        private Rectangle _detailsBg;
+        private Rectangle _detailsRarityBar;
 
         private Rectangle _moveBoxActiveArea;
         private Rectangle _mainBoxActiveArea;
@@ -90,7 +102,23 @@ namespace ArtillerySeries.src
                 Height = _mainBoxActiveArea.Height
             };
 
+            _detailsBox = new Rectangle
+            {
+                Height = 60
+            };
 
+            _detailsBg = new Rectangle
+            {
+                Height = 70
+            };
+
+            _detailsRarityBar = new Rectangle()
+            {
+                X = Pos.X,
+                Y = Pos.Y,
+                Width = 10,
+                Height = 40
+            };
 
             _targetMainBoxColor = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f);
             _targetMoveBoxColor = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f);
@@ -104,6 +132,12 @@ namespace ArtillerySeries.src
             _textColor = SwinGame.RGBAFloatColor(0, 0, 0, 0);
             _highlightMainColor = SwinGame.RGBAFloatColor(0, 0, 0, 0);
             _highlightMoveColor = SwinGame.RGBAFloatColor(0, 0, 0, 0);
+
+            _detailsTextColor = Color.Transparent;
+            _detailsRarityColor = Color.Transparent;
+
+            _targetDetailsTextColor = Color.Transparent;
+            _targetDetailsRarityColor = Color.Transparent;
 
 
         }
@@ -127,6 +161,8 @@ namespace ArtillerySeries.src
             SwinGame.FillRectangle(_highlightMainColor, _mainBox);
             SwinGame.FillRectangle(_highlightMoveColor, _moveBox);
 
+            //SwinGame.FillRectangle()
+
             if (_mouseOverMain || _mouseSelectedMain)
                 SwinGame.DrawRectangle(_targetHighlightColor, _mainBox);
 
@@ -143,6 +179,9 @@ namespace ArtillerySeries.src
 
                 SwinGame.DrawText(_isActive.ToString(), _isActiveColor, SwinGame.FontNamed("smallFont"),
                     Pos.X + 60 + Camera.Pos.X, Pos.Y + 25 + Camera.Pos.Y);
+
+                SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f), _detailsBg);
+                SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.4f), _detailsBox);
             }
             else
             {
@@ -167,7 +206,37 @@ namespace ArtillerySeries.src
             {
                 _targetMainBoxColor = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f);
                 _targetMoveBoxColor = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f);
+
+                if (_mouseSelectedMain)
+                {
+                    _targetDetailsRarityColor = _a3RData.RarityReference[_heldWeapon.Rarity];
+                    _targetDetailsTextColor = Color.White;
+
+                    _animationCount += (500 - _animationCount) / 20;
+                    _animationCount = Clamp(_animationCount, 0, 500);
+                }
+
+                else
+                {
+                    _targetDetailsRarityColor = Color.Transparent;
+                    _targetDetailsTextColor = Color.Transparent;
+
+                    _animationCount += (-20 - _animationCount) / 20;
+                    _animationCount = Clamp(_animationCount, 0, 500);
+                }
+
+
+
             }
+
+            _detailsBox.X = Camera.Pos.X + Pos.X - _animationCount;
+            _detailsBox.Y = Camera.Pos.Y + Pos.Y;
+            _detailsBox.Width = _animationCount;
+
+            _detailsBg.X = Camera.Pos.X + Pos.X - _animationCount - 50;
+            _detailsBg.Y = Camera.Pos.Y + Pos.Y - 5;
+            _detailsBg.Width = _animationCount * (550f / 500f);
+
 
             if (_isActive)
                 _isActiveColor = Color.LightGreen;
@@ -203,6 +272,8 @@ namespace ArtillerySeries.src
             _highlightMainColor = UpdateColor(_highlightMainColor, _targetHighlightColor, -5);
             _highlightMoveColor = UpdateColor(_highlightMoveColor, _targetHighlightColor, -5);
             _textColor = UpdateColor(_textColor, _targetTextColor);
+            _detailsRarityColor = UpdateColor(_detailsRarityColor, _targetDetailsRarityColor);
+            _detailsTextColor = UpdateColor(_detailsTextColor, _targetDetailsTextColor);
 
         }
     }
