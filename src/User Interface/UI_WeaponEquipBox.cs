@@ -56,6 +56,9 @@ namespace ArtillerySeries.src
         private Rectangle _moveBoxActiveArea;
         private Rectangle _mainBoxActiveArea;
 
+        public delegate void InventoryBoxSelected(UI_WeaponEquipBox sender);
+        InventoryBoxSelected _onInventorySelect;
+
 
         private Weapon _heldWeapon;
 
@@ -63,12 +66,15 @@ namespace ArtillerySeries.src
 
         public Weapon HeldWeapon { get => _heldWeapon; set => _heldWeapon = value; }
         public bool IsActive { get => _isActive; set => _isActive = value; }
+        public bool MainSelected { get => _mouseSelectedMain; set => _mouseSelectedMain = value; }
 
-        public UI_WeaponEquipBox(Camera camera, A3RData a3RData, Vector pos)
+        public UI_WeaponEquipBox(Camera camera, A3RData a3RData, Vector pos, InventoryBoxSelected onInventorySelect)
             : base(camera)
         {
             _a3RData = a3RData;
             Pos = pos;
+
+            _onInventorySelect = onInventorySelect;
 
             _mainBox = new Rectangle()
             {
@@ -301,6 +307,7 @@ namespace ArtillerySeries.src
                 {
                     _highlightMainColor = _targetHighlightColor;
                     _mouseSelectedMain = !_mouseSelectedMain;
+                    //_onInventorySelect?.Invoke(this);
                 }
 
 
@@ -308,6 +315,7 @@ namespace ArtillerySeries.src
                 {
                     _highlightMoveColor = _targetHighlightColor;
                     _mouseSelectedMove = !_mouseSelectedMove;
+                    _onInventorySelect?.Invoke(this);
                 }
             }
 

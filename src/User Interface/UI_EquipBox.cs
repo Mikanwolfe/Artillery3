@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
     public class UI_EquipBox : UI_Box
     {
         int cursor = 0;
+
+        int _selectedBoxes = 0;
 
         private bool _weaponHasBeenSelected;
 
@@ -21,7 +24,7 @@ namespace ArtillerySeries.src
             {
 
                 UI_WeaponEquipBox _weaponBox = new UI_WeaponEquipBox(Camera, A3RData,
-                    new Vector(Pos.X + 20, Pos.Y + cursor * (50 + 15) + 20));
+                    new Vector(Pos.X + 20, Pos.Y + cursor * (50 + 15) + 20), OnInventoryEvent);
                 _weaponBox.HeldWeapon = w;
                 _weaponBox.IsActive = true;
 
@@ -29,10 +32,46 @@ namespace ArtillerySeries.src
 
                 AddElement(_weaponBox);
             }
-
             AddElement(new UI_Line(Camera, new Vector(Pos.X + 20, Pos.Y + cursor * 65 + 20),
                 new Vector(Pos.X + _width - 20, Pos.Y + cursor * 65 + 20)));
+            AddElement(new UI_Text(Camera, Pos.X + 30, Pos.Y + cursor * 65 + 35, Color.White, SwinGame.FontNamed("winnerFont"),
+                "Inventory"));
+            cursor++;
+            
 
+            foreach (Weapon w in A3RData.SelectedPlayer.Character.Inventory)
+            {
+
+                UI_WeaponEquipBox _weaponBox = new UI_WeaponEquipBox(Camera, A3RData,
+                    new Vector(Pos.X + 20, Pos.Y + cursor * (50 + 15) + 20), OnInventoryEvent);
+                _weaponBox.HeldWeapon = w;
+                _weaponBox.IsActive = false;
+
+                cursor++;
+
+                AddElement(_weaponBox);
+            }
+
+            
+
+        }
+
+        public void DeselectAllBoxes()
+        {
+            foreach (UIElement e in UIElements)
+            {
+                (e as UI_WeaponEquipBox).MainSelected = false;
+            }
+        }
+
+        public void OnInventoryEvent(UI_WeaponEquipBox sender)
+        {
+            _selectedBoxes++;
+
+            if (_selectedBoxes > 1)
+            {
+                DeselectAllBoxes();
+            }
         }
 
         public override void Draw()
