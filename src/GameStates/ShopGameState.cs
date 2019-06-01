@@ -65,6 +65,12 @@ namespace ArtillerySeries.src
             base.Update();
         }
 
+        public override void ExitState()
+        {
+           
+            base.ExitState();
+        }
+
         public void NextPlayerShop()
         {
             _currentPlayerIndex++;

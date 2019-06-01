@@ -49,6 +49,10 @@ namespace ArtillerySeries.src
             }
         }
 
+        public void Clear()
+        {
+            _uiElements.Clear();
+        }
 
         public void ChangeGameState(GameState gameState)
         {

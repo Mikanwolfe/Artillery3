@@ -59,6 +59,9 @@ namespace ArtillerySeries.src
         public delegate void InventoryBoxSelected(UI_WeaponEquipBox sender);
         InventoryBoxSelected _onInventorySelect;
 
+        private int _weaponIndex;
+        private bool _isInventory;
+
 
         private Weapon _heldWeapon;
 
@@ -67,6 +70,9 @@ namespace ArtillerySeries.src
         public Weapon HeldWeapon { get => _heldWeapon; set => _heldWeapon = value; }
         public bool IsActive { get => _isActive; set => _isActive = value; }
         public bool MainSelected { get => _mouseSelectedMain; set => _mouseSelectedMain = value; }
+        public bool MoveSelected { get => _mouseSelectedMove; set => _mouseSelectedMove = value; }
+        public int WeaponIndex { get => _weaponIndex; set => _weaponIndex = value; }
+        public bool IsInventory { get => _isInventory; set => _isInventory = value; }
 
         public UI_WeaponEquipBox(Camera camera, A3RData a3RData, Vector pos, InventoryBoxSelected onInventorySelect)
             : base(camera)
@@ -166,6 +172,8 @@ namespace ArtillerySeries.src
 
             SwinGame.FillRectangle(_highlightMainColor, _mainBox);
             SwinGame.FillRectangle(_highlightMoveColor, _moveBox);
+
+            SwinGame.DrawText("Index: " + _weaponIndex, Color.Black, Pos.X + Camera.Pos.X + 200, Camera.Pos.Y + Pos.Y);
 
             SwinGame.FillRectangle(IncreaseBrightness(_detailsRarityColor, 50), _detailsRarityBar);
 
@@ -319,8 +327,8 @@ namespace ArtillerySeries.src
                 }
             }
 
-            _mainBoxColor = UpdateColor(_mainBoxColor, _targetMainBoxColor);
-            _moveBoxColor = UpdateColor(_moveBoxColor, _targetMoveBoxColor);
+            _mainBoxColor = UpdateColor(_mainBoxColor, _targetMainBoxColor, 5);
+            _moveBoxColor = UpdateColor(_moveBoxColor, _targetMoveBoxColor, 5);
             _highlightMainColor = UpdateColor(_highlightMainColor, _targetHighlightColor, -5);
             _highlightMoveColor = UpdateColor(_highlightMoveColor, _targetHighlightColor, -5);
             _textColor = UpdateColor(_textColor, _targetTextColor);

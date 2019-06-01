@@ -37,7 +37,7 @@ namespace ArtillerySeries.src
 
                 SwinGame.RefreshScreen(60);
             }
-
+            UserInterface.Instance.Clear();
 
 
             GameState nextState = _gameStates.Pop();

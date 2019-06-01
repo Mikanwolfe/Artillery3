@@ -101,6 +101,8 @@ namespace ArtillerySeries.src
             SwinGame.FillRectangle(_boxColor, _buyBox);
             SwinGame.FillRectangle(_highlightColor, _mainBox);
 
+            
+
             SwinGame.DrawRectangle(_rarityReference[_itemBeingBought.Rarity], _iconBox);
             SwinGame.DrawText(_rarityWords[_itemBeingBought.Rarity], _rarityReference[_itemBeingBought.Rarity]
                 , SwinGame.FontNamed("smallFont"), Pos.X + 25, Pos.Y + _mainBox.Height - 30);

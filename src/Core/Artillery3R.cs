@@ -114,7 +114,7 @@ namespace ArtillerySeries.src
             {
                 //Push the next state, and then the loading state.
                 // if the game is in the loading state it's then going to load the state properly.
-                _gameState.Push(_gameStateTransitions[uiEventArgs.Event]);
+                _gameState.Push( _gameStateTransitions[uiEventArgs.Event]);
                 _gameState.Push(new LoadingGameState(_gameState, _a3RData));
             }
             catch (Exception e)
@@ -147,6 +147,10 @@ namespace ArtillerySeries.src
             SwinGame.LoadSoundEffectNamed("laser_satellite", "magicSorcery_Short1_edit.wav");
             SwinGame.LoadSoundEffectNamed("satellite_prep", "satellite_prep.wav");
             SwinGame.LoadSoundEffectNamed("menuSound", "koikenmenu.ogg");
+
+            SwinGame.LoadSoundEffectNamed("mechConfirm", "UI_Mechanical_Confirm_04_FX.ogg");
+            SwinGame.LoadSoundEffectNamed("mechMove", "UI_Mechanical_Move_40.wav");
+            SwinGame.LoadSoundEffectNamed("mechTurnOn", "UI_Mechanical_Turning-On_03_Raw.ogg");
 
             SwinGame.LoadFontNamed("guiFont", "cour.ttf", 12);
             SwinGame.LoadFontNamed("winnerFont", "maven_pro_regular.ttf", 25);

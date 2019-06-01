@@ -14,11 +14,27 @@ namespace ArtillerySeries.src
         int _selectedBoxes = 0;
 
         private bool _weaponHasBeenSelected;
+        private bool _queueRefresh;
 
+        private List<UI_WeaponEquipBox> _weaponBoxes;
         public UI_EquipBox(A3RData a3RData, int width, int height, Vector pos)
             : base(a3RData, width, height, pos)
         {
+            RefreshUIBox();
+        }
+        public void RefreshEquipBox()
+        {
+            _queueRefresh = true;
+        }
 
+        void RefreshUIBox()
+        {
+            _queueRefresh = false;
+            UIElements.Clear();
+            int cursor = 0;
+            _weaponBoxes = new List<UI_WeaponEquipBox>();
+
+            int _index = 0;
 
             foreach (Weapon w in A3RData.SelectedPlayer.Character.WeaponList)
             {
@@ -27,18 +43,21 @@ namespace ArtillerySeries.src
                     new Vector(Pos.X + 20, Pos.Y + cursor * (50 + 15) + 20), OnInventoryEvent);
                 _weaponBox.HeldWeapon = w;
                 _weaponBox.IsActive = true;
+                _weaponBox.IsInventory = false;
+                _weaponBox.WeaponIndex = _index;
 
                 cursor++;
-
+                _weaponBoxes.Add(_weaponBox);
                 AddElement(_weaponBox);
+                _index++;
             }
             AddElement(new UI_Line(Camera, new Vector(Pos.X + 20, Pos.Y + cursor * 65 + 20),
                 new Vector(Pos.X + _width - 20, Pos.Y + cursor * 65 + 20)));
             AddElement(new UI_Text(Camera, Pos.X + 30, Pos.Y + cursor * 65 + 35, Color.White, SwinGame.FontNamed("winnerFont"),
                 "Inventory"));
             cursor++;
-            
 
+            _index = 0;
             foreach (Weapon w in A3RData.SelectedPlayer.Character.Inventory)
             {
 
@@ -46,32 +65,117 @@ namespace ArtillerySeries.src
                     new Vector(Pos.X + 20, Pos.Y + cursor * (50 + 15) + 20), OnInventoryEvent);
                 _weaponBox.HeldWeapon = w;
                 _weaponBox.IsActive = false;
+                _weaponBox.IsInventory = true;
+                _weaponBox.WeaponIndex = _index;
 
                 cursor++;
 
+                _weaponBoxes.Add(_weaponBox);
                 AddElement(_weaponBox);
+                _index++;
             }
-
-            
 
         }
 
         public void DeselectAllBoxes()
         {
-            foreach (UIElement e in UIElements)
+            foreach (UI_WeaponEquipBox w in _weaponBoxes)
             {
-                (e as UI_WeaponEquipBox).MainSelected = false;
+                w.MoveSelected = false;
+            }
+            _firstIndex = null;
+            _secondIndex = null;
+        }
+        UI_WeaponEquipBox _firstIndex = null;
+        UI_WeaponEquipBox _secondIndex = null;
+
+        public void Swap<T>(ref T left, ref T right)
+        {
+            T temp = left;
+            left = right;
+            right = temp;
+        }
+        public void OnInventoryEvent(UI_WeaponEquipBox sender)
+        {
+            
+            if (sender.MoveSelected)
+            {
+                if (_selectedBoxes == 0)
+                    _firstIndex = sender;
+
+                if (_selectedBoxes == 1)
+                    _secondIndex = sender;
+
+
+                _selectedBoxes++;
+            } else
+            {
+                _selectedBoxes--;
+                if (_selectedBoxes == 0)
+                    _firstIndex = null;
+            }
+
+            Console.WriteLine("Boxes selected: " + _selectedBoxes);
+            if (_selectedBoxes > 1)
+            {
+                SwinGame.PlaySoundEffect(SwinGame.SoundEffectNamed("mechConfirm"));
+                Weapon temp;
+                if (_firstIndex.IsInventory)
+                {
+                    if (_secondIndex.IsInventory)
+                    {
+                        //inventory to inventory
+                        temp = A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex];
+                        A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex] =
+                             A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex];
+                        A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex] = temp;
+                    }
+                    else
+                    {
+                        //inventory to weapon
+                        temp = A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex];
+                        A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex] =
+                             A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex];
+                        A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex] = temp;
+                    }
+                }
+                else
+                {
+                    if (_secondIndex.IsInventory)
+                    {
+                        //weapon to inventory
+                        temp = A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex];
+                        A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex] =
+                             A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex];
+                        A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex] = temp;
+                    }
+                    else
+                    {
+                        //weapon to weapon
+                        temp = A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex];
+                        A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex] =
+                             A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex];
+                        A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex] = temp;
+                    }
+                }
+
+
+
+                    Console.WriteLine("Clearing boxes");
+                DeselectAllBoxes();
+                _selectedBoxes = 0;
+
+                RefreshEquipBox();
+
+
             }
         }
 
-        public void OnInventoryEvent(UI_WeaponEquipBox sender)
+        public override void Update()
         {
-            _selectedBoxes++;
-
-            if (_selectedBoxes > 1)
-            {
-                DeselectAllBoxes();
-            }
+            if (_queueRefresh)
+                RefreshUIBox();
+            base.Update();
         }
 
         public override void Draw()
