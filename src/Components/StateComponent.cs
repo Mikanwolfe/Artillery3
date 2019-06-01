@@ -65,7 +65,6 @@ namespace ArtillerySeries.src
 
         public void Switch(T nextState)
         {
-            Console.WriteLine("A State has been changed: From {0} to {1}", _stateStack.Peek(), nextState);
             if (!_stateStack.Peek().Equals(nextState))
             {
                 _stateStack.Pop();

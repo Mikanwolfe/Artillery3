@@ -76,6 +76,7 @@ namespace ArtillerySeries.src
 
             _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f, ProjectileType.Shell);
             _weapon.UsesSatellite = true;
+            _weapon.DamageRad = 200;
             _weaponList[0] = _weapon;
 
             _weapon = new Weapon("Base Weapon 2 -- Remove asap.", 0f, 50f, ProjectileType.Shell);

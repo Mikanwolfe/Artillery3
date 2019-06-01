@@ -173,8 +173,6 @@ namespace ArtillerySeries.src
             SwinGame.FillRectangle(_highlightMainColor, _mainBox);
             SwinGame.FillRectangle(_highlightMoveColor, _moveBox);
 
-            SwinGame.DrawText("Index: " + _weaponIndex, Color.Black, Pos.X + Camera.Pos.X + 200, Camera.Pos.Y + Pos.Y);
-
             SwinGame.FillRectangle(IncreaseBrightness(_detailsRarityColor, 50), _detailsRarityBar);
 
             if (_mouseOverMain || _mouseSelectedMain)
@@ -191,7 +189,7 @@ namespace ArtillerySeries.src
                 SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f), _detailsBg);
                 SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.4f), _detailsBox);
 
-                SwinGame.DrawText(_heldWeapon.Name.Substring(0, 26), IncreaseBrightness(_a3RData.RarityReference[_heldWeapon.Rarity], -20),
+                SwinGame.DrawText(_heldWeapon.Name.Substring(0, 10), IncreaseBrightness(_a3RData.RarityReference[_heldWeapon.Rarity], -20),
                     SwinGame.FontNamed("shopFont"), Pos.X + 10 + Camera.Pos.X, Pos.Y + 10 + Camera.Pos.Y);
 
                 SwinGame.DrawText("Active: ", _textColor, SwinGame.FontNamed("smallFont"),

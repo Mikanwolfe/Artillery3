@@ -13,7 +13,7 @@ namespace ArtillerySeries.src
         NotifyPlayerFinishedShop _notifyPlayerFinishedShop;
         UI_Box _characterBox;
         UI_TextBox _statBox;
-        UI_Box _equipBox;
+        UI_EquipBox _equipBox;
 
         Bitmap _shopBackground;
 
@@ -22,8 +22,6 @@ namespace ArtillerySeries.src
         string _playerName, _characterName;
 
         UI_StaticImage _fadeFx;
-
-
 
         public UI_ShopMenu(A3RData a3RData, NotifyPlayerFinishedShop notifyPlayerFinishedShop)
             : base(a3RData)
@@ -49,7 +47,7 @@ namespace ArtillerySeries.src
             _playerName = A3RData.SelectedPlayer.Name;
             _characterName = A3RData.SelectedPlayer.Character.Name;
 
-            AddElement(new UI_ShopItems(A3RData));
+            AddElement(new UI_ShopItems(A3RData, RefreshEquipBox));
 
             AddElement(_nextButton);
             AddElement(_equipBox);
@@ -63,7 +61,10 @@ namespace ArtillerySeries.src
 
         }
 
-        
+        public void RefreshEquipBox()
+        {
+            _equipBox.RefreshEquipBox();
+        }
 
         public override void Draw()
         {

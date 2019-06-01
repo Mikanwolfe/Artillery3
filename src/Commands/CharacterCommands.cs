@@ -58,6 +58,23 @@ namespace ArtillerySeries.src
             a3RData.SelectedPlayer.Character.FireWeapon();
         }
     }
+
+    public class AwardMoney
+    : Command
+    {
+        int _amount;
+        public AwardMoney(int amount)
+            : base("award")
+        {
+            _amount = amount;
+        }
+
+        public override void Execute(A3RData a3RData)
+        {
+            a3RData.SelectedPlayer.Money += _amount;
+        }
+
+    }
     public class MoveLeftCommand
         : Command
     {

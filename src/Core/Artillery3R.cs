@@ -151,6 +151,7 @@ namespace ArtillerySeries.src
             SwinGame.LoadSoundEffectNamed("mechConfirm", "UI_Mechanical_Confirm_04_FX.ogg");
             SwinGame.LoadSoundEffectNamed("mechMove", "UI_Mechanical_Move_40.wav");
             SwinGame.LoadSoundEffectNamed("mechTurnOn", "UI_Mechanical_Turning-On_03_Raw.ogg");
+            SwinGame.LoadSoundEffectNamed("mechFail", "UI_Mechanical_Error_11_FX_01.ogg");
 
             SwinGame.LoadFontNamed("guiFont", "cour.ttf", 12);
             SwinGame.LoadFontNamed("winnerFont", "maven_pro_regular.ttf", 25);
