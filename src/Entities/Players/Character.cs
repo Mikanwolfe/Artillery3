@@ -57,8 +57,18 @@ namespace ArtillerySeries.src
         public Character(string name, int health, int armour)
             : base(name)
         {
-            _weaponList = new List<Weapon>(_inventoryCapacity);
-            _inventory = new List<Weapon>(_weaponCapacity);
+            _weaponList = new List<Weapon>(_weaponCapacity);
+            _inventory = new List<Weapon>(_inventoryCapacity);
+
+            for (int i = 0; i < _weaponCapacity; i++)
+            {
+                _weaponList.Add(null);
+            }
+
+            for (int i = 0; i < _inventoryCapacity; i++)
+            {
+                _inventory.Add(null);
+            }
 
             _physics = new PhysicsComponent(this);
             _selected = false;
@@ -66,13 +76,13 @@ namespace ArtillerySeries.src
 
             _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f, ProjectileType.Shell);
             _weapon.UsesSatellite = true;
-            _weaponList.Add(_weapon);
+            _weaponList[0] = _weapon;
 
             _weapon = new Weapon("Base Weapon 2 -- Remove asap.", 0f, 50f, ProjectileType.Shell);
             _weapon.ProjectilesFiredPerTurn = 3;
             _weapon.AutoloaderClip = 3;
             _weapon.UsesSatellite = false;
-            _weaponList.Add(_weapon);
+            _weaponList[1] = _weapon;
 
             _maxArmour = armour;
             _maxHealth = health;
@@ -169,7 +179,7 @@ namespace ArtillerySeries.src
         {
             foreach (Weapon w in _weaponList)
             {
-                w.Reload();
+                w?.Reload();
             }
             _wasChargingWeapon = false;
             _isChargingWeapon = false;
@@ -188,13 +198,21 @@ namespace ArtillerySeries.src
 
         public void SwitchWeapon()
         {
+            
 
             if (_switchWeaponTimer.Finished)
             {
                 if (_weaponList.Count != 1)
                 {
+                    int index = _weaponList.IndexOf(_selectedWeapon);
                     if (!_selectedWeapon.AutoloaderFired)
-                        _selectedWeapon = _weaponList[(_weaponList.IndexOf(_selectedWeapon) + 1) % _weaponList.Count];
+                    {
+                        do
+                        {
+                            index++;
+                            _selectedWeapon = _weaponList[ (index) % _weaponList.Count];
+                        } while (_selectedWeapon == null);
+                    }
                 }
 
                 _switchWeaponTimer.Reset();
@@ -305,8 +323,8 @@ namespace ArtillerySeries.src
 
             foreach (Weapon w in _weaponList)
             {
-                w.Update();
-                w.UpdatePosition(Pos, Direction, AbsoluteAngle);
+                w?.Update();
+                w?.UpdatePosition(Pos, Direction, AbsoluteAngle);
             }
 
 

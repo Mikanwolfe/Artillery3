@@ -20,17 +20,28 @@ namespace ArtillerySeries.src
             foreach (Weapon w in A3RData.SelectedPlayer.Character.WeaponList)
             {
 
-                UI_WeaponEquipBox _weaponBox = new UI_WeaponEquipBox(Camera, A3RData, 
-                    new Vector(Pos.X + 20, Pos.Y + cursor * (80 + 20) + 20));
+                UI_WeaponEquipBox _weaponBox = new UI_WeaponEquipBox(Camera, A3RData,
+                    new Vector(Pos.X + 20, Pos.Y + cursor * (50 + 15) + 20));
+                _weaponBox.HeldWeapon = w;
+                _weaponBox.IsActive = true;
 
                 cursor++;
 
                 AddElement(_weaponBox);
             }
 
-
+            AddElement(new UI_Line(Camera, new Vector(Pos.X + 20, Pos.Y + cursor * 65 + 20),
+                new Vector(Pos.X + _width - 20, Pos.Y + cursor * 65 + 20)));
 
         }
+
+        public override void Draw()
+        {
+
+
+            base.Draw();
+        }
+
 
         /*
                 public void SwapSelectedWeapons()

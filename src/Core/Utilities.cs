@@ -68,6 +68,24 @@ namespace ArtillerySeries.src
             return VectorDirection(vector);
         }
 
+        public static Color UpdateColor(Color c, Color target)
+        {
+            return SwinGame.RGBAColor(
+                target.R,
+                target.G,
+                target.B,
+                (byte)Clamp(c.A + 1, 0, target.A));
+        }
+
+        public static Color UpdateColor(Color c, Color target, int increment)
+        {
+            return SwinGame.RGBAColor(
+                target.R,
+                target.G,
+                target.B,
+                (byte)Clamp(c.A + increment, 0, target.A));
+        }
+
         public static float VectorDirection(Point2D vector)
         {
             return (float)(Math.Tan((vector.Y / vector.X)) % (2*Math.PI));

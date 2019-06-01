@@ -22,6 +22,8 @@ namespace ArtillerySeries.src
                 AddElement(shopButton);
                 cursor++;
             }
+
+            
         }
 
         public override void Draw()
