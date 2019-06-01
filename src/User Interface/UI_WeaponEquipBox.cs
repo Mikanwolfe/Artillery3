@@ -116,8 +116,8 @@ namespace ArtillerySeries.src
             {
                 X = Pos.X,
                 Y = Pos.Y,
-                Width = 10,
-                Height = 40
+                Width = 2,
+                Height = 50
             };
 
             _targetMainBoxColor = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f);
@@ -161,7 +161,7 @@ namespace ArtillerySeries.src
             SwinGame.FillRectangle(_highlightMainColor, _mainBox);
             SwinGame.FillRectangle(_highlightMoveColor, _moveBox);
 
-            //SwinGame.FillRectangle()
+            SwinGame.FillRectangle(IncreaseBrightness(_detailsRarityColor, 50), _detailsRarityBar);
 
             if (_mouseOverMain || _mouseSelectedMain)
                 SwinGame.DrawRectangle(_targetHighlightColor, _mainBox);
@@ -179,6 +179,10 @@ namespace ArtillerySeries.src
 
                 SwinGame.DrawText(_isActive.ToString(), _isActiveColor, SwinGame.FontNamed("smallFont"),
                     Pos.X + 60 + Camera.Pos.X, Pos.Y + 25 + Camera.Pos.Y);
+
+                SwinGame.DrawText(_heldWeapon.Name, _detailsRarityColor, SwinGame.FontNamed("shopFont"), Pos.X + Camera.Pos.X + 20 - _animationCount,
+                    Pos.Y + Camera.Pos.Y + 20);
+
 
                 SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f), _detailsBg);
                 SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.4f), _detailsBox);
@@ -218,8 +222,8 @@ namespace ArtillerySeries.src
 
                 else
                 {
-                    _targetDetailsRarityColor = Color.Transparent;
-                    _targetDetailsTextColor = Color.Transparent;
+                    _targetDetailsRarityColor = SwinGame.RGBAFloatColor(0, 0, 0, 0);
+                    _targetDetailsTextColor = SwinGame.RGBAFloatColor(0, 0, 0, 0);
 
                     _animationCount += (-20 - _animationCount) / 20;
                     _animationCount = Clamp(_animationCount, 0, 500);
@@ -228,6 +232,9 @@ namespace ArtillerySeries.src
 
 
             }
+
+            _detailsRarityBar.X = Camera.Pos.X + Pos.X - 8 - _animationCount;
+            _detailsRarityBar.Y = Camera.Pos.Y + Pos.Y + 5;
 
             _detailsBox.X = Camera.Pos.X + Pos.X - _animationCount;
             _detailsBox.Y = Camera.Pos.Y + Pos.Y;
