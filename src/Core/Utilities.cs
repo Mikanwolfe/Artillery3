@@ -77,6 +77,20 @@ namespace ArtillerySeries.src
                 (byte)Clamp(c.A + 1, 0, target.A));
         }
 
+        public static float ByteToFloat(byte b)
+        {
+            return (float)((float)b / 255f);
+        }
+
+        public static Color FadeColorTo(Color c, Color to)
+        {
+            return SwinGame.RGBAFloatColor(
+                ByteToFloat(c.R) + (ByteToFloat(to.R) - ByteToFloat(c.R)) / 5,
+                ByteToFloat(c.G) + (ByteToFloat(to.G) - ByteToFloat(c.G)) / 5,
+                ByteToFloat(c.B) + (ByteToFloat(to.B) - ByteToFloat(c.B)) / 5,
+                ByteToFloat(c.A) + (ByteToFloat(to.A) - ByteToFloat(c.A)) / 5
+                );
+        }
         public static Color UpdateColor(Color c, Color target, int increment)
         {
             return SwinGame.RGBAColor(

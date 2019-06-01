@@ -171,6 +171,12 @@ namespace ArtillerySeries.src
 
             if (_heldWeapon != null)
             {
+
+
+
+                SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f), _detailsBg);
+                SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.4f), _detailsBox);
+
                 SwinGame.DrawText(_heldWeapon.Name.Substring(0, 26), IncreaseBrightness(_a3RData.RarityReference[_heldWeapon.Rarity], -20),
                     SwinGame.FontNamed("shopFont"), Pos.X + 10 + Camera.Pos.X, Pos.Y + 10 + Camera.Pos.Y);
 
@@ -180,12 +186,44 @@ namespace ArtillerySeries.src
                 SwinGame.DrawText(_isActive.ToString(), _isActiveColor, SwinGame.FontNamed("smallFont"),
                     Pos.X + 60 + Camera.Pos.X, Pos.Y + 25 + Camera.Pos.Y);
 
-                SwinGame.DrawText(_heldWeapon.Name, _detailsRarityColor, SwinGame.FontNamed("shopFont"), Pos.X + Camera.Pos.X + 20 - _animationCount,
-                    Pos.Y + Camera.Pos.Y + 20);
+                if (_animationCount > 200)
+                {
+                    SwinGame.DrawText(_heldWeapon.Name, _detailsRarityColor, SwinGame.FontNamed("shopFont"), Pos.X + Camera.Pos.X + 20 - _animationCount,
+                                        Pos.Y + Camera.Pos.Y + 10);
+
+                    SwinGame.DrawText(_a3RData.RarityWords[_heldWeapon.Rarity].Substring(0, 1)
+                + _heldWeapon.ProjectileType.ToString().Substring(0, 1).ToLower()
+                , _detailsRarityColor, SwinGame.FontNamed("winnerFont"), Pos.X + Camera.Pos.X - 40 - _animationCount,
+                                        Pos.Y + Camera.Pos.Y + 15);
+
+                    SwinGame.DrawText("Damage: " + _heldWeapon.BaseDamage, _detailsTextColor, SwinGame.FontNamed("smallerFont"), Pos.X + Camera.Pos.X + 20 - _animationCount,
+                        Pos.Y + Camera.Pos.Y + 28);
+
+                    SwinGame.DrawText(_heldWeapon.ShortDesc, _mainBoxColor, SwinGame.FontNamed("smallerFont"), Pos.X + Camera.Pos.X + 20 - _animationCount,
+                        Pos.Y + Camera.Pos.Y + 64);
+
+                    SwinGame.DrawText("Range: " + _heldWeapon.WeaponMaxCharge, _detailsTextColor, SwinGame.FontNamed("smallerFont"), Pos.X + Camera.Pos.X + 20 - _animationCount,
+                        Pos.Y + Camera.Pos.Y + 40);
+
+                    SwinGame.DrawText("| Dispersion: " + _heldWeapon.AimDispersion, _detailsTextColor, SwinGame.FontNamed("smallerFont"), 
+                        Pos.X + Camera.Pos.X + 120 - _animationCount,
+                        Pos.Y + Camera.Pos.Y + 28);
+
+                    SwinGame.DrawText("| Gun Range: " + _heldWeapon.MinWepDeg + " - " + _heldWeapon.MaxWepDeg, _detailsTextColor, SwinGame.FontNamed("smallerFont"),
+                        Pos.X + Camera.Pos.X + 120 - _animationCount,
+                        Pos.Y + Camera.Pos.Y + 40);
+
+                    SwinGame.DrawText("| Clip: " + _heldWeapon.AutoloaderClip, _detailsTextColor, SwinGame.FontNamed("smallerFont"),
+                        Pos.X + Camera.Pos.X + 240 - _animationCount,
+                        Pos.Y + Camera.Pos.Y + 28);
+
+                    SwinGame.DrawText("| Weapon Type: " + _heldWeapon.ProjectileType, _detailsTextColor, SwinGame.FontNamed("smallerFont"),
+                        Pos.X + Camera.Pos.X + 240 - _animationCount,
+                        Pos.Y + Camera.Pos.Y + 40);
+
+                }
 
 
-                SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f), _detailsBg);
-                SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.4f), _detailsBox);
             }
             else
             {
@@ -219,7 +257,6 @@ namespace ArtillerySeries.src
                     _animationCount += (500 - _animationCount) / 20;
                     _animationCount = Clamp(_animationCount, 0, 500);
                 }
-
                 else
                 {
                     _targetDetailsRarityColor = SwinGame.RGBAFloatColor(0, 0, 0, 0);
@@ -279,8 +316,9 @@ namespace ArtillerySeries.src
             _highlightMainColor = UpdateColor(_highlightMainColor, _targetHighlightColor, -5);
             _highlightMoveColor = UpdateColor(_highlightMoveColor, _targetHighlightColor, -5);
             _textColor = UpdateColor(_textColor, _targetTextColor);
-            _detailsRarityColor = UpdateColor(_detailsRarityColor, _targetDetailsRarityColor);
-            _detailsTextColor = UpdateColor(_detailsTextColor, _targetDetailsTextColor);
+
+            _detailsRarityColor = FadeColorTo(_detailsRarityColor, _targetDetailsRarityColor);
+            _detailsTextColor = FadeColorTo(_detailsTextColor, _targetDetailsTextColor);
 
         }
     }
