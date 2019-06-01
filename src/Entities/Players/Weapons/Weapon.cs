@@ -326,7 +326,7 @@ namespace ArtillerySeries.src
         public ProjectileType ProjectileType { get => _projectileType; set => _projectileType = value; }
         public float ExplRad { get => _explRad; set => _explRad = value; }
         public float DamageRad { get => _damageRad; set => _damageRad = value; }
-        public float AimDispersion { get => _aimDispersion; set => _aimDispersion = value; }
+        public float AimDispersion { get => _projectileFactory.AimDispersion; set => _projectileFactory.AimDispersion = value; }
         public int Cost { get => _cost; set => _cost = value; }
         public int Rarity { get => rarity; set => rarity = value; }
         public float WeaponMaxCharge { get => _weaponMaxCharge; set => _weaponMaxCharge = value; }

@@ -43,7 +43,7 @@ namespace ArtillerySeries.src
                 _directionInDeg += 90;
 
             _direction = Rad(_directionInDeg);
-            _magnitude = (float)_random.NextDouble();
+            _magnitude = 0.5f * (float)_random.NextDouble();
         }
 
         public float X { get => _magnitude * (float)Math.Cos(_direction); }

@@ -159,7 +159,7 @@ namespace ArtillerySeries.src
 
                 _turnCount++;
 
-                if (_turnCount % 4 == 0)
+                if (_turnCount % 12 == 0)
                 {
                     Artillery3R.Services.PhysicsEngine.SetWind();
                 }

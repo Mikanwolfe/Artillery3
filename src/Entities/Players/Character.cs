@@ -74,6 +74,7 @@ namespace ArtillerySeries.src
             _selected = false;
 
 
+            /*
             _weapon = new Weapon("Base Weapon 1 -- Remove asap.", 0f, 50f, ProjectileType.Shell);
             _weapon.UsesSatellite = true;
             _weapon.DamageRad = 200;
@@ -81,9 +82,12 @@ namespace ArtillerySeries.src
 
             _weapon = new Weapon("Base Weapon 2 -- Remove asap.", 0f, 50f, ProjectileType.Shell);
             _weapon.ProjectilesFiredPerTurn = 3;
+            _weapon.AimDispersion = 10f;
             _weapon.AutoloaderClip = 3;
             _weapon.UsesSatellite = false;
             _weaponList[1] = _weapon;
+
+    */
 
             _maxArmour = armour;
             _maxHealth = health;
@@ -150,7 +154,19 @@ namespace ArtillerySeries.src
 
         public void AddWeapon(Weapon w)
         {
-            _weaponList.Add(w);
+            bool _foundEmptySlot = false;
+
+            for (int i = 0; i < WeaponList.Capacity; i++)
+            {
+                if (_weaponList[i] == null)
+                {
+                    _foundEmptySlot = true;
+                    _weaponList[i] = w;
+                    break;
+                }
+                if (_foundEmptySlot)
+                    break;
+            }
         }
 
         public void SetFiringNotif(NotifyFiring parentFunction)

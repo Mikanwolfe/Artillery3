@@ -86,7 +86,7 @@ namespace ArtillerySeries.src
             _howitzer.BaseDamage = 200;
             _howitzer.AimDispersion = 5;
             _howitzer.WeaponMaxCharge = 30;
-            _howitzer.DamageRad = 120;
+            _howitzer.DamageRad = 200;
             _howitzer.Rarity = 1;
             _howitzer.ShortDesc = "A big gun with a short barrel; sacrifices range and accuracy for big boom.";
             _howitzer.LongDesc = "A well-worn 152mm howitzer";
@@ -98,7 +98,7 @@ namespace ArtillerySeries.src
             _coilgun.AimDispersion = 3;
             _coilgun.ProjectilesFiredPerTurn = 4;
             _coilgun.WeaponMaxCharge = 40;
-            _coilgun.BaseDamage = 80;
+            _coilgun.BaseDamage = 60;
             _coilgun.DamageRad = 40;
             _coilgun.Rarity = 2;
             _coilgun.ShortDesc = "A high-speed coilgun developed by CLS-T. Fires four rounds at once.";
