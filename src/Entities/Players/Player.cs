@@ -99,8 +99,8 @@ namespace ArtillerySeries.src
                     break;
 
                 case PlayerState.ObserveSatelliteStrike:
-                    if (state == PlayerState.EndTurn)
-                        _subjectComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
+                    //if (state == PlayerState.EndTurn)
+                        //_subjectComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
                     break;
             }
 

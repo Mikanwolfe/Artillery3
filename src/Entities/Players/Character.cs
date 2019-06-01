@@ -20,7 +20,7 @@ namespace ArtillerySeries.src
     }
 
 
-    public class Character : EntityAssembly, 
+    public class Character : EntityAssembly,
         IPhysicsComponent, IStateComponent<CharacterState>
     {
 
@@ -119,8 +119,32 @@ namespace ArtillerySeries.src
         }
         public void Initialise()
         {
+            bool weaponFound = false;
             _armour = _maxArmour;
             _health = _maxHealth;
+            foreach (Weapon w in _weaponList)
+            {
+                if (w != null)
+                {
+                    _selectedWeapon = w;
+                    weaponFound = true; ;
+                }
+                if (weaponFound)
+                    break;
+
+            }
+
+            foreach (Weapon w in _inventory)
+            {
+                if (weaponFound)
+                    break;
+                if (w != null)
+                {
+                    _selectedWeapon = w;
+                    break;
+                }
+            }
+
         }
 
         public void AddWeapon(Weapon w)
@@ -198,7 +222,7 @@ namespace ArtillerySeries.src
 
         public void SwitchWeapon()
         {
-            
+
 
             if (_switchWeaponTimer.Finished)
             {
@@ -210,7 +234,7 @@ namespace ArtillerySeries.src
                         do
                         {
                             index++;
-                            _selectedWeapon = _weaponList[ (index) % _weaponList.Count];
+                            _selectedWeapon = _weaponList[(index) % _weaponList.Count];
                         } while (_selectedWeapon == null);
                     }
                 }
