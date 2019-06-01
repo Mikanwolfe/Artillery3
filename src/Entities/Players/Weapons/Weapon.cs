@@ -235,7 +235,7 @@ namespace ArtillerySeries.src
                     break;
 
                 case WeaponState.ChargingState:
-                    _weaponCharge += Constants.WeaponChargeSpeed;
+                    _weaponCharge += _weaponMaxCharge * 0.005f;
                     if (_weaponCharge > _weaponMaxCharge)
                         _weaponCharge = _weaponMaxCharge;
                     break;

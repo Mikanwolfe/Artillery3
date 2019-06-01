@@ -85,11 +85,11 @@ namespace ArtillerySeries.src
             Weapon _howitzer = new Weapon("152mm/22 Howitzer", 0, 40, ProjectileType.Shell);
             _howitzer.BaseDamage = 200;
             _howitzer.AimDispersion = 5;
-            _howitzer.WeaponMaxCharge = 30;
+            _howitzer.WeaponMaxCharge = 40;
             _howitzer.DamageRad = 200;
             _howitzer.Rarity = 1;
             _howitzer.ShortDesc = "A big gun with a short barrel; sacrifices range and accuracy for big boom.";
-            _howitzer.LongDesc = "A well-worn 152mm howitzer";
+            _howitzer.LongDesc = "A well-worn 152mm howitzer.";
             _howitzer.Cost = 700;
             _shopWeapons.Add(_howitzer);
 
@@ -110,8 +110,8 @@ namespace ArtillerySeries.src
             _batchat155.AutoloaderClip = 5;
             _batchat155.WeaponMaxCharge = 70;
             _batchat155.AimDispersion = 0.5f;
-            _batchat155.BaseDamage = 150;
-            _batchat155.DamageRad = 150;
+            _batchat155.BaseDamage = 80;
+            _batchat155.DamageRad = 100;
             _batchat155.Rarity = 3;
             _batchat155.ShortDesc = "An experimental autoloading weapon. Incredibly accurate, doesn't pack a punch.";
             _batchat155.LongDesc = "B.C. 155/58, a 5-Round Autoloading Artillery.";
@@ -119,7 +119,7 @@ namespace ArtillerySeries.src
             _shopWeapons.Add(_batchat155);
 
             Weapon _gwtCannon = new Weapon("290mm/64 G.W. Tiger", -5, 90, ProjectileType.Shell);
-            _gwtCannon.AutoloaderClip = 1;
+            _gwtCannon.AutoloaderClip = 2;
             _gwtCannon.WeaponMaxCharge = 100;
             _gwtCannon.AimDispersion = 2f;
             _gwtCannon.BaseDamage = 300;
@@ -136,7 +136,7 @@ namespace ArtillerySeries.src
             _yamatoTurret.ProjectilesFiredPerTurn = 3;
             _yamatoTurret.AimDispersion = 4f;
             _yamatoTurret.BaseDamage = 300;
-            _yamatoTurret.DamageRad = 100;
+            _yamatoTurret.DamageRad = 300;
             _yamatoTurret.Rarity = 5;
             _yamatoTurret.ShortDesc = "A miniaturised version of the Yamato's triple-turrets. For cute girls.";
             _yamatoTurret.LongDesc = "High damage, long range, but even worse accuracy!";
@@ -160,10 +160,11 @@ namespace ArtillerySeries.src
 
             Weapon _massDriver = new Weapon("210mm Kinetic Mass Driver", 0, 20, ProjectileType.Shell);
             _massDriver.AutoloaderClip = 2;
-            _massDriver.WeaponMaxCharge = 400;
+            _massDriver.WeaponMaxCharge = 1000;
             _massDriver.AimDispersion = 0.001f;
-            _massDriver.BaseDamage = 500;
-            _massDriver.DamageRad = 300;
+            _massDriver.ExplRad = 80;
+            _massDriver.BaseDamage = 1000;
+            _massDriver.DamageRad = 400;
             _massDriver.UsesSatellite = true;
             _massDriver.Rarity = 7;
             _massDriver.ShortDesc = "A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.";

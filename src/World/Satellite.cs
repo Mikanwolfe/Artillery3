@@ -34,9 +34,9 @@ namespace ArtillerySeries.src
         {
             _angleFacing = 0;
             _angleDestination = Rad(270f);
-            _damage = 40;
+            _damage = 60;
             _explRad = 15;
-            _damageRad = 90;
+            _damageRad = 150;
             Pos = new Point2D()
             {
                 X = x,

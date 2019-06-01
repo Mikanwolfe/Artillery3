@@ -88,6 +88,10 @@ namespace ArtillerySeries.src
                         projectilePos, projectileVel, damage, explRad, damageRad);
                     break;
 
+                case ProjectileType.Laser:
+                    mainProjectile = null;
+                    break;
+
                 default:
                     mainProjectile = null;
                     break;
