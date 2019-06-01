@@ -36,6 +36,8 @@ namespace ArtillerySeries.src
         private bool _mouseOver;
         private bool _mouseSelected;
 
+        private bool _mouseOverBuy;
+
         byte _alphaValueIncrement = 1;
 
         Rectangle _mainBox;
@@ -140,6 +142,11 @@ namespace ArtillerySeries.src
                     Pos.X + 380, Pos.Y + 90);
             }
 
+            if (_mouseOverBuy)
+            {
+                _textColor = _rarityReference[_itemBeingBought.Rarity];
+            }
+
             SwinGame.DrawText("Price: ", _textColor, SwinGame.FontNamed("shopFont"),
                     Pos.X + 760, Pos.Y + 35);
             SwinGame.DrawText("$" + ItemBeingBought.Cost.ToString("N0"), _textColor, SwinGame.FontNamed("winnerFont"),
@@ -178,6 +185,12 @@ namespace ArtillerySeries.src
             {
                 _targetBoxColor = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f);
             }
+
+            _mouseOverBuy = (SwinGame.PointInRect(new Point2D()
+            {
+                X = SwinGame.MouseX() + Camera.Pos.X,
+                Y = SwinGame.MouseY() + Camera.Pos.Y
+            }, _buyBox));
 
             _mouseOver = (SwinGame.PointInRect(new Point2D()
             {

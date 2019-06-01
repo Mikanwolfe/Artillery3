@@ -7,7 +7,7 @@ using SwinGameSDK;
 
 namespace ArtillerySeries.src
 {
-    class UI_SelectableTextBox : UI_TextBox
+    public class UI_SelectableTextBox : UI_TextBox
     {
         private bool _mouseOver;
         private Color _highlightColour;

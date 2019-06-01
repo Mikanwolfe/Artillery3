@@ -11,28 +11,17 @@ namespace ArtillerySeries.src
         int cursor = 0;
 
         private bool _weaponHasBeenSelected;
-        Dictionary<UI_SelectableTextBox, Weapon> _uiToWeapon;
 
         public UI_EquipBox(A3RData a3RData, int width, int height, Vector pos)
             : base(a3RData, width, height, pos)
         {
-            _weaponHasBeenSelected = false;
-            _uiToWeapon = new Dictionary<UI_SelectableTextBox, Weapon>();
+
 
             foreach (Weapon w in A3RData.SelectedPlayer.Character.WeaponList)
             {
 
-                UI_SelectableTextBox _weaponBox = new UI_SelectableTextBox(A3RData, 260, 80,
+                UI_WeaponEquipBox _weaponBox = new UI_WeaponEquipBox(Camera, A3RData, 
                     new Vector(Pos.X + 20, Pos.Y + cursor * (80 + 20) + 20));
-                _weaponBox.AddText(w.Name);
-                _weaponBox.AddText("Damage: " + w.BaseDamage);
-                _weaponBox.AddText("Type: " + w.ProjectileType);
-                _weaponBox.OnPlayerSelectWeapon = PlayerSwapWeapon;
-
-                _uiToWeapon.Add(_weaponBox, w);
-
-                if (w.IsAutoloader)
-                    _weaponBox.AddText("Clip: " + w.AutoloaderClip);
 
                 cursor++;
 
@@ -43,7 +32,8 @@ namespace ArtillerySeries.src
 
         }
 
-        public void SwapSelectedWeapons()
+        /*
+                public void SwapSelectedWeapons()
         {
             int _selectedWeaponsCount = 0;
 
@@ -92,5 +82,8 @@ namespace ArtillerySeries.src
                 _weaponHasBeenSelected = true;
             }
         }
+ 
+         */
+
     }
 }
