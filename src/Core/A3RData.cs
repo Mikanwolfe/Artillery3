@@ -148,7 +148,8 @@ namespace ArtillerySeries.src
             _yamatoTurret.ProjectilesFiredPerTurn = 3;
             _yamatoTurret.AimDispersion = 4f;
             _yamatoTurret.BaseDamage = 300;
-            _yamatoTurret.DamageRad = 300;
+            _yamatoTurret.DamageRad = 160;
+            _yamatoTurret.ExplRad = 30;
             _yamatoTurret.Rarity = 5;
             _yamatoTurret.ShortDesc = "A miniaturised version of the Yamato's triple-turrets. For cute girls.";
             _yamatoTurret.LongDesc = "High damage, long range, but even worse accuracy!";

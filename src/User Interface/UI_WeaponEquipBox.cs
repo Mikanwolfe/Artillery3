@@ -226,11 +226,11 @@ namespace ArtillerySeries.src
                         Pos.Y + Camera.Pos.Y + 40);
 
                     SwinGame.DrawText("| Clip: " + _heldWeapon.AutoloaderClip, _detailsTextColor, SwinGame.FontNamed("smallerFont"),
-                        Pos.X + Camera.Pos.X + 240 - _animationCount,
+                        Pos.X + Camera.Pos.X + 260 - _animationCount,
                         Pos.Y + Camera.Pos.Y + 28);
 
                     SwinGame.DrawText("| Weapon Type: " + _heldWeapon.ProjectileType, _detailsTextColor, SwinGame.FontNamed("smallerFont"),
-                        Pos.X + Camera.Pos.X + 240 - _animationCount,
+                        Pos.X + Camera.Pos.X + 260 - _animationCount,
                         Pos.Y + Camera.Pos.Y + 40);
 
                 }

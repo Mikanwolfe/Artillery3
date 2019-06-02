@@ -101,6 +101,7 @@ namespace ArtillerySeries.src
             _gameStateTransitions.Add(UIEvent.MainMenu, new MainMenuGameState(_a3RData));
             _gameStateTransitions.Add(UIEvent.StartCombat, new CombatGameState(_a3RData));
             _gameStateTransitions.Add(UIEvent.EndCombat, new ShopGameState(_a3RData));
+            _gameStateTransitions.Add(UIEvent.Exit, new ExitState(_a3RData));
 
             //TODO: Add in the rest of the UI transitions here
 

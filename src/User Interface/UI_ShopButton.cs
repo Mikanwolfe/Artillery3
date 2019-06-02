@@ -219,6 +219,7 @@ namespace ArtillerySeries.src
             if (_mouseSelected)
             {
                 _targetBoxColor = SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.5f);
+                
             }
             else
             {
@@ -304,6 +305,8 @@ namespace ArtillerySeries.src
                 if (SwinGame.MouseClicked(MouseButton.LeftButton))
                 {
                     _mouseSelected = !_mouseSelected;
+                    if (_mouseSelected)
+                        SwinGame.PlaySoundEffect("menuConfirm");
                     _highlightColor = _targetHighlightColor;
                     //invoke stuff here
                 }
