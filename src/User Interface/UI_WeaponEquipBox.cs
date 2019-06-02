@@ -313,6 +313,11 @@ namespace ArtillerySeries.src
                 {
                     _highlightMainColor = _targetHighlightColor;
                     _mouseSelectedMain = !_mouseSelectedMain;
+                    if (_heldWeapon == null)
+                        _mouseSelectedMain = false;
+
+                    if (_mouseSelectedMain)
+                        SwinGame.PlaySoundEffect("menuConfirm");
                     //_onInventorySelect?.Invoke(this);
                 }
 

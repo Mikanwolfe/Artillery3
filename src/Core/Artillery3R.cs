@@ -159,6 +159,7 @@ namespace ArtillerySeries.src
             SwinGame.LoadSoundEffectNamed("entryboomCombat", "entryboom-combat.ogg");
             SwinGame.LoadSoundEffectNamed("entryboomShop", "entryboom-shop.ogg");
             SwinGame.LoadSoundEffectNamed("winSound", "winsfx.ogg");
+            SwinGame.LoadSoundEffectNamed("menuConfirm", "menuConfirm.ogg");
 
             SwinGame.LoadSoundEffectNamed("expl1", "expl1.ogg");
             SwinGame.LoadSoundEffectNamed("expl2", "expl2.ogg");
