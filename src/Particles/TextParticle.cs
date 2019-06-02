@@ -33,6 +33,7 @@ namespace ArtillerySeries.src
         {
             if (Visible)
             {
+                //SwinGame.DrawText(_text, Color, SwinGame.FontNamed("shopFont"), Pos.X, Pos.Y);
                 DrawTextCentre(_text, Color, Pos);
             }
         }

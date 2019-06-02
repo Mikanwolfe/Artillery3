@@ -160,10 +160,12 @@ namespace ArtillerySeries.src
             SwinGame.LoadSoundEffectNamed("entryboomShop", "entryboom-shop.ogg");
             SwinGame.LoadSoundEffectNamed("winSound", "winsfx.ogg");
             SwinGame.LoadSoundEffectNamed("menuConfirm", "menuConfirm.ogg");
+            SwinGame.LoadSoundEffectNamed("newTurn", "newTurn.ogg");
 
             SwinGame.LoadSoundEffectNamed("expl1", "expl1.ogg");
             SwinGame.LoadSoundEffectNamed("expl2", "expl2.ogg");
             SwinGame.LoadSoundEffectNamed("expl3", "expl3.ogg");
+            SwinGame.LoadSoundEffectNamed("acid", "shatter_ice_001.ogg");
 
             SwinGame.LoadMusicNamed("generalBg", "carpark_underground_003.ogg");
             SwinGame.LoadMusicNamed("shopDrone", "menuDrones.ogg");

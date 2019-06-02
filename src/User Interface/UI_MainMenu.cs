@@ -20,7 +20,7 @@ namespace ArtillerySeries.src
 
             AddElement(new UI_StaticImage(Camera, 0, 0, SwinGame.BitmapNamed("fullBg")));
 
-            UI_DynamicImage _menuGradient = new UI_DynamicImage(A3RData.Camera, 0, 0, -5000, 0, 10, SwinGame.BitmapNamed("menuLeftWhite"));
+            UI_DynamicImage _menuGradient = new UI_DynamicImage(A3RData.Camera, -20, 0, -5000, 0, 10, SwinGame.BitmapNamed("menuLeftWhite"));
             AddElement(_menuGradient);
 
             _menuGradient = new UI_DynamicImage(A3RData.Camera, 0, 0, -5000, 0, 10, SwinGame.BitmapNamed("menuGradientFull"));

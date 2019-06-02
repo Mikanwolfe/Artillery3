@@ -14,6 +14,7 @@ namespace ArtillerySeries.src
         Shell,
         Gun,
         Missile,
+        Acid,
         Laser
     }
 
@@ -85,6 +86,11 @@ namespace ArtillerySeries.src
 
 
                     mainProjectile = new Projectile(parentWeapon.Name +  "Gun Round", parentWeapon,
+                        projectilePos, projectileVel, damage, explRad, damageRad);
+                    break;
+
+                case ProjectileType.Acid:
+                    mainProjectile = new AcidProjectile(parentWeapon.Name + "Gun Round", parentWeapon,
                         projectilePos, projectileVel, damage, explRad, damageRad);
                     break;
 

@@ -11,6 +11,7 @@ namespace ArtillerySeries.src
     {
         public override void EnterState()
         {
+            SwinGame.PlaySoundEffect("entryboomCombat");
             SwinGame.StopMusic();
             SwinGame.PlayMusic("shopDrone");
             base.EnterState();

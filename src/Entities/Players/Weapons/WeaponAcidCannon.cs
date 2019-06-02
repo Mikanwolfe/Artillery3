@@ -17,8 +17,8 @@ namespace ArtillerySeries.src
 
         public override void FireProjectile()
         {
-            Projectile projectile = new AcidProjectile(Name + " Projectile", this, ProjectilePos, ProjectileVel);
-            SetProjectile(projectile);
+            //Projectile projectile = new AcidProjectile(Name + " Projectile", this, ProjectilePos, ProjectileVel);
+            //SetProjectile(projectile);
         }
     }
 }

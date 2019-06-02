@@ -38,6 +38,9 @@ namespace ArtillerySeries.src
         Rectangle _nameBox;
         Rectangle _nameBoxTarget;
 
+        Rectangle _wepBox;
+        Rectangle _wepBoxTarget;
+
         Color _glassColor;
         Color _glassColorTarget;
 
@@ -57,6 +60,7 @@ namespace ArtillerySeries.src
         int _inventoryCapacity = 4;
 
         int _offsetText = 0;
+        int _offsetWeaponText = 0;
 
         Bitmap _charBitmap; // use sprites
         PhysicsComponent _physics;
@@ -118,6 +122,14 @@ namespace ArtillerySeries.src
                 Width = 70,
                 Height = 15,
                 Y = -70
+            };
+
+            _wepBox = new Rectangle();
+            _wepBoxTarget = new Rectangle()
+            {
+                Width = 70,
+                Height = 15,
+                Y = +20
             };
             _nameBoxTarget.X = -_nameBoxTarget.Width / 2;
 
@@ -339,6 +351,7 @@ namespace ArtillerySeries.src
         void UpdateBoxes()
         {
             _offsetText = (_parent.Name + " | " + Name).ToString().Length * 4;
+            _offsetWeaponText = (_selectedWeapon.Name.Length * 4);
 
             _rearGlassBox.Width = _targetBox.Width;
             _rearGlassBox.Height = _targetBox.Height;
@@ -350,14 +363,21 @@ namespace ArtillerySeries.src
             _nameBox.X = Pos.X - _nameBox.Width/2;
             _nameBox.Y = Pos.Y + _nameBoxTarget.Y;
 
+            _wepBox.Width += (_wepBoxTarget.Width - _wepBox.Width) / 20;
+            _wepBox.Height = _wepBoxTarget.Height;
+            _wepBox.X = Pos.X - _wepBox.Width / 2;
+            _wepBox.Y = Pos.Y + _wepBoxTarget.Y;
+
             if (_selected)
             {
                 _nameBoxTarget.Width = _offsetText * 2.4f;
+                _wepBoxTarget.Width = _offsetWeaponText * 2.4f+10;
                 _textColorTarget = SwinGame.RGBAColor(42, 55, 115, 190);
             }
             else
             {
                 _nameBoxTarget.Width = 0;
+                _wepBoxTarget.Width = 0;
                 _textColorTarget = SwinGame.RGBAColor(0, 0, 0, 0);
             }
 
@@ -419,6 +439,7 @@ namespace ArtillerySeries.src
             SwinGame.FillRectangle(_armourColor, _armourBox);
             SwinGame.FillRectangle(_healthColor, _healthBox);
             SwinGame.FillRectangle(SwinGame.RGBAColor(250, 250, 255, 160), _nameBox);
+            SwinGame.FillRectangle(SwinGame.RGBAColor(180, 180, 190, 160), _wepBox);
 
             if (_selected)
             {
@@ -429,6 +450,8 @@ namespace ArtillerySeries.src
             
 
             SwinGame.DrawText(_parent.Name + " | " + Name, _textColor, SwinGame.FontNamed("smallFont"), Pos.X - _offsetText*0.9f, Pos.Y + _nameBoxTarget.Y);
+            SwinGame.DrawText(_selectedWeapon.Name, Artillery3R.Services.A3RData.RarityReference[_selectedWeapon.Rarity],
+                SwinGame.FontNamed("smallFont"), Pos.X - _offsetWeaponText*0.9f, _wepBox.Y);
             //DrawTextCentre("Health: " + (int)_health, Color.Black, Pos.X, Pos.Y - 50);
             //DrawTextCentre("Armour: " + (int)_armour, Color.Black, Pos.X, Pos.Y - 40);
             //DrawTextCentre(Name, Color.DarkGray, Pos.X, Pos.Y - 30);

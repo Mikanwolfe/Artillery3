@@ -109,14 +109,26 @@ namespace ArtillerySeries.src
             Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 80, ProjectileType.Shell);
             _batchat155.AutoloaderClip = 5;
             _batchat155.WeaponMaxCharge = 70;
-            _batchat155.AimDispersion = 0.5f;
-            _batchat155.BaseDamage = 80;
-            _batchat155.DamageRad = 100;
+            _batchat155.AimDispersion = 1f;
+            _batchat155.BaseDamage = 60;
+            _batchat155.DamageRad = 80;
             _batchat155.Rarity = 3;
-            _batchat155.ShortDesc = "An experimental autoloading weapon. Incredibly accurate, doesn't pack a punch.";
+            _batchat155.ShortDesc = "An experimental autoloading weapon. Packs small punches.";
             _batchat155.LongDesc = "B.C. 155/58, a 5-Round Autoloading Artillery.";
             _batchat155.Cost = 2610;
             _shopWeapons.Add(_batchat155);
+
+            Weapon _acidWeapon = new Weapon("122mm CLS-T Type-91", -5, 80, ProjectileType.Acid);
+            _acidWeapon.AutoloaderClip = 2;
+            _acidWeapon.WeaponMaxCharge = 50;
+            _acidWeapon.AimDispersion = 2f;
+            _acidWeapon.BaseDamage = 50;
+            _acidWeapon.DamageRad = 80;
+            _acidWeapon.Rarity = 3;
+            _acidWeapon.ShortDesc = "Developed during the last Neko War, fires highly acidic projectiles";
+            _acidWeapon.LongDesc = "2-Round Acid Projectiles, otherwise, somewhat mediocre.";
+            _acidWeapon.Cost = 1850;
+            _shopWeapons.Add(_acidWeapon);
 
             Weapon _gwtCannon = new Weapon("290mm/64 G.W. Tiger", -5, 90, ProjectileType.Shell);
             _gwtCannon.AutoloaderClip = 2;

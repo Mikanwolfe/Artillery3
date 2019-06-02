@@ -57,6 +57,7 @@ namespace ArtillerySeries.src
 
         public void NewTurn()
         {
+            
             _character.NewTurn();
             _character.Selected = true;
         }

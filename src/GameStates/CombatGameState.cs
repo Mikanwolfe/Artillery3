@@ -183,6 +183,7 @@ namespace ArtillerySeries.src
 
         public void EndPlayerTurn()
         {
+            SwinGame.PlaySoundEffect("newTurn");
             CyclePlayers();
             SwitchCameraFocus(A3RData.SelectedPlayer.Character as ICameraCanFocus);
         }
@@ -257,12 +258,11 @@ namespace ArtillerySeries.src
             Artillery3R.Services.Draw();
             DrawSatellite();
 
-            SwinGame.DrawText("Selected Player: " + A3RData.SelectedPlayer.Name, Color.Black, 50, 70);
             A3RData.SelectedPlayer.Draw();
 
-            SwinGame.DrawText("World State: " + _state.Peek(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 40f);
-            SwinGame.DrawText("Player State: " + A3RData.SelectedPlayer.PeekState(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 50f);
-            SwinGame.DrawText("Character State: " + A3RData.SelectedPlayer.Character.PeekState(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 60f);
+            //SwinGame.DrawText("World State: " + _state.Peek(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 40f);
+            //SwinGame.DrawText("Player State: " + A3RData.SelectedPlayer.PeekState(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 50f);
+            //SwinGame.DrawText("Character State: " + A3RData.SelectedPlayer.Character.PeekState(), Color.Black, A3RData.Camera.Pos.X + 20f, A3RData.Camera.Pos.Y + 60f);
         }
 
 
