@@ -45,7 +45,7 @@ namespace ArtillerySeries.src
             _nextHealth = (int)(_currentHealth * 1.3f);
 
             int _numUpgrades = A3RData.SelectedPlayer.Character.NumHealthUpgrades;
-            _cost = (int)(Math.Pow(1.9, _numUpgrades*1.1) * 90) + 300;
+            _cost = (int)(Math.Pow(1.9, _numUpgrades*1.1) * 40) + 300;
 
             if (Selected)
             {
@@ -111,7 +111,7 @@ namespace ArtillerySeries.src
             _nextHealth = (int)(_currentHealth * 1.3f);
 
             int _numUpgrades = A3RData.SelectedPlayer.Character.NumArmourUpgrades;
-            _cost = (int)(Math.Pow(1.9, _numUpgrades * 1.1) * 90) + 300;
+            _cost = (int)(Math.Pow(1.9, _numUpgrades * 1.1) * 40) + 300;
 
             if (Selected)
             {
