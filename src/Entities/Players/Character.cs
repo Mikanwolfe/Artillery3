@@ -53,6 +53,9 @@ namespace ArtillerySeries.src
         Color _textColor;
         Color _textColorTarget;
 
+        int _numHealthUpgrades = 0;
+        int _numArmourUpgrades = 0;
+
         float _health, _armour;
         float _maxHealth = 100, _maxArmour = 100;
 
@@ -607,6 +610,8 @@ namespace ArtillerySeries.src
         public int WeaponCapacity { get => _weaponCapacity; set => _weaponCapacity = value; }
         public List<Weapon> Inventory { get => _inventory; set => _inventory = value; }
         public List<Weapon> WeaponList { get => _weaponList; set => _weaponList = value; }
+        public int NumHealthUpgrades { get => _numHealthUpgrades; set => _numHealthUpgrades = value; }
+        public int NumArmourUpgrades { get => _numArmourUpgrades; set => _numArmourUpgrades = value; }
 
 
         #endregion

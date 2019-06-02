@@ -33,7 +33,7 @@ namespace ArtillerySeries.src
             AddElement(new UI_StaticImage(a3RData.Camera, Width(0.5f), Height(0.24f), SwinGame.BitmapNamed("menuLogo")));
 
             _characterBox = new UI_Box(A3RData, 300, 200, new Vector(20, 20));
-            _statBox = new UI_TextBox(A3RData, 300, 600, new Vector(20, 240));
+            _statBox = new UI_TextBox(A3RData, 300, 370, new Vector(20, 240));
             _equipBox = new UI_EquipBox(A3RData, 300, 750, new Vector(Width(1) - 320, 20));
 
             UI_Button _nextButton = new UI_Button(Camera, "Next", Width(1) -170, Height(1)-60, FinishShopButton);
@@ -53,6 +53,9 @@ namespace ArtillerySeries.src
             AddElement(_equipBox);
             AddElement(_characterBox);
             AddElement(_statBox);
+
+            AddElement(new UI_HealthUpgradeButton(a3RData, 300, 60, new Vector(20, _statBox.Pos.Y + 390)));
+            AddElement(new UI_ArmourUpgradeButton(a3RData, 300, 60, new Vector(20, _statBox.Pos.Y + 390 + 80)));
 
             AddElement(_fadeFx);
 

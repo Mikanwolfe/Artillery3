@@ -65,6 +65,7 @@
     <Compile Include="src\User Interface\UI_ShopButton.cs" />
     <Compile Include="src\User Interface\UI_ShopItems.cs" />
     <Compile Include="src\User Interface\UI_ShopMenu.cs" />
+    <Compile Include="src\User Interface\UI_StatUpgradeButton.cs" />
     <Compile Include="src\User Interface\UI_TextBox.cs" />
     <Compile Include="src\User Interface\UI_WeaponEquipBox.cs" />
     <Compile Include="src\User Interface\UI_WinUI.cs" />

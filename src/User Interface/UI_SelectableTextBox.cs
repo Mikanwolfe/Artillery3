@@ -10,6 +10,7 @@ namespace ArtillerySeries.src
     public class UI_SelectableTextBox : UI_TextBox
     {
         private bool _mouseOver;
+        private bool _holdsSelection = true;
         private Color _highlightColour;
         Rectangle _activeMouseArea;
         Rectangle _rectangleArea;
@@ -78,7 +79,8 @@ namespace ArtillerySeries.src
                 if (SwinGame.MouseClicked(MouseButton.LeftButton))
                 {
                     _alphaValue = 255;
-                    _mouseSelected = !_mouseSelected;
+                    if (_holdsSelection)
+                        _mouseSelected = !_mouseSelected;
                     _playerSelectedWeapon?.Invoke();
                 }
                     
@@ -90,5 +92,6 @@ namespace ArtillerySeries.src
 
         public PlayerSelectedWeapon OnPlayerSelectWeapon { get => _playerSelectedWeapon; set => _playerSelectedWeapon = value; }
         public bool Selected { get => _mouseSelected; set => _mouseSelected = value; }
+        public bool HoldsSelection { get => _holdsSelection; set => _holdsSelection = value; }
     }
 }
