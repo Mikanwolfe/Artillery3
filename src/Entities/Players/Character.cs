@@ -117,7 +117,7 @@ namespace ArtillerySeries.src
             {
                 Width = 70,
                 Height = 15,
-                Y = -65
+                Y = -70
             };
             _nameBoxTarget.X = -_nameBoxTarget.Width / 2;
 
@@ -380,6 +380,8 @@ namespace ArtillerySeries.src
             _healthColor = FadeColorTo(_healthColor, _healthColorTarget);
             _textColor = FadeColorTo(_textColor, _textColorTarget);
 
+            if (_healthPercentage < 1.1f)
+                _healthColorTarget = SwinGame.RGBAColor(87, 128, 109, 200);
             if (_healthPercentage < 0.7f)
                 _healthColorTarget = SwinGame.RGBAColor(198, 162, 106, 240);
             if (_healthPercentage < 0.4f)
@@ -426,7 +428,7 @@ namespace ArtillerySeries.src
 
             
 
-            SwinGame.DrawText(_parent.Name + " | " + Name, _textColor, SwinGame.FontNamed("smallFont"), Pos.X - _offsetText, Pos.Y + _nameBoxTarget.Y);
+            SwinGame.DrawText(_parent.Name + " | " + Name, _textColor, SwinGame.FontNamed("smallFont"), Pos.X - _offsetText*0.9f, Pos.Y + _nameBoxTarget.Y);
             //DrawTextCentre("Health: " + (int)_health, Color.Black, Pos.X, Pos.Y - 50);
             //DrawTextCentre("Armour: " + (int)_armour, Color.Black, Pos.X, Pos.Y - 40);
             //DrawTextCentre(Name, Color.DarkGray, Pos.X, Pos.Y - 30);
