@@ -42,7 +42,7 @@ namespace ArtillerySeries.src
         public override void Update()
         {
             _currentHealth = (int)A3RData.SelectedPlayer.Character.MaxHealth;
-            _nextHealth = (int)(_currentHealth * 1.2f);
+            _nextHealth = (int)(_currentHealth * 1.3f);
 
             int _numUpgrades = A3RData.SelectedPlayer.Character.NumHealthUpgrades;
             _cost = (int)(Math.Pow(2, _numUpgrades*1.2) * 90) + 300;
@@ -108,7 +108,7 @@ namespace ArtillerySeries.src
         public override void Update()
         {
             _currentHealth = (int)A3RData.SelectedPlayer.Character.MaxArmour;
-            _nextHealth = (int)(_currentHealth * 1.2f);
+            _nextHealth = (int)(_currentHealth * 1.3f);
 
             int _numUpgrades = A3RData.SelectedPlayer.Character.NumArmourUpgrades;
             _cost = (int)(Math.Pow(2, _numUpgrades * 1.2) * 90) + 300;

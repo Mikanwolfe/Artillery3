@@ -14,6 +14,7 @@ namespace ArtillerySeries.src
         A3RData _a3RData;
 
         UI_LoadingBar _playerChargeBar;
+        UI_LoadingBar _playerFuel;
         public UI_Combat(A3RData a3RData)
             : base(a3RData)
         {
@@ -23,8 +24,13 @@ namespace ArtillerySeries.src
                 (int)(_a3RData.WindowRect.Width * 0.7),
                 (int)(_a3RData.WindowRect.Height * 0.88));
 
+            _playerFuel = new UI_LoadingBar(_a3RData.Camera, 400, 20, Color.SteelBlue,
+                (int)(_a3RData.WindowRect.Width * 0.7),
+                (int)(_a3RData.WindowRect.Height * 0.92));
+
 
             AddElement(_playerChargeBar);
+            AddElement(_playerFuel);
 
             AddElement(new UI_Minimap(a3RData, Camera));
 
@@ -56,6 +62,7 @@ namespace ArtillerySeries.src
         public override void Update()
         {
             _playerChargeBar.UpdateLoadingBar(A3RData.SelectedPlayer.WeaponChargePercentage);
+            _playerFuel.UpdateLoadingBar(A3RData.SelectedPlayer.Character.Fuel);
             _playerChargeBar.SetPlayerPreviousPercentage(A3RData.SelectedPlayer.PreviousWeaponCharge);
             base.Update();
         }

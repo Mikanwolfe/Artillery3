@@ -59,6 +59,9 @@ namespace ArtillerySeries.src
         float _health, _armour;
         float _maxHealth = 100, _maxArmour = 100;
 
+        int _maxFuel = 250;
+        int _fuel;
+
         int _weaponCapacity = 4;
         int _inventoryCapacity = 4;
 
@@ -72,8 +75,6 @@ namespace ArtillerySeries.src
         bool _isChargingWeapon, _wasChargingWeapon;
 
         Weapon _selectedWeapon;
-        Weapon _weapon;
-        Weapon _weapon2;
         private List<Weapon> _weaponList;
         private List<Weapon> _inventory;
 
@@ -148,7 +149,7 @@ namespace ArtillerySeries.src
             _textColor = SwinGame.RGBAColor(0, 0, 0, 0);
             _textColorTarget = SwinGame.RGBAColor(20, 20, 50, 140);
 
-
+            _fuel = _maxFuel;
 
             _maxArmour = armour;
             _maxHealth = health;
@@ -158,7 +159,7 @@ namespace ArtillerySeries.src
             _state = new StateComponent<CharacterState>(CharacterState.Idle);
 
 
-            _selectedWeapon = _weapon;
+            _selectedWeapon = null;
             _physics.WindFrictionMult = 0.01f;
 
             _switchWeaponTimer = new Timer(20);
@@ -272,9 +273,13 @@ namespace ArtillerySeries.src
 
         void Move(float acc)
         {
-            if ((PeekState() == CharacterState.Idle) || (PeekState() == CharacterState.Walking))
-                if (_physics.OnGround)
-                    _physics.AccX = acc;
+            _fuel--;
+            if (_fuel > 0)
+            {
+                if ((PeekState() == CharacterState.Idle) || (PeekState() == CharacterState.Walking))
+                    if (_physics.OnGround)
+                        _physics.AccX = acc;
+            }
         }
 
         public void NewTurn()
@@ -283,7 +288,7 @@ namespace ArtillerySeries.src
             {
                 w?.Reload();
             }
-
+            _fuel = _maxFuel;
             _textColor = Color.LightPink;
 
             _wasChargingWeapon = false;
@@ -542,6 +547,7 @@ namespace ArtillerySeries.src
                     if (nextState == CharacterState.Dead)
                     {
                         Artillery3R.Services.ParticleEngine.CreateFastExplosion(Pos, 100);
+                        SwinGame.PlaySoundEffect("charDie");
                         //DO more die stuff
 
                     }
@@ -612,6 +618,7 @@ namespace ArtillerySeries.src
         public List<Weapon> WeaponList { get => _weaponList; set => _weaponList = value; }
         public int NumHealthUpgrades { get => _numHealthUpgrades; set => _numHealthUpgrades = value; }
         public int NumArmourUpgrades { get => _numArmourUpgrades; set => _numArmourUpgrades = value; }
+        public float Fuel { get => (float)_fuel / _maxFuel; }
 
 
         #endregion
