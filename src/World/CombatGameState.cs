@@ -89,12 +89,12 @@ namespace ArtillerySeries.src
             Artillery3R.Services.PhysicsEngine.Clear();
             Artillery3R.Services.ParticleEngine.Clear();
 
-            EnvironmentPreset _temporaryPreset = new EnvironmentPreset("Sad Day", 3);
+            EnvironmentPreset _temporaryPreset = new EnvironmentPreset("Snowy Day", 3);
             _temporaryPreset.ParallaxBgCoef = new float[] { 0.70f, 0.65f, 0.55f };
-            _temporaryPreset.ParallaxBgColor = new Color[] {SwinGame.RGBAFloatColor(0f, 0.2f, 0f, 1),
-                                                            SwinGame.RGBAFloatColor(0.1f, 0.3f, 0.1f, 1),
-                                                            SwinGame.RGBAFloatColor(0.2f, 0.4f, 0.2f, 1) };
-            _temporaryPreset.BgColor = Color.CadetBlue;
+            _temporaryPreset.ParallaxBgColor = new Color[] {SwinGame.RGBAColor(3, 21, 46, 255),
+                                                            SwinGame.RGBAColor(52, 51, 50, 255),
+                                                            SwinGame.RGBAColor(188, 195, 210, 255) };
+            _temporaryPreset.BgColor = SwinGame.RGBAColor(229, 218, 248, 1);
             _temporaryPreset.CloudColor = Color.Gray;
 
             A3RData.Environment = new Environment(_windowRect, A3RData.Camera);

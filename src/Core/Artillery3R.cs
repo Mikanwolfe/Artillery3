@@ -131,6 +131,8 @@ namespace ArtillerySeries.src
             SwinGame.LoadBitmapNamed("menuLogo", "menu_logo.png");
             SwinGame.LoadBitmapNamed("menuGradientFull", "menu_gradient_fulltrans.png");
             SwinGame.LoadBitmapNamed("menuGradientHalf", "menu_gradient_halftrans.png");
+            SwinGame.LoadBitmapNamed("menuLeftWhite", "leftwhite.png");
+            SwinGame.LoadBitmapNamed("fullBg", "fullbg.jpg");
             SwinGame.LoadBitmapNamed("startButton", "menu_start.png");
             SwinGame.LoadBitmapNamed("loadButton", "menu_load.png");
             SwinGame.LoadBitmapNamed("optionsButton", "menu_options.png");

@@ -77,7 +77,7 @@ namespace ArtillerySeries.src
 
         public Terrain Generate()
         {
-            Terrain _terrain = _terrainFactory.Generate(SwinGame.RGBAFloatColor(0.4f, 0.6f, 0.4f, 1f));
+            Terrain _terrain = _terrainFactory.Generate(SwinGame.RGBAColor(241, 243, 246, 255));
             return _terrain;
         }
 
@@ -114,7 +114,7 @@ namespace ArtillerySeries.src
                     Y = _particleY
                 };
 
-                Artillery3R.Services.ParticleEngine.CreateNonCollideParticle(_particleSpawnPoint, Color.Black,
+                Artillery3R.Services.ParticleEngine.CreateNonCollideParticle(_particleSpawnPoint, SwinGame.RGBAColor(248, 244, 252, 255),
                 0f, 10f, 0.2f, 1);
             }
         }

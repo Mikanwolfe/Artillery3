@@ -308,8 +308,9 @@ namespace ArtillerySeries.src
 
             }
 
-            DrawTextCentre("Health: " + (int)_health, Color.DarkGray, Pos.X, Pos.Y - 50);
-            DrawTextCentre("Armour: " + (int)_armour, Color.DarkGray, Pos.X, Pos.Y - 40);
+            //This is next
+            DrawTextCentre("Health: " + (int)_health, Color.Black, Pos.X, Pos.Y - 50);
+            DrawTextCentre("Armour: " + (int)_armour, Color.Black, Pos.X, Pos.Y - 40);
             DrawTextCentre(Name, Color.DarkGray, Pos.X, Pos.Y - 30);
 
 

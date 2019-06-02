@@ -25,17 +25,17 @@ namespace ArtillerySeries.src
         public override void Draw()
         {
 
-            SwinGame.FillRectangle(Color.Black,
+            SwinGame.FillRectangle(Color.White,
                 Pos.X + Camera.Pos.X,
                 Pos.Y + _height / 2 - 1 + Camera.Pos.Y,
                 _width,
                 2);
-            SwinGame.FillRectangle(Color.Black,
+            SwinGame.FillRectangle(Color.White,
                 Pos.X + Camera.Pos.X,
                 Pos.Y + Camera.Pos.Y,
                 4,
                 _height);
-            SwinGame.FillRectangle(Color.Black,
+            SwinGame.FillRectangle(Color.White,
                 Pos.X + Camera.Pos.X + _width,
                 Pos.Y + Camera.Pos.Y,
                 4,
@@ -43,13 +43,13 @@ namespace ArtillerySeries.src
 
             foreach (Player p in _a3RData.Players)
             {
-                SwinGame.FillCircle(Color.Black,
+                SwinGame.FillCircle(Color.White,
                     Camera.Pos.X + Pos.X + (_width * (p.Pos.X / (float)_a3RData.Terrain.Map.Length)),
                     Camera.Pos.Y + Pos.Y + _height / 2 - 1,
                     3);
             }
             Player s = _a3RData.SelectedPlayer;
-            SwinGame.DrawCircle(Color.Red,
+            SwinGame.DrawCircle(Color.Purple,
                     Camera.Pos.X + Pos.X + (_width * (s.Pos.X / (float)_a3RData.Terrain.Map.Length)),
                     Camera.Pos.Y + Pos.Y + _height / 2 - 1,
                     5);
