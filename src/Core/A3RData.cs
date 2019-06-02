@@ -82,13 +82,13 @@ namespace ArtillerySeries.src
 
             _shopWeapons = new List<Weapon>();
 
-            Weapon _weapon = new Weapon("75mm CLS-T Lensed X11 Laser", -5, 30, ProjectileType.Laser);
-            _weapon.AutoloaderClip = 1;
+            Weapon _weapon = new Weapon("75mm CLS-T Lensed x2 Laser Mount", -5, 30, ProjectileType.Laser);
+            _weapon.AutoloaderClip = 2;
             _weapon.WeaponMaxCharge = 40;
             _weapon.AimDispersion = 5.5f;
-            _weapon.BaseDamage = 80;
+            _weapon.BaseDamage = 60;
             _weapon.ExplRad = 3;
-            _weapon.DamageRad = 80;
+            _weapon.DamageRad = 70;
             _weapon.Rarity = 1;
             _weapon.ShortDesc = "Nothing says experimental like duct tape everywhere. Even on the lens.";
             _weapon.LongDesc = "Somewhat mediocre damage but surprisingly consistent... somehow.";
