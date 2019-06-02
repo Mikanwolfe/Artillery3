@@ -82,6 +82,19 @@ namespace ArtillerySeries.src
 
             _shopWeapons = new List<Weapon>();
 
+            Weapon _weapon = new Weapon("75mm CLS-T Lensed X11 Laser", -5, 30, ProjectileType.Laser);
+            _weapon.AutoloaderClip = 1;
+            _weapon.WeaponMaxCharge = 40;
+            _weapon.AimDispersion = 5.5f;
+            _weapon.BaseDamage = 80;
+            _weapon.ExplRad = 3;
+            _weapon.DamageRad = 80;
+            _weapon.Rarity = 1;
+            _weapon.ShortDesc = "Nothing says experimental like duct tape everywhere. Even on the lens.";
+            _weapon.LongDesc = "Somewhat mediocre damage but surprisingly consistent... somehow.";
+            _weapon.Cost = 1080;
+            _shopWeapons.Add(_weapon);
+
             Weapon _howitzer = new Weapon("152mm/22 Howitzer", 0, 40, ProjectileType.Shell);
             _howitzer.BaseDamage = 100;
             _howitzer.AimDispersion = 5;
@@ -94,7 +107,7 @@ namespace ArtillerySeries.src
             _howitzer.Cost = 1220;
             _shopWeapons.Add(_howitzer);
 
-            Weapon _weapon = new Weapon("90mm/109 LFS 'Claymore'", -5, 40, ProjectileType.Shell);
+            _weapon = new Weapon("90mm/109 LFS 'Claymore'", -5, 40, ProjectileType.Shell);
             _weapon.AutoloaderClip = 3;
             _weapon.WeaponMaxCharge = 50;
             _weapon.AimDispersion = 1.5f;
