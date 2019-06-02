@@ -33,7 +33,7 @@ namespace ArtillerySeries.src
                 _camera.Pos.X + Pos.X + 60, _camera.Pos.Y + Pos.Y + 30);
 
             SwinGame.DrawText("H", Color.DarkRed, SwinGame.FontNamed("winnerFont"),
-                _camera.Pos.X + Pos.X + 21, _camera.Pos.Y + Pos.Y + 16);
+                _camera.Pos.X + Pos.X + 23, _camera.Pos.Y + Pos.Y + 16);
 
             SwinGame.DrawRectangle(Color.DarkRed, _camera.Pos.X + Pos.X + 10, _camera.Pos.Y + Pos.Y + 10,
                 40, 40);
@@ -45,7 +45,7 @@ namespace ArtillerySeries.src
             _nextHealth = (int)(_currentHealth * 1.3f);
 
             int _numUpgrades = A3RData.SelectedPlayer.Character.NumHealthUpgrades;
-            _cost = (int)(Math.Pow(2, _numUpgrades*1.2) * 90) + 300;
+            _cost = (int)(Math.Pow(2, _numUpgrades*1.1) * 90) + 300;
 
             if (Selected)
             {
@@ -88,7 +88,7 @@ namespace ArtillerySeries.src
         public override void Draw()
         {
             base.Draw();
-            SwinGame.DrawText("Armour++ ", Color.LightGray, SwinGame.FontNamed("shopFont"),
+            SwinGame.DrawText("Armour++ ", Color.White, SwinGame.FontNamed("shopFont"),
                 _camera.Pos.X + Pos.X + 60, _camera.Pos.Y + Pos.Y + 10);
 
             SwinGame.DrawText(_currentHealth + ">>" + _nextHealth, Color.White, SwinGame.FontNamed("winnerFont"),
@@ -98,10 +98,10 @@ namespace ArtillerySeries.src
                 SwinGame.FontNamed("shopFont"),
                 _camera.Pos.X + Pos.X + 60, _camera.Pos.Y + Pos.Y + 30);
 
-            SwinGame.DrawText("A", Color.LightGray, SwinGame.FontNamed("winnerFont"),
-                _camera.Pos.X + Pos.X + 21, _camera.Pos.Y + Pos.Y + 16);
+            SwinGame.DrawText("A", Color.White, SwinGame.FontNamed("winnerFont"),
+                _camera.Pos.X + Pos.X + 23, _camera.Pos.Y + Pos.Y + 16);
 
-            SwinGame.DrawRectangle(Color.LightGray, _camera.Pos.X + Pos.X + 10, _camera.Pos.Y + Pos.Y + 10,
+            SwinGame.DrawRectangle(Color.White, _camera.Pos.X + Pos.X + 10, _camera.Pos.Y + Pos.Y + 10,
                 40, 40);
         }
 
@@ -111,7 +111,7 @@ namespace ArtillerySeries.src
             _nextHealth = (int)(_currentHealth * 1.3f);
 
             int _numUpgrades = A3RData.SelectedPlayer.Character.NumArmourUpgrades;
-            _cost = (int)(Math.Pow(2, _numUpgrades * 1.2) * 90) + 300;
+            _cost = (int)(Math.Pow(2, _numUpgrades * 1.1) * 90) + 300;
 
             if (Selected)
             {
