@@ -45,6 +45,7 @@ namespace ArtillerySeries.src
 
         int _playersAlive;
 
+        Bitmap _backgroundBg;
 
         NotifyGameEnded onNotifyGameEnded;
 
@@ -73,6 +74,8 @@ namespace ArtillerySeries.src
             _observer = new CombatStateObserver(this);
 
             UIModule = new UI_Combat(A3RData);
+
+            _backgroundBg = SwinGame.BitmapNamed("combatBg");
 
             _turnCount = 0;
         }
@@ -243,6 +246,7 @@ namespace ArtillerySeries.src
         public override void Draw()
         {
             SwinGame.ClearScreen(A3RData.Environment.SkyColor);
+            _backgroundBg.Draw(_a3RData.Camera.Pos.X, _a3RData.Camera.Pos.Y - 500);
             A3RData.Environment.Draw();
             A3RData.Terrain.Draw();
 

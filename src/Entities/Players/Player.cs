@@ -58,12 +58,15 @@ namespace ArtillerySeries.src
         public void NewTurn()
         {
             _character.NewTurn();
+            _character.Selected = true;
         }
 
         public void Initiallise()
         {
+            
             _character.SetFiringNotif(CharacterFired);
             _character.Initialise();
+            _character.Selected = false;
         }
 
         public void SwitchState(PlayerState state)
@@ -72,6 +75,7 @@ namespace ArtillerySeries.src
 
             if (state == PlayerState.EndTurn)
             {
+                _character.Selected = false;
                 _subjectComponent.Notify(this, ObserverEvent.PlayerEndedTurn);
             }
 
@@ -132,7 +136,7 @@ namespace ArtillerySeries.src
                 //Idle --> ObvsProj is an event
 
                 case PlayerState.Idle:
-
+                    
                     if (_character.PeekState() == CharacterState.Firing)
                     {
                         _subjectComponent.Notify(this, ObserverEvent.PlayerIsChargingWeapon);

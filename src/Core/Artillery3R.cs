@@ -139,6 +139,7 @@ namespace ArtillerySeries.src
             SwinGame.LoadBitmapNamed("exitButton", "menu_exit.png");
             SwinGame.LoadBitmapNamed("shopBg", "shopbg.jpg");
             SwinGame.LoadBitmapNamed("fadeFx", "fadefxshop.png");
+            SwinGame.LoadBitmapNamed("combatBg", "imagebg.jpg");
 
             SwinGame.LoadBitmapNamed("startButtonSelected", "menu_start_selected.png");
             SwinGame.LoadBitmapNamed("loadButtonSelected", "menu_load_selected.png");
