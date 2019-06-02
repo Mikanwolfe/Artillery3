@@ -28,6 +28,8 @@ namespace ArtillerySeries.src
 
         Timer _switchWeaponTimer;
 
+        Player _parent;
+
         Rectangle _targetBox;
         Rectangle _rearGlassBox;
         Rectangle _armourBox;
@@ -54,6 +56,8 @@ namespace ArtillerySeries.src
         int _weaponCapacity = 4;
         int _inventoryCapacity = 4;
 
+        int _offsetText = 0;
+
         Bitmap _charBitmap; // use sprites
         PhysicsComponent _physics;
         StateComponent<CharacterState> _state;
@@ -74,9 +78,10 @@ namespace ArtillerySeries.src
 
         #region Constructor
 
-        public Character(string name, int health, int armour)
+        public Character(string name, int health, int armour, Player parent)
             : base(name)
         {
+            _parent = parent;
             _weaponList = new List<Weapon>(_weaponCapacity);
             _inventory = new List<Weapon>(_inventoryCapacity);
 
@@ -112,12 +117,12 @@ namespace ArtillerySeries.src
             {
                 Width = 70,
                 Height = 15,
-                Y = -20
+                Y = -65
             };
             _nameBoxTarget.X = -_nameBoxTarget.Width / 2;
 
             _glassColor = SwinGame.RGBAColor(0, 0, 0, 0);
-            _glassColorTarget = SwinGame.RGBAColor(240, 240, 240, 150);
+            _glassColorTarget = SwinGame.RGBAColor(250, 250, 255, 160);
 
             _healthColor = SwinGame.RGBAColor(0, 0, 0, 0);
             _healthColorTarget = SwinGame.RGBAColor(87, 128, 109, 200);
@@ -126,7 +131,7 @@ namespace ArtillerySeries.src
             _armourColorTarget = SwinGame.RGBAColor(124, 123, 127, 240);
 
             _textColor = SwinGame.RGBAColor(0, 0, 0, 0);
-            _textColorTarget = Color.DarkOrchid;
+            _textColorTarget = SwinGame.RGBAColor(20, 20, 50, 140);
 
 
 
@@ -263,6 +268,9 @@ namespace ArtillerySeries.src
             {
                 w?.Reload();
             }
+
+            _textColor = Color.LightPink;
+
             _wasChargingWeapon = false;
             _isChargingWeapon = false;
             _state.Switch(CharacterState.Idle);
@@ -330,10 +338,28 @@ namespace ArtillerySeries.src
 
         void UpdateBoxes()
         {
+            _offsetText = (_parent.Name + " | " + Name).ToString().Length * 4;
+
             _rearGlassBox.Width = _targetBox.Width;
             _rearGlassBox.Height = _targetBox.Height;
             _rearGlassBox.X = Pos.X - _targetBox.Width / 2;
             _rearGlassBox.Y = Pos.Y + _targetBox.Y;
+
+            _nameBox.Width += (_nameBoxTarget.Width - _nameBox.Width) / 20;
+            _nameBox.Height = _nameBoxTarget.Height;
+            _nameBox.X = Pos.X - _nameBox.Width/2;
+            _nameBox.Y = Pos.Y + _nameBoxTarget.Y;
+
+            if (_selected)
+            {
+                _nameBoxTarget.Width = _offsetText * 2.4f;
+                _textColorTarget = SwinGame.RGBAColor(42, 55, 115, 190);
+            }
+            else
+            {
+                _nameBoxTarget.Width = 0;
+                _textColorTarget = SwinGame.RGBAColor(0, 0, 0, 0);
+            }
 
             float _armourPercentage = _armour / _maxArmour;
 
@@ -352,6 +378,7 @@ namespace ArtillerySeries.src
             _glassColor = FadeColorTo(_glassColor, _glassColorTarget);
             _armourColor = FadeColorTo(_armourColor, _armourColorTarget);
             _healthColor = FadeColorTo(_healthColor, _healthColorTarget);
+            _textColor = FadeColorTo(_textColor, _textColorTarget);
 
             if (_healthPercentage < 0.7f)
                 _healthColorTarget = SwinGame.RGBAColor(198, 162, 106, 240);
@@ -389,6 +416,7 @@ namespace ArtillerySeries.src
             SwinGame.FillRectangle(_glassColor, _rearGlassBox);
             SwinGame.FillRectangle(_armourColor, _armourBox);
             SwinGame.FillRectangle(_healthColor, _healthBox);
+            SwinGame.FillRectangle(SwinGame.RGBAColor(250, 250, 255, 160), _nameBox);
 
             if (_selected)
             {
@@ -396,6 +424,9 @@ namespace ArtillerySeries.src
                 SwinGame.DrawText(((int)_armour).ToString(), Color.White, SwinGame.FontNamed("smallFont"), Pos.X - 85, Pos.Y - 50);
             }
 
+            
+
+            SwinGame.DrawText(_parent.Name + " | " + Name, _textColor, SwinGame.FontNamed("smallFont"), Pos.X - _offsetText, Pos.Y + _nameBoxTarget.Y);
             //DrawTextCentre("Health: " + (int)_health, Color.Black, Pos.X, Pos.Y - 50);
             //DrawTextCentre("Armour: " + (int)_armour, Color.Black, Pos.X, Pos.Y - 40);
             //DrawTextCentre(Name, Color.DarkGray, Pos.X, Pos.Y - 30);
@@ -412,6 +443,8 @@ namespace ArtillerySeries.src
         public override void Update()
         {
             UpdateBoxes();
+            
+
             _switchWeaponTimer.Tick();
 
             if (_isChargingWeapon)

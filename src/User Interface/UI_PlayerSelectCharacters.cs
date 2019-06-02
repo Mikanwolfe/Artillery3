@@ -71,7 +71,7 @@ namespace ArtillerySeries.src
                 switch (uiEventArgs.Text)
                 {
                     case "gwt":
-                        newCharacter = new Character("G.W. Tiger", 150, 100);
+                        newCharacter = new Character("G.W. Tiger", 150, 100, A3RData.Players[_playerIndex]);
 
                         startingWeapon = new Weapon("G.W. 150mm/78 Morser", -20, 90, ProjectileType.Shell);
                         startingWeapon.BaseDamage = 100;
@@ -90,7 +90,7 @@ namespace ArtillerySeries.src
                         break;
 
                     case "obj":
-                        newCharacter = new Character("Object 15X", 75, 175);
+                        newCharacter = new Character("Object 15X", 75, 175, A3RData.Players[_playerIndex]);
 
                         startingWeapon = new Weapon("190mm D-76ST 15X", 0, 45, ProjectileType.Shell);
                         startingWeapon.BaseDamage = 220;
@@ -108,7 +108,7 @@ namespace ArtillerySeries.src
                         break;
 
                     case "int":
-                        newCharacter = new Character("Innocentia", 100, 150);
+                        newCharacter = new Character("Innocentia", 100, 150, A3RData.Players[_playerIndex]);
 
                         startingWeapon = new Weapon("120mm Kati-S / Sat. Enabled.", 0, 45, ProjectileType.Shell);
                         startingWeapon.BaseDamage = 80;

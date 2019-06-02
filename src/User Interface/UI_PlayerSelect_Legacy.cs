@@ -151,7 +151,7 @@ namespace ArtillerySeries.src
             switch (uiEventArgs.Text)
             {
                 case "gwt":
-                    newCharacter = new Character("G.W. Tiger", 100, 250);
+                    newCharacter = new Character("G.W. Tiger", 100, 250, _players[currentIndexPlayer - 1]);
                     Weapon autoLoader = new Weapon("BatChat Autoloader", 10, 85, ProjectileType.Shell);
                     autoLoader.AutoloaderClip = 5;
                     autoLoader.ProjectilesFiredPerTurn = 3;
@@ -164,12 +164,12 @@ namespace ArtillerySeries.src
                     break;
 
                 case "obj":
-                    _players[currentIndexPlayer-1].Character = new Character("Object 15X", 100, 100);
+                    _players[currentIndexPlayer-1].Character = new Character("Object 15X", 100, 100, _players[currentIndexPlayer - 1]);
                     Console.WriteLine("Obj Selected!");
                     break;
 
                 case "int":
-                    _players[currentIndexPlayer - 1].Character = new Character("Innocentia", 100, 100);
+                    _players[currentIndexPlayer - 1].Character = new Character("Innocentia", 100, 100, _players[currentIndexPlayer - 1]);
                     Console.WriteLine("int Selected!");
                     break;
 
