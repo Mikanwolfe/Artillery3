@@ -82,13 +82,13 @@ namespace ArtillerySeries.src
 
             _shopWeapons = new List<Weapon>();
 
-            Weapon _weapon = new Weapon("75mm CLS-T Lensed x2 Laser Mount", -5, 30, ProjectileType.Laser);
+            Weapon _weapon = new Weapon("75mm CLS-T Lensed x2 Laser Mount", -25, 25, ProjectileType.Laser);
             _weapon.AutoloaderClip = 2;
-            _weapon.WeaponMaxCharge = 40;
-            _weapon.AimDispersion = 5.5f;
-            _weapon.BaseDamage = 60;
+            _weapon.WeaponMaxCharge = 80;
+            _weapon.AimDispersion = 0.6f;
+            _weapon.BaseDamage = 200;
             _weapon.ExplRad = 3;
-            _weapon.DamageRad = 70;
+            _weapon.DamageRad = 60;
             _weapon.Rarity = 1;
             _weapon.ShortDesc = "Nothing says experimental like duct tape everywhere. Even on the lens.";
             _weapon.LongDesc = "Somewhat mediocre damage but surprisingly consistent... somehow.";
@@ -254,8 +254,8 @@ namespace ArtillerySeries.src
             _weapon = new Weapon("88mm x3 'Nadeko Snake' Laser Turret", -30, 30, ProjectileType.Laser);
             _weapon.AutoloaderClip = 2;
             _weapon.ProjectilesFiredPerTurn = 3;
-            _weapon.WeaponMaxCharge = 50;
-            _weapon.AimDispersion = 1.75f;
+            _weapon.WeaponMaxCharge = 100;
+            _weapon.AimDispersion = 1.55f;
             _weapon.BaseDamage = 450;
             _weapon.DamageRad = 80;
             _weapon.ExplRad = 10;
@@ -265,11 +265,11 @@ namespace ArtillerySeries.src
             _weapon.Cost = 18850;
             _shopWeapons.Add(_weapon);
 
-            Weapon _objLaser = new Weapon("90mm Neko-15X Laser", 0, 50, ProjectileType.Laser);
+            Weapon _objLaser = new Weapon("90mm Neko-15X Laser", -30, 30, ProjectileType.Laser);
             _objLaser.AutoloaderClip = 2;
-            _objLaser.WeaponMaxCharge = 50;
+            _objLaser.WeaponMaxCharge = 100;
             _objLaser.BaseDamage = 850;
-            _objLaser.AimDispersion = 0.35f;
+            _objLaser.AimDispersion = 0.25f;
             _objLaser.DamageRad = 100;
             _objLaser.ExplRad = 5;
             _objLaser.UsesSatellite = true;

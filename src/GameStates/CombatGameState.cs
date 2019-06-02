@@ -286,7 +286,7 @@ namespace ArtillerySeries.src
 
             foreach (Player p in A3RData.Players)
             {
-                p.Money += 50000 + Artillery3R.Services.Achievements.Damage / 3;
+                p.Money += 500 + Artillery3R.Services.Achievements.Damage / 3;
             }
 
             Artillery3R.Services.Achievements.Damage = 0;
