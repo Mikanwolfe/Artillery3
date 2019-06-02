@@ -51,7 +51,7 @@ namespace ArtillerySeries.src
             SwinGame.FillRectangle(Color.White, _backgroundRect2);
             SwinGame.FillRectangle(Color.White, _backgroundRect3);
 
-            SwinGame.DrawText( A3RData.SelectedPlayer.Name+" Wins!", Color.Black, SwinGame.FontNamed("winnerFont"),
+            SwinGame.DrawText( A3RData.SelectedPlayer.Name+" wins!", SwinGame.RGBAColor(20,20,50,255), SwinGame.FontNamed("winnerFont"),
                 Camera.Pos.X + Width(0.45f), Camera.Pos.Y + Height(0.48f));
             base.Draw();
         }

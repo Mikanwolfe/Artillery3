@@ -86,14 +86,41 @@ namespace ArtillerySeries.src
             _howitzer.BaseDamage = 200;
             _howitzer.AimDispersion = 5;
             _howitzer.WeaponMaxCharge = 40;
-            _howitzer.DamageRad = 200;
+            _howitzer.DamageRad = 150;
+            _howitzer.ExplRad = 20;
             _howitzer.Rarity = 1;
             _howitzer.ShortDesc = "A big gun with a short barrel; sacrifices range and accuracy for big boom.";
             _howitzer.LongDesc = "A well-worn 152mm howitzer.";
-            _howitzer.Cost = 700;
+            _howitzer.Cost = 1220;
             _shopWeapons.Add(_howitzer);
 
-            Weapon _coilgun = new Weapon("90mm Coilgun", -10, 40, ProjectileType.Gun);
+            Weapon _weapon = new Weapon("90mm/109 LFS 'Claymore'", -5, 40, ProjectileType.Shell);
+            _weapon.AutoloaderClip = 3;
+            _weapon.WeaponMaxCharge = 50;
+            _weapon.AimDispersion = 1.5f;
+            _weapon.BaseDamage = 100;
+            _weapon.ExplRad = 5;
+            _weapon.DamageRad = 60;
+            _weapon.Rarity = 1;
+            _weapon.ShortDesc = "'Designed and Manufactured by Lymilark Future Sciences' -- on the side.";
+            _weapon.LongDesc = "A three-clip low-calibre artillery piece.";
+            _weapon.Cost = 1650;
+            _shopWeapons.Add(_weapon);
+
+            _weapon = new Weapon("122mm/90 LFS 'Long Lance'", -5, 60, ProjectileType.Shell);
+            _weapon.AutoloaderClip = 2;
+            _weapon.WeaponMaxCharge = 60;
+            _weapon.AimDispersion = 1f;
+            _weapon.BaseDamage = 150;
+            _weapon.ExplRad = 8;
+            _weapon.DamageRad = 70;
+            _weapon.Rarity = 2;
+            _weapon.ShortDesc = "An older model from the Lymilark, the Long Lance boasts excellent accuracy.";
+            _weapon.LongDesc = "A higher-accuracy piece with surprisingly high damage.";
+            _weapon.Cost = 1650;
+            _shopWeapons.Add(_weapon);
+
+            Weapon _coilgun = new Weapon("90mm Exp. Coilgun", -10, 40, ProjectileType.Gun);
             _coilgun.AutoloaderClip = 2;
             _coilgun.AimDispersion = 3;
             _coilgun.ProjectilesFiredPerTurn = 4;
@@ -103,8 +130,47 @@ namespace ArtillerySeries.src
             _coilgun.Rarity = 2;
             _coilgun.ShortDesc = "A high-speed coilgun developed by CLS-T. Fires four rounds at once.";
             _coilgun.LongDesc = "Less artillery gun and more machine gun.";
-            _coilgun.Cost = 1000;
+            _coilgun.Cost = 2250;
             _shopWeapons.Add(_coilgun);
+
+            _weapon = new Weapon("181mm Obj. 261", 0, 70, ProjectileType.Shell);
+            _weapon.AutoloaderClip = 1;
+            _weapon.WeaponMaxCharge = 90;
+            _weapon.AimDispersion = 0.5f;
+            _weapon.BaseDamage = 200;
+            _weapon.DamageRad = 130;
+            _weapon.ExplRad = 20;
+            _weapon.Rarity = 2;
+            _weapon.ShortDesc = "Retrofitted from Anti-Air to Anti-Everything. Reminds you of twintails...";
+            _weapon.LongDesc = "Larger shell means large blast radius. Also means one shot.";
+            _weapon.Cost = 3520;
+            _shopWeapons.Add(_weapon);
+
+            _weapon = new Weapon("Hatsuyuki Type-11/N15", 0, 90, ProjectileType.Shell);
+            _weapon.AutoloaderClip = 3;
+            _weapon.WeaponMaxCharge = 90;
+            _weapon.AimDispersion = 0.5f;
+            _weapon.BaseDamage = 120;
+            _weapon.UsesSatellite = true;
+            _weapon.DamageRad = 70;
+            _weapon.ExplRad = 10;
+            _weapon.Rarity = 3;
+            _weapon.ShortDesc = "A relic of the Hatsuyuki Project; utilises the MAIA Satellite System";
+            _weapon.LongDesc = "Flexible but doesn't do much damage.";
+            _weapon.Cost = 3990;
+            _shopWeapons.Add(_weapon);
+
+            Weapon _acidWeapon = new Weapon("122mm CLS-T Type-91", -5, 50, ProjectileType.Acid);
+            _acidWeapon.AutoloaderClip = 2;
+            _acidWeapon.WeaponMaxCharge = 50;
+            _acidWeapon.AimDispersion = 2f;
+            _acidWeapon.BaseDamage = 50;
+            _acidWeapon.DamageRad = 80;
+            _acidWeapon.Rarity = 3;
+            _acidWeapon.ShortDesc = "Developed during the last Neko War, fires highly acidic projectiles";
+            _acidWeapon.LongDesc = "2-Round Acid Projectiles, otherwise, somewhat mediocre.";
+            _acidWeapon.Cost = 5080;
+            _shopWeapons.Add(_acidWeapon);
 
             Weapon _batchat155 = new Weapon("B.C. 155/58 de Canon", -5, 80, ProjectileType.Shell);
             _batchat155.AutoloaderClip = 5;
@@ -115,32 +181,48 @@ namespace ArtillerySeries.src
             _batchat155.Rarity = 3;
             _batchat155.ShortDesc = "An experimental autoloading weapon. Packs small punches.";
             _batchat155.LongDesc = "B.C. 155/58, a 5-Round Autoloading Artillery.";
-            _batchat155.Cost = 2610;
+            _batchat155.Cost = 5010;
             _shopWeapons.Add(_batchat155);
 
-            Weapon _acidWeapon = new Weapon("122mm CLS-T Type-91", -5, 80, ProjectileType.Acid);
-            _acidWeapon.AutoloaderClip = 2;
-            _acidWeapon.WeaponMaxCharge = 50;
-            _acidWeapon.AimDispersion = 2f;
-            _acidWeapon.BaseDamage = 50;
-            _acidWeapon.DamageRad = 80;
-            _acidWeapon.Rarity = 3;
-            _acidWeapon.ShortDesc = "Developed during the last Neko War, fires highly acidic projectiles";
-            _acidWeapon.LongDesc = "2-Round Acid Projectiles, otherwise, somewhat mediocre.";
-            _acidWeapon.Cost = 1850;
-            _shopWeapons.Add(_acidWeapon);
+            _weapon = new Weapon("381mm x2 CLS-T Typ. 67", 0, 70, ProjectileType.Shell);
+            _weapon.AutoloaderClip = 1;
+            _weapon.ProjectilesFiredPerTurn = 2;
+            _weapon.WeaponMaxCharge = 50;
+            _weapon.AimDispersion = 4f;
+            _weapon.BaseDamage = 180;
+            _weapon.DamageRad = 90;
+            _weapon.ExplRad = 25;
+            _weapon.Rarity = 3;
+            _weapon.ShortDesc = "An experimental dual-gun turret designed for cute girls.";
+            _weapon.LongDesc = "Fires two rounds, once -- big ones though.";
+            _weapon.Cost = 5860;
+            _shopWeapons.Add(_weapon);
 
             Weapon _gwtCannon = new Weapon("290mm/64 G.W. Tiger", -5, 90, ProjectileType.Shell);
             _gwtCannon.AutoloaderClip = 2;
             _gwtCannon.WeaponMaxCharge = 100;
-            _gwtCannon.AimDispersion = 2f;
-            _gwtCannon.BaseDamage = 300;
-            _gwtCannon.DamageRad = 100;
+            _gwtCannon.AimDispersion = 1f;
+            _gwtCannon.BaseDamage = 350;
+            _gwtCannon.DamageRad = 200;
             _gwtCannon.Rarity = 4;
             _gwtCannon.ShortDesc = "A weapon developed from the G.W. Tiger program, a deadly weapon, if it hits.";
             _gwtCannon.LongDesc = "High damage, long range, but surprisingly bad accuracy. ";
-            _gwtCannon.Cost = 5540;
+            _gwtCannon.Cost = 8940;
             _shopWeapons.Add(_gwtCannon);
+
+            _weapon = new Weapon("220mm/80 CLS-T 'Doki-Doki'", 0, 60, ProjectileType.Shell);
+            _weapon.AutoloaderClip = 3;
+            _weapon.ProjectilesFiredPerTurn = 3;
+            _weapon.WeaponMaxCharge = 50;
+            _weapon.AimDispersion = 6f;
+            _weapon.BaseDamage = 240;
+            _weapon.DamageRad = 90;
+            _weapon.ExplRad = 20;
+            _weapon.Rarity = 4;
+            _weapon.ShortDesc = "A mix of sadness and sweetness with a tinge of searing iron.";
+            _weapon.LongDesc = "Three by three they come! Are we missing one? Jus------";
+            _weapon.Cost = 11150;
+            _shopWeapons.Add(_weapon);
 
             Weapon _yamatoTurret = new Weapon("460mm/18.1in Type 94 Triple Turret", -5, 90, ProjectileType.Shell);
             _yamatoTurret.AutoloaderClip = 1;
@@ -153,7 +235,7 @@ namespace ArtillerySeries.src
             _yamatoTurret.Rarity = 5;
             _yamatoTurret.ShortDesc = "A miniaturised version of the Yamato's triple-turrets. For cute girls.";
             _yamatoTurret.LongDesc = "High damage, long range, but even worse accuracy!";
-            _yamatoTurret.Cost = 8760;
+            _yamatoTurret.Cost = 16360;
             _shopWeapons.Add(_yamatoTurret);
 
             Weapon _objLaser = new Weapon("90mm Neko-15X Laser", 0, 50, ProjectileType.Laser);
@@ -167,7 +249,7 @@ namespace ArtillerySeries.src
             _objLaser.Rarity = 6;
             _objLaser.ShortDesc = "A technologically advanced laser developed from the Neko-15X project. Top Secret.";
             _objLaser.LongDesc = "Fires lasers similar to Maia, however, has low explosion radius.";
-            _objLaser.Cost = 16800;
+            _objLaser.Cost = 39800;
             _shopWeapons.Add(_objLaser);
 
 
@@ -182,7 +264,7 @@ namespace ArtillerySeries.src
             _massDriver.Rarity = 7;
             _massDriver.ShortDesc = "A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.";
             _massDriver.LongDesc = "Holding two rounds, it was salvaged from KTNS Hatsuyuki.";
-            _massDriver.Cost = 35420;
+            _massDriver.Cost = 195420;
             _shopWeapons.Add(_massDriver);
 
             _rarityReference = new Dictionary<int, Color>();
