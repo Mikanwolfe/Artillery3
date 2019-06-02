@@ -156,6 +156,18 @@ namespace ArtillerySeries.src
             SwinGame.LoadSoundEffectNamed("mechTurnOn", "UI_Mechanical_Turning-On_03_Raw.ogg");
             SwinGame.LoadSoundEffectNamed("mechFail", "UI_Mechanical_Error_11_FX_01.ogg");
 
+            SwinGame.LoadSoundEffectNamed("entryboomCombat", "entryboom-combat.ogg");
+            SwinGame.LoadSoundEffectNamed("entryboomShop", "entryboom-shop.ogg");
+            SwinGame.LoadSoundEffectNamed("winSound", "winsfx.ogg");
+
+            SwinGame.LoadSoundEffectNamed("expl1", "expl1.ogg");
+            SwinGame.LoadSoundEffectNamed("expl2", "expl2.ogg");
+            SwinGame.LoadSoundEffectNamed("expl3", "expl3.ogg");
+
+            SwinGame.LoadMusicNamed("generalBg", "carpark_underground_003.ogg");
+            SwinGame.LoadMusicNamed("shopDrone", "menuDrones.ogg");
+            SwinGame.LoadMusicNamed("menuAmbience", "menuAmbience.ogg");
+
             SwinGame.LoadFontNamed("guiFont", "cour.ttf", 12);
             SwinGame.LoadFontNamed("winnerFont", "maven_pro_regular.ttf", 25);
             SwinGame.LoadFontNamed("shopFont", "maven_pro_regular.ttf", 15);

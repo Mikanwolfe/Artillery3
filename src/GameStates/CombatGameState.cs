@@ -92,6 +92,10 @@ namespace ArtillerySeries.src
             Artillery3R.Services.PhysicsEngine.Clear();
             Artillery3R.Services.ParticleEngine.Clear();
 
+            SwinGame.StopMusic();
+            SwinGame.PlayMusic("generalBg");
+            SwinGame.PlaySoundEffect("entryboomCombat");
+
             EnvironmentPreset _temporaryPreset = new EnvironmentPreset("Snowy Day", 3);
             _temporaryPreset.ParallaxBgCoef = new float[] { 0.70f, 0.65f, 0.55f };
             _temporaryPreset.ParallaxBgColor = new Color[] {SwinGame.RGBAColor(3, 21, 46, 255),
@@ -268,9 +272,15 @@ namespace ArtillerySeries.src
             A3RData.Camera.FocusCamera(focusPoint);
         }
 
+        public override void ExitState()
+        {
+            base.ExitState();
+        }
+
         public void NotifyCombatEndedGame()
         {
             Console.WriteLine("Combat just ended");
+            
             onNotifyGameEnded?.Invoke();
             _winCounterTimer.Enabled = false;
 
@@ -291,6 +301,7 @@ namespace ArtillerySeries.src
             switch (state)
             {
                 case CombatState.ShowWinScreen:
+                    SwinGame.PlaySoundEffect("winSound");
                     foreach (Player p in A3RData.Players)
                     {
                         if (p.IsAlive)

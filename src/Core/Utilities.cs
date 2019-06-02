@@ -105,6 +105,25 @@ namespace ArtillerySeries.src
             return (float)(Math.Tan((vector.Y / vector.X)) % (2*Math.PI));
         }
 
+        public static void PlayRandomExplosionSound()
+        {
+            switch(Math.Round(RandFloatBetween(1, 3)))
+            {
+                case 1:
+                    SwinGame.PlaySoundEffect("expl1");
+                    break;
+
+                case 2:
+                    SwinGame.PlaySoundEffect("expl2");
+                    break;
+
+                case 3:
+                    SwinGame.PlaySoundEffect("expl3");
+                    break;
+
+            }
+        }
+
         public static Point2D ZeroPoint2D()
         {
             return new Point2D()

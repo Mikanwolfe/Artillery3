@@ -37,6 +37,7 @@ namespace ArtillerySeries.src
 
         public virtual void ExitState()
         {
+            //SwinGameSDK.SwinGame.StopMusic();
         }
         public virtual void Draw()
         {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
@@ -115,6 +116,7 @@ namespace ArtillerySeries.src
 
         public virtual void Explode(Point2D pt)
         {
+            PlayRandomExplosionSound();
             BlowUpTerrain(pt);
             Artillery3R.Services.ParticleEngine.CreateFastExplosion(pt, 100);
             Artillery3R.Services.EntityManager.DamageEntities(this, _baseDamage, (int)_damageRad, pt);

@@ -121,7 +121,7 @@
     <Compile Include="src\Entities\Players\Weapons\WeaponAcidCannon.cs" />
     <Compile Include="src\User Interface\UI_WindMarker.cs" />
     <Compile Include="src\World\Wind.cs" />
-    <Compile Include="src\World\CombatGameState.cs" />
+    <Compile Include="src\GameStates\CombatGameState.cs" />
     <Compile Include="src\Components\CombatStateObserver.cs" />
   </ItemGroup>
   <ItemGroup>

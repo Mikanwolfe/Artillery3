@@ -35,6 +35,9 @@ namespace ArtillerySeries.src
             A3RData.Camera.FocusCamera(_scrollingPoint);
             A3RData.Camera.FocusLock = true;
 
+            SwinGame.StopMusic();
+            SwinGame.PlayMusic("shopDrone");
+            SwinGame.PlaySoundEffect("entryboomShop");
             
             base.EnterState();
         }
