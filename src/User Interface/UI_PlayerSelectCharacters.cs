@@ -75,7 +75,7 @@ namespace ArtillerySeries.src
 
                         startingWeapon = new Weapon("G.W. 150mm/78 Morser", -20, 90, ProjectileType.Shell);
                         startingWeapon.BaseDamage = 100;
-                        startingWeapon.AimDispersion = 2.1f;
+                        startingWeapon.AimDispersion = 3.1f;
                         startingWeapon.AutoloaderClip = 2;
                         startingWeapon.WeaponMaxCharge = 50;
                         startingWeapon.DamageRad = 50;
@@ -94,9 +94,9 @@ namespace ArtillerySeries.src
 
                         startingWeapon = new Weapon("190mm D-76ST 15X", 0, 45, ProjectileType.Shell);
                         startingWeapon.BaseDamage = 200;
-                        startingWeapon.AimDispersion = 3f;
+                        startingWeapon.AimDispersion = 0.9f;
                         startingWeapon.WeaponMaxCharge = 40;
-                        startingWeapon.DamageRad = 65;
+                        startingWeapon.DamageRad = 75;
                         startingWeapon.Rarity = 1;
                         startingWeapon.ShortDesc = "An experimental adaption from CLS-T developed during the last Neko Wars.";
                         startingWeapon.LongDesc = "Starting Weapon for Object 15X";
@@ -113,7 +113,7 @@ namespace ArtillerySeries.src
                         startingWeapon = new Weapon("120mm Kati-S / Sat. Enabled.", 0, 45, ProjectileType.Shell);
                         startingWeapon.BaseDamage = 80;
                         startingWeapon.ProjectilesFiredPerTurn = 2;
-                        startingWeapon.AimDispersion = 1.5f;
+                        startingWeapon.AimDispersion = 2.1f;
                         startingWeapon.WeaponMaxCharge = 70;
                         startingWeapon.DamageRad = 80;
                         startingWeapon.UsesSatellite = true;

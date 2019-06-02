@@ -23,6 +23,8 @@ namespace ArtillerySeries.src
         FacingDirection _direction;
         float _absAngle;
 
+        private bool _damageable = true;
+
         public Entity(string name)
         {
             _name = name;
@@ -42,6 +44,7 @@ namespace ArtillerySeries.src
         public virtual string LongDesc { get => _longDesc; set => _longDesc = value; }
         internal FacingDirection Direction { get => _direction; set => _direction = value; }
         public float AbsoluteAngle { get => _absAngle; set => _absAngle = value; }
+        public bool Damageable { get => _damageable; set => _damageable = value; }
 
         public abstract override void Draw();
 
@@ -49,7 +52,6 @@ namespace ArtillerySeries.src
 
         public virtual void Damage(float damage)
         {
-            //Base: Do nothing. Can't  be damaged.
         }
 
         public virtual void UpdatePosition(Point2D pos, FacingDirection direction, float absoluteAngle)

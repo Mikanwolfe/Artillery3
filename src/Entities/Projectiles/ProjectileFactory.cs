@@ -95,7 +95,8 @@ namespace ArtillerySeries.src
                     break;
 
                 case ProjectileType.Laser:
-                    mainProjectile = null;
+                    mainProjectile = new LaserTargetProjectile(parentWeapon.Name, parentWeapon,
+                        projectilePos, projectileVel, damage, explRad, damageRad);
                     break;
 
                 default:

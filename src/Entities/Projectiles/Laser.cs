@@ -20,6 +20,8 @@ namespace ArtillerySeries.src
         float _lifeTime;
         float _maxLife;
 
+        float _originalAlpha = 1;
+
         public Laser(string name, Weapon parentWeapon, Point2D from, Point2D to, float damage, float explRad, float damageRad)
             : base(name, parentWeapon, from, ZeroPoint2D(), damage, explRad, damageRad)
         {
@@ -29,6 +31,13 @@ namespace ArtillerySeries.src
             _lifeTime = _maxLife;
             Pos = from;
             Explode(to);
+        }
+
+        public Color Color { get => _color; set
+            {
+                _color = value;
+                _originalAlpha = ((float)value.A / 255);
+            }
         }
 
         public override void Draw()
@@ -57,7 +66,7 @@ namespace ArtillerySeries.src
                 if (_lifeTime < 0)
                     SwitchState(ProjectileState.Dead);
 
-                _color = SwinGame.RGBAColor(_color.R, _color.G, _color.B, (byte)(_lifeTime / _maxLife * 255));
+                _color = SwinGame.RGBAColor(_color.R, _color.G, _color.B, (byte)(_lifeTime / _maxLife * _originalAlpha * 255));
 
             }
             else

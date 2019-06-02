@@ -75,7 +75,7 @@ namespace ArtillerySeries.src
                
                 if (SwinGame.PointInCircle(e.Pos, pt.X, pt.Y, radius))
                 {
-                    if (e != parent)
+                    if (e != parent && e.Damageable)
                     {
                         float dealtDamage = DamageFromDistance(damage, pt, e.Pos, radius);
                         if (dealtDamage > 1)

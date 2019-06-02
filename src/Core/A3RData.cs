@@ -83,10 +83,10 @@ namespace ArtillerySeries.src
             _shopWeapons = new List<Weapon>();
 
             Weapon _howitzer = new Weapon("152mm/22 Howitzer", 0, 40, ProjectileType.Shell);
-            _howitzer.BaseDamage = 200;
+            _howitzer.BaseDamage = 100;
             _howitzer.AimDispersion = 5;
             _howitzer.WeaponMaxCharge = 40;
-            _howitzer.DamageRad = 150;
+            _howitzer.DamageRad = 120;
             _howitzer.ExplRad = 20;
             _howitzer.Rarity = 1;
             _howitzer.ShortDesc = "A big gun with a short barrel; sacrifices range and accuracy for big boom.";
@@ -126,7 +126,7 @@ namespace ArtillerySeries.src
             _coilgun.ProjectilesFiredPerTurn = 4;
             _coilgun.WeaponMaxCharge = 40;
             _coilgun.BaseDamage = 60;
-            _coilgun.DamageRad = 40;
+            _coilgun.DamageRad = 55;
             _coilgun.Rarity = 2;
             _coilgun.ShortDesc = "A high-speed coilgun developed by CLS-T. Fires four rounds at once.";
             _coilgun.LongDesc = "Less artillery gun and more machine gun.";
@@ -201,12 +201,12 @@ namespace ArtillerySeries.src
             Weapon _gwtCannon = new Weapon("290mm/64 G.W. Tiger", -5, 90, ProjectileType.Shell);
             _gwtCannon.AutoloaderClip = 2;
             _gwtCannon.WeaponMaxCharge = 100;
-            _gwtCannon.AimDispersion = 1f;
+            _gwtCannon.AimDispersion = 1.5f;
             _gwtCannon.BaseDamage = 350;
             _gwtCannon.DamageRad = 200;
             _gwtCannon.Rarity = 4;
             _gwtCannon.ShortDesc = "A weapon developed from the G.W. Tiger program, a deadly weapon, if it hits.";
-            _gwtCannon.LongDesc = "High damage, long range, but surprisingly bad accuracy. ";
+            _gwtCannon.LongDesc = "High damage, long range, and everything in-between. ";
             _gwtCannon.Cost = 8940;
             _shopWeapons.Add(_gwtCannon);
 
@@ -214,7 +214,7 @@ namespace ArtillerySeries.src
             _weapon.AutoloaderClip = 3;
             _weapon.ProjectilesFiredPerTurn = 3;
             _weapon.WeaponMaxCharge = 50;
-            _weapon.AimDispersion = 6f;
+            _weapon.AimDispersion = 8f;
             _weapon.BaseDamage = 240;
             _weapon.DamageRad = 90;
             _weapon.ExplRad = 20;
@@ -238,27 +238,41 @@ namespace ArtillerySeries.src
             _yamatoTurret.Cost = 16360;
             _shopWeapons.Add(_yamatoTurret);
 
+            _weapon = new Weapon("88mm x3 'Nadeko Snake' Laser Turret", -30, 30, ProjectileType.Laser);
+            _weapon.AutoloaderClip = 2;
+            _weapon.ProjectilesFiredPerTurn = 3;
+            _weapon.WeaponMaxCharge = 50;
+            _weapon.AimDispersion = 1.75f;
+            _weapon.BaseDamage = 450;
+            _weapon.DamageRad = 80;
+            _weapon.ExplRad = 10;
+            _weapon.Rarity = 5;
+            _weapon.ShortDesc = "Twice cursed and once more, fires just as hot as the darkness near Shirahebi Shrine.";
+            _weapon.LongDesc = "A direct hit is deadly, be careful of small-ish explosions.";
+            _weapon.Cost = 18850;
+            _shopWeapons.Add(_weapon);
+
             Weapon _objLaser = new Weapon("90mm Neko-15X Laser", 0, 50, ProjectileType.Laser);
-            _objLaser.AutoloaderClip = 1;
+            _objLaser.AutoloaderClip = 2;
             _objLaser.WeaponMaxCharge = 50;
-            _objLaser.BaseDamage = 150;
-            _objLaser.AimDispersion = 1f;
-            _objLaser.DamageRad = 20;
+            _objLaser.BaseDamage = 850;
+            _objLaser.AimDispersion = 0.35f;
+            _objLaser.DamageRad = 100;
             _objLaser.ExplRad = 5;
             _objLaser.UsesSatellite = true;
             _objLaser.Rarity = 6;
             _objLaser.ShortDesc = "A technologically advanced laser developed from the Neko-15X project. Top Secret.";
-            _objLaser.LongDesc = "Fires lasers similar to Maia, however, has low explosion radius.";
+            _objLaser.LongDesc = "Fires high-powered lasers similar to Maia.";
             _objLaser.Cost = 39800;
             _shopWeapons.Add(_objLaser);
 
 
-            Weapon _massDriver = new Weapon("210mm Kinetic Mass Driver", 0, 20, ProjectileType.Shell);
+            Weapon _massDriver = new Weapon("210mm Kinetic Mass Driver", 0, 20, ProjectileType.Laser);
             _massDriver.AutoloaderClip = 2;
             _massDriver.WeaponMaxCharge = 1000;
             _massDriver.AimDispersion = 0.001f;
             _massDriver.ExplRad = 80;
-            _massDriver.BaseDamage = 1000;
+            _massDriver.BaseDamage = 5000;
             _massDriver.DamageRad = 400;
             _massDriver.UsesSatellite = true;
             _massDriver.Rarity = 7;
