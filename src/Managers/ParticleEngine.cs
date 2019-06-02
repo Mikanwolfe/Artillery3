@@ -231,9 +231,9 @@ namespace ArtillerySeries.src
         {
             for (int i = 0; i < numParticles; i++)
             {
-                CreateAcidParticle(pos, Color.Cyan, 15, 2, 0.3f, 1, 0.02f);
-                CreateAcidParticle(pos, Color.LightBlue, 15, 2, 0.3f, 1, 0.02f);
-                CreateAcidParticle(pos, Color.GhostWhite, 15, 3, 0.3f, 1, 0.02f);
+                CreateAcidParticle(pos, Color.Cyan, 15, 2, 0.3f, 1, 0.1f);
+                CreateAcidParticle(pos, Color.LightBlue, 15, 2, 0.3f, 1, 0.1f);
+                CreateAcidParticle(pos, Color.GhostWhite, 15, 3, 0.3f, 1, 0.1f);
 
             }
         }
@@ -242,9 +242,9 @@ namespace ArtillerySeries.src
         {
             for (int i = 0; i < numParticles; i++)
             {
-                CreateAcidParticle(pos, Color.Orange, 20, 7, 0.3f, 1, 0.12f);
-                CreateAcidParticle(pos, Color.Yellow, 20, 7, 0.3f, 1, 0.12f);
-                CreateAcidParticle(pos, Color.Green, 20, 10, 0.3f, 1, 0.12f);
+                CreateAcidParticle(pos, Color.Orange, 20, 7, 0.3f, 1, 0.5f);
+                CreateAcidParticle(pos, Color.Yellow, 20, 7, 0.3f, 1, 0.4f);
+                CreateAcidParticle(pos, Color.Green, 20, 10, 0.3f, 1, 0.3f);
 
             }
         }
