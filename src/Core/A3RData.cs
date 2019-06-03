@@ -82,18 +82,6 @@ namespace ArtillerySeries.src
 
             _shopWeapons = new List<Weapon>();
 
-            Weapon _weapon = new Weapon("75mm CLS-T Lensed x2 Laser Mount", -25, 25, ProjectileType.Laser);
-            _weapon.AutoloaderClip = 2;
-            _weapon.WeaponMaxCharge = 80;
-            _weapon.AimDispersion = 0.6f;
-            _weapon.BaseDamage = 200;
-            _weapon.ExplRad = 3;
-            _weapon.DamageRad = 60;
-            _weapon.Rarity = 1;
-            _weapon.ShortDesc = "Nothing says experimental like duct tape everywhere. Even on the lens.";
-            _weapon.LongDesc = "Somewhat mediocre damage but surprisingly consistent... somehow.";
-            _weapon.Cost = 1080;
-            _shopWeapons.Add(_weapon);
 
             Weapon _howitzer = new Weapon("152mm/22 Howitzer", 0, 40, ProjectileType.Shell);
             _howitzer.BaseDamage = 100;
@@ -107,7 +95,7 @@ namespace ArtillerySeries.src
             _howitzer.Cost = 1220;
             _shopWeapons.Add(_howitzer);
 
-            _weapon = new Weapon("90mm/109 LFS 'Claymore'", -5, 40, ProjectileType.Shell);
+            Weapon _weapon = new Weapon("90mm/109 LFS 'Claymore'", -5, 40, ProjectileType.Shell);
             _weapon.AutoloaderClip = 3;
             _weapon.WeaponMaxCharge = 50;
             _weapon.AimDispersion = 1.5f;
@@ -120,17 +108,30 @@ namespace ArtillerySeries.src
             _weapon.Cost = 1650;
             _shopWeapons.Add(_weapon);
 
+            _weapon = new Weapon("75mm CLS-T Lensed x2 Laser Mount", -25, 25, ProjectileType.Laser);
+            _weapon.AutoloaderClip = 2;
+            _weapon.WeaponMaxCharge = 80;
+            _weapon.AimDispersion = 0.6f;
+            _weapon.BaseDamage = 200;
+            _weapon.ExplRad = 3;
+            _weapon.DamageRad = 30;
+            _weapon.Rarity = 1;
+            _weapon.ShortDesc = "Nothing says experimental like duct tape everywhere. Even on the lens.";
+            _weapon.LongDesc = "Like all lasers, high damage, low consistency.";
+            _weapon.Cost = 1980;
+            _shopWeapons.Add(_weapon);
+
             _weapon = new Weapon("122mm/90 LFS 'Long Lance'", -5, 60, ProjectileType.Shell);
             _weapon.AutoloaderClip = 2;
             _weapon.WeaponMaxCharge = 60;
             _weapon.AimDispersion = 1f;
             _weapon.BaseDamage = 150;
             _weapon.ExplRad = 8;
-            _weapon.DamageRad = 70;
+            _weapon.DamageRad = 80;
             _weapon.Rarity = 2;
             _weapon.ShortDesc = "An older model from the Lymilark, the Long Lance boasts excellent accuracy.";
             _weapon.LongDesc = "A higher-accuracy piece with surprisingly high damage.";
-            _weapon.Cost = 1650;
+            _weapon.Cost = 2650;
             _shopWeapons.Add(_weapon);
 
             Weapon _coilgun = new Weapon("90mm Exp. Coilgun", -10, 40, ProjectileType.Gun);
@@ -138,19 +139,19 @@ namespace ArtillerySeries.src
             _coilgun.AimDispersion = 3;
             _coilgun.ProjectilesFiredPerTurn = 4;
             _coilgun.WeaponMaxCharge = 40;
-            _coilgun.BaseDamage = 60;
+            _coilgun.BaseDamage = 80;
             _coilgun.DamageRad = 55;
             _coilgun.Rarity = 2;
             _coilgun.ShortDesc = "A high-speed coilgun developed by CLS-T. Fires four rounds at once.";
             _coilgun.LongDesc = "Less artillery gun and more machine gun.";
-            _coilgun.Cost = 2250;
+            _coilgun.Cost = 2910;
             _shopWeapons.Add(_coilgun);
 
             _weapon = new Weapon("181mm Obj. 261", 0, 70, ProjectileType.Shell);
             _weapon.AutoloaderClip = 1;
             _weapon.WeaponMaxCharge = 90;
             _weapon.AimDispersion = 0.5f;
-            _weapon.BaseDamage = 200;
+            _weapon.BaseDamage = 250;
             _weapon.DamageRad = 130;
             _weapon.ExplRad = 20;
             _weapon.Rarity = 2;
@@ -173,6 +174,19 @@ namespace ArtillerySeries.src
             _weapon.Cost = 3990;
             _shopWeapons.Add(_weapon);
 
+            _weapon = new Weapon("50mm x5 Kotona Lensed-AE Rifle", -30, 30, ProjectileType.Laser);
+            _weapon.AutoloaderClip = 5;
+            _weapon.WeaponMaxCharge = 80;
+            _weapon.AimDispersion = 0.5f;
+            _weapon.BaseDamage = 200;
+            _weapon.ExplRad = 2;
+            _weapon.DamageRad = 50;
+            _weapon.Rarity = 3;
+            _weapon.ShortDesc = "Classified as an old-generation Light Firearm, found in at a relic site.";
+            _weapon.LongDesc = "A relic from the an ancient Kotona empire. It's surprising it still works.";
+            _weapon.Cost = 4520;
+            _shopWeapons.Add(_weapon);
+
             Weapon _acidWeapon = new Weapon("122mm CLS-T Type-91", -5, 50, ProjectileType.Acid);
             _acidWeapon.AutoloaderClip = 2;
             _acidWeapon.WeaponMaxCharge = 50;
@@ -189,7 +203,7 @@ namespace ArtillerySeries.src
             _batchat155.AutoloaderClip = 5;
             _batchat155.WeaponMaxCharge = 70;
             _batchat155.AimDispersion = 1f;
-            _batchat155.BaseDamage = 60;
+            _batchat155.BaseDamage = 90;
             _batchat155.DamageRad = 80;
             _batchat155.Rarity = 3;
             _batchat155.ShortDesc = "An experimental autoloading weapon. Packs small punches.";
@@ -223,13 +237,28 @@ namespace ArtillerySeries.src
             _gwtCannon.Cost = 8940;
             _shopWeapons.Add(_gwtCannon);
 
+            _weapon = new Weapon("75mm 2x3 LFS NaK System", -25, 25, ProjectileType.Laser);
+            _weapon.AutoloaderClip = 2;
+            _weapon.ProjectilesFiredPerTurn = 3;
+            _weapon.WeaponMaxCharge = 90;
+            _weapon.AimDispersion = 1f;
+            _weapon.BaseDamage = 400;
+            _weapon.ExplRad = 5;
+            _weapon.DamageRad = 70;
+            _weapon.Rarity = 4;
+            _weapon.ShortDesc = "Part of the next-generation sentry design from the NaK Project.";
+            _weapon.LongDesc = "Somewhat bad accuracy for a laser-weapon, but packs a big sting.";
+            _weapon.Cost = 9880;
+            _shopWeapons.Add(_weapon);
+
+
             _weapon = new Weapon("220mm/80 CLS-T 'Doki-Doki'", 0, 60, ProjectileType.Shell);
             _weapon.AutoloaderClip = 3;
             _weapon.ProjectilesFiredPerTurn = 3;
             _weapon.WeaponMaxCharge = 50;
             _weapon.AimDispersion = 8f;
             _weapon.BaseDamage = 240;
-            _weapon.DamageRad = 90;
+            _weapon.DamageRad = 100;
             _weapon.ExplRad = 20;
             _weapon.Rarity = 4;
             _weapon.ShortDesc = "A mix of sadness and sweetness with a tinge of searing iron.";
@@ -268,7 +297,7 @@ namespace ArtillerySeries.src
             Weapon _objLaser = new Weapon("90mm Neko-15X Laser", -30, 30, ProjectileType.Laser);
             _objLaser.AutoloaderClip = 2;
             _objLaser.WeaponMaxCharge = 100;
-            _objLaser.BaseDamage = 850;
+            _objLaser.BaseDamage = 1150;
             _objLaser.AimDispersion = 0.25f;
             _objLaser.DamageRad = 100;
             _objLaser.ExplRad = 5;

@@ -137,6 +137,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="A3RClassDiagram.cd" />
     <None Include="packages.config" />
     <None Include="Resources\animations\startup.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
