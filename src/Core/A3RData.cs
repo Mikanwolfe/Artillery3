@@ -248,7 +248,7 @@ namespace ArtillerySeries.src
             _weapon.Rarity = 4;
             _weapon.ShortDesc = "Part of the next-generation design from the Neko Paradise Project.";
             _weapon.LongDesc = "Somewhat bad accuracy for a laser-weapon, but packs a cute sting.";
-            _weapon.Cost = 9880;
+            _weapon.Cost = 12880;
             _shopWeapons.Add(_weapon);
 
 
@@ -263,7 +263,7 @@ namespace ArtillerySeries.src
             _weapon.Rarity = 4;
             _weapon.ShortDesc = "A mix of sadness and sweetness with a tinge of searing iron.";
             _weapon.LongDesc = "Three by three they come! Are we missing one? Jus------";
-            _weapon.Cost = 11150;
+            _weapon.Cost = 17150;
             _shopWeapons.Add(_weapon);
 
             Weapon _yamatoTurret = new Weapon("460mm/18.1in Type 94 Triple Turret", -5, 90, ProjectileType.Shell);
@@ -277,7 +277,7 @@ namespace ArtillerySeries.src
             _yamatoTurret.Rarity = 5;
             _yamatoTurret.ShortDesc = "A miniaturised version of the Yamato's triple-turrets. For cute girls.";
             _yamatoTurret.LongDesc = "High damage, long range, but even worse accuracy!";
-            _yamatoTurret.Cost = 16360;
+            _yamatoTurret.Cost = 26360;
             _shopWeapons.Add(_yamatoTurret);
 
             _weapon = new Weapon("88mm x3 'Nadeko Snake' Laser Turret", -30, 30, ProjectileType.Laser);
@@ -291,7 +291,7 @@ namespace ArtillerySeries.src
             _weapon.Rarity = 5;
             _weapon.ShortDesc = "Twice cursed and once more, fires just as hot as the darkness near Shirahebi Shrine.";
             _weapon.LongDesc = "A direct hit is deadly, be careful of small-ish explosions.";
-            _weapon.Cost = 18850;
+            _weapon.Cost = 28850;
             _shopWeapons.Add(_weapon);
 
             Weapon _objLaser = new Weapon("90mm Neko-15X Laser", -30, 30, ProjectileType.Laser);
@@ -329,10 +329,10 @@ namespace ArtillerySeries.src
             _weapon.AimDispersion = 12f;
             _weapon.BaseDamage = 400;
             _weapon.DamageRad = 100;
-            _weapon.ExplRad = 40;
+            _weapon.ExplRad = 25;
             _weapon.Rarity = 6;
             _weapon.ShortDesc = "Cute cupcakes! Sweet and fluffy, pink and purple!";
-            _weapon.LongDesc = "Four by four equals sixteen! About her age!";
+            _weapon.LongDesc = "Four by four equals sixteen!";
             _weapon.Cost = 73150;
             _shopWeapons.Add(_weapon);
 
@@ -343,7 +343,7 @@ namespace ArtillerySeries.src
             _weapon.AimDispersion = 3f;
             _weapon.BaseDamage = 800;
             _weapon.DamageRad = 200;
-            _weapon.ExplRad = 45;
+            _weapon.ExplRad = 30;
             _weapon.Rarity = 7;
             _weapon.ShortDesc = "White haired and blue-eyed, named after the holy demon sword.";
             _weapon.LongDesc = "What's with the trend of cute girls? Are there any here?";
