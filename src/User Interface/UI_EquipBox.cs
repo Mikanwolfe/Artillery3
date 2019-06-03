@@ -16,10 +16,16 @@ namespace ArtillerySeries.src
         private bool _weaponHasBeenSelected;
         private bool _queueRefresh;
 
+        public delegate void PlayerSellEvent();
+
+        PlayerSellEvent _onPlayerSell;
+
+
         private List<UI_WeaponEquipBox> _weaponBoxes;
-        public UI_EquipBox(A3RData a3RData, int width, int height, Vector pos)
+        public UI_EquipBox(A3RData a3RData, int width, int height, Vector pos, PlayerSellEvent onPlayerSell)
             : base(a3RData, width, height, pos)
         {
+            _onPlayerSell = onPlayerSell;
             RefreshUIBox();
         }
         public void RefreshEquipBox()
@@ -74,6 +80,13 @@ namespace ArtillerySeries.src
                 AddElement(_weaponBox);
                 _index++;
             }
+            cursor++;
+
+            UI_WeaponEquipBox _sellBox = new UI_WeaponEquipBox(Camera, A3RData,
+                    new Vector(Pos.X + 20, Pos.Y + cursor * (50 + 15) + 20), OnInventoryEvent);
+            _sellBox.WeaponIndex = -1;
+            _sellBox.IsSellBox = true;
+            AddElement(_sellBox);
 
         }
 
@@ -88,6 +101,8 @@ namespace ArtillerySeries.src
         }
         UI_WeaponEquipBox _firstIndex = null;
         UI_WeaponEquipBox _secondIndex = null;
+
+        
 
         public void Swap<T>(ref T left, ref T right)
         {
@@ -122,40 +137,67 @@ namespace ArtillerySeries.src
                 Weapon temp;
                 if (_firstIndex.IsInventory)
                 {
-                    if (_secondIndex.IsInventory)
+                    if (_secondIndex.IsSellBox)
                     {
-                        //inventory to inventory
-                        temp = A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex];
-                        A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex] =
-                             A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex];
-                        A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex] = temp;
+                        //second selected is sell box
+                        A3RData.SelectedPlayer.Money += (int)(A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex].Cost * 0.7f);
+
+                        A3RData.ShopWeapons.Add(A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex]);
+                        A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex] = null;
+                        _onPlayerSell?.Invoke();
+
                     }
                     else
                     {
-                        //inventory to weapon
-                        temp = A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex];
-                        A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex] =
-                             A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex];
-                        A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex] = temp;
+                        // NOT a sell box
+                        if (_secondIndex.IsInventory)
+                        {
+                            //inventory to inventory
+                            temp = A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex];
+                            A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex] =
+                                 A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex];
+                            A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex] = temp;
+                        }
+                        else
+                        {
+                            //inventory to weapon
+                            temp = A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex];
+                            A3RData.SelectedPlayer.Character.Inventory[_firstIndex.WeaponIndex] =
+                                 A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex];
+                            A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex] = temp;
+                        }
                     }
+                        
                 }
                 else
                 {
-                    if (_secondIndex.IsInventory)
+                    if (_firstIndex.IsSellBox)
                     {
-                        //weapon to inventory
-                        temp = A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex];
-                        A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex] =
-                             A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex];
-                        A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex] = temp;
+                        //second selected is sell box
+                        A3RData.SelectedPlayer.Money += (int)(A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex].Cost * 0.7f);
+
+                        A3RData.ShopWeapons.Add(A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex]);
+                        A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex] = null;
+                        _onPlayerSell?.Invoke();
                     }
                     else
                     {
-                        //weapon to weapon
-                        temp = A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex];
-                        A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex] =
-                             A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex];
-                        A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex] = temp;
+                        if (_secondIndex.IsInventory)
+                        {
+                            //weapon to inventory
+                            temp = A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex];
+                            A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex] =
+                                 A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex];
+                            A3RData.SelectedPlayer.Character.Inventory[_secondIndex.WeaponIndex] = temp;
+                        }
+                        else
+                        {
+                            //weapon to weapon
+                            temp = A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex];
+                            A3RData.SelectedPlayer.Character.WeaponList[_firstIndex.WeaponIndex] =
+                                 A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex];
+                            A3RData.SelectedPlayer.Character.WeaponList[_secondIndex.WeaponIndex] = temp;
+                        }
                     }
                 }
 

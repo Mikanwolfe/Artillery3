@@ -139,7 +139,6 @@ namespace ArtillerySeries.src
                 if (p.IsAlive)
                     _playersAlive++;
             }
-            Console.WriteLine("Players alive: " + _playersAlive);
             if (_playersAlive <= 1)
             {
 

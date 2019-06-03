@@ -56,6 +56,8 @@ namespace ArtillerySeries.src
         private Rectangle _moveBoxActiveArea;
         private Rectangle _mainBoxActiveArea;
 
+        private bool _isSellBox = false;
+
         public delegate void InventoryBoxSelected(UI_WeaponEquipBox sender);
         InventoryBoxSelected _onInventorySelect;
 
@@ -183,8 +185,7 @@ namespace ArtillerySeries.src
 
             if (_heldWeapon != null)
             {
-
-
+                
 
                 SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.2f), _detailsBg);
                 SwinGame.FillRectangle(SwinGame.RGBAFloatColor(0.3f, 0.3f, 0.3f, 0.4f), _detailsBox);
@@ -239,10 +240,21 @@ namespace ArtillerySeries.src
             }
             else
             {
-                SwinGame.DrawText("Empty Slot", Color.DarkGray,
+                if (_isSellBox)
+                {
+                    SwinGame.DrawText("Sell Weapon", Color.DarkGray,
                     SwinGame.FontNamed("shopFont"), Pos.X + 10 + Camera.Pos.X, Pos.Y + 10 + Camera.Pos.Y);
-                SwinGame.DrawText("Inactive", Color.DarkGray, SwinGame.FontNamed("smallFont"),
-                    Pos.X + 10 + Camera.Pos.X, Pos.Y + 25 + Camera.Pos.Y);
+                    SwinGame.DrawText("Drop into this slot", Color.DarkGray, SwinGame.FontNamed("smallFont"),
+                        Pos.X + 10 + Camera.Pos.X, Pos.Y + 25 + Camera.Pos.Y);
+                }
+                else
+                {
+                    SwinGame.DrawText("Empty Slot", Color.DarkGray,
+                    SwinGame.FontNamed("shopFont"), Pos.X + 10 + Camera.Pos.X, Pos.Y + 10 + Camera.Pos.Y);
+                    SwinGame.DrawText("Inactive", Color.DarkGray, SwinGame.FontNamed("smallFont"),
+                        Pos.X + 10 + Camera.Pos.X, Pos.Y + 25 + Camera.Pos.Y);
+                }
+                
             }
 
 
@@ -340,5 +352,7 @@ namespace ArtillerySeries.src
             _detailsTextColor = FadeColorTo(_detailsTextColor, _targetDetailsTextColor);
 
         }
+
+        public bool IsSellBox { get => _isSellBox; set => _isSellBox = value; }
     }
 }
