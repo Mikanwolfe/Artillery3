@@ -51,7 +51,7 @@ namespace ArtillerySeries.src
             destinationX = Clamp(destinationX, Constants.CameraPadding, Constants.TerrainWidth - _windowRect.Width - Constants.CameraPadding);
 
             float destinationY = _focus.Pos.Y + OffsetY;
-            destinationY = Clamp(destinationY, -Constants.CameraMaxHeight, _windowRect.Height + Constants.TerrainDepth);
+            //destinationY = Clamp(destinationY, -Constants.CameraMaxHeight, _windowRect.Height + Constants.TerrainDepth);
 
             _pos.X += (destinationX - _pos.X) / Constants.CameraEaseSpeed;
             _pos.Y += (destinationY - _pos.Y) / Constants.CameraEaseSpeed;

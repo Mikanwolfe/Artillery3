@@ -237,7 +237,7 @@ namespace ArtillerySeries.src
             _gwtCannon.Cost = 8940;
             _shopWeapons.Add(_gwtCannon);
 
-            _weapon = new Weapon("75mm 2x3 LFS NaK System", -25, 25, ProjectileType.Laser);
+            _weapon = new Weapon("75mm 2x3 LFS 'Neko Paradise'", -25, 25, ProjectileType.Laser);
             _weapon.AutoloaderClip = 2;
             _weapon.ProjectilesFiredPerTurn = 3;
             _weapon.WeaponMaxCharge = 90;
@@ -246,8 +246,8 @@ namespace ArtillerySeries.src
             _weapon.ExplRad = 5;
             _weapon.DamageRad = 70;
             _weapon.Rarity = 4;
-            _weapon.ShortDesc = "Part of the next-generation sentry design from the NaK Project.";
-            _weapon.LongDesc = "Somewhat bad accuracy for a laser-weapon, but packs a big sting.";
+            _weapon.ShortDesc = "Part of the next-generation design from the Neko Paradise Project.";
+            _weapon.LongDesc = "Somewhat bad accuracy for a laser-weapon, but packs a cute sting.";
             _weapon.Cost = 9880;
             _shopWeapons.Add(_weapon);
 
@@ -304,9 +304,51 @@ namespace ArtillerySeries.src
             _objLaser.UsesSatellite = true;
             _objLaser.Rarity = 6;
             _objLaser.ShortDesc = "A technologically advanced laser developed from the Neko-15X project. Top Secret.";
-            _objLaser.LongDesc = "Fires high-powered lasers similar to Maia.";
+            _objLaser.LongDesc = "'Nekomimi Cooperative' written on the plate. Cute!";
             _objLaser.Cost = 39800;
             _shopWeapons.Add(_objLaser);
+
+            _weapon = new Weapon("220mm 3x2 CLS-T 'KARAKARA' Acid", 0, 60, ProjectileType.Acid);
+            _weapon.AutoloaderClip = 3;
+            _weapon.ProjectilesFiredPerTurn = 2;
+            _weapon.WeaponMaxCharge = 70;
+            _weapon.AimDispersion = 3f;
+            _weapon.BaseDamage = 550;
+            _weapon.DamageRad = 100;
+            _weapon.ExplRad = 10;
+            _weapon.Rarity = 6;
+            _weapon.ShortDesc = "Developed on the world of KARAKARA. The cause of environmental damage: this.";
+            _weapon.LongDesc = "Acid! Acid! Not the one that makes you high, but it kills you too!";
+            _weapon.Cost = 44680;
+            _shopWeapons.Add(_weapon);
+
+            _weapon = new Weapon("770mm 4x4 CLS-T 'Natsuki'", 0, 70, ProjectileType.Shell);
+            _weapon.AutoloaderClip = 4;
+            _weapon.ProjectilesFiredPerTurn = 4;
+            _weapon.WeaponMaxCharge = 100;
+            _weapon.AimDispersion = 12f;
+            _weapon.BaseDamage = 400;
+            _weapon.DamageRad = 100;
+            _weapon.ExplRad = 40;
+            _weapon.Rarity = 6;
+            _weapon.ShortDesc = "Cute cupcakes! Sweet and fluffy, pink and purple!";
+            _weapon.LongDesc = "Four by four equals sixteen! About her age!";
+            _weapon.Cost = 73150;
+            _shopWeapons.Add(_weapon);
+
+            _weapon = new Weapon("810mm 4x3 KTS-T 'Terminus Est'", -20, 90, ProjectileType.Shell);
+            _weapon.AutoloaderClip = 3;
+            _weapon.ProjectilesFiredPerTurn = 4;
+            _weapon.WeaponMaxCharge = 100;
+            _weapon.AimDispersion = 3f;
+            _weapon.BaseDamage = 800;
+            _weapon.DamageRad = 200;
+            _weapon.ExplRad = 45;
+            _weapon.Rarity = 7;
+            _weapon.ShortDesc = "White haired and blue-eyed, named after the holy demon sword.";
+            _weapon.LongDesc = "What's with the trend of cute girls? Are there any here?";
+            _weapon.Cost = 121150;
+            _shopWeapons.Add(_weapon);
 
 
             Weapon _massDriver = new Weapon("210mm Kinetic Mass Driver", 0, 20, ProjectileType.Laser);

@@ -23,7 +23,7 @@ namespace ArtillerySeries.src
         public const int BoundaryBoxPadding = 20;
         public const int CameraEaseSpeed = 10;
         public const double CameraAfterExplosionDelay = 7;
-        public const int CameraMaxHeight = 2000;
+        public const int CameraMaxHeight = 5000;
         public const int CameraPadding = 100;
 
         public const float WeaponChargeSpeed = 0.5f;
