@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Class Name="ArtillerySeries.src.Camera">
+    <Position X="11.25" Y="13" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>CCQAAEAAAAAAAAQAAAAACAAABQCAAATCIEABAAAAAAA=</HashCode>
+      <FileName>src\World\Camera.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.CameraFocusPoint">
+    <Position X="15" Y="11.5" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAACAAAAAAEAAAAAAAAA=</HashCode>
+      <FileName>src\World\CameraFocusPoint.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Interface Name="ArtillerySeries.src.ICameraCanFocus">
+    <Position X="11.25" Y="11.5" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\World\Camera.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

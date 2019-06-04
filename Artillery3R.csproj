@@ -138,6 +138,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="A3RClassDiagram.cd" />
+    <None Include="ClassDiagScratchpad.cd" />
+    <None Include="High Level.cd" />
     <None Include="packages.config" />
     <None Include="Resources\animations\startup.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

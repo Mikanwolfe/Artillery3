@@ -1,0 +1,338 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Class Name="ArtillerySeries.src.GameMain">
+    <Position X="9.25" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAA=</HashCode>
+      <FileName>src\GameMain.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Constants" Collapsed="true">
+    <Position X="5.25" Y="2.25" Width="3.75" />
+    <TypeIdentifier>
+      <HashCode>AAIAgAgAAQCaABAAAgAAAABICAEIIBIAZFIEAABIECQ=</HashCode>
+      <FileName>src\Core\Artillery3R.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Artillery3R">
+    <Position X="9.25" Y="2.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>oAAAAIAAABAAAAAAAgAAAAggAAACAAAAAAABQAAAEBI=</HashCode>
+      <FileName>src\Core\Artillery3R.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.ServicesModule" BaseTypeListCollapsed="true">
+    <Position X="13.75" Y="14.75" Width="3" />
+    <TypeIdentifier>
+      <HashCode>ABQAAAAAAAAAAoAAAgAAAAAAAAAAAAAQAAAAAAAAAAA=</HashCode>
+      <FileName>src\Managers\Services.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ArtillerySeries.src.Services" BaseTypeListCollapsed="true">
+    <Position X="13.75" Y="8.25" Width="3" />
+    <TypeIdentifier>
+      <HashCode>QBQMAAIAAAAAA4GRAhUAAQAAAQAAAAAQQAACACAAAAg=</HashCode>
+      <FileName>src\Managers\Services.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ArtillerySeries.src.UserInterface">
+    <Position X="3.75" Y="19.25" Width="4" />
+    <TypeIdentifier>
+      <HashCode>wBUAAAAAAAABAwAAAgAAIAIAIABQAAIAQAAAAARAABA=</HashCode>
+      <FileName>src\User Interface\UserInterface.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.GameState">
+    <Position X="4.25" Y="8.25" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AhQAAAAAAAAAAoAAAgAAAAAQAAAAAAAQAAIAAAAQAAA=</HashCode>
+      <FileName>src\GameStates\GameState.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.A3RData">
+    <Position X="17.25" Y="2.25" Width="4" />
+    <TypeIdentifier>
+      <HashCode>AAACCEAKAJwoAIAAAAAAAABgBJBhIBEAAMGFACQkABU=</HashCode>
+      <FileName>src\Core\A3RData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UIElement">
+    <Position X="3.75" Y="26.25" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAQAAAAAAAAAAACAAAAAAAAAACAAYAA=</HashCode>
+      <FileName>src\User Interface\UIElement.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UIElementAssembly">
+    <Position X="3.75" Y="31.75" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>ABUoAAAABAABAgAAAgAAAEAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UIElementAssembly.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UIEventArgs">
+    <Position X="8" Y="19.25" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAACAAAAAAAAAAAAgAAAAAIAAAACAAAAAA=</HashCode>
+      <FileName>src\User Interface\UIEventArgs.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_WinUI" Collapsed="true">
+    <Position X="6.25" Y="36" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAACAAgAAAAAQAAAAAAjAAAAAAACIAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_WinUI.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Box" Collapsed="true">
+    <Position X="6.25" Y="37.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAgAAgAACIAgAAAAAABAAAABAAAAAIABAEiAAAAAE=</HashCode>
+      <FileName>src\User Interface\UI_Box.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Button" Collapsed="true">
+    <Position X="7" Y="30.25" Width="1.5" />
+    <NestedTypes>
+      <Delegate Name="ArtillerySeries.src.UI_Button.OnButtonEvent" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>src\User Interface\UI_Button.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAQQBAgABYCYAgEAAEEAAEAAADACAAAICBAAAFAAEAE=</HashCode>
+      <FileName>src\User Interface\UI_Button.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_CheckBox" Collapsed="true">
+    <Position X="10.5" Y="30.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQABAAAAQCQAgCAAEAAAAAAQDAAAAAIAAAACAIAAAA=</HashCode>
+      <FileName>src\User Interface\UI_CheckBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Combat" Collapsed="true">
+    <Position X="14.25" Y="36" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAoAAAgAAAACAAAAAAAAAAARABAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_Combat.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_DynamicImage" Collapsed="true">
+    <Position X="14" Y="31.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAQAAIgAAEAAAgAAIAACAAAAAAAAAAAAAAIAQAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_DynamicImage.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_EquipBox" Collapsed="true">
+    <Position X="6.25" Y="38.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAEgEAIAkEAAAAAAEAgAAARAAABAACAQAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_EquipBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Line" Collapsed="true">
+    <Position X="8.75" Y="30.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQSAAAAAAAIAgAAAAAAAAAAAAAAAAAAAAAEAAAAAAQ=</HashCode>
+      <FileName>src\User Interface\UI_Line.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_LoadingBar" Collapsed="true">
+    <Position X="10.5" Y="31.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAgACoAgAAAAAAACCAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_LoadingBar.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_MainMenu" Collapsed="true">
+    <Position X="16" Y="36" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgA=</HashCode>
+      <FileName>src\User Interface\UI_MainMenu.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Minimap" Collapsed="true">
+    <Position X="12.25" Y="31.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAACAAgAAAgAAAAAAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_Minimap.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelect_Legacy" Collapsed="true">
+    <Position X="9.75" Y="36" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgQCAMAAAAAAAgAAIAACIAAAIDAAAAAAAAIAQAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelect_Legacy.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelectCharacters" Collapsed="true">
+    <Position X="17.5" Y="37.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAIAAAAAAAACAIAAAAAAAAAAAAAAAAAQAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelectCharacters.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelectNames" Collapsed="true">
+    <Position X="19.75" Y="37.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAABAAAAAAAAAACAKAAAAAAAAAAAAAAAAAQABAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelectNames.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelectNumberPlayers" Collapsed="true">
+    <Position X="22" Y="37.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAQAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelectNumberPlayers.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelectTemplate" Collapsed="true">
+    <Position X="19.75" Y="36" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAAAAAAAAACAAAAACAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelectScreen.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_SelectableTextBox" Collapsed="true">
+    <Position X="8" Y="39.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQIAEIAIAAAAgAAAAAgABgAAAAAgAAAgAAAAAAAAAI=</HashCode>
+      <FileName>src\User Interface\UI_SelectableTextBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ShopButton" Collapsed="true">
+    <Position X="7" Y="31.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQIBAAAEDQgggACQkAAIBACBAABBIQIgBACEABAAAg=</HashCode>
+      <FileName>src\User Interface\UI_ShopButton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ShopItems" Collapsed="true">
+    <Position X="12.5" Y="36" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAQAAgFAAgAAIAAACAAQAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_ShopItems.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ShopMenu" Collapsed="true">
+    <Position X="17.75" Y="36" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>GAQAAIAAAAAFAkQAAAAAAAAAABAAEAABAgAAAQAIAAA=</HashCode>
+      <FileName>src\User Interface\UI_ShopMenu.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_StaticImage" Collapsed="true">
+    <Position X="14" Y="30.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAQCAAgAAAAAAAAAAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_StaticImage.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_HealthUpgradeButton" Collapsed="true">
+    <Position X="8" Y="41" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAACACAgAAAAAAABAAAAAAAAAAAAAAACAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_StatUpgradeButton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ArmourUpgradeButton" Collapsed="true">
+    <Position X="9.75" Y="41" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAACACAgAAAAAAABAAAAAAAAAAAAAAACAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_StatUpgradeButton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Text" Collapsed="true">
+    <Position X="8.75" Y="31.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQABAAAAQAIAgAAAAAAAAAAAACAAAAIAAAACAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_Text.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_TextBox" Collapsed="true">
+    <Position X="8" Y="38.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAgEBAAEAAAAAgAAEAAAAAAIAgABAAAA=</HashCode>
+      <FileName>src\User Interface\UI_TextBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_WeaponEquipBox" Collapsed="true">
+    <Position X="12.25" Y="30.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABwIAA4AgBBoIhIQMooSAQAAAIAkQAYCAB4ABCBAAAg=</HashCode>
+      <FileName>src\User Interface\UI_WeaponEquipBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_WindMarker" Collapsed="true">
+    <Position X="15.75" Y="30.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAEAAAQAAAA=</HashCode>
+      <FileName>src\User Interface\UI_WindMarker.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_WinScreen" Collapsed="true">
+    <Position X="8" Y="36" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_WinScreen.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="ArtillerySeries.src.IServices" Collapsed="true">
+    <Position X="13.75" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Managers\Services.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IGameState" Collapsed="true">
+    <Position X="4.25" Y="7" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\GameState.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.ShoppableItem" Collapsed="true">
+    <Position X="36.75" Y="27.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAhAAAAAABQAAAAAQAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_ShopButton.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="ArtillerySeries.src.UIEvent">
+    <Position X="8" Y="22.25" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAwQAAAAAAAIAAAAABAAAE=</HashCode>
+      <FileName>src\User Interface\UIEventArgs.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.DynamicImageState" Collapsed="true">
+    <Position X="36.75" Y="28.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAI=</HashCode>
+      <FileName>src\User Interface\UI_DynamicImage.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.PlayerSelectState" Collapsed="true">
+    <Position X="38.5" Y="28.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAACAACEAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelect_Legacy.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Delegate Name="ArtillerySeries.src.UIEventOccurred">
+    <Position X="3.75" Y="24.75" Width="4" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UserInterface.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

@@ -216,8 +216,8 @@ namespace ArtillerySeries.src
             _weapon.ProjectilesFiredPerTurn = 2;
             _weapon.WeaponMaxCharge = 50;
             _weapon.AimDispersion = 4f;
-            _weapon.BaseDamage = 180;
-            _weapon.DamageRad = 90;
+            _weapon.BaseDamage = 310;
+            _weapon.DamageRad = 120;
             _weapon.ExplRad = 25;
             _weapon.Rarity = 3;
             _weapon.ShortDesc = "An experimental dual-gun turret designed for cute girls.";
@@ -229,7 +229,7 @@ namespace ArtillerySeries.src
             _gwtCannon.AutoloaderClip = 2;
             _gwtCannon.WeaponMaxCharge = 100;
             _gwtCannon.AimDispersion = 1.5f;
-            _gwtCannon.BaseDamage = 350;
+            _gwtCannon.BaseDamage = 550;
             _gwtCannon.DamageRad = 200;
             _gwtCannon.Rarity = 4;
             _gwtCannon.ShortDesc = "A weapon developed from the G.W. Tiger program, a deadly weapon, if it hits.";
@@ -257,7 +257,7 @@ namespace ArtillerySeries.src
             _weapon.ProjectilesFiredPerTurn = 3;
             _weapon.WeaponMaxCharge = 50;
             _weapon.AimDispersion = 8f;
-            _weapon.BaseDamage = 240;
+            _weapon.BaseDamage = 340;
             _weapon.DamageRad = 100;
             _weapon.ExplRad = 17;
             _weapon.Rarity = 4;
@@ -271,7 +271,7 @@ namespace ArtillerySeries.src
             _yamatoTurret.WeaponMaxCharge = 120;
             _yamatoTurret.ProjectilesFiredPerTurn = 3;
             _yamatoTurret.AimDispersion = 4f;
-            _yamatoTurret.BaseDamage = 300;
+            _yamatoTurret.BaseDamage = 500;
             _yamatoTurret.DamageRad = 160;
             _yamatoTurret.ExplRad = 22;
             _yamatoTurret.Rarity = 5;
@@ -285,7 +285,7 @@ namespace ArtillerySeries.src
             _weapon.ProjectilesFiredPerTurn = 3;
             _weapon.WeaponMaxCharge = 100;
             _weapon.AimDispersion = 1.55f;
-            _weapon.BaseDamage = 450;
+            _weapon.BaseDamage = 650;
             _weapon.DamageRad = 80;
             _weapon.ExplRad = 10;
             _weapon.Rarity = 5;
