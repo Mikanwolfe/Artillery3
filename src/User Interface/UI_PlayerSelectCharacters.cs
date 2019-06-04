@@ -90,7 +90,7 @@ namespace ArtillerySeries.src
                         break;
 
                     case "obj":
-                        newCharacter = new Character("Object 15X", 75, 175, A3RData.Players[_playerIndex]);
+                        newCharacter = new Character("Object 15X", 65, 175, A3RData.Players[_playerIndex]);
 
                         startingWeapon = new Weapon("190mm D-76ST 15X", 0, 45, ProjectileType.Shell);
                         startingWeapon.BaseDamage = 200;
@@ -108,7 +108,7 @@ namespace ArtillerySeries.src
                         break;
 
                     case "int":
-                        newCharacter = new Character("Innocentia", 100, 150, A3RData.Players[_playerIndex]);
+                        newCharacter = new Character("Innocentia", 130, 130, A3RData.Players[_playerIndex]);
 
                         startingWeapon = new Weapon("120mm Kati-S / Sat. Enabled.", 0, 45, ProjectileType.Shell);
                         startingWeapon.BaseDamage = 80;

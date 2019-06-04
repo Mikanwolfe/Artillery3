@@ -174,8 +174,8 @@ namespace ArtillerySeries.src
             _weapon.Cost = 3990;
             _shopWeapons.Add(_weapon);
 
-            _weapon = new Weapon("50mm x5 Kotona Lensed-AE Rifle", -30, 30, ProjectileType.Laser);
-            _weapon.AutoloaderClip = 5;
+            _weapon = new Weapon("50mm x3 Kotona Lensed-AE Rifle", -30, 30, ProjectileType.Laser);
+            _weapon.AutoloaderClip = 3;
             _weapon.WeaponMaxCharge = 80;
             _weapon.AimDispersion = 0.5f;
             _weapon.BaseDamage = 200;
@@ -259,21 +259,21 @@ namespace ArtillerySeries.src
             _weapon.AimDispersion = 8f;
             _weapon.BaseDamage = 240;
             _weapon.DamageRad = 100;
-            _weapon.ExplRad = 20;
+            _weapon.ExplRad = 17;
             _weapon.Rarity = 4;
             _weapon.ShortDesc = "A mix of sadness and sweetness with a tinge of searing iron.";
             _weapon.LongDesc = "Three by three they come! Are we missing one? Jus------";
             _weapon.Cost = 17150;
             _shopWeapons.Add(_weapon);
 
-            Weapon _yamatoTurret = new Weapon("460mm/18.1in Type 94 Triple Turret", -5, 90, ProjectileType.Shell);
-            _yamatoTurret.AutoloaderClip = 1;
+            Weapon _yamatoTurret = new Weapon("460mm/18.1in Type 94 Triple Turrets", -5, 90, ProjectileType.Shell);
+            _yamatoTurret.AutoloaderClip = 2;
             _yamatoTurret.WeaponMaxCharge = 120;
             _yamatoTurret.ProjectilesFiredPerTurn = 3;
             _yamatoTurret.AimDispersion = 4f;
             _yamatoTurret.BaseDamage = 300;
             _yamatoTurret.DamageRad = 160;
-            _yamatoTurret.ExplRad = 30;
+            _yamatoTurret.ExplRad = 22;
             _yamatoTurret.Rarity = 5;
             _yamatoTurret.ShortDesc = "A miniaturised version of the Yamato's triple-turrets. For cute girls.";
             _yamatoTurret.LongDesc = "High damage, long range, but even worse accuracy!";
