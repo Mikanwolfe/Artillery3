@@ -215,7 +215,7 @@ namespace ArtillerySeries.src
             _weapon.AutoloaderClip = 1;
             _weapon.ProjectilesFiredPerTurn = 2;
             _weapon.WeaponMaxCharge = 50;
-            _weapon.AimDispersion = 4f;
+            _weapon.AimDispersion = 2.7f;
             _weapon.BaseDamage = 310;
             _weapon.DamageRad = 120;
             _weapon.ExplRad = 25;
@@ -237,28 +237,13 @@ namespace ArtillerySeries.src
             _gwtCannon.Cost = 8940;
             _shopWeapons.Add(_gwtCannon);
 
-            _weapon = new Weapon("75mm 2x3 LFS 'Neko Paradise'", -25, 25, ProjectileType.Laser);
-            _weapon.AutoloaderClip = 2;
-            _weapon.ProjectilesFiredPerTurn = 3;
-            _weapon.WeaponMaxCharge = 90;
-            _weapon.AimDispersion = 1f;
-            _weapon.BaseDamage = 400;
-            _weapon.ExplRad = 5;
-            _weapon.DamageRad = 70;
-            _weapon.Rarity = 4;
-            _weapon.ShortDesc = "Part of the next-generation design from the Neko Paradise Project.";
-            _weapon.LongDesc = "Somewhat bad accuracy for a laser-weapon, but packs a cute sting.";
-            _weapon.Cost = 12880;
-            _shopWeapons.Add(_weapon);
-
-
             _weapon = new Weapon("220mm/80 CLS-T 'Doki-Doki'", 0, 60, ProjectileType.Shell);
             _weapon.AutoloaderClip = 3;
             _weapon.ProjectilesFiredPerTurn = 3;
             _weapon.WeaponMaxCharge = 50;
-            _weapon.AimDispersion = 8f;
-            _weapon.BaseDamage = 340;
-            _weapon.DamageRad = 100;
+            _weapon.AimDispersion = 2.65f;
+            _weapon.BaseDamage = 360;
+            _weapon.DamageRad = 120;
             _weapon.ExplRad = 17;
             _weapon.Rarity = 4;
             _weapon.ShortDesc = "A mix of sadness and sweetness with a tinge of searing iron.";
@@ -266,12 +251,26 @@ namespace ArtillerySeries.src
             _weapon.Cost = 17150;
             _shopWeapons.Add(_weapon);
 
+            _weapon = new Weapon("75mm 2x3 LFS 'Neko Paradise'", -25, 25, ProjectileType.Laser);
+            _weapon.AutoloaderClip = 2;
+            _weapon.ProjectilesFiredPerTurn = 3;
+            _weapon.WeaponMaxCharge = 90;
+            _weapon.AimDispersion = 1f;
+            _weapon.BaseDamage = 400;
+            _weapon.ExplRad = 5;
+            _weapon.DamageRad = 55;
+            _weapon.Rarity = 4;
+            _weapon.ShortDesc = "Part of the next-generation design from the Neko Paradise Project.";
+            _weapon.LongDesc = "Somewhat bad accuracy for a laser-weapon, but packs a cute sting.";
+            _weapon.Cost = 20880;
+            _shopWeapons.Add(_weapon);
+
             Weapon _yamatoTurret = new Weapon("460mm/18.1in Type 94 Triple Turrets", -5, 90, ProjectileType.Shell);
             _yamatoTurret.AutoloaderClip = 2;
             _yamatoTurret.WeaponMaxCharge = 120;
             _yamatoTurret.ProjectilesFiredPerTurn = 3;
             _yamatoTurret.AimDispersion = 4f;
-            _yamatoTurret.BaseDamage = 500;
+            _yamatoTurret.BaseDamage = 550;
             _yamatoTurret.DamageRad = 160;
             _yamatoTurret.ExplRad = 22;
             _yamatoTurret.Rarity = 5;
@@ -299,7 +298,7 @@ namespace ArtillerySeries.src
             _objLaser.WeaponMaxCharge = 100;
             _objLaser.BaseDamage = 1150;
             _objLaser.AimDispersion = 0.25f;
-            _objLaser.DamageRad = 100;
+            _objLaser.DamageRad = 90;
             _objLaser.ExplRad = 5;
             _objLaser.UsesSatellite = true;
             _objLaser.Rarity = 6;
