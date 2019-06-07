@@ -146,11 +146,14 @@ namespace ArtillerySeries.src
             SwinGame.LoadBitmapNamed("loadButtonSelected", "menu_load_selected.png");
             SwinGame.LoadBitmapNamed("optionsButtonSelected", "menu_options_selected.png");
             SwinGame.LoadBitmapNamed("exitButtonSelected", "menu_exit_selected.png");
+            SwinGame.LoadBitmapNamed("ddlc", "ddlc.jpg");
 
 
             SwinGame.LoadSoundEffectNamed("laser_satellite", "magicSorcery_Short1_edit.wav");
             SwinGame.LoadSoundEffectNamed("satellite_prep", "satellite_prep.wav");
             SwinGame.LoadSoundEffectNamed("menuSound", "koikenmenu.ogg");
+            SwinGame.LoadSoundEffectNamed("newMenuSound", "hover.ogg");
+            SwinGame.LoadSoundEffectNamed("confirmSound", "confirm.ogg");
 
             SwinGame.LoadSoundEffectNamed("mechConfirm", "UI_Mechanical_Confirm_04_FX.ogg");
             SwinGame.LoadSoundEffectNamed("mechMove", "UI_Mechanical_Move_40.wav");

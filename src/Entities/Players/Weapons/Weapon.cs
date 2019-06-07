@@ -97,9 +97,16 @@ namespace ArtillerySeries.src
             _usesSatellite = false;
 
         }
+
         #endregion
 
         #region Methods
+
+        public void onAchievementEvent(object sender, AchievementEventArgs eventArgs)
+        {
+            Artillery3R.Services.Achievements.onAchievementEvent(sender, eventArgs);
+        }
+
         public void LastProjectilePosition(Projectile p, Point2D pos)
         {
             if (p == MainProjectile)
@@ -161,6 +168,7 @@ namespace ArtillerySeries.src
 
         public virtual void FireProjectile()
         {
+            onAchievementEvent(this, new AchievementEventArgs(this, AchievementEvent.WeaponFired));
             //Projectile projectile = new Projectile(Name + " Projectile", this, _projectilePos, _projectileVel, _baseDamage, 15, 35);
             _mainProjectile = _projectileFactory.FireProjectile(this, _projectilePos, _projectileVel, _baseDamage, _explRad, _damageRad);
         }

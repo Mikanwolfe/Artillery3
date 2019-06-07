@@ -45,6 +45,9 @@ namespace ArtillerySeries.src
 
             _fadeFx = new UI_StaticImage(Camera, 0, 0, SwinGame.BitmapNamed("fadeFx"));
 
+            if (A3RData.EasterEggTriggered)
+                AddElement(new UI_StaticImage(a3RData.Camera, Width(0.5f), Height(-1f), SwinGame.BitmapNamed("ddlc")));
+
             _playerName = A3RData.SelectedPlayer.Name;
             _characterName = A3RData.SelectedPlayer.Character.Name;
             _shopItems = new UI_ShopItems(A3RData, RefreshEquipBox);

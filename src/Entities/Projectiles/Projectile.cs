@@ -117,9 +117,9 @@ namespace ArtillerySeries.src
         public virtual void Explode(Point2D pt)
         {
             PlayRandomExplosionSound();
+            Artillery3R.Services.EntityManager.DamageEntities(this, _baseDamage, (int)_damageRad, pt);
             BlowUpTerrain(pt);
             Artillery3R.Services.ParticleEngine.CreateFastExplosion(pt, 100);
-            Artillery3R.Services.EntityManager.DamageEntities(this, _baseDamage, (int)_damageRad, pt);
         }
 
         public void SwitchState(ProjectileState nextState)

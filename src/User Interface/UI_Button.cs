@@ -190,7 +190,10 @@ namespace ArtillerySeries.src
                     //false-->true mousing over.
                     if (_mouseOverSoundEffect != null)
                     {
-                        SwinGame.PlaySoundEffect(_mouseOverSoundEffect);
+                        if (Artillery3R.Services.A3RData.EasterEggTriggered)
+                            SwinGame.PlaySoundEffect("newMenuSound");
+                        else 
+                            SwinGame.PlaySoundEffect(_mouseOverSoundEffect);
                     }
 
                 }
@@ -201,6 +204,8 @@ namespace ArtillerySeries.src
 
             if (_isMouseOver && SwinGame.MouseClicked(MouseButton.LeftButton))
             {
+                if (Artillery3R.Services.A3RData.EasterEggTriggered)
+                    SwinGame.PlaySoundEffect("confirmSound");
                 OnUIEvent?.Invoke(this, _uiEventArgs);
                 _buttonEvent?.Invoke();
             }

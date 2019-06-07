@@ -52,10 +52,9 @@ namespace ArtillerySeries.src
 
         public override void Explode(Point2D pt)
         {
-            
+            Artillery3R.Services.EntityManager.DamageEntities(this, BaseDamage, (int)DamageRad, pt);
             BlowUpTerrain(pt);
             Artillery3R.Services.ParticleEngine.CreateLaserExplosion(pt, 100);
-            Artillery3R.Services.EntityManager.DamageEntities(this,BaseDamage, (int)DamageRad, pt);
         }
 
         public override void Update()

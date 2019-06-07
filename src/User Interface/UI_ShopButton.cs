@@ -264,7 +264,10 @@ namespace ArtillerySeries.src
                                 _foundEmptySlot = true;
 
                                 _a3RData.SelectedPlayer.Money -= _itemBeingBought.Cost;
-                                SwinGame.PlaySoundEffect(SwinGame.SoundEffectNamed("mechTurnOn"));
+                                if (Artillery3R.Services.A3RData.EasterEggTriggered)
+                                    SwinGame.PlaySoundEffect("confirmSound");
+                                else 
+                                    SwinGame.PlaySoundEffect(SwinGame.SoundEffectNamed("mechTurnOn"));
                                 _a3RData.SelectedPlayer.Character.Inventory[i] = ItemBeingBought;
                                 //_a3RData.SelectedPlayer.Character.Inventory.Add(ItemBeingBought);
                                 _a3RData.ShopWeapons.Remove(ItemBeingBought);

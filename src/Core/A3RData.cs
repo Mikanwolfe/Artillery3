@@ -27,6 +27,7 @@ namespace ArtillerySeries.src
         int _numberOfPlayers;
         List<Player> _players;
         List<Entity> _entities;
+        bool _easterEggTriggered;
 
         Random _random = new Random();
 
@@ -426,6 +427,7 @@ namespace ArtillerySeries.src
         public List<Weapon> ShopWeapons { get => _shopWeapons; set => _shopWeapons = value; }
         public Dictionary<int, Color> RarityReference { get => _rarityReference; set => _rarityReference = value; }
         public Dictionary<int, string> RarityWords { get => _rarityWords; set => _rarityWords = value; }
+        public bool EasterEggTriggered { get => _easterEggTriggered; set => _easterEggTriggered = value; }
 
         #endregion
     }

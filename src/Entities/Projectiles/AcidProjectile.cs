@@ -17,8 +17,8 @@ namespace ArtillerySeries.src
 
         public override void Explode(Point2D pt)
         {
-            BlowUpTerrain(pt);
             Artillery3R.Services.EntityManager.DamageEntities(this, BaseDamage, (int)DamageRad, pt);
+            BlowUpTerrain(pt);
             PlayRandomExplosionSound();
             SwinGame.PlaySoundEffect("acid", 2);
             Artillery3R.Services.ParticleEngine.CreateAcidExplosion(pt, 100);
