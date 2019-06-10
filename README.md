@@ -31,6 +31,8 @@ Artillery 3 is a complete re-write of the original Artillery 2 project found [he
 | Aim Weapon      | `Up, Down`                  |
 | Change Weapon   | `s`                         |
 | Move Camera/Pan | `Right Mouse Button` (Hold) |
+| Charge Weapon   | `Spacebar` (Hold)           |
+| Fire Weapon     | `Spacebar` (Release)        |
 
 **Note:**
 
