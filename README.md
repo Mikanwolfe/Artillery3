@@ -1,3 +1,48 @@
+
+
+# Artillery 3
+
+by mikanwolfe, 03-2019, mikanwolfe@nekox.net.
+
+------
+
+**Artillery 3** is a 2D physics-based shooter where players take turns controlling vehicles on a map of varying elevation. Players will be able to move their *artillery pieces* across the map and fire in large arcs towards enemy players, with the explicit goal of destroying all other players.
+
+Artillery 3 is a complete re-write of the original Artillery 2 project found [here](https://github.com/Mikanwolfe/artillery). 
+
+**Features:**
+
+- Complete rewrite of the original game; significantly extends on the original combat aesthetics Artillery II provided
+- Multiple Weapons per-character
+- Weapons have more effects, notably Acid, Lasers, and even multi-shot weapons.
+- Games don't end after one round--players can purchase additional weapons in the shop and are no longer locked to their selected characters
+- Functioning Menus and UIs using OO principles.
+- Sound Effects! 
+- Proper introduction of backgrounds and a theme to the game -- the background is now a snowy mountainplace themed after the simple UIs within A3.
+- The backgrounds are parallax -- they move at different rates based on the camera position.
+
+
+
+**Controls:**
+
+| Command         | Key                         |
+| --------------- | --------------------------- |
+| Move            | `Left, Right`               |
+| Aim Weapon      | `Up, Down`                  |
+| Change Weapon   | `s`                         |
+| Move Camera/Pan | `Right Mouse Button` (Hold) |
+
+**Note:**
+
+- Saving and Loading don't work yet, nor the options buttons. They should throw errors since they're not tied to any events at current. They're present on the menu because... design... 
+- 
+
+
+
+------
+
+Artillery 3 is the 
+
 # Artillery 3
 
 **Warning: This repository is private. If you're reading this, you're in the wrong place. Check back once it's actually been cleaned of typos.**
