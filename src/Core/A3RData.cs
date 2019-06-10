@@ -357,8 +357,9 @@ namespace ArtillerySeries.src
 
             _weapon = new Weapon("90mm 3x KTS-T 'Horizon Signal'", 0, 60, ProjectileType.Acid);
             _weapon.AutoloaderClip = 3;
+            _weapon.ProjectilesFiredPerTurn = 2;
             _weapon.WeaponMaxCharge = 80;
-            _weapon.AimDispersion = 2f;
+            _weapon.AimDispersion = 1f;
             _weapon.BaseDamage = 450;
             _weapon.DamageRad = 100;
             _weapon.ExplRad = 10;
@@ -374,7 +375,7 @@ namespace ArtillerySeries.src
             _weapon.ProjectilesFiredPerTurn = 4;
             _weapon.WeaponMaxCharge = 100;
             _weapon.AimDispersion = 3f;
-            _weapon.BaseDamage = 1200;
+            _weapon.BaseDamage = 1800;
             _weapon.DamageRad = 200;
             _weapon.ExplRad = 30;
             _weapon.Rarity = 7;
@@ -389,7 +390,7 @@ namespace ArtillerySeries.src
             _massDriver.WeaponMaxCharge = 1000;
             _massDriver.AimDispersion = 0.001f;
             _massDriver.ExplRad = 80;
-            _massDriver.BaseDamage = 5000;
+            _massDriver.BaseDamage = 10000;
             _massDriver.DamageRad = 400;
             _massDriver.UsesSatellite = true;
             _massDriver.Rarity = 7;
