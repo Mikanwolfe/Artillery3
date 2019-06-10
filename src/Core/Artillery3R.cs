@@ -249,7 +249,7 @@ namespace ArtillerySeries.src
             SwinGame.ReleaseAllResources();
         }
 
-        public string Version => "A3S -- I ran out of letters and A3Rx2 is a bit much";
+        public string Version => "A3s Final Iteration";
 
     }
 }
