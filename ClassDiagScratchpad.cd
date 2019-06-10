@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Class Name="ArtillerySeries.src.ShopGameState">
+    <Position X="4.75" Y="13.25" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAIQAQAAIQA=</HashCode>
+      <FileName>src\GameStates\ShopGameState.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ShopMenu">
+    <Position X="4.75" Y="17.75" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>GAQAAIAAAAAFAkQAAAAAAAAAABAAEAABAgAAAQAIAAA=</HashCode>
+      <FileName>src\User Interface\UI_ShopMenu.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ShopItems">
+    <Position X="9.5" Y="17" Width="3.25" />
+    <NestedTypes>
+      <Delegate Name="ArtillerySeries.src.UI_ShopItems.PlayerBuyEvent" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>src\User Interface\UI_ShopItems.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAQAAgFAAgAAIAAACAAQAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_ShopItems.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ShopButton">
+    <Position X="1.5" Y="17.75" Width="2.75" />
+    <NestedTypes>
+      <Delegate Name="ArtillerySeries.src.UI_ShopButton.PlayerBuyEvent" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>src\User Interface\UI_ShopButton.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAQIBAAAEDQgggACQkAAIBACBAABBIQIgBACEABAAAg=</HashCode>
+      <FileName>src\User Interface\UI_ShopButton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_SelectableTextBox">
+    <Position X="4.75" Y="27.5" Width="3.25" />
+    <NestedTypes>
+      <Delegate Name="ArtillerySeries.src.UI_SelectableTextBox.PlayerSelectedWeapon" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>src\User Interface\UI_SelectableTextBox.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAQIAEIAIAAAAgAAAAAgABgAAAAAgAAAgAAAAAAAAAI=</HashCode>
+      <FileName>src\User Interface\UI_SelectableTextBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Text">
+    <Position X="19.75" Y="18.25" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAQABAAAAQAIAgAAAAAAAAAAAACAAAAIAAAACAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_Text.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_TextBox">
+    <Position X="4.75" Y="22.75" Width="3.25" />
+    <NestedTypes>
+      <Delegate Name="ArtillerySeries.src.UI_TextBox.SpecialCharacter" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>src\User Interface\UI_TextBox.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAgEBAAEAAAAAgAAEAAAAAAIAgABAAAA=</HashCode>
+      <FileName>src\User Interface\UI_TextBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_WeaponEquipBox">
+    <Position X="19.75" Y="25.75" Width="3.25" />
+    <NestedTypes>
+      <Delegate Name="ArtillerySeries.src.UI_WeaponEquipBox.InventoryBoxSelected" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>src\User Interface\UI_WeaponEquipBox.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>ABwIAA4AgBBoIhIQMooSAQAAAIAkQAYCAB4ABCBAAAg=</HashCode>
+      <FileName>src\User Interface\UI_WeaponEquipBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_StaticImage">
+    <Position X="10" Y="21.25" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAQCAAgAAAAAAAAAAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_StaticImage.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_HealthUpgradeButton">
+    <Position X="12" Y="30" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAACACAgAAAAAAABAAAAAAAAAAAAAAACAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_StatUpgradeButton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ArmourUpgradeButton">
+    <Position X="8.5" Y="30" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAACACAgAAAAAAABAAAAAAAAAAAAAAACAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_StatUpgradeButton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_EquipBox">
+    <Position X="17.5" Y="13" Width="3.25" />
+    <NestedTypes>
+      <Delegate Name="ArtillerySeries.src.UI_EquipBox.PlayerSellEvent" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>src\User Interface\UI_EquipBox.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAQAAAAEgEAIAkEAAAAAAEAgAAARAAABAACAQAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_EquipBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Line">
+    <Position X="19.75" Y="22.25" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAQSAAAAAAAIAgAAAAAAAAAAAAAAAAAAAAAEAAAAAAQ=</HashCode>
+      <FileName>src\User Interface\UI_Line.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="ArtillerySeries.src.ShoppableItem">
+    <Position X="8.5" Y="13.25" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAhAAAAAABQAAAAAQAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_ShopButton.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

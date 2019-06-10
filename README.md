@@ -1,10 +1,8 @@
-# Artillery 3x
+# Artillery 3
 
-by mikanwolfe, 05-2019, mikanwolfe@nekox.net.
+**Warning: This repository is private. If you're reading this, you're in the wrong place. Check back once it's actually been cleaned of typos.**
 
----
-
-This is just rambly. See /docs/ for more info, though it's all ramble as well. Don't worry, this will be done by the end of June.
+by mikanwolfe, 03-2019, mikanwolfe@nekox.net.
 
 ---
 

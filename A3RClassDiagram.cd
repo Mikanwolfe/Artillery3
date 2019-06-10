@@ -1,0 +1,977 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Class Name="ArtillerySeries.src.ChargeWeaponCommand" Collapsed="true">
+    <Position X="1.25" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Commands\CharacterCommands.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.DepressWeaponCommand" Collapsed="true">
+    <Position X="3.5" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Commands\CharacterCommands.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.ElevateWeaponCommand" Collapsed="true">
+    <Position X="5.75" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Commands\CharacterCommands.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.FireWeaponCommand" Collapsed="true">
+    <Position X="8" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Commands\CharacterCommands.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.AwardMoney" Collapsed="true">
+    <Position X="10.25" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAABAAAAAAAA=</HashCode>
+      <FileName>src\Commands\CharacterCommands.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.MoveLeftCommand" Collapsed="true">
+    <Position X="12.5" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Commands\CharacterCommands.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.MoveRightCommand" Collapsed="true">
+    <Position X="14.75" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Commands\CharacterCommands.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.SwitchWeaponCommand" Collapsed="true">
+    <Position X="17" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Commands\CharacterCommands.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Command" Collapsed="true">
+    <Position X="9" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAQAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Commands\Command.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.CommandStream" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="87.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQCAAQAAAQAAAAAAAAAAACAABAAAAA=</HashCode>
+      <FileName>src\Commands\CommandStream.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ArtillerySeries.src.CombatStateObserver" Collapsed="true">
+    <Position X="9.5" Y="11.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>src\Components\CombatStateObserver.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Observer" Collapsed="true">
+    <Position X="10.75" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>src\Components\Observer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.PhysicsComponent" Collapsed="true">
+    <Position X="91" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AARBCCAQYAQQCMQgAAgIAKAADCBgIAUQQAAEEAgEYAA=</HashCode>
+      <FileName>src\Components\PhysicsComponent.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.StateComponent&lt;T&gt;" Collapsed="true">
+    <Position X="87.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAEAIAAAAAAAAAAAACAAAAAAAAAEAAACAA=</HashCode>
+      <FileName>src\Components\StateComponent.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.SubjectComponent" Collapsed="true">
+    <Position X="89.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABAAAAAAAAAAAAAAAAAAABAAAAACAQAAAA=</HashCode>
+      <FileName>src\Components\SubjectComponent.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.A3RData">
+    <Position X="87.5" Y="11" Width="3.5" />
+    <TypeIdentifier>
+      <HashCode>AAACCEAKAJwoAIAAAAAAAABgBJBhIBEAAMGFACQkABU=</HashCode>
+      <FileName>src\Core\A3RData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Constants" Collapsed="true">
+    <Position X="89.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAgAgAAQCaABAAAgAAAABICAEIIBIAZFIEAABIECQ=</HashCode>
+      <FileName>src\Core\Artillery3R.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Artillery3R" Collapsed="true">
+    <Position X="92.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>oAAAAIAAABAAAAAAAgAAAAggAAACAAAAAAABQAAAEBI=</HashCode>
+      <FileName>src\Core\Artillery3R.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.InputHandler" Collapsed="true">
+    <Position X="87.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAAAIAAAAAAAAAAAAAAAAAQAAAAAAAAAAA=</HashCode>
+      <FileName>src\Core\InputHandler.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.AIInputMethod" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="91" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Core\InputMethod.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ArtillerySeries.src.PlayerInputMethod" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="94.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAAAAAAAAAAAAAQAAIAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Core\InputMethod.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ArtillerySeries.src.Utilities" Collapsed="true">
+    <Position X="87.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAgCABQIABCAKAAAAAAgAACAAAAIAAAAAAAgAIAAE=</HashCode>
+      <FileName>src\Core\Utilities.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Vector" Collapsed="true">
+    <Position X="89.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAIAAQAAACEQAEAAAAAAAAAAAAAAAAAAgEAYAA=</HashCode>
+      <FileName>src\Core\Vector.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.DrawableObject" Collapsed="true">
+    <Position X="47" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAgAAAAAAAAAAAAABAAAIAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\DrawableObject.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.Entity" Collapsed="true">
+    <Position X="72.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AASAIACAAAAAAixIACAAAARAAACAAACABAAIAAAAgAA=</HashCode>
+      <FileName>src\Entities\Entity.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.EntityAssembly" Collapsed="true">
+    <Position X="80.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAIAgAAAAAAAAAAAAAAAAAAAAEAAAAAAAA=</HashCode>
+      <FileName>src\Entities\EntityAssembly.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Character">
+    <Position X="78.75" Y="6.25" Width="3.25" />
+    <NestedTypes>
+      <Delegate Name="ArtillerySeries.src.Character.NotifyFiring" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>src\Entities\Players\Character.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>iCSADaCQINEBCwsBIBgDCgQcACpdGEGLWpaFSwEkAAc=</HashCode>
+      <FileName>src\Entities\Players\Character.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.Hull" Collapsed="true">
+    <Position X="60.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQACACAABEAAghAAAgAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\Players\Hull.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.Player" Collapsed="true">
+    <Position X="63" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>A0QQAIAAAAAAAkIAJAADCAAQAACEAAAAAASAQAAAGAQ=</HashCode>
+      <FileName>src\Entities\Players\Player.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.Timer" Collapsed="true">
+    <Position X="92.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABIAAAAQAAgQAAAAIAABQAACAAAAAQAA=</HashCode>
+      <FileName>src\Entities\Players\Timer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Vehicle" Collapsed="true">
+    <Position X="82.75" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQACBAAAAAAAgAAAAAAAAAEAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\Players\Vehicle.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Weapon" Collapsed="true">
+    <Position X="85" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>kqYCgACAGSRAAollCAiAChAIgyAUQAJByWcgxEoAAAI=</HashCode>
+      <FileName>src\Entities\Players\Weapons\Weapon.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.WeaponAcidCannon" Collapsed="true">
+    <Position X="85" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\Players\Weapons\WeaponAcidCannon.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.AcidProjectile" Collapsed="true">
+    <Position X="65.25" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\Projectiles\AcidProjectile.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Laser" Collapsed="true">
+    <Position X="67.5" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAACAAAIAiAAgAAAAAgAAAAAAAAAAAAIgAAAAAQ=</HashCode>
+      <FileName>src\Entities\Projectiles\Laser.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.LaserTargetProjectile" Collapsed="true">
+    <Position X="69.75" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAQAAAEAgAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\Projectiles\LaserTargetProjectile.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Projectile" Collapsed="true">
+    <Position X="67.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AiQAAAAAAQAAAggAYAIACEgAAAAQAAIAAACBAAAAYAA=</HashCode>
+      <FileName>src\Entities\Projectiles\Projectile.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.ProjectileFactory" Collapsed="true">
+    <Position X="6.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACYAAABBAQQAAAgAQACAAgAAAAAQQAABQKAADAAAAAA=</HashCode>
+      <FileName>src\Entities\Projectiles\ProjectileFactory.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UpdatableObject" Collapsed="true">
+    <Position X="44.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\UpdatableObject.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.GameMain" Collapsed="true">
+    <Position X="96.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAA=</HashCode>
+      <FileName>src\GameMain.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.CombatGameState" Collapsed="true">
+    <Position X="10" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gEQIAIQAAAhsAgICKgICCAAZAABAAQIAACYBwKQAAAA=</HashCode>
+      <FileName>src\GameStates\CombatGameState.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.ExitState" Collapsed="true">
+    <Position X="12.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\ExitState.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.GameState" Collapsed="true">
+    <Position X="15.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AhQAAAAAAAAAAoAAAgAAAAAQAAAAAAAQAAIAAAAQAAA=</HashCode>
+      <FileName>src\GameStates\GameState.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.LoadingGameState" Collapsed="true">
+    <Position X="14.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAgACAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\LoadingGameState.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.MainMenuGameState" Collapsed="true">
+    <Position X="16.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\MainMenuGameState.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.PlayerSelectGameState" Collapsed="true">
+    <Position X="19" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\PlayerSelectGameState.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.ShopGameState" Collapsed="true">
+    <Position X="21.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAIQAQAAIQA=</HashCode>
+      <FileName>src\GameStates\ShopGameState.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.AchievementEventArgs" Collapsed="true">
+    <Position X="89.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Managers\Achievements.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Achievements" Collapsed="true">
+    <Position X="0.5" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAADAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Managers\Achievements.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.CommandProcessor" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="96.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Managers\CommandProcessor.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ArtillerySeries.src.EntityManager" Collapsed="true">
+    <Position X="91" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQACAAAAAAIAgAAAgABAAUAAAQAAgAAAIEAAABAAAA=</HashCode>
+      <FileName>src\Managers\EntityManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.ParticleEngine" Collapsed="true">
+    <Position X="89.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIQAAAAQQACwAgIGAgAAAAAgAEAAQIAAAAAAAARQACE=</HashCode>
+      <FileName>src\Managers\ParticleEngine.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.PhysicsEngine" Collapsed="true">
+    <Position X="92.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAgIIAAABgAAAAAAAAAAAAEEAEABAQBAAAM=</HashCode>
+      <FileName>src\Managers\PhysicsEngine.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.ServicesModule" Collapsed="true">
+    <Position X="1.75" Y="9.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABQAAAAAAAAAAoAAAgAAAAAAAAAAAAAQAAAAAAAAAAA=</HashCode>
+      <FileName>src\Managers\Services.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.Services" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="96.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QBQMAAIAAAAAA4GRAhUAAQAAAQAAAAAQQAACACAAAAg=</HashCode>
+      <FileName>src\Managers\Services.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ArtillerySeries.src.Particle" Collapsed="true">
+    <Position X="76.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAQIAADCAQAIIgAAEAMAAAAAAAgAAAAAAACAgAAAAAA=</HashCode>
+      <FileName>src\Particles\Particle.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.TextParticle" Collapsed="true">
+    <Position X="76.5" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAgAAAAgAAAAAAAAAAAAIAAAAAAAAAAA=</HashCode>
+      <FileName>src\Particles\TextParticle.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Box" Collapsed="true">
+    <Position X="49.5" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAgAAgAACIAgAAAAAABAAAABAAAAAIABAEiAAAAAE=</HashCode>
+      <FileName>src\User Interface\UI_Box.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Button" Collapsed="true">
+    <Position X="9" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQQBAgABYCYAgEAAEEAAEAAADACAAAICBAAAFAAEAE=</HashCode>
+      <FileName>src\User Interface\UI_Button.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_CheckBox" Collapsed="true">
+    <Position X="13.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQABAAAAQCQAgCAAEAAAAAAQDAAAAAIAAAACAIAAAA=</HashCode>
+      <FileName>src\User Interface\UI_CheckBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Combat" Collapsed="true">
+    <Position X="27" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAoAAAgAAAACAAAAAAAAAAARABAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_Combat.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_DynamicImage" Collapsed="true">
+    <Position X="58.5" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAQAAIgAAEAAAgAAIAACAAAAAAAAAAAAAAIAQAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_DynamicImage.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_EquipBox" Collapsed="true">
+    <Position X="51.75" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAEgEAIAkEAAAAAAEAgAAARAAABAACAQAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_EquipBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Line" Collapsed="true">
+    <Position X="20.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQSAAAAAAAIAgAAAAAAAAAAAAAAAAAAAAAEAAAAAAQ=</HashCode>
+      <FileName>src\User Interface\UI_Line.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_LoadingBar" Collapsed="true">
+    <Position X="24.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAgACoAgAAAAAAACCAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_LoadingBar.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_MainMenu" Collapsed="true">
+    <Position X="42.75" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgA=</HashCode>
+      <FileName>src\User Interface\UI_MainMenu.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Minimap" Collapsed="true">
+    <Position X="56.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAACAAgAAAgAAAAAAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_Minimap.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelect_Legacy" Collapsed="true">
+    <Position X="54" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgQCAMAAAAAAAgAAIAACIAAAIDAAAAAAAAIAQAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelect_Legacy.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelectCharacters" Collapsed="true">
+    <Position X="29.25" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAIAAAAAAAACAIAAAAAAAAAAAAAAAAAQAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelectCharacters.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelectNames" Collapsed="true">
+    <Position X="31.5" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAABAAAAAAAAAACAKAAAAAAAAAAAAAAAAAQABAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelectNames.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelectNumberPlayers" Collapsed="true">
+    <Position X="33.75" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAQAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelectNumberPlayers.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_PlayerSelectTemplate" Collapsed="true">
+    <Position X="31.5" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAAAAAAAAACAAAAACAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelectScreen.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_SelectableTextBox" Collapsed="true">
+    <Position X="48.25" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQIAEIAIAAAAgAAAAAgABgAAAAAgAAAgAAAAAAAAAI=</HashCode>
+      <FileName>src\User Interface\UI_SelectableTextBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ShopButton" Collapsed="true">
+    <Position X="22.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQIBAAAEDQgggACQkAAIBACBAABBIQIgBACEABAAAg=</HashCode>
+      <FileName>src\User Interface\UI_ShopButton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ShopItems" Collapsed="true">
+    <Position X="40.5" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAQAAgFAAgAAIAAACAAQAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_ShopItems.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ShopMenu" Collapsed="true">
+    <Position X="45" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>GAQAAIAAAAAFAkQAAAAAAAAAABAAEAABAgAAAQAIAAA=</HashCode>
+      <FileName>src\User Interface\UI_ShopMenu.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_StaticImage" Collapsed="true">
+    <Position X="58.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAQCAAgAAAAAAAAAAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_StaticImage.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_HealthUpgradeButton" Collapsed="true">
+    <Position X="47.25" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAACACAgAAAAAAABAAAAAAAAAAAAAAACAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_StatUpgradeButton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_ArmourUpgradeButton" Collapsed="true">
+    <Position X="49.5" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAACACAgAAAAAAABAAAAAAAAAAAAAAACAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_StatUpgradeButton.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_Text" Collapsed="true">
+    <Position X="11.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQABAAAAQAIAgAAAAAAAAAAAACAAAAIAAAACAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_Text.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_TextBox" Collapsed="true">
+    <Position X="48.25" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAgEBAAEAAAAAgAAEAAAAAAIAgABAAAA=</HashCode>
+      <FileName>src\User Interface\UI_TextBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_WeaponEquipBox" Collapsed="true">
+    <Position X="15.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABwIAA4AgBBoIhIQMooSAQAAAIAkQAYCAB4ABCBAAAg=</HashCode>
+      <FileName>src\User Interface\UI_WeaponEquipBox.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_WindMarker" Collapsed="true">
+    <Position X="18" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAEAAAQAAAA=</HashCode>
+      <FileName>src\User Interface\UI_WindMarker.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_WinScreen" Collapsed="true">
+    <Position X="36" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_WinScreen.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UI_WinUI" Collapsed="true">
+    <Position X="38.25" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAACAAgAAAAAQAAAAAAjAAAAAAACIAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_WinUI.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UIElement" Collapsed="true">
+    <Position X="33.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAQAAAAAAAAAAACAAAAAAAAAACAAYAA=</HashCode>
+      <FileName>src\User Interface\UIElement.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UIElementAssembly" Collapsed="true">
+    <Position X="40.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABUoAAAABAABAgAAAgAAAEAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UIElementAssembly.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UIEventArgs" Collapsed="true">
+    <Position X="94.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAACAAAAAAAAAAAAgAAAAAIAAAACAAAAAA=</HashCode>
+      <FileName>src\User Interface\UIEventArgs.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UserInterface" Collapsed="true">
+    <Position X="96.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>wBUAAAAAAAABAwAAAgAAIAIAIABQAAIAQAAAAARAABA=</HashCode>
+      <FileName>src\User Interface\UserInterface.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.UserInterfaceObserver" Collapsed="true">
+    <Position X="11.75" Y="11.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAQAA=</HashCode>
+      <FileName>src\User Interface\UserInterfaceObserver.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Camera" Collapsed="true">
+    <Position X="4.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CCQAAEAAAAAAAAQAAAAACAAABQCAAATCIEABAAAAAAA=</HashCode>
+      <FileName>src\World\Camera.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.CameraFocusPoint" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="94.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAACAAAAAAEAAAAAAAAA=</HashCode>
+      <FileName>src\World\CameraFocusPoint.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ArtillerySeries.src.CelestialBody">
+    <Position X="72" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAQAAAAAAAAIAgAAAAAAAAAAAEAAAAAAAAAAAAACAIA=</HashCode>
+      <FileName>src\World\CelestialBody.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Environment" Collapsed="true">
+    <Position X="92.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQQAAAAAAAgDAwgCAAAAAAAAAAAAgggAAAAJAGAAAAE=</HashCode>
+      <FileName>src\World\Environment.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.EnvironmentPreset" Collapsed="true">
+    <Position X="94.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAgBAADAAAAAAAACAAIAAQAAABAAAAA=</HashCode>
+      <FileName>src\World\EnvironmentPreset.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Satellite" Collapsed="true">
+    <Position X="74.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAFAIQAAAigAAEAAUEAAAAIEAAAEAAEEAAAAAAQ=</HashCode>
+      <FileName>src\World\Satellite.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Terrain" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="91" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AASAAACAABAIAgQAAAAAAABAABCABAAAAAABgCAAAAA=</HashCode>
+      <FileName>src\World\Terrain.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ArtillerySeries.src.TerrainFactory" Collapsed="true">
+    <Position X="1.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAEAACAAAAAAAAAAAAIAAABAAABIAAAAABAGAAAAM=</HashCode>
+      <FileName>src\World\TerrainFactory.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.TerrainFactoryMidpoint" Collapsed="true">
+    <Position X="2.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAQAEAAAAA=</HashCode>
+      <FileName>src\World\TerrainFactoryMidpoint.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.TerrainFactoryRandom" Collapsed="true">
+    <Position X="0.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>src\World\TerrainFactoryRandom.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Wind" Collapsed="true">
+    <Position X="91" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAABAAAAACgAAAiAAAAAAAAAAAAAAAAAIAAFAYAE=</HashCode>
+      <FileName>src\World\Wind.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArtillerySeries.src.Managers.EscMenuService" Collapsed="true">
+    <Position X="2.75" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Managers\EscMenuService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="ArtillerySeries.src.ICommand" Collapsed="true">
+    <Position X="5.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Commands\Command.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.ICommandStream" Collapsed="true">
+    <Position X="5.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAACAAQAAAAAAAAAAAAAAACAAAAAAAA=</HashCode>
+      <FileName>src\Commands\CommandStream.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IPhysicsComponent" Collapsed="true">
+    <Position X="94.5" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Components\PhysicsComponent.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IStateComponent&lt;T&gt;" Collapsed="true">
+    <Position X="96.25" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAIAAAAAAAAAAIAACAAAAAAAAAAAAAAAAQAAAAAA=</HashCode>
+      <FileName>src\Components\StateComponent.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IInputMethod" Collapsed="true">
+    <Position X="92.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Core\InputMethod.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IDrawable" Collapsed="true">
+    <Position X="9.75" Y="9.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\DrawableObject.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IHull" Collapsed="true">
+    <Position X="91" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\Players\Hull.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IWeapon" Collapsed="true">
+    <Position X="87.5" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gCAAAAAAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAI=</HashCode>
+      <FileName>src\Entities\Players\Weapons\Weapon.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IUpdatable" Collapsed="true">
+    <Position X="6.75" Y="9.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\UpdatableObject.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IGameState" Collapsed="true">
+    <Position X="6.75" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\GameState.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.ICommandProcessor" Collapsed="true">
+    <Position X="89.25" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Managers\CommandProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.IServices" Collapsed="true">
+    <Position X="6.75" Y="12.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Managers\Services.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.ShoppableItem" Collapsed="true">
+    <Position X="89.25" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAhAAAAAABQAAAAAQAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_ShopButton.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ArtillerySeries.src.ICameraCanFocus" Collapsed="true">
+    <Position X="87.5" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\World\Camera.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="ArtillerySeries.src.ObserverEvent" Collapsed="true">
+    <Position X="94.5" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAQAAAhAQAAACAQAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Components\Observer.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.FacingDirection" Collapsed="true">
+    <Position X="92.75" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACACAAAAAAAA=</HashCode>
+      <FileName>src\Components\PhysicsComponent.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.CharacterState" Collapsed="true">
+    <Position X="87.5" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAJAAAAAAAAAAAABAAAAEAABAAAAAAAACAAAAAA=</HashCode>
+      <FileName>src\Entities\Players\Character.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.PlayerState" Collapsed="true">
+    <Position X="89.25" Y="8.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAABAAAABAAEAAAABAAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\Players\Player.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.WeaponState" Collapsed="true">
+    <Position X="96.25" Y="8.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgAAAAAEAAAAAAAABAAAAAA=</HashCode>
+      <FileName>src\Entities\Players\Weapons\Weapon.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.ProjectileState" Collapsed="true">
+    <Position X="91" Y="8.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAACACAAAA=</HashCode>
+      <FileName>src\Entities\Projectiles\Projectile.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.ProjectileType" Collapsed="true">
+    <Position X="92.75" Y="8.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAgIAAAAAAAAAAAAAAAAAAAAAEAAAAAAQAAAA=</HashCode>
+      <FileName>src\Entities\Projectiles\ProjectileFactory.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.CombatState" Collapsed="true">
+    <Position X="89.25" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAIAIAAAAAAAIAAAAAAAAAAAAAQAAAQAAA=</HashCode>
+      <FileName>src\GameStates\CombatGameState.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.PlayerSelect" Collapsed="true">
+    <Position X="96.25" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\PlayerSelectGameState.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.DynamicImageState" Collapsed="true">
+    <Position X="91" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAI=</HashCode>
+      <FileName>src\User Interface\UI_DynamicImage.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.PlayerSelectState" Collapsed="true">
+    <Position X="87.5" Y="8.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAACAACEAAAAA=</HashCode>
+      <FileName>src\User Interface\UI_PlayerSelect_Legacy.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.UIEvent" Collapsed="true">
+    <Position X="94.5" Y="8.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAwQAAAAAAAIAAAAABAAAE=</HashCode>
+      <FileName>src\User Interface\UIEventArgs.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="ArtillerySeries.src.WeatherType" Collapsed="true">
+    <Position X="87.5" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAABAAIAAAAIAAAEAAAAAAAAAAA=</HashCode>
+      <FileName>src\World\Environment.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Delegate Name="ArtillerySeries.src.RemoveCommand" Collapsed="true">
+    <Position X="94.5" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Components\PhysicsComponent.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="ArtillerySeries.src.OnTimeUp" Collapsed="true">
+    <Position X="92.75" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\Entities\Players\Timer.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="ArtillerySeries.src.NotifyGameEnded" Collapsed="true">
+    <Position X="89.25" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\CombatGameState.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="ArtillerySeries.src.endSelectStage" Collapsed="true">
+    <Position X="87.5" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\PlayerSelectGameState.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="ArtillerySeries.src.NotifyPlayerFinishedShop" Collapsed="true">
+    <Position X="91" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\GameStates\ShopGameState.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="ArtillerySeries.src.UIEventOccurred" Collapsed="true">
+    <Position X="96.25" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>src\User Interface\UserInterface.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

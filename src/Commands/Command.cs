@@ -4,15 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Artillery
+namespace ArtillerySeries.src
 {
 
     public interface ICommand
     {
-        void Execute(ICharacter c);
+        void Execute(A3RData a3RData);
+        string Name { get; }
     }
     public abstract class Command : ICommand
     {
-        public abstract void Execute(ICharacter c);
+        private string _name;
+
+        public Command(string name)
+        {
+            _name = name;
+        }
+
+        public string Name { get => _name; set => _name = value; }
+
+        public abstract void Execute(A3RData a3RData);
     }
 }

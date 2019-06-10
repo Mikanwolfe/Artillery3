@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
 
-namespace Artillery
+namespace ArtillerySeries.src
 {
     public class Vector
     {
@@ -36,10 +36,20 @@ namespace Artillery
         {
 
         }
+
+        public Vector(Vector pt)
+            : this(pt.X, pt.Y)
+        {
+
+        }
         #endregion
 
         #region Methods
 
+        public override string ToString()
+        {
+            return "Vector(" + _x + ", " + _y + ")";
+        }
         public void Normalise()
         {
             float magnitude = (float)Math.Sqrt((_x * _x) + (_y * _y));

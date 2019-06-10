@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Artillery
+namespace ArtillerySeries.src
 {
-    public interface ICommandStream: ICommand
+    public interface ICommandStream : ICommand
     {
         void AddCommand(ICommand c);
         void FlushCommands();
@@ -23,12 +23,12 @@ namespace Artillery
             _commands = new Stack<ICommand>();
         }
 
-        public void Execute(ICharacter c)
+        public void Execute(A3RData a3RData)
         {
             if (_commands.Count != 0)
             {
                 ICommand _currentCommand = _commands.Pop();
-                _currentCommand.Execute(c);
+                _currentCommand.Execute(a3RData);
             }
         }
 
@@ -36,10 +36,13 @@ namespace Artillery
         {
             _commands.Push(c);
         }
-       
+
         public void FlushCommands()
         {
             _commands.Clear();
         }
+
+        public string Name => "command_stream";
+
     }
 }

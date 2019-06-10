@@ -4,20 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Artillery
+namespace ArtillerySeries.src
 {
 
     public interface ICommandProcessor
     {
-        void Update(A3Data a3Data);
+        void Update(A3RData a3RData);
     }
     public class CommandProcessor : ICommandProcessor
     {
-        public void Update(A3Data a3Data)
+        public void Update(A3RData a3RData)
         {
-            while (!a3Data.CommandStream.Finished)
+            while (!a3RData.CommandStream.Finished)
             {
-                a3Data.CommandStream.Execute(a3Data.SelectedPlayer.Character);
+                a3RData.CommandStream.Execute(a3RData);
             }
         }
     }
