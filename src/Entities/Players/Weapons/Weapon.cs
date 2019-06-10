@@ -66,6 +66,7 @@ namespace ArtillerySeries.src
         bool _usesSatellite;
         int _autoloaderClip = 1;
         int _autoloaderAmmoLeft;
+        float _acidDamage = 0.5f;
         Point2D _projectilePos;
         Point2D _projectileVel;
         Point2D _lastProjectilePosition;
@@ -73,6 +74,8 @@ namespace ArtillerySeries.src
         int _projectilesFiredPerTurn = 1;
 
         ProjectileType _projectileType;
+
+        Color _rarityColor;
 
         ProjectileFactory _projectileFactory;
         #endregion
@@ -95,6 +98,8 @@ namespace ArtillerySeries.src
             _maxWepAngleRad = Rad(maxWepAngleDeg);
             _weaponAngle = _minWepAngleRad;
             _usesSatellite = false;
+
+            
 
         }
 
@@ -338,6 +343,8 @@ namespace ArtillerySeries.src
         public int Cost { get => _cost; set => _cost = value; }
         public int Rarity { get => rarity; set => rarity = value; }
         public float WeaponMaxCharge { get => _weaponMaxCharge; set => _weaponMaxCharge = value; }
+        public float AcidDamage { get => _acidDamage; set => _acidDamage = value; }
+        public Color RarityColor { get => Artillery3R.Services.A3RData.RarityReference[rarity]; }
         #endregion
 
     }

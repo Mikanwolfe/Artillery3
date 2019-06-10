@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SwinGameSDK;
+using static ArtillerySeries.src.Utilities;
 
 namespace ArtillerySeries.src
 {
@@ -78,10 +79,10 @@ namespace ArtillerySeries.src
                     if (e != parent && e.Damageable)
                     {
                         float dealtDamage = DamageFromDistance(damage, pt, e.Pos, radius);
-                        if (dealtDamage > 1)
+                        if (dealtDamage > 3)
                         {
                             int roundedDamage = (int)dealtDamage;
-                            Artillery3R.Services.ParticleEngine.CreateDamageText(e.Pos, Color.White, 6f, roundedDamage.ToString(), 0);
+                            Artillery3R.Services.ParticleEngine.CreateDamageText(AddPoint2D(e.Pos, RandomPoint2D(10)), Color.White, 6f, roundedDamage.ToString(), 0);
                         }
                         e.Damage(dealtDamage);
                     }

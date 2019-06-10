@@ -91,7 +91,7 @@ namespace ArtillerySeries.src
 
                 case ProjectileType.Acid:
                     mainProjectile = new AcidProjectile(parentWeapon.Name + "Gun Round", parentWeapon,
-                        projectilePos, projectileVel, damage, explRad, damageRad);
+                        projectilePos, projectileVel, damage, explRad, damageRad, parentWeapon.AcidDamage);
                     break;
 
                 case ProjectileType.Laser:

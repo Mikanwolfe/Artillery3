@@ -83,6 +83,23 @@ namespace ArtillerySeries.src
 
             _shopWeapons = new List<Weapon>();
 
+            _rarityReference = new Dictionary<int, Color>();
+            _rarityReference.Add(1, Color.SteelBlue);
+            _rarityReference.Add(2, Color.ForestGreen);
+            _rarityReference.Add(3, Color.OrangeRed);
+            _rarityReference.Add(4, Color.DeepPink);
+            _rarityReference.Add(5, Color.Purple);
+            _rarityReference.Add(6, Color.DarkCyan);
+            _rarityReference.Add(7, Color.White);
+
+            _rarityWords = new Dictionary<int, string>();
+            _rarityWords.Add(1, "Common");
+            _rarityWords.Add(2, "Uncommon");
+            _rarityWords.Add(3, "Rare");
+            _rarityWords.Add(4, "Epic");
+            _rarityWords.Add(5, "Mythical");
+            _rarityWords.Add(6, "Legendary");
+            _rarityWords.Add(7, "Godly");
 
             Weapon _howitzer = new Weapon("152mm/22 Howitzer", 0, 40, ProjectileType.Shell);
             _howitzer.BaseDamage = 100;
@@ -313,11 +330,12 @@ namespace ArtillerySeries.src
             _weapon.ProjectilesFiredPerTurn = 2;
             _weapon.WeaponMaxCharge = 70;
             _weapon.AimDispersion = 3f;
-            _weapon.BaseDamage = 550;
+            _weapon.BaseDamage = 250;
             _weapon.DamageRad = 100;
             _weapon.ExplRad = 10;
+            _weapon.AcidDamage = 2;
             _weapon.Rarity = 6;
-            _weapon.ShortDesc = "Developed on the world of KARAKARA. The cause of environmental damage: this.";
+            _weapon.ShortDesc = "Developed on the desolate planet KARAKARA. The cause of environmental damage: this.";
             _weapon.LongDesc = "Acid! Acid! Not the one that makes you high, but it kills you too!";
             _weapon.Cost = 44680;
             _shopWeapons.Add(_weapon);
@@ -334,6 +352,20 @@ namespace ArtillerySeries.src
             _weapon.ShortDesc = "Cute cupcakes! Sweet and fluffy, pink and purple!";
             _weapon.LongDesc = "Four by four equals sixteen!";
             _weapon.Cost = 73150;
+            _shopWeapons.Add(_weapon);
+
+            _weapon = new Weapon("90mm 3x KTS-T 'Horizon Signal'", 0, 60, ProjectileType.Acid);
+            _weapon.AutoloaderClip = 3;
+            _weapon.WeaponMaxCharge = 80;
+            _weapon.AimDispersion = 2f;
+            _weapon.BaseDamage = 450;
+            _weapon.DamageRad = 100;
+            _weapon.ExplRad = 10;
+            _weapon.AcidDamage = 8;
+            _weapon.Rarity = 7;
+            _weapon.ShortDesc = "What was; will be. A one-way-ticket to the worm-in-waiting.";
+            _weapon.LongDesc = "'Environmental Regulations'? What's that?";
+            _weapon.Cost = 105760;
             _shopWeapons.Add(_weapon);
 
             _weapon = new Weapon("810mm 4x3 KTS-T 'Terminus Est'", -20, 90, ProjectileType.Shell);
@@ -365,23 +397,7 @@ namespace ArtillerySeries.src
             _massDriver.Cost = 195420;
             _shopWeapons.Add(_massDriver);
 
-            _rarityReference = new Dictionary<int, Color>();
-            _rarityReference.Add(1, Color.SteelBlue);
-            _rarityReference.Add(2, Color.ForestGreen);
-            _rarityReference.Add(3, Color.OrangeRed);
-            _rarityReference.Add(4, Color.DeepPink);
-            _rarityReference.Add(5, Color.Purple);
-            _rarityReference.Add(6, Color.DarkCyan);
-            _rarityReference.Add(7, Color.White);
 
-            _rarityWords = new Dictionary<int, string>();
-            _rarityWords.Add(1, "Common");
-            _rarityWords.Add(2, "Uncommon");
-            _rarityWords.Add(3, "Rare");
-            _rarityWords.Add(4, "Epic");
-            _rarityWords.Add(5, "Mythical");
-            _rarityWords.Add(6, "Legendary");
-            _rarityWords.Add(7, "Godly");
 
 
 

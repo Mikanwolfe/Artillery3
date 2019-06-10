@@ -14,7 +14,10 @@ namespace ArtillerySeries.src
 
         List<Particle> _particles;
         List<Particle> _particlesToRemove;
+        List<Particle> _particlesToAdd;
         Random _random;
+
+        bool _queueClear = false;
 
         public ParticleEngine(A3RData a3RData)
         {
@@ -22,6 +25,7 @@ namespace ArtillerySeries.src
 
             _particles = new List<Particle>(500);
             _particlesToRemove = new List<Particle>();
+            _particlesToAdd = new List<Particle>();
             _random = new Random();
         }
 
@@ -97,7 +101,7 @@ namespace ArtillerySeries.src
             velocity.X *= speedMult * RandFloatBetween(-1, 1);
             velocity.Y *= speedMult * RandFloatBetween(-1, 1);
 
-            _particles.Add(new Particle(
+            AddParticle(new Particle(
                 RandDoubleBetween(0.5, 1) * lifeMult,
                 pos,
                 velocity,
@@ -129,7 +133,7 @@ namespace ArtillerySeries.src
             _particleToAdd.Radius *= sizeMult;
             _particleToAdd.Physics.CanCollideWithGround = false;
 
-            _particles.Add(_particleToAdd);
+            AddParticle(_particleToAdd);
         }
 
         public void CreateNonCollideParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult)
@@ -153,7 +157,7 @@ namespace ArtillerySeries.src
 
             _particleToAdd.Physics.CanCollideWithGround = false;
 
-            _particles.Add(_particleToAdd);
+            AddParticle(_particleToAdd);
         }
 
         public void CreateDamageText(Point2D pos, Color color, float lifeMult, String text, float weight)
@@ -164,7 +168,7 @@ namespace ArtillerySeries.src
             _textParticle.SetFriction(0);
             _textParticle.Physics.WindFrictionMult = 0;
 
-            _particles.Add(_textParticle);
+            AddParticle(_textParticle);
         }
 
         public void CreateAcidParticle(Point2D pos, Color color, float speedMult, float lifeMult, float weight, float windFricMult, float damage)
@@ -189,13 +193,13 @@ namespace ArtillerySeries.src
             _particleToAdd.SetDamage(damage);
             _particleToAdd.SetFriction(0.15f);
 
-            _particles.Add(_particleToAdd);
+            AddParticle(_particleToAdd);
         }
 
 
         public void CreateTracer(Point2D pos, Color color, double radius, float lifeMult, float weight)
         {
-            _particles.Add(new Particle(
+            AddParticle(new Particle(
                 lifeMult,
                 pos,
                 ZeroPoint2D(),
@@ -249,6 +253,27 @@ namespace ArtillerySeries.src
             }
         }
 
+        public void CreateAcidExplosion(Point2D pos, int numParticles, float damage)
+        {
+            for (int i = 0; i < numParticles; i++)
+            {
+                CreateAcidParticle(pos, Color.Orange, 20, 7, 0.3f, 1, damage);
+                CreateAcidParticle(pos, Color.Yellow, 20, 7, 0.3f, 1, damage);
+                CreateAcidParticle(pos, Color.Green, 20, 10, 0.3f, 1, damage);
+
+            }
+        }
+
+        public void CreateAcidExplosion(Point2D pos, int numParticles, float damage, Color color)
+        {
+            for (int i = 0; i < numParticles; i++)
+            {
+                CreateAcidParticle(pos, Color.Orange, 20, 7, 0.3f, 1, damage);
+                CreateAcidParticle(pos, Color.Yellow, 20, 7, 0.3f, 1, damage);
+                CreateAcidParticle(pos, color, 20, 10, 0.3f, 1, damage);
+
+            }
+        }
 
 
         /* ----------------------------------------------
@@ -262,6 +287,7 @@ namespace ArtillerySeries.src
             {
                 p.Update();
 
+
                 if (!WithinBoundary(p.Pos, Services.Instance.PhysicsEngine.BoundaryBox))
                     RemoveParticle(p);
             }
@@ -273,6 +299,19 @@ namespace ArtillerySeries.src
             }
             _particlesToRemove.Clear();
 
+            foreach (Particle p in _particlesToAdd)
+            {
+                p.Update();
+                _particles.Add(p);
+            }
+            _particlesToAdd.Clear();
+
+            if (_queueClear)
+            {
+                _particles.Clear();
+                _particlesToRemove.Clear();
+                _queueClear = false;
+            }
         }
 
         public void Draw()
@@ -283,6 +322,10 @@ namespace ArtillerySeries.src
             }
         }
 
+        public void AddParticle(Particle p)
+        {
+            _particlesToAdd.Add(p);
+        }
 
         public void RemoveParticle(Particle p)
         {
@@ -291,8 +334,8 @@ namespace ArtillerySeries.src
 
         public void Clear()
         {
-            _particles.Clear();
-            _particlesToRemove.Clear();
+            _queueClear = true;
+            
         }
     }
 }

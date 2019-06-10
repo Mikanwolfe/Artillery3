@@ -17,6 +17,7 @@ namespace ArtillerySeries.src
             : this(life, pos, vel, radius, color, weight)
         {
             _physics.WindFrictionMult = windFricMult;
+            this.Damageable = false;
         }
 
         public Particle(double life, Point2D pos, Point2D vel, double radius, Color color, float weight)

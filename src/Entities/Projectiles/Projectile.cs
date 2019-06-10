@@ -61,7 +61,7 @@ namespace ArtillerySeries.src
             {
                 if (_bitmap == null)
                 {
-                    SwinGame.FillCircle(Color.DarkMagenta, Pos, 3);
+                    SwinGame.FillCircle(_parentWeapon.RarityColor, Pos, 3);
 
                 }
 
