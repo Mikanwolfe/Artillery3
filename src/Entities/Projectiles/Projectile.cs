@@ -86,7 +86,7 @@ namespace ArtillerySeries.src
 
                 Artillery3R.Services.ParticleEngine.CreateTracer(
                     Pos,
-                    Color.DarkMagenta,
+                    _parentWeapon.RarityColor,
                     3,
                     1,
                     0);

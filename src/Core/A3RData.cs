@@ -211,6 +211,7 @@ namespace ArtillerySeries.src
             _acidWeapon.AimDispersion = 2f;
             _acidWeapon.BaseDamage = 50;
             _acidWeapon.DamageRad = 80;
+            _acidWeapon.AcidDamage = 0.63f; //Final damage tends to be about 400x per shot this value giving about ~500
             _acidWeapon.Rarity = 3;
             _acidWeapon.ShortDesc = "Developed during the last Neko War, fires highly acidic projectiles";
             _acidWeapon.LongDesc = "2-Round Acid Projectiles, otherwise, somewhat mediocre.";
