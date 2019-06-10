@@ -130,9 +130,25 @@ The final branch and current iteration of Artillery, recently merged to master v
 
 ### Further Development of the Artillery Concept
 
-Artillery has accompanying reports, found at [nekox.net](https://nekox.net). With Artillery, I would've liked to achieve/worked on the following, given enough time or incentive:
+Artillery has accompanying reports, found at [nekox.net](https://nekox.net). 
 
-* 
+At current, Artillery is complete aside from minor tweaks. The game structure has become a bit rigid due to poor decisions at the start and it will take a lot more effort than I have available to achieve more meaningful goals. For now, it's completely playable.
+
+---
+
+## Acknowledgements
+
+Most sounds from the Sonniss Audio Library -- Awesome shoutout to those guys for releasing a huge sound library for free! No attribution required!
+
+"Koiken Menu" -- notably `koikenmenu.ogg` is mercilessly utilised from *Eufonie*'s *__Koiken Otome__* [translated, original title 恋剣乙女]. If there are any concerns about this, contact me in any way, shape or form to have this removed immediately!
+
+The easter egg embedded within this game is tip-of-the-hat to _Team Salvato_, again, if there are any concerns here,  contact me in any way, shape or form to have this removed immediately!
+
+Artillery3 runs on the SwinGame API (for better or for worse), you'll fine more information [here.](http://swingame.com/)
+
+
+
+
 
 
 
