@@ -105,7 +105,7 @@ namespace ArtillerySeries.src
             _statBox.AddText("---");
             _statBox.AddText("Health:  " + _selPlayer.Character.MaxHealth);
             _statBox.AddText("Armour:  " + _selPlayer.Character.MaxArmour);
-            _statBox.AddText("Money : $" + _selPlayer.Money);
+            _statBox.AddText("Money : $" + _selPlayer.Money.ToString("N0"));
             _statBox.AddText(" ");
             _statBox.AddText(_selPlayer.Character.LongDesc);
             _statBox.AddText("---");
