@@ -341,7 +341,7 @@ namespace ArtillerySeries.src
             _weapon.ProjectilesFiredPerTurn = 4;
             _weapon.WeaponMaxCharge = 100;
             _weapon.AimDispersion = 3f;
-            _weapon.BaseDamage = 800;
+            _weapon.BaseDamage = 1200;
             _weapon.DamageRad = 200;
             _weapon.ExplRad = 30;
             _weapon.Rarity = 7;

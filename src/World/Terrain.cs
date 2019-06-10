@@ -88,7 +88,7 @@ namespace ArtillerySeries.src
                 {
                     xPos = Clamp(i + (int)_pos.X,0,_terrainMap.Length);
                     if (xPos >= _cameraMinLimitX && xPos < _cameraMaxLimitX)
-                        SwinGame.DrawLine(_color, xPos, Constants.TerrainDepth, xPos, (int)Math.Round(_terrainMap[i]));
+                        SwinGame.DrawLine(_color, xPos, _camera.Pos.Y + _camera.WindowRect.Height, xPos, (int)Math.Round(_terrainMap[i]));
                 }
             }
         }
