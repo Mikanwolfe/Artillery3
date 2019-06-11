@@ -48,6 +48,7 @@ namespace ArtillerySeries.src
         Bitmap _backgroundBg;
 
         NotifyGameEnded onNotifyGameEnded;
+        float _awardMult = 1;
 
 
         A3RData _a3RData;
@@ -285,8 +286,9 @@ namespace ArtillerySeries.src
 
             foreach (Player p in A3RData.Players)
             {
-                p.Money += 500000 + Artillery3R.Services.Achievements.Damage / 2;
+                p.Money += (int)(500 + Artillery3R.Services.Achievements.Damage / 2 * _awardMult);
             }
+            _awardMult += 0.2f;
 
             Artillery3R.Services.Achievements.Damage = 0;
 
