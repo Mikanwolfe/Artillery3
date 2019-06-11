@@ -200,7 +200,7 @@ namespace ArtillerySeries.src
             _weapon.ExplRad = 2;
             _weapon.DamageRad = 50;
             _weapon.Rarity = 3;
-            _weapon.ShortDesc = "Classified as an old-generation Light Firearm, found in at a relic site.";
+            _weapon.ShortDesc = "Classified as an old-generation Light Firearm, found at a relic site.";
             _weapon.LongDesc = "A relic from the an ancient Kotona empire. It's surprising it still works.";
             _weapon.Cost = 4520;
             _shopWeapons.Add(_weapon);
