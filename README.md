@@ -80,11 +80,11 @@ The final branch and current iteration of Artillery, recently merged to master v
 
 **The menu:**
 
-![menu.jpg](C:\repos\Artillery3\README-assets\menu.jpg)
+![menu.jpg](https://raw.githubusercontent.com/Mikanwolfe/Artillery3/master/docs/README-assets/menu.jpg)
 
 **In-game:**
 
-![ingame playing.gif](C:\repos\Artillery3\README-assets\gameplay.gif)
+![ingame playing.gif](https://raw.githubusercontent.com/Mikanwolfe/Artillery3/master/docs/README-assets/gameplay.gif)
 
 Health Animation
 
@@ -92,17 +92,17 @@ Health Animation
 
 **In the Shop:**
 
-Scrolling
+Scrolling through the shop items
 
-![wepdesc.gif](C:\repos\Artillery3\README-assets\wepdesc.gif)
+![wepdesc.gif](https://raw.githubusercontent.com/Mikanwolfe/Artillery3/master/docs/README-assets/scrolling.gif)
 
 Weapon Descriptions
 
-![wepdesc.gif](C:\repos\Artillery3\README-assets\wepdesc-1560313810435.gif)
+![wepdesc.gif](https://raw.githubusercontent.com/Mikanwolfe/Artillery3/master/docs/README-assets/wepdesc.gif)
 
 Buying Weapons
 
-![buyingweps.gif](C:\repos\Artillery3\README-assets\buyingweps.gif)
+![buyingweps.gif](https://raw.githubusercontent.com/Mikanwolfe/Artillery3/master/docs/README-assets/buyingweps.gif)
 
 ---
 
