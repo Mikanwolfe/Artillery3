@@ -76,6 +76,34 @@ Artillery3R + ideas from Artillery 3X. This is the final branch of Artillery if 
 
 The final branch and current iteration of Artillery, recently merged to master via natural and alternative means. Branched from 3RX after the debacle with Vectors, contains the final implementation of all the menus and includes the new theme for Artillery alongside all the other, more polished, more modern goodies seen in A3 such as music, sound effects, and even an easter egg.
 
+### Screenshots
+
+**The menu:**
+
+[!menu.jpg](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/menu.jpg)
+
+**In-game:**
+
+[!ingame playing.gif](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/gameplay.gif)
+
+Health Animation
+
+[!healthanimation](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/animatedhealth.gif)
+
+**In the Shop:**
+
+Scrolling
+
+[!wepdesc.gif](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/wepdesc.gif)
+
+Weapon Descriptions
+
+[!wepdesc.gif](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/wepdesc.gif)
+
+Buying Weapons
+
+[!buyingweps.gif](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/buyingweps.gif)
+
 ---
 
 ### Further Development of the Artillery Concept
