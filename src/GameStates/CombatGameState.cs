@@ -288,7 +288,7 @@ namespace ArtillerySeries.src
             {
                 p.Money += (int)(500 + Artillery3R.Services.Achievements.Damage / 2 * _awardMult);
             }
-            _awardMult += 0.2f;
+            _awardMult += 0.08f;
 
             Artillery3R.Services.Achievements.Damage = 0;
 
