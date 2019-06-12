@@ -80,29 +80,29 @@ The final branch and current iteration of Artillery, recently merged to master v
 
 **The menu:**
 
-[!menu.jpg](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/menu.jpg)
+![menu.jpg](C:\repos\Artillery3\README-assets\menu.jpg)
 
 **In-game:**
 
-[!ingame playing.gif](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/gameplay.gif)
+![ingame playing.gif](C:\repos\Artillery3\README-assets\gameplay.gif)
 
 Health Animation
 
-[!healthanimation](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/animatedhealth.gif)
+![healthanimation](https://raw.githubusercontent.com/Mikanwolfe/Artillery3/master/docs/README-assets/animatedhealth.gif)
 
 **In the Shop:**
 
 Scrolling
 
-[!wepdesc.gif](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/wepdesc.gif)
+![wepdesc.gif](C:\repos\Artillery3\README-assets\wepdesc.gif)
 
 Weapon Descriptions
 
-[!wepdesc.gif](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/wepdesc.gif)
+![wepdesc.gif](C:\repos\Artillery3\README-assets\wepdesc-1560313810435.gif)
 
 Buying Weapons
 
-[!buyingweps.gif](https://github.com/Mikanwolfe/Artillery3/blob/master/docs/README-assets/buyingweps.gif)
+![buyingweps.gif](C:\repos\Artillery3\README-assets\buyingweps.gif)
 
 ---
 
