@@ -2,6 +2,11 @@
 
 # Artillery 3
 
+--
+
+### Update: 7/08/19
+This repository seems to be broken, things got lost along the way. Recently, my machine has been formatted/reset and I've lost the source code. The release still works and all the files should still be here, however, something's broken. Will update when fixed.
+
 by mikanwolfe, 03-2019, mikanwolfe@nekox.net.
 
 ------
