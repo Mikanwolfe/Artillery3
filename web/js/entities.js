@@ -291,6 +291,17 @@ class Tank {
       const ww = ctx.measureText(w.name).width + 30;
       ctx.fillStyle = 'rgba(200,200,214,0.88)';
       ctx.fillRect(Math.round(sx - ww / 2), Math.round(sy + 18), Math.round(ww), 20);
+      // A3 badge: rarity + type letters in a square outlined in the rarity colour
+      const bx = Math.round(sx - ww / 2 - 26);
+      const by = Math.round(sy + 16);
+      const rc = RARITY[w.rarity].color;
+      ctx.fillStyle = 'rgba(200,200,214,0.88)';
+      ctx.fillRect(bx, by, 24, 24);
+      ctx.fillStyle = rc;
+      ctx.fillRect(bx, by, 24, 1); ctx.fillRect(bx, by + 23, 24, 1); ctx.fillRect(bx, by, 1, 24); ctx.fillRect(bx + 23, by, 1, 24);
+      ctx.font = '14px "Maven Pro", Verdana, sans-serif';
+      ctx.fillText(badgeText(w), bx + 12, by + 17);
+      ctx.font = '15px "Maven Pro", Verdana, sans-serif';
       ctx.fillStyle = w.rarity === 7 ? '#20204a' : RARITY[w.rarity].color;
       ctx.fillText(w.name, Math.round(sx), Math.round(sy + 33));
       // autoloader rounds left this turn
@@ -301,9 +312,9 @@ class Tank {
       // MAIA uplink from a supply crate: the next shot calls the satellite
       if (this.uplink) {
         ctx.fillStyle = 'rgb(255,120,200)';
-        ctx.fillRect(Math.round(sx - ww / 2 - 22), Math.round(sy + 22), 12, 12);
+        ctx.fillRect(Math.round(sx - ww / 2 - 44), Math.round(sy + 22), 12, 12);
         ctx.fillStyle = 'rgb(120,32,78)';
-        ctx.fillRect(Math.round(sx - ww / 2 - 19), Math.round(sy + 25), 6, 6);
+        ctx.fillRect(Math.round(sx - ww / 2 - 41), Math.round(sy + 25), 6, 6);
       }
       // repair kits carried: small green crosses (press R)
       for (let i = 0; i < this.kits; i++) {

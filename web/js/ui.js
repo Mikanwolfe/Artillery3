@@ -98,7 +98,7 @@ const UI = {
         const w = v.weapon;
         return `<div class="veh" data-v="${v.id}"><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
           <div class="stats"><span>Health</span><span>${v.hp}</span><span>Armour</span><span>${v.armour}</span></div>
-          <h3 style="font-size:1em;color:${RARITY[w.rarity].color}">${esc(w.name)}</h3><p>${esc(w.short)}</p>
+          <div class="veh-wpn">${this.badge(w, true)}<h3 style="font-size:1em;color:${RARITY[w.rarity].color}">${esc(w.name)}</h3></div><p>${esc(w.short)}</p>
           <div class="stats">${this.weaponStats(w)}</div></div>`;
       }).join('');
       $('veh-grid').querySelectorAll('.veh').forEach((el) => {
@@ -106,6 +106,12 @@ const UI = {
       });
     };
     next();
+  },
+
+  // the original shop's badge: a square outlined in the rarity colour, two big letters and the word
+  badge(w, small = false) {
+    const r = RARITY[w.rarity];
+    return `<span class="badge${small ? ' small' : ''}" style="--rc:${r.color}"><b>${badgeText(w)}</b>${small ? '' : `<i>${r.word}</i>`}</span>`;
   },
 
   weaponStats(w) {
@@ -231,17 +237,17 @@ const UI = {
         const r = RARITY[w.rarity];
         const owned = tank.weapons.includes(w.id);
         const can = !owned && !full && tank.money >= w.cost;
-        return `<div class="card" style="border-left-color:${r.color === '#ffffff' ? '#ccc' : r.color}">
-          <h4 style="color:${r.color === '#ffffff' ? '#20204a' : r.color}">${esc(w.name)}</h4><span class="rar">${r.word}</span>
+        return `<div class="card">${this.badge(w)}<div class="card-body">
+          <h4 style="color:${r.color}">${esc(w.name)}</h4>
           <p>${esc(w.short)}</p><p><i>${esc(w.long)}</i></p>
           <div class="stats">${this.weaponStats(w)}</div>
-          <div class="buyrow"><span class="cost">${money(w.cost)}</span>
-          <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'owned' : full ? 'slots full' : 'buy'}</button></div></div>`;
+          <div class="buyrow"><span class="cost">Price: ${money(w.cost)}</span>
+          <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'owned' : full ? 'slots full' : 'buy'}</button></div></div></div>`;
       }).join('');
       $('shop-count').textContent = `(${tank.weapons.length}/4)`;
       $('shop-owned').innerHTML = tank.weapons.map((id) => {
         const w = WEAPON_BY_ID[id];
-        return `<div class="owned" style="border-left-color:${RARITY[w.rarity].color}"><span>${esc(w.name)}</span>
+        return `<div class="owned">${this.badge(w, true)}<span>${esc(w.name)}</span>
           <button data-s="${id}" ${tank.weapons.length > 1 ? '' : 'disabled'}>sell ${money(g.sellValue(w))}</button></div>`;
       }).join('');
       $('shop-upg').innerHTML = [['hp', 'Health++', tank.maxHp], ['armour', 'Armour++', tank.maxArmour]].map(([id, label, cur]) => {
