@@ -90,6 +90,11 @@ const VEHICLE_ART = {
   },
 };
 
+// average slope of the ground under a vehicle's footprint (dy/dx), used to tilt it
+function groundSlope(terrain, x) {
+  return clamp((terrain.hAt(x + 18) - terrain.hAt(x - 18)) / 36, -0.7, 0.7);
+}
+
 class Tank {
   constructor(idx, cfg) {
     this.idx = idx;
@@ -129,6 +134,7 @@ class Tank {
     this.charge = 0;
     this.recoil = 0;
     this.flash = 0;
+    this.tilt = terrain ? groundSlope(terrain, x) : 0;
     this.falling = false;
     this.shotsLeft = 0;
     this.roundDealt = 0;
@@ -153,9 +159,11 @@ class Tank {
 
   center() { return { x: this.x, y: this.y - TANK_H / 2 }; }
   // the gun is mounted at the back of the superstructure (these are SPGs, not tanks)
-  pivot() {
+  // (vehicles sit on slopes by shearing their boxes vertically, so the mount moves with the tilt)
+  pivot(facing = this.facing) {
     const a = VEHICLE_ART[this.vehicle.id] || VEHICLE_ART.gwt;
-    return { x: this.x + this.facing * a.pivot[0], y: this.y + a.pivot[1] };
+    const dx = facing * a.pivot[0];
+    return { x: this.x + dx, y: this.y + a.pivot[1] + (this.tilt || 0) * dx };
   }
 
   aimVec(elev = this.elev, facing = this.facing) {
@@ -165,7 +173,7 @@ class Tank {
 
   muzzle(elev = this.elev, facing = this.facing) {
     const a = VEHICLE_ART[this.vehicle.id] || VEHICLE_ART.gwt;
-    const p = { x: this.x + facing * a.pivot[0], y: this.y + a.pivot[1] };
+    const p = this.pivot(facing);
     const v = this.aimVec(elev, facing);
     const len = a.gun.start + a.gun.step * a.gun.n;
     return { x: p.x + v.x * len, y: p.y + v.y * len };
@@ -182,12 +190,21 @@ class Tank {
   }
 
   // world space. Box helper takes facing-right local coords (lx = left edge, ty = top edge
-  // relative to the ground point) and mirrors them when the vehicle faces left.
+  // relative to the ground point) and mirrors them when the vehicle faces left. Boxes never
+  // rotate: to sit on a slope each box is shifted vertically by tilt * its offset from centre.
   draw(ctx, active) {
     const f = this.facing;
     const x = Math.round(this.x);
     const y = Math.round(this.y);
-    const box = (lx, ty, w, h) => ctx.fillRect(f > 0 ? x + lx : x - lx - w, y + ty, w, h);
+    const k = this.tilt || 0;
+    const box = (lx, ty, w, h) => {
+      const left = f > 0 ? x + lx : x - lx - w;
+      // long boxes are drawn as 6-unit columns so the whole silhouette steps with the slope
+      for (let c = 0; c < w; c += 6) {
+        const cw = Math.min(6, w - c);
+        ctx.fillRect(left + c, y + ty + Math.round(k * (left + c + cw / 2 - x)), cw, h);
+      }
+    };
     const art = VEHICLE_ART[this.vehicle.id] || VEHICLE_ART.gwt;
     const fill = (c, lx, ty, w, h) => { ctx.fillStyle = c; box(lx, ty, w, h); };
     if (!this.alive) {
