@@ -151,6 +151,33 @@ Object.assign(Game.prototype, {
   // damage multiplier picked up from Force / Rain fronts
   frontMult(p) { return (p.forceMult || 1) * (p.rainMult || 1); },
 
+  // a jagged bolt: a list of points from the top to the bottom
+  makeBolt(x, top, bottom) {
+    const pts = [];
+    let px = x;
+    for (let y = top; y < bottom; y += 18 + Math.random() * 16) {
+      pts.push({ x: px, y });
+      px += (Math.random() - 0.5) * 44;
+    }
+    pts.push({ x: px, y: bottom });
+    return { pts, life: 14 };
+  },
+
+  drawBolt(ctx, b, size = 6) {
+    const a = clamp(b.life / 10, 0, 1);
+    for (let i = 1; i < b.pts.length; i++) {
+      const p0 = b.pts[i - 1], p1 = b.pts[i];
+      const n = Math.ceil(dist(p0.x, p0.y, p1.x, p1.y) / 5);
+      for (let k = 0; k <= n; k++) {
+        const x = lerp(p0.x, p1.x, k / n), y = lerp(p0.y, p1.y, k / n);
+        ctx.fillStyle = `rgba(160,210,255,${0.3 * a})`;
+        sq(ctx, x, y, size * 2.6);
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        sq(ctx, x, y, size);
+      }
+    }
+  },
+
   // a storm-charged shell's lightning: jumps to the nearest target in range of the impact
   lightning(p, w) {
     const s = p.storm;
@@ -164,17 +191,14 @@ Object.assign(Game.prototype, {
     }
     if (!best) return;
     const c = best.center();
-    let x = p.x;
-    let y = p.y;
+    // a bright jagged bolt from the impact to the target, with a flash and thunder
+    const pts = [{ x: p.x, y: p.y }];
     const n = 7;
-    for (let i = 1; i <= n; i++) { // a jagged bolt of squares
-      const nx = i === n ? c.x : lerp(p.x, c.x, i / n) + (Math.random() - 0.5) * 40;
-      const ny = i === n ? c.y : lerp(p.y, c.y, i / n) + (Math.random() - 0.5) * 40;
-      this.lasers.push(new Laser(x, y, nx, ny, '#a0d8ff', 8, 30));
-      x = nx;
-      y = ny;
-    }
-    this.sfx.laser();
+    for (let i = 1; i < n; i++) pts.push({ x: lerp(p.x, c.x, i / n) + (Math.random() - 0.5) * 40, y: lerp(p.y, c.y, i / n) + (Math.random() - 0.5) * 40 });
+    pts.push({ x: c.x, y: c.y });
+    this.chainBolts = (this.chainBolts || []).concat({ pts, life: 22 });
+    this.screenFlash = Math.max(this.screenFlash || 0, 0.35);
+    this.sfx.thunder();
     this.damage(best, Math.max(20, w.dmg * 0.25 * s), p.owner);
   },
 
@@ -183,6 +207,17 @@ Object.assign(Game.prototype, {
     for (const f of this.fronts) {
       f.t++;
       f.alpha = clamp(f.alpha + (f.dying ? -0.02 : 0.02), 0, 1);
+      if (f.kind === 'storm' && f.alpha > 0.6) {
+        // storms strike: a visible bolt from the sky to the ground every few seconds (more often when wide)
+        if (f.nextBolt === undefined) f.nextBolt = 40 + Math.floor(Math.random() * 120); // visual only: Math.random
+        if (--f.nextBolt <= 0) {
+          f.nextBolt = Math.round((90 + Math.random() * 150) / (f.w / 100));
+          f.bolt = this.makeBolt(f.x + (Math.random() - 0.5) * f.w * 0.66, this.cam.y - 60, this.terrain.hAt(f.x));
+          this.screenFlash = Math.max(this.screenFlash || 0, 0.25 + 0.1 * f.level);
+          this.sfx.thunder();
+        }
+      }
+      if (f.bolt && --f.bolt.life <= 0) f.bolt = null;
     }
     this.fronts = this.fronts.filter((f) => !(f.dying && f.alpha <= 0));
   },
@@ -209,6 +244,7 @@ Object.assign(Game.prototype, {
     if (this.shipAt && cycles >= this.shipAt && !this.mobs.some((m) => m.kind === 'mothership')) {
       const m = this.addMob('mothership', rng.chance(0.5) ? 160 : WORLD_W - 160);
       this.ui.notice(`The ${m.name} has arrived! $${m.bounty} to whoever brings it down.`);
+      this.ui.dispatch('Priority transmission', STORY.boss);
       this.events.push(`The ${m.name} arrives.`);
       this.sfx.satPrep();
     }
@@ -280,17 +316,31 @@ Object.assign(Game.prototype, {
           default: sq(ctx, x0 + lane, ground - (ph % span), 3 + (i % 3)); break;
         }
       }
-      if (f.kind === 'storm' && f.alpha > 0.5 && (f.t + f.x) % 97 < 3) { // the odd flash of lightning
-        ctx.fillStyle = 'rgba(220,240,255,0.8)';
-        let y = top;
-        let x = f.x;
-        while (y < ground) { x += (Math.random() - 0.5) * f.w * 0.3; sq(ctx, clamp(x, x0, x0 + f.w), y, 5); y += 10; }
+      if (f.kind === 'force') {
+        // a beam coming down from orbit: a bright core, pulses travelling down it, a glow where it lands
+        const core = f.w * 0.28;
+        ctx.fillStyle = rgb([255, 236, 150], (0.18 + 0.06 * f.level) * a);
+        ctx.fillRect(Math.round(f.x - core / 2), Math.round(top), Math.round(core), Math.round(ground - top));
+        ctx.fillStyle = rgb([255, 250, 220], 0.35 * a);
+        ctx.fillRect(Math.round(f.x - core / 6), Math.round(top), Math.round(core / 3), Math.round(ground - top));
+        for (let k = 0; k < 5; k++) {
+          const py = top + (((f.t * (3 + f.level)) + k * span / 5) % span);
+          ctx.fillStyle = rgb([255, 244, 180], 0.45 * a);
+          ctx.fillRect(Math.round(x0 + 4), Math.round(py), Math.round(f.w - 8), 4);
+        }
+        ctx.fillStyle = rgb([255, 236, 150], 0.35 * a * (0.7 + 0.3 * Math.sin(f.t / 6)));
+        ctx.fillRect(Math.round(x0 - 6), Math.round(ground - 6), Math.round(f.w + 12), 8);
       }
+      if (f.bolt) this.drawBolt(ctx, f.bolt, 4 + f.level);
     }
   },
 
   drawHazardsFront(ctx, cam) {
     for (const m of this.mobs) m.draw(ctx);
+    if (this.chainBolts) {
+      for (const b of this.chainBolts) { this.drawBolt(ctx, b, 5); b.life--; }
+      this.chainBolts = this.chainBolts.filter((b) => b.life > 0);
+    }
     if (this.fogY !== null) {
       const sd = this.biome.sudden;
       const y = Math.round(this.fogY);

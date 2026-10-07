@@ -42,6 +42,7 @@ const UI = {
       if (d) { $('menu').hidden = true; this.game.loadMatch(d); }
     };
     this.syncLoad();
+    $('prologue').innerHTML = STORY.prologue.map((p) => `<p>${esc(p)}</p>`).join('');
     $('re-next').onclick = () => { $('roundend').hidden = true; game.afterRoundEnd(); };
     $('ge-again').onclick = () => { $('gameend').hidden = true; game.sfx.music('shop'); game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); this.syncLoad(); };
     $('resume').onclick = () => game.togglePause();
@@ -115,7 +116,7 @@ const UI = {
       $("veh-player").textContent = `${c.name}:`;
       $('veh-grid').innerHTML = VEHICLES.map((v) => {
         const w = v.weapon;
-        return `<div class="veh" data-v="${v.id}"><canvas class="girl" width="160" height="150" data-g="${v.id}"></canvas><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
+        return `<div class="veh${v.id === 'nxi' ? ' nxi' : ''}" data-v="${v.id}"><canvas class="girl" width="160" height="150" data-g="${v.id}"></canvas><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
           <div class="stats"><span>Health</span><span>${v.hp}</span><span>Armour</span><span>${v.armour}</span></div>
           <div class="veh-wpn">${this.badge(w, true)}<h3 style="font-size:1em;color:${RARITY[w.rarity].color}">${esc(w.name)}</h3></div><p>${esc(w.short)}</p>
           <div class="stats">${this.weaponStats(w)}</div></div>`;
@@ -188,6 +189,19 @@ const UI = {
     const b = $('load');
     b.hidden = !d;
     if (d) b.textContent = `load (round ${d.completed + 1}${d.rounds ? '/' + d.rounds : ''}: ${d.tanks.map((t) => t.name).join(', ')})`;
+  },
+
+  // a story transmission card (fades by itself)
+  dispatch(title, text) {
+    if (!text) return;
+    const d = $('dispatch');
+    $('dispatch-title').textContent = title;
+    $('dispatch-text').textContent = text;
+    d.hidden = true;
+    void d.offsetWidth;
+    d.hidden = false;
+    clearTimeout(this.dispatchTimer);
+    this.dispatchTimer = setTimeout(() => { d.hidden = true; }, 7000);
   },
 
   // a system line in the chat log (no speaker)
@@ -276,8 +290,11 @@ const UI = {
         const r = RARITY[w.rarity];
         const owned = tank.weapons.includes(w.id);
         const can = !owned && !full && tank.money >= w.cost;
-        return `<div class="card">${this.badge(w)}<div class="card-body">
-          <h4 style="color:${r.color}">${esc(w.name)}</h4>
+        const maker = makerOf(w);
+        const nxi = maker === 'NXi';
+        return `<div class="card${nxi ? ' nxi' : ''}">${this.badge(w)}<div class="card-body">
+          ${maker ? `<span class="maker">${nxi ? 'NXi · November Division' : esc(maker)}</span>` : ''}
+          <h4 style="color:${nxi ? 'var(--nxi-ink)' : r.color}">${esc(w.name)}</h4>
           <p>${esc(w.short)}</p><p><i>${esc(w.long)}</i></p>
           <div class="stats">${this.weaponStats(w)}</div>
           <div class="buyrow"><span class="cost">Price: ${money(w.cost)}</span>
@@ -310,9 +327,10 @@ const UI = {
       $('shop-kits').querySelector('[data-k]').onclick = () => { g.buy(tank, 'kit'); render(); };
       $('shop-abil').innerHTML = ABILITIES.map((a) => {
         const owned = tank.abilities[a.id] > 0;
+        const locked = a.late && !g.isLate();
         return `<div class="upg"><span>${esc(a.name)} <small>(key ${a.key})</small><br>
         <small>${esc(a.desc)} Recharges in ${a.cd} turns; ready at the start of every round.</small></span>
-        <button data-a="${a.id}" ${!owned && tank.money >= a.cost ? '' : 'disabled'}>${owned ? 'owned' : money(a.cost)}</button></div>`;
+        <button data-a="${a.id}" ${!owned && !locked && tank.money >= a.cost ? '' : 'disabled'}>${owned ? 'owned' : locked ? 'late game' : money(a.cost)}</button></div>`;
       }).join('');
       $('shop-abil').querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => { g.buy(tank, 'ability', b.dataset.a); render(); }; });
     };
@@ -328,6 +346,13 @@ const UI = {
     const tie = st[1] && st[1].wins === champ.wins;
     $('ge-quips').innerHTML = '';
     $('ge-title').innerHTML = tie ? 'A draw' : `<span style="color:${champ.color}">${esc(champ.name)}</span> takes the match`;
+    if (!tie) {
+      const q = document.createElement('div');
+      q.className = 'quip';
+      q.style.borderColor = 'var(--nxi-gold)';
+      q.textContent = STORY.ending(champ);
+      $('ge-quips').appendChild(q);
+    }
     $('ge-table').className = 'data';
     $('ge-table').innerHTML = '<tr><th>#</th><th>Tank</th><th>Rounds</th><th>Kills</th><th>Damage</th><th>Money</th></tr>' + st.map((t, i) =>
       `<tr class="${i === 0 ? 'win' : ''}"><td>${i + 1}</td><td><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</td>

@@ -52,8 +52,10 @@ function gunLength(w) {
   return s.start + s.step * s.n;
 }
 
-// draw the gun at pivot p along unit vector v; `deep` is the girl's dark player-colour shade
-function drawGun(ctx, w, p, v, facing, recoil, deep, t) {
+// draw the gun at pivot p along unit vector v; `deep` is the girl's dark player-colour shade.
+// Animated: barrels glow hot just after firing (`recoil` 1 -> 0), a laser lens brightens as the shot
+// charges (`charge` 0..1), flak fuse rings and the uplink beacon cycle with time `t`.
+function drawGun(ctx, w, p, v, facing, recoil, deep, t, charge = 0) {
   const s = gunSkin(w);
   const body = s.color || deep;
   for (let b = 0; b < s.barrels; b++) {
@@ -68,6 +70,11 @@ function drawGun(ctx, w, p, v, facing, recoil, deep, t) {
       if (s.rail && i % 2) size -= 1;
       ctx.fillStyle = i === 1 ? s.band : body;
       sq(ctx, p.x + ox + v.x * d, p.y + oy + v.y * d, size);
+      const heat = recoil * (i / s.n); // hot towards the muzzle
+      if (heat > 0.05) {
+        ctx.fillStyle = `rgba(255,${140 + 80 * (1 - heat)},60,${heat * 0.85})`;
+        sq(ctx, p.x + ox + v.x * d, p.y + oy + v.y * d, size - 1);
+      }
     }
   }
   // the muzzle end: lens, acid tank, flak fuse ring, cat ears, a satellite antenna
@@ -76,8 +83,15 @@ function drawGun(ctx, w, p, v, facing, recoil, deep, t) {
   const my = p.y + v.y * d;
   if (s.tip === 'lens' || s.glow) {
     ctx.fillStyle = s.glow || RARITY[w.rarity].color;
-    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 6);
-    sq(ctx, mx + v.x * 3, my + v.y * 3, Math.max(3, s.size - 1));
+    ctx.globalAlpha = clamp(0.5 + 0.3 * Math.sin(t * 6) + charge * 0.5, 0, 1);
+    sq(ctx, mx + v.x * 3, my + v.y * 3, Math.max(3, s.size - 1) + charge * 5);
+    if (charge > 0.2) { // gathering light around the lens
+      for (let k = 0; k < 4; k++) {
+        const a = t * 5 + (k * Math.PI) / 2;
+        const r = 10 * (1 - ((t * 2 + k / 4) % 1));
+        sq(ctx, mx + v.x * 3 + Math.cos(a) * r, my + v.y * 3 + Math.sin(a) * r, 2);
+      }
+    }
     ctx.globalAlpha = 1;
   }
   if (s.tip === 'acid') { // a glass tank of acid on the breech
@@ -88,7 +102,8 @@ function drawGun(ctx, w, p, v, facing, recoil, deep, t) {
   }
   if (s.tip === 'flak') { // fuse rings along the barrels
     ctx.fillStyle = '#c8b46a';
-    for (const k of [0.35, 0.7]) sq(ctx, p.x + v.x * d * k, p.y + v.y * d * k, s.size + 2);
+    const shift = ((t * 3) % 1) * 0.12; // the rings tick along the barrel
+    for (const k of [0.3 + shift, 0.62 + shift]) sq(ctx, p.x + v.x * d * k, p.y + v.y * d * k, s.size + 2);
   }
   if (s.ears) {
     ctx.fillStyle = s.band;

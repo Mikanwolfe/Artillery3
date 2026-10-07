@@ -20,7 +20,7 @@
       <button class="icon" id="btn-pause" title="Pause (Esc)">Ⅱ</button>
     </div>
     <div id="chat"></div>
-    <div id="hints">←→ move · ↑↓ aim (Shift: fine) · hold <b>Space</b> to charge, release to fire · <b>S</b> switch weapon · <b>R</b> repair kit · <b>1</b> double shot · <b>2</b> overcharge · <b>3</b> deflector · <b>Enter</b> end turn · <b>click</b> to mark a target (shows the power needed) · drag to look around</div>
+    <div id="hints">←→ move · ↑↓ aim (Shift: fine) · hold <b>Space</b> to charge, release to fire · <b>S</b> switch weapon · <b>R</b> repair kit · <b>1</b> double shot · <b>2</b> overcharge · <b>3</b> deflector · <b>4</b> barrier · <b>Enter</b> end turn · <b>click</b> to mark a target (shows the power needed) · drag to look around</div>
     <div id="touch">
       <div class="pad">
         <button data-k="left">◀</button><button data-k="right">▶</button>
@@ -29,11 +29,12 @@
       <div class="pad r">
         <button data-q="1">S</button><button data-end="1">END</button>
         <button data-rep="1">REP</button><button data-ab="double">×2</button>
-        <button data-ab="over">OVR</button><button data-ab="shield">SHD</button>
+        <button data-ab="over">OVR</button><button data-ab="shield">SHD</button><button data-ab="barrier">BAR</button>
         <button data-k="charge" class="fire">FIRE</button>
       </div>
     </div>
     <div id="banner"></div>
+    <div id="dispatch" hidden><b id="dispatch-title"></b><span id="dispatch-text"></span></div>
   </div>
 
   <!-- main menu, laid out like the original -->
@@ -57,11 +58,12 @@
           <select id="events"><option value="on" selected>on</option><option value="off">off</option></select>
         </label>
         <label class="inline">map
-          <select id="map"><option value="random" selected>random</option><option value="snow">snowy day</option><option value="forest">autumn forest</option><option value="desert">dune sea</option></select>
+          <select id="map"><option value="random" selected>random</option><option value="snow">snowy day</option><option value="forest">autumn forest</option><option value="desert">dune sea</option><option value="alstroemeria">alstroemeria</option></select>
         </label>
       </div>
       <button id="start" class="primary">start</button>
       <button id="load" hidden>load</button>
+      <details class="how story"><summary>story</summary><div id="prologue"></div></details>
       <details class="how"><summary>how to play</summary>
         <p>Take turns to move, aim and fire. Hold <b>Space</b> to charge and release to fire; the tick on the charge bar marks your last shot.
         Armour soaks damage until it's gone, then health takes it. Autoloaders fire several times per turn; satellite-enabled guns
@@ -75,7 +77,7 @@
           <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
           <tr><td>S</td><td>switch weapon (before firing)</td></tr>
           <tr><td>R</td><td>use a repair kit (takes your turn)</td></tr>
-          <tr><td>1 · 2 · 3</td><td>double shot · overcharge · deflector (if bought)</td></tr>
+          <tr><td>1 · 2 · 3 · 4</td><td>double shot · overcharge · deflector · barrier toward your aim (if bought)</td></tr>
           <tr><td>Enter</td><td>end turn</td></tr>
           <tr><td>click / tap</td><td>mark a target: shows the power it needs at your angle (click your vehicle to clear)</td></tr>
           <tr><td>drag</td><td>look around</td></tr>
@@ -152,6 +154,7 @@
 <script src="js/girls.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/taunts.js"></script>
+<script src="js/story.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/game.js"></script>
 <script src="js/forts.js"></script>

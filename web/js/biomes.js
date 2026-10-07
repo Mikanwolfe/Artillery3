@@ -53,15 +53,55 @@ const BIOMES = {
     sudden: { name: 'Quicksand', color: [200, 160, 104], alpha: 0.7, start: 'Quicksand! The sand is rising: get to high ground.', hurt: 'is sinking in the sand' },
     fort: { stone: '#c49a64', light: '#dcb47c', dark: '#9a744a', cap: '#e8c890' },
   },
+  alstroemeria: {
+    id: 'alstroemeria', name: 'Alstroemeria',
+    sky: [[248, 206, 210], [255, 234, 218]],
+    layers: [
+      { color: 'rgb(150,112,160)', rough: 0.6, parallax: 0.45, lift: 60 },
+      { color: 'rgb(214,150,178)', rough: 0.55, parallax: 0.6, lift: 90 },
+      { color: 'rgb(214,232,206)', rough: 0.5, parallax: 0.75, lift: 230 },
+    ],
+    ground: 'rgb(110,150,90)', cap: 'rgb(150,196,112)', soot: [70, 50, 40],
+    tree: 'lily', trees: 2.6, ridgeTrees: false,
+    particles: { kind: 'leaves', n: 50, colors: [[246, 150, 186], [252, 176, 96], [255, 222, 120], [255, 244, 250]] },
+    terrain: { rough: 0.48, disp: 280, peaks: [2, 3], h: [220, 440], w: [360, 560] },
+    fronts: ['force', 'storm', 'gale', 'rain'],
+    sudden: { name: 'Pollen haze', color: [244, 196, 214], alpha: 0.66, start: 'Pollen haze! It is rising from the meadow: get to high ground.', hurt: 'is choking on pollen' },
+    fort: { stone: '#d8d0dc', light: '#ece6ee', dark: '#b4a8ba', cap: '#f6a8c4' },
+  },
 };
 const BIOME_IDS = Object.keys(BIOMES);
 
 // trees by kind: height in world units for size h (3..5), and the box art
 function treeHeight(kind, h) {
-  return kind === 'broadleaf' ? 14 + h * 9 : kind === 'cactus' ? 8 + h * 7 : 8 + h * 8;
+  return kind === 'broadleaf' ? 14 + h * 9 : kind === 'cactus' ? 8 + h * 7 : kind === 'lily' ? 16 + h * 6 : 8 + h * 8;
 }
 
+// Alstroemeria (Peruvian lily): a tall stem with leaves and a head of streaked petals
+const LILY_COLS = [['rgb(244,128,176)', 'rgb(200,80,130)'], ['rgb(252,160,72)', 'rgb(210,100,40)'], ['rgb(250,214,90)', 'rgb(200,150,40)']];
+
 function drawTree(ctx, kind, x, base, h, autumn) {
+  if (kind === 'lily') {
+    const top = base - treeHeight(kind, h);
+    ctx.fillStyle = 'rgb(76,128,64)';
+    ctx.fillRect(x - 1, top + 6, 3, base - top - 6);
+    ctx.fillRect(x - 6, base - 12, 5, 3);
+    ctx.fillRect(x + 2, base - 18, 5, 3);
+    const [petal, streak] = LILY_COLS[(autumn || 0) % 3];
+    ctx.fillStyle = petal; // six petals as boxes around the heart
+    ctx.fillRect(x - 7, top + 2, 6, 5);
+    ctx.fillRect(x + 2, top + 2, 6, 5);
+    ctx.fillRect(x - 3, top - 3, 7, 5);
+    ctx.fillRect(x - 5, top + 6, 4, 4);
+    ctx.fillRect(x + 2, top + 6, 4, 4);
+    ctx.fillStyle = streak; // the tiger-stripe streaks alstroemeria petals have
+    ctx.fillRect(x - 5, top + 3, 2, 1);
+    ctx.fillRect(x + 4, top + 3, 2, 1);
+    ctx.fillRect(x - 1, top - 2, 2, 1);
+    ctx.fillStyle = 'rgb(255,236,140)';
+    ctx.fillRect(x - 1, top + 3, 3, 3);
+    return;
+  }
   if (kind === 'broadleaf') {
     ctx.fillStyle = 'rgb(84,58,40)';
     ctx.fillRect(x - 2, base - 14, 5, 14);

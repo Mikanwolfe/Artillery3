@@ -53,7 +53,7 @@ function solveShot(game, tank, w, target) {
     if (selfD < Math.max(w.dmgR, w.sat ? 150 : 0) + 20 && r.tank !== target) err += 400;
     // only shots that would actually do damage earn the bonus
     const d = dist(r.x, r.y, tc.x, tc.y);
-    const f = d < w.dmgR ? bonusFactor(w, r.drop, r.speed, d < kinR) : 1;
+    const f = d < w.dmgR ? bonusFactor(w, r.drop, r.speed, d < kinR, rad(elev + tank.hullAngle(facing))) : 1;
     return { err, score: err - arc * (f - 1), f };
   };
   let best = { err: Infinity, score: Infinity, f: 1, elev: (w.elevMin + w.elevMax) / 2, v: maxV / 2, facing };
@@ -161,6 +161,13 @@ class CpuController {
           this.moveFrames = 160;
           this.state = 'move';
           return;
+        }
+        // Bulwark Barrier toward whoever it expects fire from (its grudge, else the nearest rival),
+        // tilted up because most of that fire comes down in an arc
+        if (t.abilityReady('barrier') && !t.barrier && rng.chance(t.type === 'easy' ? 0.3 : 0.8)) {
+          const foes = this.game.tanks.filter((x) => x.alive && x !== t);
+          const foe = t.lastAttacker && t.lastAttacker.alive ? t.lastAttacker : foes.sort((a, b) => Math.abs(a.x - t.x) - Math.abs(b.x - t.x))[0];
+          if (foe) this.game.useAbility(t, 'barrier', { x: Math.sign(foe.x - t.x) || 1, y: -1 });
         }
         // Deflector when hurt (it doesn't cost the turn)
         if (t.abilityReady('shield') && !t.shield && t.hp < t.maxHp * 0.6 && rng.chance(t.type === 'easy' ? 0.3 : 0.7)) this.game.useAbility(t, 'shield');

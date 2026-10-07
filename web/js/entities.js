@@ -7,7 +7,7 @@ const TANK_W = 34; // hitbox / footprint (world units)
 const TANK_H = 34; // a turret girl stands about 44 tall; the hitbox covers her body and rigging
 const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
 const TANK_SPEED = 1.5; // A3 Constants.PlayerSpeed
-const TANK_CLIMB = 1.6; // steepest slope (dy/dx) a vehicle can drive up
+const TANK_CLIMB = 2.2; // steepest slope (dy/dx) a vehicle can drive up
 
 // Vehicle upgrades beyond A3's Health++ / Armour++ (which use Game.upgradeCost's curve). Each level
 // is bought in turn from `costs`.
@@ -22,7 +22,7 @@ const PLAYER_COLORS = ['#3d6fa8', '#b8433a', '#3e8a5a', '#7a4d9a'];
 
 // average slope of the ground under a vehicle's footprint (dy/dx), used to tilt it
 function groundSlope(terrain, x) {
-  return clamp((terrain.hAt(x + 18) - terrain.hAt(x - 18)) / 36, -0.7, 0.7);
+  return clamp((terrain.hAt(x + 18) - terrain.hAt(x - 18)) / 36, -1.2, 1.2);
 }
 
 class Tank {
@@ -37,13 +37,15 @@ class Tank {
     this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0 };
     this.weapons = [this.vehicle.weapon.id];
     this.kits = 0; // repair kits carried (consumable)
-    this.abilities = { double: 0, over: 0, shield: 0 }; // 1 = owned (see ABILITIES)
+    this.abilities = { double: 0, over: 0, shield: 0, barrier: 0 }; // 1 = owned (see ABILITIES)
     this.lastAttacker = null; // CPUs go after whoever last hurt them
     this.weaponIdx = 0;
     this.stats = { dealt: 0, kills: 0 };
     this.lastCharge = 0;
     this.lastTrail = null;
     this.speech = null;
+    this.pose = 'idle';
+    this.poseT = 0;
     this.resetRound(WORLD_W / 2);
   }
 
@@ -51,7 +53,7 @@ class Tank {
   // A3 shop: Health++ / Armour++ multiply by 1.3 per level
   get maxHp() { return Math.round(this.vehicle.hp * Math.pow(1.3, this.upgrades.hp)); }
   get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)); }
-  get maxFuel() { return Math.round(TANK_FUEL * (1 + 0.4 * this.upgrades.engine)); }
+  get maxFuel() { return Math.round(TANK_FUEL * (this.vehicle.fuel || 1) * (1 + 0.4 * this.upgrades.engine)); }
   get climb() { return TANK_CLIMB + 0.5 * this.upgrades.engine; }
   get weapon() { return WEAPON_BY_ID[this.weapons[this.weaponIdx]] || WEAPON_BY_ID[this.weapons[0]]; }
   // full-charge muzzle speed for the next shot (Overcharge raises it)
@@ -76,9 +78,11 @@ class Tank {
     this.tilt = terrain ? groundSlope(terrain, x) : 0;
     this.falling = false;
     this.fallFrom = 0;
+    this.pose = 'idle';
     this.armed = { double: false, over: false };
     this.mark = null; // target marker (humans): the HUD shows the power needed to land on it
-    this.cooldown = { double: 0, over: 0, shield: 0 }; // own turns until each ability is ready again
+    this.cooldown = { double: 0, over: 0, shield: 0, barrier: 0 }; // own turns until each ability is ready again
+    this.barrier = null; // Bulwark Barrier direction (unit vector), until the next turn
     this.shield = false;
     this.shotsLeft = 0;
     this.roundDealt = 0;
@@ -96,6 +100,9 @@ class Tank {
     this.charge = 0;
     this.clampElev();
   }
+
+  // girls.js poses: 'fire' and 'hit' play once, 'win' loops
+  setPose(pose) { if (this.pose !== 'win' || pose === 'idle') { this.pose = pose; this.poseT = 0; } }
 
   say(text, secs, delay = 0) {
     this.speech = { text, age: -delay, dur: secs || Math.max(3.2, 1.6 + text.length * 0.055) };
@@ -134,6 +141,8 @@ class Tank {
     this.blink = (this.blink || 0) + dt;
     this.recoil = Math.max(0, this.recoil - dt * 2.5);
     this.walking = Math.max(0, (this.walking || 0) - 1);
+    this.poseT = (this.poseT || 0) + dt;
+    this.barrierHit = Math.max(0, (this.barrierHit || 0) - dt * 3);
     this.flash = Math.max(0, this.flash - dt * 4);
     if (this.speech) {
       this.speech.age += dt;
@@ -149,12 +158,25 @@ class Tank {
     const x = Math.round(this.x);
     const y = Math.round(this.y);
     const state = !this.alive ? 'wreck' : this.hp < this.maxHp * 0.5 ? 'damaged' : 'ok';
-    const o = { id: this.vehicle.id, x, y, facing: f, color: this.color, state, t: this.blink || 0, walking: this.walking > 0, flash: this.flash };
+    const o = { id: this.vehicle.id, x, y, facing: f, color: this.color, state, t: this.blink || 0, walking: this.walking > 0, flash: this.flash, pose: this.pose || 'idle', poseT: this.poseT || 0 };
     // a turret girl (girls.js) with her rigging; the gun is the equipped weapon's skin (weaponskins.js)
     drawGirl(ctx, o);
     if (!this.alive) return;
-    drawGun(ctx, this.weapon, this.pivot(), this.aimVec(), f, this.recoil, shade(this.color, -0.5), this.blink || 0);
+    const p0 = this.pivot();
+    const off = girlPivotOffset(o); // the victory hop lifts her rigging
+    drawGun(ctx, this.weapon, { x: p0.x + off[0] * f, y: p0.y + off[1] }, this.aimVec(), f, this.recoil, shade(this.color, -0.5), this.blink || 0, active ? this.charge / this.chargeCap() : 0);
     drawGirlMount(ctx, o);
+    if (this.barrier) {
+      // Bulwark Barrier: an arc of plates on the side it faces, pulsing; brighter when it just blocked
+      const b = this.barrier;
+      const base = Math.atan2(b.y, b.x);
+      const pulse = 0.55 + 0.25 * Math.sin((this.blink || 0) * 4) + (this.barrierHit || 0) * 0.4;
+      for (let i = -6; i <= 6; i++) {
+        const a = base + (i / 6) * Math.PI * 0.3;
+        ctx.fillStyle = i % 2 ? `rgba(120,230,210,${pulse})` : `rgba(255,214,120,${pulse})`;
+        sq(ctx, x + Math.cos(a) * 40, y - 20 + Math.sin(a) * 40, 6);
+      }
+    }
     if (this.shield) {
       // Deflector: a ring of pale squares around the hull, pulsing
       const a = 0.45 + 0.2 * Math.sin((this.blink || 0) * 5);

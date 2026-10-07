@@ -31,10 +31,10 @@ const TRACE_MAX = 2500;
 //  - kinetic: extra damage from impact speed, packed into a tighter radius than the blast
 //  - altitude: the whole blast is scaled up by how far the shell fell from the top of its arc
 const KINETIC_MIN_SPEED = 25; // px/frame at impact before kinetic damage starts
-const KINETIC_PER_SPEED = 0.012; // + this fraction of the weapon's damage per px/frame above that
-const KINETIC_RADIUS = 0.35; // of the weapon's damage radius
+const KINETIC_PER_SPEED = 0.022; // + this fraction of the weapon's damage per px/frame above that
+const KINETIC_RADIUS = 0.4; // of the weapon's damage radius
 const ALTITUDE_RATE = 0.0006; // + this fraction of damage per world unit fallen from the apex
-const ALTITUDE_MAX = 1; // at most double damage
+const ALTITUDE_MAX = 0.5; // at most +50%, and only for a shot fired straight up (see altitudeBonus)
 // Falls: a vehicle whose ground is blown away (or slides away) takes damage past a short drop
 const FALL_SAFE = 30;
 const FALL_DMG = 0.8; // per world unit beyond FALL_SAFE
@@ -109,7 +109,7 @@ class Input {
       case 'KeyS': case 'KeyE': case 'Tab': if (down && !e.repeat) this.queue.push({ cycle: 1 }); break;
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
-      case 'Digit1': case 'Digit2': case 'Digit3': {
+      case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': {
         const ab = ABILITIES.find((a) => a.key === e.code.slice(5));
         if (down && !e.repeat && ab) this.queue.push({ ability: ab.id });
         break;
@@ -321,6 +321,7 @@ class Game {
     }
     this.satellite.setTier(tier);
     this.events.push(`Round ${this.round} begins.`);
+    this.ui.dispatch(`Dispatch · round ${this.round}`, storyDispatch(this));
     this.sfx.roundStart();
     this.nextTurn();
     this.cam.snap();
@@ -376,6 +377,7 @@ class Game {
     if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
     t.fuel = t.maxFuel;
     t.shield = false; // a Deflector lasts until its owner's next turn
+    t.barrier = null; // so does a Bulwark Barrier
     if (t.upgrades.workshop && t.armour < t.maxArmour) { // field workshop: patch some armour each turn
       const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.05 * t.upgrades.workshop));
       t.armour += ar;
@@ -413,6 +415,10 @@ class Game {
       t.update(DT);
       if (t.alive && t.hp < t.maxHp * 0.3 && Math.random() < 0.04) this.particles.puff(t.x - t.facing * 6, t.y - TANK_H, [90, 90, 100]);
       if (!t.alive && Math.random() < 0.03) this.particles.puff(t.x, t.y - 14, [70, 70, 78]);
+      if (t.alive && t.recoil > 0.15 && Math.random() < 0.35) { // smoke curling from a barrel that just fired
+        const m = t.muzzle();
+        this.particles.add({ x: m.x, y: m.y, vx: (Math.random() - 0.5) * 0.6, vy: -0.6 - Math.random() * 0.6, g: -0.01, drag: 0.97, life: 0.9, size: 3 + Math.random() * 4, color: [170, 168, 180] });
+      }
     }
     this.stepTanks();
     this.updateHazards();
@@ -524,7 +530,7 @@ class Game {
   ramTree(t, tr) {
     tr.alive = false;
     const top = this.terrain.hAt(tr.x) - this.terrain.treeHeight(tr) / 2;
-    const leaf = this.terrain.treeKind === 'cactus' ? [78, 128, 70] : this.terrain.treeKind === 'broadleaf' ? [196, 104, 40] : [38, 62, 64];
+    const leaf = this.terrain.treeKind === 'cactus' ? [78, 128, 70] : this.terrain.treeKind === 'broadleaf' ? [196, 104, 40] : this.terrain.treeKind === 'lily' ? [244, 128, 176] : [38, 62, 64];
     for (let i = 0; i < 12; i++) {
       this.particles.add({ x: tr.x, y: top + (Math.random() - 0.5) * 30, vx: (Math.random() - 0.5) * 4 + t.facing * 2, vy: -Math.random() * 3, g: 0.2, drag: 0.97, life: 0.9, size: 3 + Math.random() * 5, color: i % 3 ? leaf : [84, 58, 40] });
     }
@@ -660,6 +666,7 @@ class Game {
     t.uplink = false;
     t.charge = 0;
     t.recoil = 1;
+    t.setPose('fire');
     this.sfx.shot(w);
     this.shake = Math.max(this.shake, 3 + w.dmg / 200);
     this.events.push(`${t.name} fired the ${w.name.replace(/\.$/, "")}.`);
@@ -691,6 +698,7 @@ class Game {
     const vx = s.vx + (rng.next() - 0.5) * s.w.disp;
     const vy = s.vy + (rng.next() - 0.5) * s.w.disp;
     const p = new Projectile(this, s.w, t, m.x, m.y, vx, vy, s.first);
+    p.launch = Math.atan2(-vy, Math.abs(vx)); // launch angle above the horizon: steeper shots earn more altitude bonus
     p.uplink = s.uplink && s.first;
     if (s.first) {
       p.rec = [];
@@ -768,7 +776,7 @@ class Game {
       const lens = sat.lens();
       this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, '#fffff0', 22, 90));
       this.sfx.satFire();
-      this.explode(tg.x, tg.y, { dmg: sat.damage, dmgR: sat.dmgR, explR: sat.explR }, s.owner, 'laser');
+      this.explode(tg.x, tg.y, { dmg: sat.damage, dmgR: sat.dmgR, explR: sat.explR, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
       this.cam.follow({ x: tg.x, y: tg.y });
     }
     if (s.t > 75 + 70) this.satSeq = null;
@@ -784,9 +792,9 @@ class Game {
       const c = RARITY[w.rarity].color;
       this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
       this.sfx.laser();
-      this.explode(p.x, p.y, { ...w, dmg: w.dmg * this.frontMult(p) }, p.owner, 'laser');
+      this.explode(p.x, p.y, { ...w, dmg: w.dmg * this.frontMult(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
     } else {
-      this.explode(p.x, p.y, this.shotBonus(p), p.owner, w.kind === 'acid' ? 'acid' : 'shell');
+      this.explode(p.x, p.y, { ...this.shotBonus(p), from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
         for (let i = 0; i < 30; i++) {
           const a = -Math.PI * (0.1 + 0.8 * Math.random());
@@ -804,7 +812,7 @@ class Game {
   // kinetic and altitude bonuses for a shell's impact (see KINETIC_* / ALTITUDE_*)
   shotBonus(p) {
     const w = p.w;
-    const alt = Math.min(ALTITUDE_MAX, Math.max(0, p.y - p.peak) * ALTITUDE_RATE);
+    const alt = altitudeBonus(p.y - p.peak, p.launch || 0);
     const speed = Math.hypot(p.vx, p.vy);
     const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg;
     if (p.main && alt >= 0.2) this.particles.text(p.x, p.y - 70, `altitude +${Math.round(alt * 100)}%`, '#ffd84a');
@@ -845,6 +853,18 @@ class Game {
       const d = dist(c.x, c.y, x, y);
       let amt = d < def.dmgR ? def.dmg * (1 - d / def.dmgR) : 0;
       if (def.kin && d < def.kin.r) amt += def.kin.dmg * (1 - d / def.kin.r);
+      if (amt > 0 && t.barrier) {
+        // Bulwark Barrier: does this blast come from the side it covers? (a direct hit counts from
+        // the direction the shell arrived)
+        let dx = x - c.x, dy = y - c.y;
+        if (Math.hypot(dx, dy) < 12 && def.from) { dx = def.from.x; dy = def.from.y; }
+        const len = Math.hypot(dx, dy) || 1;
+        if ((dx * t.barrier.x + dy * t.barrier.y) / len > BARRIER_COS) {
+          amt *= 1 - BARRIER_BLOCK;
+          t.barrierHit = 1;
+          this.particles.text(t.x, t.y - 70, 'blocked', '#78e6d2');
+        }
+      }
       if (amt > 0) this.damage(t, amt, owner, false, def);
     }
     this.startSlide(x, def.explR || 10);
@@ -869,6 +889,7 @@ class Game {
       t.hp -= amt;
     }
     t.flash = 1;
+    if (!quiet && amt > 3) t.setPose('hit');
     this.roundDamage += taken * (quiet ? ACID_PAY_RATE : 1);
     if (this.report) {
       const m = owner ? this.report.dmg : this.report.fall;
@@ -1003,6 +1024,7 @@ class Game {
     const winner = this.tanks.find((t) => t.alive) || null;
     if (winner) {
       winner.wins++;
+      winner.setPose('win');
       this.sfx.win();
       this.events.push(`${winner.name} wins round ${this.round}.`);
     } else this.events.push(`Round ${this.round} ends in mutual destruction.`);
@@ -1149,6 +1171,7 @@ class Game {
     }
     // abilities: Hard keeps a Double Shot and a Deflector, Normal a Double Shot, Easy now and then
     const wants = t.type === 'hard' ? ['double', 'shield'] : t.type === 'normal' ? ['double'] : rng.chance(0.4) ? [rng.pick(['double', 'shield'])] : [];
+    if (this.isLate() && t.type !== 'easy') wants.unshift('barrier'); // late game: a barrier first
     for (const id of wants) {
       const ab = ABILITIES.find((a) => a.id === id);
       if (t.abilities[id] < 1 && t.money - reserve >= ab.cost * 1.5) { t.money -= ab.cost; t.abilities[id] = 1; }
@@ -1171,10 +1194,21 @@ class Game {
 
   // Abilities (see ABILITIES): 1 / 2 arm Double Shot / Overcharge for the next shot (press again
   // to disarm; they only recharge once fired), 3 switches the Deflector on. None takes the turn.
-  useAbility(t, id) {
+  // late game: the second half of a finite match, or from round 4 in infinite mode
+  isLate() { return this.rounds ? this.round > this.rounds / 2 : this.round >= 4; }
+
+  useAbility(t, id, dir) {
     if (this.phase !== 'aim' || t !== this.active || !(t.abilities[id] > 0) || (t.cooldown[id] > 0 && !t.armed[id])) { this.sfx.deny(); return false; }
     const ab = ABILITY_BY_ID[id];
-    if (id === 'shield') {
+    if (id === 'barrier') {
+      if (t.barrier) { this.sfx.deny(); return false; }
+      t.cooldown.barrier = ab.cd;
+      const v = dir || t.aimVec();
+      const len = Math.hypot(v.x, v.y) || 1;
+      t.barrier = { x: v.x / len, y: v.y / len };
+      t.barrierHit = 1;
+      this.events.push(`${t.name} raises a Bulwark Barrier.`);
+    } else if (id === 'shield') {
       if (t.shield) { this.sfx.deny(); return false; }
       t.cooldown.shield = ab.cd;
       t.shield = true;
@@ -1349,9 +1383,14 @@ class Game {
     this.drawHazardsFront(ctx, cam);
     this.particles.draw(ctx);
 
-    // snow (screen pixels)
+    // snow (screen pixels), and the flash of a lightning strike
     ctx.setTransform(k, 0, 0, k, 0, 0);
     this.bg.drawSnow(ctx);
+    if (this.screenFlash > 0.01) {
+      ctx.fillStyle = `rgba(235,245,255,${this.screenFlash})`;
+      ctx.fillRect(0, 0, W, H);
+      this.screenFlash *= 0.82;
+    }
 
     // HUD in the original's 1600x900 screen units
     ctx.setTransform(s, 0, 0, s, 0, 0);
