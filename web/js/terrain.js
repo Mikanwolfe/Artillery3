@@ -57,7 +57,7 @@ class Terrain {
     this.trees = [];
     this.forts = [];
     this.soot = new Float32Array(WORLD_W); // 0..1 scorch per column, drawn along the surface
-    const peaks = rng.int(g.peaks[0], g.peaks[1]);
+    const peaks = Math.round(rng.int(g.peaks[0], g.peaks[1]) * WORLD_W / 2400); // the biome's count is per 2400 units
     for (let k = 0; k < peaks; k++) {
       const cx = rng.range(250, WORLD_W - 250);
       const hh = rng.range(g.h[0], g.h[1]);

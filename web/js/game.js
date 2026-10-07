@@ -117,7 +117,8 @@ class Input {
       case 'Enter': if (down && !e.repeat && this.g.phase === 'aim') this.queue.push({ endTurn: true }); else handled = false; break;
       case 'KeyM': if (down && !e.repeat) this.g.toggleMute(); break;
       case 'KeyN': if (down && !e.repeat) this.g.toggleMusic(); break;
-      case 'Escape': if (down && !e.repeat) this.g.togglePause(); break;
+      case 'Escape': if (down && !e.repeat) { if (this.g.ui.helpOpen()) this.g.ui.toggleHelp(false); else this.g.togglePause(); } break;
+      case 'KeyH': case 'Slash': if (down && !e.repeat) this.g.ui.toggleHelp(); break;
       default: handled = false;
     }
     if (handled && this.g.phase !== 'menu') e.preventDefault();
@@ -1456,7 +1457,7 @@ class Game {
     const sat = this.satellite;
     // satellite caption (A3 Satellite.Draw)
     if (sat.y - cam.y > -80) {
-      ctx.font = '18px "Maven Pro", Verdana, sans-serif';
+      ctx.font = `15px ${HUD_FONT}`;
       ctx.textAlign = 'left';
       ctx.fillStyle = '#ffffff';
       ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 4));
@@ -1484,16 +1485,18 @@ class Game {
     if (t && this.phase !== 'roundEnd') this.drawBars(ctx, t);
   }
 
-  // A3 UI_Minimap: a line at the top right with a dot per tank
+  // A3 UI_Minimap: a track at the top right with a dot per tank, on a dark plate
   drawMinimap(ctx) {
-    const x0 = 1250, y0 = 80, w = 300, h = 20;
+    const x0 = 1190, y0 = 80, w = 360, h = 20;
     const mx = (x) => x0 + (w * clamp(x, 0, WORLD_W)) / WORLD_W;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = HUD.plate;
+    ctx.fillRect(x0 - 10, y0 - 12, w + 20, h + 24);
+    ctx.fillStyle = HUD.line;
     ctx.fillRect(x0, y0 + h / 2 - 1, w, 2);
-    ctx.fillRect(x0 - 2, y0, 4, h);
-    ctx.fillRect(x0 + w - 2, y0, 4, h);
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.fillRect(mx(this.cam.x), y0 + 3, (w * VIEW_W) / WORLD_W, h - 6);
+    ctx.fillRect(x0 - 1, y0 + 2, 2, h - 4);
+    ctx.fillRect(x0 + w - 1, y0 + 2, 2, h - 4);
+    ctx.fillStyle = 'rgba(195,176,255,0.14)';
+    ctx.fillRect(mx(this.cam.x), y0 + 1, (w * VIEW_W) / WORLD_W, h - 2);
     for (const t of this.tanks) {
       if (!t.alive) continue;
       ctx.fillStyle = t.color;
@@ -1508,16 +1511,16 @@ class Game {
     };
     for (const d of this.mobs) {
       if (!d.alive) continue;
-      ctx.fillStyle = '#3c3c48';
-      sq(ctx, mx(d.x), y0 + h / 2 - 9, 6);
+      ctx.fillStyle = HUD.hot;
+      sq(ctx, mx(d.x), y0 + h / 2 - 9, 5);
     }
     for (const c of this.crates) {
-      ctx.fillStyle = '#ffd84a';
+      ctx.fillStyle = HUD.gold;
       sq(ctx, mx(c.x), y0 + h / 2 - (c.landed ? 0 : 8), 7);
     }
-    if (this.active) box(mx(this.active.x), 16, 'purple');
+    if (this.active) box(mx(this.active.x), 16, HUD.bright);
     const shell = this.projectiles[0];
-    if (shell) box(mx(shell.x), 10, 'orange');
+    if (shell) box(mx(shell.x), 10, HUD.gold);
   }
 
   // A3 UI_WindMarker, reinterpreted as a windsock: a mast with a striped sock of squares that
@@ -1544,18 +1547,18 @@ class Game {
     const sx = t.mark.x - this.cam.x;
     const sy = t.mark.y - this.cam.y;
     let txt;
-    let col = '#20204a';
+    let col = HUD.fg;
     if (info.behind) txt = 'turn around';
-    else if (info.far || info.frac > 1) { txt = 'out of reach at this angle'; col = '#b8433a'; }
-    else { txt = `power ${Math.round(info.frac * 100)}%${info.blocked ? ' · blocked' : ''}`; if (info.blocked) col = '#b8433a'; }
-    ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+    else if (info.far || info.frac > 1) { txt = 'out of reach at this angle'; col = HUD.hot; }
+    else { txt = `power ${Math.round(info.frac * 100)}%${info.blocked ? ' · blocked' : ''}`; if (info.blocked) col = HUD.hot; }
+    ctx.font = `13px ${HUD_FONT}`;
     ctx.textAlign = 'center';
     const w = ctx.measureText(txt).width + 16;
     // by the marker while it's on screen, otherwise above the charge bar
     const on = sx > 0 && sx < VIEW_W && sy > 60 && sy < VIEW_H - 120;
     const bx = Math.round(on ? clamp(sx - w / 2, 8, VIEW_W - w - 8) : 1120 + 400 - w);
     const by = Math.round(on ? sy - 52 : 752);
-    ctx.fillStyle = 'rgba(232,230,244,0.9)';
+    ctx.fillStyle = HUD.plate;
     ctx.fillRect(bx, by, Math.round(w), 22);
     ctx.fillStyle = t.color;
     ctx.fillRect(bx, by, 4, 22);
@@ -1563,30 +1566,42 @@ class Game {
     ctx.fillText(txt, bx + w / 2 + 2, by + 16);
   }
 
-  // A3 UI_Combat: charge bar (with last-charge tick) and fuel bar, bottom right
+  // A3 UI_Combat: charge bar (with last-charge tick) and fuel bar, bottom right, as hatched meters
   drawBars(ctx, t) {
     const x0 = 1120, w = 400;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(x0, 801, w, 10);
-    ctx.fillRect(x0 - 2, 790, 4, 32);
-    ctx.fillRect(x0 + w - 2, 790, 4, 32);
-    ctx.fillStyle = 'orange';
-    ctx.fillRect(x0 + 2, 796, Math.round((w - 4) * (t.charge / t.chargeCap())), 20);
+    const hatch = (x, y, ww, hh) => { ctx.fillStyle = 'rgba(0,0,0,0.3)'; for (let i = x + 2; i < x + ww; i += 6) ctx.fillRect(i, y, 2, hh); };
+    ctx.fillStyle = HUD.plate;
+    ctx.fillRect(x0 - 70, 784, w + 82, 70);
+    ctx.font = `11px ${HUD_FONT}`;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = HUD.ash;
+    ctx.fillText('POWER', x0 - 60, 811);
+    ctx.fillText('FUEL', x0 - 60, 843);
+    // power
+    ctx.fillStyle = HUD.line;
+    ctx.fillRect(x0, 796, w, 20);
+    const pw = Math.round(w * (t.charge / t.chargeCap()));
+    ctx.fillStyle = HUD.gold;
+    ctx.fillRect(x0, 796, pw, 20);
+    hatch(x0, 796, pw, 20);
     if (t.lastCharge > 0) {
-      ctx.fillStyle = '#000';
+      ctx.fillStyle = HUD.bright;
       ctx.fillRect(Math.round(x0 + w * t.lastCharge) - 1, 790, 2, 32);
     }
     // power the target marker needs at this angle
     const mi = this.markInfo;
     if (mi && mi.frac && mi.frac <= 1) {
-      ctx.fillStyle = mi.blocked ? '#b8433a' : '#2e8b57';
-      ctx.fillRect(Math.round(x0 + w * mi.frac) - 2, 784, 4, 44);
-      sq(ctx, x0 + w * mi.frac, 780, 10);
+      ctx.fillStyle = mi.blocked ? HUD.hot : HUD.cool;
+      ctx.fillRect(Math.round(x0 + w * mi.frac) - 2, 788, 4, 36);
+      sq(ctx, x0 + w * mi.frac, 786, 8);
     }
-    ctx.fillStyle = '#000';
-    ctx.fillRect(x0 - 2, 828, 4, 20);
-    ctx.fillRect(x0 + w - 2, 828, 4, 20);
-    ctx.fillStyle = 'steelblue';
-    ctx.fillRect(x0 + 2, 834, Math.round((w - 4) * clamp(t.fuel / t.maxFuel, 0, 1)), 8);
+    // fuel
+    ctx.fillStyle = HUD.line;
+    ctx.fillRect(x0, 834, w, 8);
+    const fw = Math.round(w * clamp(t.fuel / t.maxFuel, 0, 1));
+    ctx.fillStyle = HUD.accent;
+    ctx.fillRect(x0, 834, fw, 8);
+    hatch(x0, 834, fw, 8);
   }
+
 }

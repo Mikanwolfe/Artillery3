@@ -87,7 +87,7 @@ class Particles {
       if (p.type !== 'text') continue;
       const t = p.age / p.life;
       ctx.globalAlpha = clamp(1.6 * (1 - t), 0, 1);
-      ctx.font = `${p.big ? 40 : 26}px "Maven Pro", Verdana, sans-serif`;
+      ctx.font = `700 ${p.big ? 34 : 22}px ${HUD_FONT}`;
       const sx = Math.round(p.x - cam.x);
       const sy = Math.round(p.y - cam.y);
       ctx.fillStyle = 'rgba(20,20,40,0.6)';

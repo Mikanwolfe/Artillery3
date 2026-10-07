@@ -355,7 +355,7 @@ Object.assign(Game.prototype, {
 
   drawHazardLabels(ctx, cam) {
     for (const m of this.mobs) m.drawLabel(ctx, m.x - cam.x, m.y - cam.y);
-    ctx.font = '14px "Maven Pro", Verdana, sans-serif';
+    ctx.font = `12px ${HUD_FONT}`;
     ctx.textAlign = 'center';
     for (const f of this.fronts) {
       const sx = f.x - cam.x;
