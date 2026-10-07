@@ -1,15 +1,15 @@
 'use strict';
-// DOM layer: menu, HUD, shop, round/game summaries and the LLM settings box.
+// DOM layer: menu, character select, shop, round/game summaries and the small HUD bits.
+// Most of the in-game HUD (labels, minimap, wind, charge/fuel bars) is drawn on the canvas.
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const TYPE_LABELS = { human: 'Human', easy: 'CPU · Easy', normal: 'CPU · Normal', hard: 'CPU · Hard', llm: 'CPU · LLM' };
+const TYPE_LABELS = { human: 'Human', easy: 'CPU · Easy', normal: 'CPU · Normal', hard: 'CPU · Hard' };
+const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
 
 const UI = {
   game: null,
   players: [],
-  hudKey: '',
-  weaponKey: '',
   last: {},
 
   init(game) {
@@ -30,14 +30,13 @@ const UI = {
       this.players.pop();
       this.renderPlayers();
     };
-    $('start').onclick = () => this.startMatch();
+    $('start').onclick = () => this.selectVehicles();
     $('re-next').onclick = () => { $('roundend').hidden = true; game.afterRoundEnd(); };
     $('ge-again').onclick = () => { $('gameend').hidden = true; game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); };
     $('resume').onclick = () => game.togglePause();
     $('btn-pause').onclick = () => game.togglePause();
     $('btn-mute').onclick = () => game.toggleMute();
     this.syncMute();
-    this.initLlmBox();
     this.initTouch();
     window.addEventListener('keydown', (e) => {
       if (e.code !== 'Enter' || /^(INPUT|SELECT|TEXTAREA|SUMMARY)$/.test(e.target.tagName)) return;
@@ -63,72 +62,63 @@ const UI = {
       row.querySelector('select').onchange = (e) => {
         p.type = e.target.value;
         if (p.type !== 'human' && /^Player \d$/.test(p.name)) { p.name = AI_NAMES[i % AI_NAMES.length]; this.renderPlayers(); }
-        this.llmStatus();
       };
       box.appendChild(row);
     });
-    this.llmStatus();
   },
 
-  startMatch() {
+  configs() {
     const seen = new Set();
-    const cfgs = this.players.map((p, i) => {
+    return this.players.map((p, i) => {
       let name = (p.name || '').trim() || `Player ${i + 1}`;
       while (seen.has(name)) name += '′';
       seen.add(name);
-      return { name, type: p.type };
+      return { name, type: p.type, vehicle: null };
     });
-    this.game.startMatch(cfgs, +$('rounds').value);
   },
 
-  initLlmBox() {
-    const cfg = LlmBrain.load();
-    $('llm-key').value = cfg.key;
-    $('llm-model').value = cfg.model;
-    $('llm-base').value = cfg.base;
-    $('llm-taunts').checked = cfg.taunts;
-    const read = () => ({ key: $('llm-key').value.trim(), model: $('llm-model').value.trim() || 'gpt-5-mini', base: $('llm-base').value.trim() || 'https://api.openai.com/v1', taunts: $('llm-taunts').checked });
-    const msg = (t, cls = '') => { $('llm-msg').textContent = t; $('llm-msg').className = 'note ' + cls; };
-    $('llm-save').onclick = () => { LlmBrain.save(read()); msg('Saved to this browser.', 'ok'); this.llmStatus(); };
-    $('llm-forget').onclick = () => {
-      LlmBrain.save({ ...read(), key: '' });
-      $('llm-key').value = '';
-      msg('Key removed from this browser.', 'ok');
-      this.llmStatus();
+  // A3 "Select a Character": each human picks a vehicle in turn; CPUs pick at random
+  selectVehicles() {
+    this.game.sfx.unlock();
+    const cfgs = this.configs();
+    for (const c of cfgs) if (c.type !== 'human') c.vehicle = rng.pick(VEHICLES).id;
+    const queue = cfgs.filter((c) => c.type === 'human');
+    const next = () => {
+      const c = queue.shift();
+      if (!c) { $('vehicles').hidden = true; this.game.startMatch(cfgs, +$('rounds').value); return; }
+      $('menu').hidden = true;
+      $('vehicles').hidden = false;
+      $("veh-player").textContent = `${c.name}:`;
+      $('veh-grid').innerHTML = VEHICLES.map((v) => {
+        const w = v.weapon;
+        return `<div class="veh" data-v="${v.id}"><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
+          <div class="stats"><span>Health</span><span>${v.hp}</span><span>Armour</span><span>${v.armour}</span></div>
+          <h3 style="font-size:1em;color:${RARITY[w.rarity].color}">${esc(w.name)}</h3><p>${esc(w.short)}</p>
+          <div class="stats">${this.weaponStats(w)}</div></div>`;
+      }).join('');
+      $('veh-grid').querySelectorAll('.veh').forEach((el) => {
+        el.onclick = () => { c.vehicle = el.dataset.v; this.game.sfx.click(); next(); };
+      });
     };
-    $('llm-test').onclick = async () => {
-      LlmBrain.save(read());
-      msg('Asking…');
-      try {
-        const d = await LlmBrain.chat([{ role: 'user', content: 'Reply with {"reply":"ready"} as JSON.' }],
-          { type: 'object', additionalProperties: false, required: ['reply'], properties: { reply: { type: 'string' } } }, 20000);
-        msg('Connected: ' + JSON.stringify(d), 'ok');
-      } catch (e) {
-        const hint = /Failed to fetch|NetworkError|Load failed/i.test(e.message) ? ' (network or CORS: browsers may block direct calls; point Base URL at a proxy)' : '';
-        msg('Failed: ' + e.message + hint, 'err');
-      }
-      this.llmStatus();
-    };
+    next();
   },
 
-  llmStatus() {
-    const anyLlm = this.players.some((p) => p.type === 'llm');
-    const on = LlmBrain.enabled();
-    $('llm-badge').textContent = on ? '· key saved' : anyLlm ? '· no key: LLM players will play as hard CPUs' : '';
-    const el = $('llmstat');
-    if (LlmBrain.lastError && this.game && this.game.tanks.some((t) => t.type === 'llm')) {
-      el.hidden = false;
-      el.textContent = 'LLM uplink: ' + LlmBrain.lastError;
-    } else el.hidden = true;
+  weaponStats(w) {
+    const rows = [['Damage', w.dmg], ['Radius', w.dmgR], ['Range', w.maxCharge], ['Spread', w.disp]];
+    if (w.clip > 1) rows.push(['Autoloader', w.clip]);
+    if (w.salvo > 1) rows.push(['Rounds', w.salvo]);
+    rows.push(['Elevation', `${w.elevMin}°…${w.elevMax}°`]);
+    if (w.sat) rows.push(['Satellite', 'MAIA']);
+    if (w.kind !== 'shell') rows.push(['Type', w.kind[0].toUpperCase() + w.kind.slice(1)]);
+    return rows.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
   },
 
   // ------------------------------------------------------------ HUD
   showHud(on) {
     $('hud').hidden = !on;
     if (on) $('menu').hidden = true;
-    this.hudKey = this.weaponKey = '';
     $('chat').innerHTML = '';
-    this.llmStatus();
+    this.last = {};
   },
 
   syncMute() { $('btn-mute').textContent = this.game.sfx.muted ? '✕' : '♪'; },
@@ -136,11 +126,10 @@ const UI = {
 
   turn(t) {
     const g = this.game;
-    $('turn').innerHTML = `<span class="dot" style="background:${t.color}"></span>${esc(t.name)}${g.phase === 'resolve' ? '' : "'s turn"}`;
-    if (g.phase === 'aim') {
+    $('turn').innerHTML = `<span class="dot" style="background:${t.color}"></span>${esc(t.name)}`;
+    if (g.phase === 'aim' && !t.firedThisTurn) {
       const b = $('banner');
-      b.textContent = `${t.name}${t.isCpu ? ' is thinking…' : ', your move'}`;
-      b.style.color = t.color;
+      b.textContent = `${t.name}${t.isCpu ? '' : ', your move'}`;
       b.classList.remove('show');
       void b.offsetWidth;
       b.classList.add('show');
@@ -150,7 +139,7 @@ const UI = {
   chat(tank, text) {
     const d = document.createElement('div');
     d.style.borderColor = tank.color;
-    d.innerHTML = `<b style="color:${tank.color}">${esc(tank.name)}</b> ${esc(text)}`;
+    d.innerHTML = `<b style="color:${tank.color};font-weight:normal">${esc(tank.name)}</b> ${esc(text)}`;
     const box = $('chat');
     box.appendChild(d);
     while (box.children.length > 4) box.firstChild.remove();
@@ -159,46 +148,8 @@ const UI = {
 
   updateHud(g) {
     if ($('hud').hidden) return;
-    const key = g.tanks.map((t) => [Math.ceil(t.hp), Math.round(t.cash), t.wins, t.alive, t === g.active].join()).join('|') + g.round;
-    if (key !== this.hudKey) {
-      this.hudKey = key;
-      $('roster').innerHTML = g.tanks.map((t) => `<div class="chip${t === g.active ? ' active' : ''}${t.alive ? '' : ' dead'}">
-        <span class="dot" style="background:${t.color};margin:0"></span><span class="nm">${esc(t.name)}</span>
-        <span class="meta">$${Math.round(t.cash)} ${'★'.repeat(t.wins)}</span>
-        <div class="hpbar"><i style="width:${(100 * Math.max(0, t.hp)) / t.maxHp}%"></i></div></div>`).join('');
-      $('roundinfo').textContent = `Round ${g.round}/${g.rounds}`;
-    }
-    const w = g.wind * 1000;
-    const arrows = Math.min(4, Math.ceil(Math.abs(w) / 3));
-    this.set('wind-arrow', Math.abs(w) < 0.4 ? '·' : (w > 0 ? '▶' : '◀').repeat(arrows));
-    this.set('wind-val', `wind ${Math.abs(w).toFixed(1)}`);
-
-    const t = g.active;
-    if (!t) return;
-    this.set('a-elev', Math.round(t.elev) + '°');
-    $('a-power').style.width = t.power + '%';
-    $('a-last').style.left = t.lastPower + '%';
-    $('a-last').style.display = t.lastPower > 0 && !t.isCpu ? '' : 'none';
-    $('a-fuel').style.width = (100 * t.fuel) / t.maxFuel + '%';
-    $('a-hp').style.width = (100 * Math.max(0, t.hp)) / t.maxHp + '%';
-
-    const wk = t.name + t.weaponId + WEAPONS.map((x) => t.ammo[x.id]).join() + g.phase;
-    if (wk !== this.weaponKey) {
-      this.weaponKey = wk;
-      const bar = $('weaponbar');
-      bar.innerHTML = '';
-      t.ownedWeapons().forEach((wp, i) => {
-        const d = document.createElement('div');
-        d.className = 'wslot' + (wp.id === t.weaponId ? ' sel' : '');
-        d.innerHTML = `<kbd>${i + 1}</kbd>${esc(wp.name.replace(/^\d+mm\s*/, ''))}<small>${wp.infinite ? '∞' : '×' + t.ammo[wp.id]} · ${wp.tag}</small>`;
-        d.onclick = () => { if (g.phase === 'aim' && !t.isCpu) { t.selectWeapon(wp.id); g.sfx.click(); } };
-        bar.appendChild(d);
-      });
-    }
-  },
-
-  set(id, text) {
-    if (this.last[id] !== text) { this.last[id] = text; $(id).textContent = text; }
+    const r = `Round ${g.round}/${g.rounds}`;
+    if (this.last.r !== r) { this.last.r = r; $('roundinfo').textContent = r; }
   },
 
   initTouch() {
@@ -210,53 +161,69 @@ const UI = {
       ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => b.addEventListener(ev, set(false)));
     });
     document.querySelectorAll('#touch [data-q]').forEach((b) => {
-      b.addEventListener('pointerdown', (e) => { e.preventDefault(); g.input.queue.push({ cycle: +b.dataset.q }); });
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); g.input.queue.push({ cycle: 1 }); });
+    });
+    document.querySelectorAll('#touch [data-end]').forEach((b) => {
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ endTurn: true }); });
     });
   },
 
   // ------------------------------------------------------------ round / shop / end
-  showRoundEnd({ round, winner, tanks }, last) {
+  showRoundEnd({ round, winner, tanks, award }, last) {
     $('re-title').innerHTML = winner
       ? `Round ${round}: <span style="color:${winner.color}">${esc(winner.name)}</span> wins`
       : `Round ${round}: mutual destruction`;
+    $('re-award').textContent = `Everyone is paid ${money(award)} for this round.`;
     $('re-table').className = 'data';
-    $('re-table').innerHTML = `<tr><th>Tank</th><th>Damage</th><th>Earned</th><th>Wins</th><th>Cash</th></tr>` + tanks.map((t) =>
+    $('re-table').innerHTML = '<tr><th>Tank</th><th>Vehicle</th><th>Damage</th><th>Wins</th><th>Money</th></tr>' + tanks.map((t) =>
       `<tr class="${t === winner ? 'win' : ''}"><td><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</td>
-       <td>${Math.round(t.roundDealt)}</td><td>+$${Math.round(t.roundEarned)}</td><td>${t.wins}</td><td>$${Math.round(t.cash)}</td></tr>`).join('');
+       <td>${esc(t.vehicle.name)}</td><td>${Math.round(t.roundDealt)}</td><td>${t.wins}</td><td>${money(t.money)}</td></tr>`).join('');
     $('re-quips').innerHTML = '';
-    $('re-next').textContent = last ? 'Final results' : 'To the shop';
+    $('re-next').textContent = last ? 'final results' : 'to the shop';
     $('roundend').hidden = false;
   },
 
-  addQuip(tank, line) {
-    if ($('roundend').hidden) return;
+  addQuip(tank, line, boxId = 're-quips') {
+    if (!line) return;
     const d = document.createElement('div');
     d.className = 'quip';
     d.style.borderColor = tank.color;
-    d.innerHTML = `<b style="color:${tank.color}">${esc(tank.name)}:</b> “${esc(line)}”`;
-    $('re-quips').appendChild(d);
+    d.innerHTML = `<span style="color:${tank.color}">${esc(tank.name)}:</span> “${esc(line)}”`;
+    $(boxId).appendChild(d);
   },
+
+  addEndQuip(tank, line) { this.addQuip(tank, line, 'ge-quips'); },
 
   showShop(tank, done) {
     const g = this.game;
     const render = () => {
-      $('shop-title').innerHTML = `<span class="dot" style="background:${tank.color}"></span>${esc(tank.name)}'s shop`;
-      $('shop-cash').textContent = '$' + Math.round(tank.cash);
-      const stat = (label, v, max) => `<div class="stat">${label}<i style="width:${clamp((100 * v) / max, 4, 100)}%"></i></div>`;
-      $('shop-grid').innerHTML = WEAPONS.filter((w) => w.cost > 0).map((w) => {
-        const dmg = w.kind === 'cluster' ? w.sub.dmg * w.sub.count : w.dmg;
-        const blast = w.kind === 'cluster' ? w.sub.blast : w.blast || w.beamHalf;
-        return `<div class="card"><span class="tag">${w.tag}</span><h3>${esc(w.name)}</h3><p>${esc(w.desc)}</p>
-          ${stat('Damage', dmg, 150)}${stat('Blast', blast, 60)}${stat('Wind', w.wind * 100, 100)}
-          <div class="buyrow"><span class="owned">${tank.ammo[w.id] ? 'owned ×' + tank.ammo[w.id] : ''}</span>
-          <button data-w="${w.id}" ${tank.cash < w.cost ? 'disabled' : ''}>+${w.pack} · $${w.cost}</button></div></div>`;
+      $('shop-title').innerHTML = `<span class="dot" style="background:${tank.color}"></span>${esc(tank.name)} | ${esc(tank.vehicle.name)}`;
+      $('shop-cash').textContent = 'Money : ' + money(tank.money);
+      const full = tank.weapons.length >= 4;
+      $('shop-grid').innerHTML = WEAPONS.map((w) => {
+        const r = RARITY[w.rarity];
+        const owned = tank.weapons.includes(w.id);
+        const can = !owned && !full && tank.money >= w.cost;
+        return `<div class="card" style="border-left-color:${r.color === '#ffffff' ? '#ccc' : r.color}">
+          <h4 style="color:${r.color === '#ffffff' ? '#20204a' : r.color}">${esc(w.name)}</h4><span class="rar">${r.word}</span>
+          <p>${esc(w.short)}</p><p><i>${esc(w.long)}</i></p>
+          <div class="stats">${this.weaponStats(w)}</div>
+          <div class="buyrow"><span class="cost">${money(w.cost)}</span>
+          <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'owned' : full ? 'slots full' : 'buy'}</button></div></div>`;
       }).join('');
-      $('shop-upg').innerHTML = UPGRADES.map((u) => {
-        const lv = tank.upgrades[u.id];
-        return `<div class="card"><h3>${u.name} <small>lv ${lv}/${u.max}</small></h3><p>${u.desc}</p>
-          <div class="buyrow"><span></span><button data-u="${u.id}" ${tank.cash < u.cost || lv >= u.max ? 'disabled' : ''}>${lv >= u.max ? 'maxed' : '$' + u.cost}</button></div></div>`;
+      $('shop-count').textContent = `(${tank.weapons.length}/4)`;
+      $('shop-owned').innerHTML = tank.weapons.map((id) => {
+        const w = WEAPON_BY_ID[id];
+        return `<div class="owned" style="border-left-color:${RARITY[w.rarity].color}"><span>${esc(w.name)}</span>
+          <button data-s="${id}" ${tank.weapons.length > 1 ? '' : 'disabled'}>sell ${money(g.sellValue(w))}</button></div>`;
+      }).join('');
+      $('shop-upg').innerHTML = [['hp', 'Health++', tank.maxHp], ['armour', 'Armour++', tank.maxArmour]].map(([id, label, cur]) => {
+        const cost = g.upgradeCost(tank.upgrades[id]);
+        return `<div class="upg"><span>${label}<br><small>${cur} &gt;&gt; ${Math.round(cur * 1.3)}</small></span>
+          <button data-u="${id}" ${tank.money >= cost ? '' : 'disabled'}>${money(cost)}</button></div>`;
       }).join('');
       $('shop-grid').querySelectorAll('[data-w]').forEach((b) => { b.onclick = () => { g.buy(tank, 'weapon', b.dataset.w); render(); }; });
+      $('shop-owned').querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { g.sell(tank, b.dataset.s); render(); }; });
       $('shop-upg').querySelectorAll('[data-u]').forEach((b) => { b.onclick = () => { g.buy(tank, 'upgrade', b.dataset.u); render(); }; });
     };
     render();
@@ -268,12 +235,13 @@ const UI = {
 
   showGameEnd(st) {
     const champ = st[0];
-    const tie = st[1] && st[1].wins === champ.wins && st[1].cash === champ.cash;
+    const tie = st[1] && st[1].wins === champ.wins;
+    $('ge-quips').innerHTML = '';
     $('ge-title').innerHTML = tie ? 'A draw' : `<span style="color:${champ.color}">${esc(champ.name)}</span> takes the match`;
     $('ge-table').className = 'data';
-    $('ge-table').innerHTML = `<tr><th>#</th><th>Tank</th><th>Rounds</th><th>Kills</th><th>Damage</th><th>Cash</th></tr>` + st.map((t, i) =>
+    $('ge-table').innerHTML = '<tr><th>#</th><th>Tank</th><th>Rounds</th><th>Kills</th><th>Damage</th><th>Money</th></tr>' + st.map((t, i) =>
       `<tr class="${i === 0 ? 'win' : ''}"><td>${i + 1}</td><td><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</td>
-       <td>${t.wins}</td><td>${t.stats.kills}</td><td>${Math.round(t.stats.dealt)}</td><td>$${Math.round(t.cash)}</td></tr>`).join('');
+       <td>${t.wins}</td><td>${t.stats.kills}</td><td>${Math.round(t.stats.dealt)}</td><td>${money(t.money)}</td></tr>`).join('');
     $('gameend').hidden = false;
     this.game.sfx.win();
   },

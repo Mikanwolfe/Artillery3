@@ -3,9 +3,16 @@
 // All gameplay randomness goes through `rng` so a match can be replayed with ?seed=N.
 // Visual-only randomness (particles, snow) uses Math.random.
 
+// Canvas is drawn at W x H CSS pixels; the camera looks at VIEW_W x VIEW_H world units
+// (the original's 1600x900 window), so world numbers below are lifted straight from A3.
 const W = 1024;
 const H = 576;
-const GRAV = 0.14; // px / step^2
+const VIEW_W = 1600;
+const VIEW_H = 900;
+const VIEW_SCALE = W / VIEW_W;
+const WORLD_W = 2400; // Constants.TerrainWidth
+const WORLD_BOTTOM = 1800; // Constants.TerrainDepth
+const GRAV = 0.6; // Constants.Gravity, px / frame^2
 const DT = 1 / 60;
 const TAU = Math.PI * 2;
 
@@ -59,6 +66,13 @@ function mixRgb(a, b, t) {
 }
 
 const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+
+// Art rule: everything in the world is an axis-aligned square (any size, may move, resize or
+// fade, never rotates). No curves, lines, gradients or blur. This draws one, centred on (x, y).
+function sq(ctx, x, y, s) {
+  const n = Math.max(1, Math.round(s));
+  ctx.fillRect(Math.round(x - n / 2), Math.round(y - n / 2), n, n);
+}
 
 function makeCanvas(w, h) {
   const c = document.createElement('canvas');

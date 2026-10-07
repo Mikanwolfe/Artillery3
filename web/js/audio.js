@@ -71,7 +71,7 @@ class Sfx {
   }
 
   shot(w) {
-    if (w.id === 'coil') {
+    if (w.kind === 'gun' || w.kind === 'laser') {
       this.tone('sawtooth', 1800, 200, 0.18, 0.25);
       this.noise('highpass', 3000, 800, 0.15, 0.3);
     } else {
@@ -87,12 +87,13 @@ class Sfx {
     if (size > 35) this.tone('sine', 60, 20, d * 1.4, 0.7, 0.04);
   }
 
-  beamWarn() { this.tone('sawtooth', 220, 1400, 0.9, 0.16); }
-  beamFire() {
+  satPrep() { this.tone('sawtooth', 220, 1400, 0.9, 0.16); }
+  satFire() {
     this.noise('highpass', 4000, 600, 0.7, 0.55);
     this.tone('sawtooth', 900, 70, 0.7, 0.4);
     this.tone('sine', 70, 25, 0.9, 0.7);
   }
+  laser() { this.tone('sawtooth', 1800, 300, 0.25, 0.22); this.noise('highpass', 5000, 1500, 0.2, 0.25); }
   acid() { this.noise('highpass', 5000, 2500, 0.35, 0.3); }
   thud() { this.tone('sine', 90, 35, 0.16, 0.4); }
   click() { this.tone('square', 900, 700, 0.04, 0.07); }
