@@ -82,6 +82,7 @@ const UI = {
     });
     this.syncMute();
     this.initTouch();
+    this.rackClicks();
     window.addEventListener('keydown', (e) => {
       // character select: 1-4 picks a card
       if (this.pick && !$('vehicles').hidden && /^Digit[1-4]$/.test(e.code)) {
@@ -169,6 +170,7 @@ const UI = {
           <div class="stage"><canvas class="girl" width="168" height="200" data-g="${v.id}"></canvas></div>
           <div><span class="maker${v.id === 'nxi' ? ' nxi' : ''}">${v.id === 'nxi' ? 'NXi · November Division' : 'CLS-T trials'}</span><h3>${esc(v.name)}</h3></div>
           <p>${esc(v.blurb)}</p>
+          <ul class="traits">${(v.traits || []).map((id) => `<li><b>${esc(TRAITS[id].name)}</b> ${esc(TRAITS[id].desc)}</li>`).join('')}</ul>
           <div class="meters">${meter('Health', v.hp, 200, 'var(--cool)')}${meter('Armour', v.armour, 200, 'var(--accent)')}${meter('Fuel', fuel, 100, 'var(--gold)')}</div>
           <div class="veh-wpn">${this.badge(w, true)}<h4 style="color:${RARITY[w.rarity].ui}">${esc(w.name)}</h4></div>
           <div class="stats">${this.weaponStats(w)}</div></div>`;
@@ -202,6 +204,8 @@ const UI = {
   weaponStats(w) {
     const rows = [['Dmg', w.salvo > 1 ? `${w.dmg}×${w.salvo}` : w.dmg], ['Rad', w.dmgR], ['Rng', w.maxCharge], ['Spr', w.disp], ['Elev', `${w.elevMin}…${w.elevMax}°`]];
     if (w.clip > 1) rows.push(['Load', `${w.clip}/turn`]);
+    if (reloadOf(w)) rows.push(['Rld', `${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''}`]);
+    if (w.drift !== 1) rows.push(['Wind', `${Math.round(w.drift * 100)}%`]);
     if (w.sat) rows.push(['Sat', 'MAIA']);
     if (w.kind !== 'shell') rows.push(['Type', w.kind]);
     return rows.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
@@ -277,8 +281,60 @@ const UI = {
     setTimeout(() => d.remove(), 14000);
   },
 
+  // the rack: the active vehicle's guns (loaded, in hand, or reloading with turns left) and its
+  // abilities and repair kits (ready, armed or recharging). Click to pick; keys shown on each.
+  rackClicks() {
+    $('rack').onclick = (e) => {
+      const b = e.target.closest('button');
+      const g = this.game;
+      if (!b || g.cpu || g.phase !== 'aim') return;
+      if (b.dataset.i !== undefined) g.input.queue.push({ select: +b.dataset.i });
+      else if (b.dataset.ab) g.input.queue.push({ ability: b.dataset.ab });
+      else if (b.dataset.rep) g.input.queue.push({ repair: true });
+    };
+  },
+
+  renderRack(g) {
+    const t = g.active;
+    const show = t && t.alive && (g.phase === 'aim' || g.phase === 'resolve');
+    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, !!g.cpu, g.phase, BALANCE]) : '';
+    if (sig === this.last.rack) return;
+    this.last.rack = sig;
+    $('rack').hidden = !show;
+    if (!show) return;
+    $('rack').classList.toggle('cpu', !!g.cpu);
+    $('rack').style.setProperty('--pc', t.color);
+    $('rack-w').innerHTML = `<span class="rk">S</span>` + t.weapons.map((id, i) => {
+      const w = WEAPON_BY_ID[id];
+      const on = i === t.weaponIdx;
+      const left = t.reloadLeft(id);
+      const total = reloadOf(w) + 1;
+      let st;
+      if (on && t.firedThisTurn && t.shotsLeft > 0) st = `${t.shotsLeft} left`;
+      else if (left > 0) st = `↻ ${left} turn${left > 1 ? 's' : ''}`;
+      else st = on ? (w.clip > 1 ? `${w.clip} shots` : 'in hand') : 'loaded';
+      const reloadNote = reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
+      const pips = on && w.clip > 1 ? `<span class="pips">${Array.from({ length: w.clip }, (_, k) => `<i class="${k < (t.firedThisTurn ? t.shotsLeft : w.clip) ? 'f' : ''}"></i>`).join('')}</span>` : '';
+      return `<button class="slot w${on ? ' on' : ''}${left > 0 ? ' rl' : ''}" data-i="${i}" title="${esc(w.name)} · ${reloadNote}" ${left > 0 || (t.firedThisTurn && !on) ? 'disabled' : ''}>
+        ${this.badge(w, true)}<span class="txt"><span class="nm">${esc(w.name)}</span><span class="st">${st}</span></span>${pips}
+        ${left > 0 ? `<span class="rlbar"><i style="width:${Math.round(100 * (1 - left / total))}%"></i></span>` : ''}</button>`;
+    }).join('');
+    const ab = ABILITIES.filter((a) => t.abilities[a.id] > 0).map((a) => {
+      const armed = t.armed[a.id] || (a.id === 'shield' && t.shield) || (a.id === 'barrier' && t.barrier);
+      const cd = t.cooldown[a.id];
+      const st = armed ? (a.id === 'shield' || a.id === 'barrier' ? 'up' : 'armed') : cd > 0 ? `↻ ${cd}` : 'ready';
+      return `<button class="slot a${armed ? ' armed' : ''}${cd > 0 && !armed ? ' rl' : ''}" data-ab="${a.id}" title="${esc(a.name)}: ${esc(a.desc)}" ${cd > 0 && !armed ? 'disabled' : ''}>
+        <span class="kb">${a.key}</span><span class="txt"><span class="nm">${esc(a.name)}</span><span class="st">${st}</span></span></button>`;
+    });
+    if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% health and armour, takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
+    if (t.uplink) ab.push(`<span class="slot a armed uplink" title="Satellite uplink: your next shot calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">next shot</span></span></span>`);
+    $('rack-a').innerHTML = ab.join('');
+    $('rack-a').hidden = !ab.length;
+  },
+
   updateHud(g) {
     if ($('hud').hidden) return;
+    this.renderRack(g);
     const r = `Round ${g.round}${g.rounds ? '/' + g.rounds : ''}`;
     if (this.last.r !== r) { this.last.r = r; $('roundinfo').textContent = r.replace('Round', 'Rnd'); }
   },
@@ -290,15 +346,6 @@ const UI = {
       const set = (v) => (e) => { e.preventDefault(); g.sfx.unlock(); g.input.ctl[k] = v; };
       b.addEventListener('pointerdown', set(true));
       ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => b.addEventListener(ev, set(false)));
-    });
-    document.querySelectorAll('#touch [data-q]').forEach((b) => {
-      b.addEventListener('pointerdown', (e) => { e.preventDefault(); g.input.queue.push({ cycle: 1 }); });
-    });
-    document.querySelectorAll('#touch [data-rep]').forEach((b) => {
-      b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ repair: true }); });
-    });
-    document.querySelectorAll('#touch [data-ab]').forEach((b) => {
-      b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ ability: b.dataset.ab }); });
     });
     document.querySelectorAll('#touch [data-end]').forEach((b) => {
       b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ endTurn: true }); });
@@ -359,10 +406,14 @@ const UI = {
           <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : full ? 'Slots full' : afford ? 'Buy' : 'Short ' + money(w.cost - tank.money)}</button></div></div></div>`;
       }).join('') || '<div class="none">Nothing here. Try another filter.</div>';
       $('shop-count').textContent = `${tank.weapons.length}/4`;
+      $('shop-note').textContent = BALANCE === 'rebalanced'
+        ? 'Bought guns reload for 1–3 of your turns after firing (by rarity); your starter never does. Own several to fire a big gun every turn.'
+        : '';
+      $('shop-note').hidden = BALANCE !== 'rebalanced';
       $('shop-owned').innerHTML = tank.weapons.map((id) => {
         const w = WEAPON_BY_ID[id];
         return `<div class="owned">${this.badge(w, true)}<span>${esc(w.name)}</span>
-          <button data-s="${id}" ${tank.weapons.length > 1 ? '' : 'disabled'} title="Sell">${tank.weapons.length > 1 ? 'Sell ' + money(g.sellValue(w)) : 'Last gun'}</button></div>`;
+          <button data-s="${id}" ${g.canSell(tank, id) ? '' : 'disabled'} title="Sell">${g.canSell(tank, id) ? 'Sell ' + money(g.sellValue(w)) : w.starter ? 'Starter' : 'Last gun'}</button></div>`;
       }).join('');
       $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour]].map(([id, label, cur]) => {
         const cost = g.upgradeCost(tank, id);
@@ -385,10 +436,12 @@ const UI = {
       $('shop-kits').querySelector('[data-k]').onclick = () => { g.buy(tank, 'kit'); render(); };
       $('shop-abil').innerHTML = ABILITIES.map((a) => {
         const owned = tank.abilities[a.id] > 0;
-        const locked = a.late && !g.isLate();
-        return `<div class="upg"><span>${esc(a.name)} <small class="lvl">[${a.key}]</small><br>
+        const locked = !g.abilityUnlocked(tank, a);
+        const cost = g.abilityCost(tank, a);
+        const perk = cost !== a.cost ? ` <small class="lvl">${esc(TRAITS.gatekeeper.name)}</small>` : '';
+        return `<div class="upg"><span>${esc(a.name)} <small class="lvl">[${a.key}]</small>${perk}<br>
         <small>${esc(a.desc)} Recharges in ${a.cd} turns.</small></span>
-        <button data-a="${a.id}" ${!owned && !locked && tank.money >= a.cost ? '' : 'disabled'}>${owned ? 'Owned' : locked ? 'Late game' : money(a.cost)}</button></div>`;
+        <button data-a="${a.id}" ${!owned && !locked && tank.money >= cost ? '' : 'disabled'}>${owned ? 'Owned' : locked ? 'Late game' : money(cost)}</button></div>`;
       }).join('');
       $('shop-abil').querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => { g.buy(tank, 'ability', b.dataset.a); render(); }; });
     };

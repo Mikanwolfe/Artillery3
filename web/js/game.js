@@ -13,6 +13,7 @@ const AIM_LINE_LEN = 260;
 const AIM_ARC_LEN = 650;
 const AIM_GUIDE_WIND = false; // true = the guide also bends with the wind (much easier)
 const WIND_SCALE = 0.06;
+const WIND_FULL = 0.5 * WIND_SCALE; // game.wind's magnitude at A3's strongest wind
 const UPGRADE_PER_POINT = 7.5; // rebalanced Health++ / Armour++: $ per point of health or armour
 // Repair kits: bought in the shop, used with R instead of firing that turn
 const REPAIR_COST = 450;
@@ -26,7 +27,8 @@ const CRATE_CHANCE = 0.3; // chance of a supply drop at the start of each turn (
 const CRATE_MAX = 2;
 // Smoke traces: every shell leaves a line of grey squares that drift with the wind and fade
 const TRACE_LIFE = 360; // frames (~6 s)
-const TRACE_MAX = 2500;
+const TRACE_MAX = 5000;
+const TRACE_STEP = 7; // world units between puffs along a shell's path (jittered), so fast shells don't leave dashes
 // Arcade bonuses that reward high, plunging shots (shells, guns and acid; not lasers):
 //  - kinetic: extra damage from impact speed, packed into a tighter radius than the blast
 //  - altitude: the whole blast is scaled up by how far the shell fell from the top of its arc
@@ -229,9 +231,11 @@ class Game {
     if (dir !== t.facing) return { frac: null, behind: true };
     const reach = (v) => { // signed overshoot past the marker for speed v (null: never comes down to it)
       let x = m.x, y = m.y, vx = u.x * v, vy = u.y * v;
+      const drift = t.weapon.drift;
       for (let i = 0; i < 1500; i++) {
-        vy += GRAV + wind.y;
-        vx += wind.x;
+        const a = windAccel({ vx, drift }, wind);
+        vy += GRAV + a.y;
+        vx += a.x;
         const px = x, py = y;
         x += vx;
         y += vy;
@@ -255,7 +259,7 @@ class Game {
     }
     const v = hi;
     // does terrain or a tree get in the way?
-    const hit = simulateShot(this.terrain, wind, this.targets(), t, m.x, m.y, u.x * v, u.y * v);
+    const hit = simulateShot(this.terrain, wind, this.targets(), t, m.x, m.y, u.x * v, u.y * v, t.weapon.drift);
     return { v, frac: v / cap, blocked: dist(hit.x, hit.y, tg.x, tg.y) > 45 };
   }
 
@@ -387,6 +391,8 @@ class Game {
     this.fogDamage(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
+    t.tickReloads();
+    t.drill = hasTrait(t, 'drill');
     t.shotsLeft = t.weapon.clip; // autoloaders reload every turn
     t.firedThisTurn = false;
     this.startAim();
@@ -466,7 +472,7 @@ class Game {
 
   // fall damage, credited to whoever's shot knocked the ground away
   landed(t, drop) {
-    if (drop <= FALL_SAFE) return;
+    if (drop <= FALL_SAFE || hasTrait(t, 'geschutz')) return;
     const sh = this.report && this.report.shooter;
     const owner = sh && sh !== t ? sh : null;
     if (this.report) this.report.fallen = (this.report.fallen || new Set()).add(t);
@@ -504,27 +510,42 @@ class Game {
     });
   }
 
-  trace(x, y) {
-    if (this.traces.length >= TRACE_MAX) this.traces.shift();
-    this.traces.push({ x, y, age: 0 });
+  // lay smoke along a shell's path from where it last puffed to (x, y): evenly by distance, each puff
+  // nudged off the line and given its own size, life and drift, so the trail reads as one ragged
+  // ribbon rather than a dotted line (cosmetic: Math.random, not the gameplay rng)
+  trace(p, x, y) {
+    if (!p.puff) { p.puff = { x, y, next: TRACE_STEP * Math.random() }; return; }
+    const dx = x - p.puff.x, dy = y - p.puff.y;
+    const len = Math.hypot(dx, dy);
+    let d = p.puff.next;
+    for (; d < len; d += TRACE_STEP * (0.6 + Math.random() * 0.8)) {
+      if (this.traces.length >= TRACE_MAX) this.traces.shift();
+      const f = d / len;
+      this.traces.push({
+        x: p.puff.x + dx * f + (Math.random() - 0.5) * 5, y: p.puff.y + dy * f + (Math.random() - 0.5) * 5,
+        age: 0, life: TRACE_LIFE * (0.6 + Math.random() * 0.6), s: 0.6 + Math.random() * 0.8,
+        vx: (Math.random() - 0.5) * 0.12, vy: -0.02 - Math.random() * 0.08,
+      });
+    }
+    p.puff = { x, y, next: d - len };
   }
 
   updateTraces() {
-    let n = 0;
     for (const t of this.traces) {
       t.age++;
-      t.x += this.wind.x * 8;
-      t.y -= 0.05;
+      t.x += this.wind.x * 8 + t.vx;
+      t.y += t.vy;
     }
-    while (n < this.traces.length && this.traces[n].age > TRACE_LIFE) n++;
-    if (n) this.traces.splice(0, n);
+    // puffs have their own lifetimes now, so filter rather than trim from the front
+    if (this.traces.length && (this.time * 60 | 0) % 15 === 0) this.traces = this.traces.filter((t) => t.age < t.life);
   }
 
   drawTraces(ctx) {
     for (const t of this.traces) {
-      const k = t.age / TRACE_LIFE;
-      ctx.fillStyle = `rgba(96,90,108,${0.5 * (1 - k)})`;
-      sq(ctx, t.x, t.y, 4 + k * 10);
+      const k = t.age / t.life;
+      if (k >= 1) continue;
+      ctx.fillStyle = `rgba(96,90,108,${0.42 * (1 - k) * (1 - k * 0.3)})`;
+      sq(ctx, t.x, t.y, (3 + k * 10) * t.s);
     }
   }
 
@@ -538,7 +559,7 @@ class Game {
     this.sfx.thud();
     this.shake = Math.max(this.shake, 3);
     this.events.push(`${t.name} drove through a tree.`);
-    this.damage(t, TREE_RAM_DMG + 3 * tr.h, null);
+    if (!hasTrait(t, 'geschutz')) this.damage(t, TREE_RAM_DMG + 3 * tr.h, null);
   }
 
   spawnCrate() {
@@ -612,9 +633,9 @@ class Game {
       c = this.input.ctl;
       for (const a of this.input.queue.splice(0)) {
         if (a.cycle && !t.firedThisTurn) {
-          t.cycleWeapon(a.cycle);
-          t.shotsLeft = t.weapon.clip;
-          this.sfx.click();
+          if (t.cycleWeapon(a.cycle)) this.sfx.click(); else this.sfx.deny();
+        } else if (a.select !== undefined) {
+          if (!t.firedThisTurn && t.selectWeapon(a.select)) this.sfx.click(); else this.sfx.deny();
         } else if (a.repair) {
           this.useRepair(t);
           return;
@@ -635,6 +656,10 @@ class Game {
     if (c.down) t.elev -= rate;
     t.clampElev();
     const w = t.weapon;
+    if (c.charge && !this.charging && !t.firedThisTurn && !t.weaponReady()) {
+      c.charge = false; // can't happen through the UI; guards the CPU and stale input
+      this.sfx.deny();
+    }
     if (c.charge) {
       if (!this.charging) { this.charging = true; this.sfx.chargeStart(); }
       t.charge = Math.min(t.chargeCap(), t.charge + w.maxCharge * 0.005); // A3 Weapon.Update
@@ -654,6 +679,7 @@ class Game {
 
   fire(t) {
     const w = t.weapon;
+    if (!t.firedThisTurn && reloadOf(w)) t.reload[w.id] = reloadOf(w) + 1; // sits out reloadOf(w) of its owner's turns
     t.shotsLeft--;
     t.firedThisTurn = true;
     const dir = t.aimVec();
@@ -749,6 +775,10 @@ class Game {
       return;
     }
     if (this.events.length > 40) this.events.splice(0, this.events.length - 40);
+    // G.W. Tiger's drill: the first shot of her turn hit a rival, so she gets the round back
+    const drilled = t && t.drill && this.report && [...this.report.dmg.keys()].some((x) => x !== t && !x.isMob);
+    if (t) t.drill = false;
+    if (drilled && t.alive) { t.shotsLeft++; this.particles.text(t.x, t.y - 90, 'Drill: round back', '#f2c45a'); }
     this.react(this.report);
     this.report = null;
     const alive = this.tanks.filter((x) => x.alive).length;
@@ -760,11 +790,29 @@ class Game {
   // ------------------------------------------------------------ satellite
   startSatellite() {
     this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner };
+    this.retarget(this.satSeq);
     this.satTarget = null;
     this.satellite.lookAt(this.satSeq.target);
     this.cam.follow(this.satellite);
     this.sfx.satPrep();
     this.events.push(`MAIA locks onto ${this.satSeq.owner.name}'s mark.`);
+  }
+
+  // Innocentia's MAIA re-targeting: a near miss gets nudged onto the closest rival
+  retarget(s) {
+    if (!hasTrait(s.owner, 'retarget')) return;
+    let best = null, bd = RETARGET_RANGE;
+    for (const e of this.targets()) {
+      if (!e.alive || e === s.owner) continue;
+      const c = e.center();
+      const d = dist(c.x, c.y, s.target.x, s.target.y);
+      if (d < bd) { bd = d; best = c; }
+    }
+    if (!best || bd < 10) return;
+    const k = Math.min(1, RETARGET_SHIFT / bd);
+    s.target = { ...s.target, x: s.target.x + (best.x - s.target.x) * k, y: s.target.y + (best.y - s.target.y) * k };
+    this.events.push('MAIA re-targets.');
+    this.particles.text(s.target.x, s.target.y - 60, 'MAIA re-targets', '#ff78c8');
   }
 
   updateSatellite() {
@@ -777,7 +825,8 @@ class Game {
       const lens = sat.lens();
       this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, '#fffff0', 22, 90));
       this.sfx.satFire();
-      this.explode(tg.x, tg.y, { dmg: sat.damage, dmgR: sat.dmgR, explR: sat.explR, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
+      const r = sat.dmgR * (hasTrait(s.owner, 'uplink') ? 1.3 : 1); // Innocentia's priority uplink
+      this.explode(tg.x, tg.y, { dmg: sat.damage, dmgR: r, explR: sat.explR, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
       this.cam.follow({ x: tg.x, y: tg.y });
     }
     if (s.t > 75 + 70) this.satSeq = null;
@@ -793,7 +842,7 @@ class Game {
       const c = RARITY[w.rarity].color;
       this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
       this.sfx.laser();
-      this.explode(p.x, p.y, { ...w, dmg: w.dmg * this.frontMult(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
+      this.explode(p.x, p.y, { ...w, dmg: w.dmg * this.frontMult(p) * this.traitDmg(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
     } else {
       this.explode(p.x, p.y, { ...this.shotBonus(p), from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
@@ -811,13 +860,16 @@ class Game {
   }
 
   // kinetic and altitude bonuses for a shell's impact (see KINETIC_* / ALTITUDE_*)
+  // Object 15X's single-shot discipline: +25% from guns without an autoloader
+  traitDmg(p) { return p.w && p.w.clip === 1 && !p.w.frag && hasTrait(p.owner, 'discipline') ? 1.25 : 1; }
+
   shotBonus(p) {
     const w = p.w;
     const alt = altitudeBonus(p.y - p.peak, p.launch || 0);
     const speed = Math.hypot(p.vx, p.vy);
     const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg;
     if (p.main && alt >= 0.2) this.particles.text(p.x, p.y - 70, `altitude +${Math.round(alt * 100)}%`, '#ffd84a');
-    return { ...w, dmg: w.dmg * (1 + alt) * this.frontMult(p), kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
+    return { ...w, dmg: w.dmg * (1 + alt) * this.frontMult(p) * this.traitDmg(p), kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
   }
 
   // flak burst: fragments rain down from the airburst
@@ -854,6 +906,10 @@ class Game {
       const d = dist(c.x, c.y, x, y);
       let amt = d < def.dmgR ? def.dmg * (1 - d / def.dmgR) : 0;
       if (def.kin && d < def.kin.r) amt += def.kin.dmg * (1 - d / def.kin.r);
+      if (amt > 0 && t.armour > 0 && hasTrait(t, 'sloped')) { // Object 15X: blasts from the side she faces
+        const fx = Math.abs(x - c.x) < 12 && def.from ? def.from.x : x - c.x;
+        if (fx * t.facing > 0) amt *= 0.8;
+      }
       if (amt > 0 && t.barrier) {
         // Bulwark Barrier: does this blast come from the side it covers? (a direct hit counts from
         // the direction the shell arrived)
@@ -886,6 +942,7 @@ class Game {
       taken = Math.min(amt, t.armour);
       t.armour -= taken;
     } else {
+      if (hasTrait(t, 'redundancy')) amt = Math.min(amt, t.maxHp * 0.4); // November: triple redundancy
       taken = Math.min(amt, t.hp);
       t.hp -= amt;
     }
@@ -1102,8 +1159,9 @@ class Game {
       return true;
     } else if (kind === 'ability') {
       const ab = ABILITIES.find((a) => a.id === id);
-      if (!ab || tank.abilities[id] > 0 || tank.money < ab.cost) { this.sfx.deny(); return false; }
-      tank.money -= ab.cost;
+      const cost = ab && this.abilityCost(tank, ab);
+      if (!ab || tank.abilities[id] > 0 || tank.money < cost || !this.abilityUnlocked(tank, ab)) { this.sfx.deny(); return false; }
+      tank.money -= cost;
       tank.abilities[id] = 1;
     } else if (kind === 'vupg') {
       const u = VEHICLE_UPGRADES.find((x) => x.id === id);
@@ -1125,8 +1183,11 @@ class Game {
     return true;
   }
 
+  // the starter is the gun that never reloads, so (rebalanced) it can't be sold
+  canSell(tank, id) { return tank.weapons.length > 1 && !(BALANCE === 'rebalanced' && WEAPON_BY_ID[id].starter); }
+
   sell(tank, id) {
-    if (tank.weapons.length <= 1) { this.sfx.deny(); return false; }
+    if (!this.canSell(tank, id)) { this.sfx.deny(); return false; }
     tank.weapons = tank.weapons.filter((x) => x !== id);
     tank.weaponIdx = 0;
     tank.money += this.sellValue(WEAPON_BY_ID[id]);
@@ -1146,7 +1207,8 @@ class Game {
     for (let n = 0; n < 4; n++) {
       const owned = t.weapons.map((id) => WEAPON_BY_ID[id]);
       const bestOwned = Math.max(...owned.map(weaponValue));
-      const weakest = owned.slice().sort((a, b) => weaponValue(a) - weaponValue(b))[0];
+      const sellable = owned.filter((w) => this.canSell(t, w.id));
+      const weakest = (sellable.length ? sellable : owned).slice().sort((a, b) => weaponValue(a) - weaponValue(b))[0];
       const full = t.weapons.length >= MAX_WEAPONS;
       const budget = t.money + (full ? this.sellValue(weakest) : 0);
       const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id)).sort((a, b) => weaponValue(b) - weaponValue(a));
@@ -1161,7 +1223,10 @@ class Game {
           break;
         }
       }
-      if (weaponValue(pick) < bestOwned * 1.15) break; // not worth a slot
+      // classic: a gun must beat the best one owned; rebalanced: reloads make a rack of guns worth
+      // having, so it only has to beat the one it replaces (or the starter, for an empty slot)
+      const bar = BALANCE === 'rebalanced' ? weaponValue(full ? weakest : t.vehicle.weapon) : bestOwned;
+      if (weaponValue(pick) < bar * 1.15) break; // not worth a slot
       if (full) {
         t.money += this.sellValue(weakest);
         t.weapons = t.weapons.filter((id) => id !== weakest.id);
@@ -1172,10 +1237,11 @@ class Game {
     }
     // abilities: Hard keeps a Double Shot and a Deflector, Normal a Double Shot, Easy now and then
     const wants = t.type === 'hard' ? ['double', 'shield'] : t.type === 'normal' ? ['double'] : rng.chance(0.4) ? [rng.pick(['double', 'shield'])] : [];
-    if (this.isLate() && t.type !== 'easy') wants.unshift('barrier'); // late game: a barrier first
+    if ((this.isLate() || hasTrait(t, 'gatekeeper')) && t.type !== 'easy') wants.unshift('barrier'); // late game (or November): a barrier first
     for (const id of wants) {
       const ab = ABILITIES.find((a) => a.id === id);
-      if (t.abilities[id] < 1 && t.money - reserve >= ab.cost * 1.5) { t.money -= ab.cost; t.abilities[id] = 1; }
+      const cost = this.abilityCost(t, ab);
+      if (t.abilities[id] < 1 && t.money - reserve >= cost * 1.5) { t.money -= cost; t.abilities[id] = 1; }
     }
     // vehicle upgrades: everyone wants an engine level; Normal and Hard a workshop; Hard the computer
     const vwants = t.type === 'hard' ? ['engine', 'workshop', 'computer'] : t.type === 'normal' ? ['engine', 'workshop'] : ['engine'];
@@ -1196,6 +1262,10 @@ class Game {
   // Abilities (see ABILITIES): 1 / 2 arm Double Shot / Overcharge for the next shot (press again
   // to disarm; they only recharge once fired), 3 switches the Deflector on. None takes the turn.
   // late game: the second half of a finite match, or from round 4 in infinite mode
+  // November's gatekeeper: the barrier is hers from round one, at half price
+  abilityUnlocked(t, ab) { return !ab.late || this.isLate() || (ab.id === 'barrier' && hasTrait(t, 'gatekeeper')); }
+  abilityCost(t, ab) { return ab.id === 'barrier' && hasTrait(t, 'gatekeeper') ? Math.round(ab.cost * GATEKEEPER_DISCOUNT) : ab.cost; }
+
   isLate() { return this.rounds ? this.round > this.rounds / 2 : this.round >= 4; }
 
   useAbility(t, id, dir) {
@@ -1419,7 +1489,7 @@ class Game {
       return;
     }
     // predicted arc for the current charge (gravity, terrain and trees; no dispersion)
-    const p = { x: m.x, y: m.y, vx: v.x * t.charge, vy: v.y * t.charge, age: 0 };
+    const p = { x: m.x, y: m.y, vx: v.x * t.charge, vy: v.y * t.charge, age: 0, drift: t.weapon.drift };
     const wind = AIM_GUIDE_WIND || t.upgrades.computer ? this.wind : { x: 0, y: 0 };
     let travelled = 0;
     let next = 8;

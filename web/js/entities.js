@@ -59,6 +59,9 @@ class Tank {
   // full-charge muzzle speed for the next shot (Overcharge raises it)
   // owned and recharged
   abilityReady(id) { return this.abilities[id] > 0 && !(this.cooldown[id] > 0); }
+  // reloads (rebalanced): own turns until a gun can fire again; 0 = ready
+  reloadLeft(id) { return this.reload[id] | 0; }
+  weaponReady(id = this.weapon.id) { return !(this.reload[id] > 0); }
   chargeCap() { return this.weapon.maxCharge * (this.armed.over ? OVERCHARGE : 1); }
 
   resetRound(x, terrain) {
@@ -82,6 +85,7 @@ class Tank {
     this.armed = { double: false, over: false };
     this.mark = null; // target marker (humans): the HUD shows the power needed to land on it
     this.cooldown = { double: 0, over: 0, shield: 0, barrier: 0 }; // own turns until each ability is ready again
+    this.reload = {}; // weapon id -> own turns until it can fire again (every gun starts the round loaded)
     this.barrier = null; // Bulwark Barrier direction (unit vector), until the next turn
     this.shield = false;
     this.shotsLeft = 0;
@@ -95,10 +99,39 @@ class Tank {
     this.elev = clamp(this.elev, w.elevMin, w.elevMax);
   }
 
+  // next loaded gun in that direction (reloading ones are skipped)
   cycleWeapon(dir) {
-    this.weaponIdx = (this.weaponIdx + dir + this.weapons.length) % this.weapons.length;
+    const n = this.weapons.length;
+    for (let k = 1; k <= n; k++) {
+      const i = (this.weaponIdx + dir * k + n * k) % n;
+      if (this.weaponReady(this.weapons[i])) { this.selectWeapon(i); return true; }
+    }
+    return false;
+  }
+
+  selectWeapon(i) {
+    if (!this.weapons[i] || !this.weaponReady(this.weapons[i])) return false;
+    this.weaponIdx = i;
     this.charge = 0;
+    this.shotsLeft = this.weapon.clip;
     this.clampElev();
+    return true;
+  }
+
+  // start of an own turn: count reloads down; if the gun in hand is still reloading, take the
+  // best loaded one (the starter never reloads, but a sold starter or an old save might leave none)
+  tickReloads() {
+    for (const id in this.reload) if (this.reload[id] > 0) this.reload[id]--;
+    if (!this.weapons.some((id) => this.weaponReady(id))) {
+      const soonest = this.weapons.slice().sort((a, b) => this.reloadLeft(a) - this.reloadLeft(b))[0];
+      this.reload[soonest] = 0;
+    }
+    if (!this.weaponReady()) {
+      const ready = this.weapons.map((id, i) => [WEAPON_BY_ID[id], i]).filter(([w]) => this.weaponReady(w.id));
+      ready.sort((a, b) => weaponValue(b[0]) - weaponValue(a[0]));
+      this.weaponIdx = ready[0][1];
+      this.clampElev();
+    }
   }
 
   // girls.js poses: 'fire' and 'hit' play once, 'win' loops
@@ -263,35 +296,6 @@ class Tank {
         ctx.fillStyle = i < this.shotsLeft ? HUD.accent : HUD.plate;
         ctx.fillRect(Math.round(sx - (w.clip * 10) / 2 + i * 10), Math.round(sy + 42), 7, 7);
       }
-      // MAIA uplink from a supply crate: the next shot calls the satellite
-      if (this.uplink) {
-        ctx.fillStyle = 'rgb(255,120,200)';
-        ctx.fillRect(Math.round(sx - ww / 2 - 44), Math.round(sy + 22), 12, 12);
-        ctx.fillStyle = 'rgb(120,32,78)';
-        ctx.fillRect(Math.round(sx - ww / 2 - 41), Math.round(sy + 25), 6, 6);
-      }
-      // repair kits carried: small green crosses (press R)
-      for (let i = 0; i < this.kits; i++) {
-        const kx = Math.round(sx + ww / 2 + 10 + i * 14);
-        const ky = Math.round(sy + 22);
-        ctx.fillStyle = HUD.cool;
-        ctx.fillRect(kx + 4, ky, 4, 12);
-        ctx.fillRect(kx, ky + 4, 12, 4);
-      }
-      // abilities owned: "key tag", lit up when armed, greyed with turns left while recharging
-      const tags = ABILITIES.filter((a) => this.abilities[a.id] > 0);
-      ctx.font = `12px ${HUD_FONT}`;
-      tags.forEach((a, i) => {
-        const on = this.armed[a.id] || (a.id === 'shield' && this.shield);
-        const cd = this.cooldown[a.id];
-        const txt = cd > 0 && !on ? `${a.key} ${a.tag} · ${cd}` : `${a.key} ${a.tag}`;
-        const bw2 = 64;
-        const ax = Math.round(sx - (tags.length * (bw2 + 4)) / 2 + i * (bw2 + 4));
-        ctx.fillStyle = on ? HUD.gold : HUD.plate;
-        ctx.fillRect(ax, Math.round(sy + 54), bw2, 18);
-        ctx.fillStyle = on ? HUD.plateInk : cd > 0 ? HUD.ash : HUD.fg;
-        ctx.fillText(txt, ax + bw2 / 2, Math.round(sy + 67));
-      });
     }
   }
 
@@ -337,6 +341,7 @@ class Projectile {
     this.w = w;
     this.owner = owner;
     this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+    this.drift = w.drift === undefined ? 1 : w.drift; // how hard the wind pushes it (weapon stat)
     this.age = 0;
     this.main = main;
     this.trail = [];
@@ -350,7 +355,7 @@ class Projectile {
     g.frontCheck(this);
     if (!r && this.w.kind === 'flak' && this.fuse(g)) { g.impact(this, { hit: 'air' }); return false; }
     if (this.y < this.peak) this.peak = this.y;
-    if (this.age % 2 === 0) g.trace(this.x, this.y);
+    g.trace(this, this.x, this.y);
     // soot flecks shed in flight: they fall away behind the shell and fade
     if (this.age % 3 === 0) {
       const dark = Math.random() < 0.5;

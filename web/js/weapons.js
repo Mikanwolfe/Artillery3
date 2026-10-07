@@ -10,11 +10,15 @@ const RARITY = [null,
   { word: 'Epic', color: '#ff1493', ui: '#ff5aae' }, { word: 'Mythical', color: '#800080', ui: '#c070ff' }, { word: 'Legendary', color: '#008b8b', ui: '#30c8c8' },
   { word: 'Godly', color: '#ffffff', ui: '#ffffff' }];
 
+// How hard the wind pushes a weapon's shells (1 = a normal shell). Fast, dense rounds (coilgun
+// slugs, the rail's titanium pillars) barely notice it; light airburst shells and acid blobs drift.
+const KIND_DRIFT = { shell: 1, gun: 0.45, laser: 0.7, acid: 1.3, flak: 1.15 };
+
 function weapon(id, name, kind, elevMin, elevMax, o) {
   return {
     id, name, kind, elevMin, elevMax,
     clip: 1, salvo: 1, disp: 0, maxCharge: 50, dmg: 100, dmgR: 50, explR: 10, acid: 0, sat: false, rarity: 1, cost: 500,
-    short: '', long: '', ...o,
+    drift: KIND_DRIFT[kind], short: '', long: '', ...o,
   };
 }
 
@@ -22,12 +26,14 @@ function weapon(id, name, kind, elevMin, elevMax, o) {
 const VEHICLES = [
   {
     id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'A sturdy Geschützwagen girl with a two-round autoloader on her back.',
+    traits: ['drill', 'geschutz'],
     weapon: weapon('morser', 'G.W. 150mm/78 Morser', 'shell', -20, 90, {
       dmg: 100, disp: 3.1, clip: 2, maxCharge: 50, dmgR: 50,
       short: 'Extensively field-tested, a reliable and sturdy weapon with no equal.', long: 'Starting weapon for G.W. Tiger.' }),
   },
   {
     id: 'obj', name: 'Object 15X', hp: 65, armour: 175, blurb: 'A heavily armoured Soviet girl: thin hull, one huge accurate shot.',
+    traits: ['sloped', 'discipline'],
     weapon: weapon('d76', '190mm D-76ST 15X', 'shell', 0, 45, {
       dmg: 200, disp: 0.9, maxCharge: 40, dmgR: 75,
       short: 'An experimental adaption from CLS-T developed during the last Neko Wars.', long: 'Starting weapon for Object 15X.' }),
@@ -36,17 +42,38 @@ const VEHICLES = [
   // Battlecruiser": overbuilt, triple-redundant, slow, never fails. A rival to CLS-T.
   {
     id: 'nxi', name: 'November', hp: 110, armour: 200, fuel: 0.7, blurb: 'An NXi battlecruiser girl: overbuilt, slow and very hard to kill.',
+    traits: ['redundancy', 'gatekeeper'],
     weapon: weapon('nxi0', "NXi Mk.0 'Bulkhead' 127mm Triple", 'shell', -5, 60, {
       salvo: 3, disp: 0.6, maxCharge: 55, dmg: 45, dmgR: 50, explR: 6,
       short: 'Triple-redundant: three shells where one would do. November Division standard issue.', long: 'Starting weapon for November.' }),
   },
   {
     id: 'int', name: 'Innocentia', hp: 130, armour: 130, blurb: 'The uplink girl: her twin barrels call down the MAIA satellite.',
+    traits: ['uplink', 'retarget'],
     weapon: weapon('katis', '120mm Kati-S / Sat. Enabled.', 'shell', 0, 45, {
       dmg: 80, salvo: 2, disp: 2.1, maxCharge: 70, dmgR: 80, sat: true,
       short: 'An early prototype that utilised the MAIA Satellite System.', long: 'Starting weapon for Innocentia.' }),
   },
 ];
+
+// Character traits: two passives per girl, so they play differently beyond stats and starter gun.
+// Hooks: Game.finishShot (drill), landed / ramTree (geschutz), explode (sloped), traitDmg
+// (discipline), damage (redundancy), the shop and useAbility (gatekeeper), startSatellite /
+// updateSatellite (uplink, retarget).
+const TRAITS = {
+  drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn hits a rival, she gets that round back.' },
+  geschutz: { name: 'Geschützwagen', desc: 'Never takes fall or tree damage.' },
+  sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
+  discipline: { name: 'Single-shot discipline', desc: '+25% damage from guns without an autoloader.' },
+  redundancy: { name: 'Triple redundancy', desc: 'No single hit takes more than 40% of her max health.' },
+  gatekeeper: { name: 'Gatekeeper', desc: 'The Bulwark Barrier is hers from round one, at half price.' },
+  uplink: { name: 'Priority uplink', desc: 'MAIA strikes she calls have a 30% bigger blast.' },
+  retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA nudges its aim onto them.' },
+};
+const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
+const GATEKEEPER_DISCOUNT = 0.5;
+const RETARGET_RANGE = 160; // how far from the mark MAIA looks for a rival
+const RETARGET_SHIFT = 70; // and how far it will move its aim
 
 const WEAPONS = [
   weapon('howitzer', '152mm/22 Howitzer', 'shell', 0, 40, { dmg: 100, disp: 5, maxCharge: 40, dmgR: 120, explR: 20, rarity: 1, cost: 1220,
@@ -55,7 +82,7 @@ const WEAPONS = [
     short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the side.", long: 'A three-clip low-calibre artillery piece.' }),
   weapon('lensx2', '75mm CLS-T Lensed x2 Laser Mount', 'laser', -25, 25, { clip: 2, maxCharge: 80, disp: 0.6, dmg: 200, explR: 3, dmgR: 30, rarity: 1, cost: 1980,
     short: 'Nothing says experimental like duct tape everywhere. Even on the lens.', long: 'Like all lasers, high damage, low consistency.' }),
-  weapon('lance', "122mm/90 LFS 'Long Lance'", 'shell', -5, 60, { clip: 2, maxCharge: 60, disp: 1, dmg: 150, explR: 8, dmgR: 80, rarity: 2, cost: 2650,
+  weapon('lance', "122mm/90 LFS 'Long Lance'", 'shell', -5, 60, { drift: 0.75, clip: 2, maxCharge: 60, disp: 1, dmg: 150, explR: 8, dmgR: 80, rarity: 2, cost: 2650,
     short: 'An older model from the Lymilark, the Long Lance boasts excellent accuracy.', long: 'A higher-accuracy piece with surprisingly high damage.' }),
   weapon('coil', '90mm Exp. Coilgun', 'gun', -10, 40, { clip: 2, disp: 3, salvo: 4, maxCharge: 40, dmg: 80, dmgR: 55, rarity: 2, cost: 2910,
     short: 'A high-speed coilgun developed by CLS-T. Fires four rounds at once.', long: 'Less artillery gun and more machine gun.' }),
@@ -114,9 +141,9 @@ const WEAPONS = [
     short: 'The gate is guarded at all cost. INTEL-3 sees everything that comes through it.', long: 'Paired beams, triple-verified targeting.' }),
   weapon('nxiaeria', "NXi 'Aeria Charlotte' 406mm Royal Battery", 'shell', -5, 85, { clip: 3, salvo: 3, disp: 2, maxCharge: 110, dmg: 450, dmgR: 150, explR: 24, rarity: 6, cost: 58000,
     short: 'Commanded by Queen Aeria Charlotte herself. Every shell is worthy of royal inspection.', long: 'Three triple turrets. For the UAF.' }),
-  weapon('nxivoid', "NXi November 'Void Between Stars' Rift Lance", 'laser', 0, 25, { clip: 2, maxCharge: 400, disp: 0.01, dmg: 4000, dmgR: 260, explR: 50, sat: true, rarity: 7, cost: 150000,
+  weapon('nxivoid', "NXi November 'Void Between Stars' Rift Lance", 'laser', 0, 25, { drift: 0.35, clip: 2, maxCharge: 400, disp: 0.01, dmg: 4000, dmgR: 260, explR: 50, sat: true, rarity: 7, cost: 150000,
     short: 'Opens a rift to the void between dimensions, briefly. Do not stand in it.', long: 'We advance slowly because we advance forever.' }),
-  weapon('massdriver', '210mm Kinetic Mass Driver', 'laser', 0, 20, { clip: 2, maxCharge: 1000, disp: 0.001, explR: 80, dmg: 10000, dmgR: 400, sat: true, rarity: 7, cost: 195420,
+  weapon('massdriver', '210mm Kinetic Mass Driver', 'laser', 0, 20, { drift: 0.15, clip: 2, maxCharge: 1000, disp: 0.001, explR: 80, dmg: 10000, dmgR: 400, sat: true, rarity: 7, cost: 195420,
     short: 'A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.', long: 'Holding two rounds, it was salvaged from KTNS Hatsuyuki.' }),
 ];
 
@@ -148,10 +175,23 @@ const ALL_WEAPONS = [...WEAPONS, ...VEHICLES.map((v) => v.weapon)];
 const CLASSIC = Object.fromEntries(ALL_WEAPONS.map((w) => [w.id, { dmg: w.dmg, clip: w.clip, cost: w.cost }]));
 let BALANCE = 'rebalanced';
 
+for (const v of VEHICLES) v.weapon.starter = true;
+
+// Reloads (rebalanced only): after a bought gun fires, it sits out this many of its owner's turns,
+// by rarity. Starters never reload, so there is always something to fire; a rack of guns fires a
+// big one every turn by rotating. Damage rises with tier to pay for the turns a gun spends
+// reloading and for the dearer misses (the 'firepower' multiplier, on top of REBALANCE).
+const RELOAD_BY_RARITY = [0, 0, 1, 1, 2, 2, 3, 3];
+const FIREPOWER_BY_RARITY = [1, 1.15, 1.27, 1.39, 1.51, 1.63, 1.75, 1.87];
+function reloadOf(w) { return BALANCE === 'rebalanced' && !w.starter ? RELOAD_BY_RARITY[w.rarity] : 0; }
+
 // switch the shared weapon objects between the classic and rebalanced numbers
 function applyBalance(mode) {
   BALANCE = mode === 'classic' ? 'classic' : 'rebalanced';
-  for (const w of ALL_WEAPONS) Object.assign(w, CLASSIC[w.id], BALANCE === 'rebalanced' ? REBALANCE[w.id] : {});
+  for (const w of ALL_WEAPONS) {
+    Object.assign(w, CLASSIC[w.id], BALANCE === 'rebalanced' ? REBALANCE[w.id] : {});
+    if (BALANCE === 'rebalanced') w.dmg = Math.round(w.dmg * FIREPOWER_BY_RARITY[w.starter ? 1 : w.rarity] / 5) * 5;
+  }
 }
 applyBalance(BALANCE);
 
@@ -204,12 +244,30 @@ function weaponValue(w) {
   return (w.dmg * shots * radius * spread + acid + sat) * (1 + 0.12 * (w.rarity - 1));
 }
 
+// Wind on a shell, scaled by its drift (p.drift, 1 by default). Two parts: a steady push (A3's wind,
+// made several times stronger), and in a strong wind, air that moves at up to WIND_AIR px/frame and
+// drags the shell's horizontal speed toward its own. The drag is what makes a shell into a headwind
+// stall and drop short, and one with a tailwind carry, instead of every arc staying a parabola.
+// Calm air adds nothing, so a windless shot flies exactly as before.
+const WIND_PUSH = 2;
+const WIND_AIR = 30;
+const WIND_DRAG = 0.0015;
+function windAccel(p, wind) {
+  const d = p.drift === undefined ? 1 : p.drift;
+  if (!d || (!wind.x && !wind.y)) return { x: 0, y: 0 };
+  const n = clamp(wind.x / WIND_FULL, -1, 1); // -1..1: full wind to the left .. right
+  return {
+    x: d * (wind.x * WIND_PUSH + WIND_DRAG * Math.abs(n) * (n * WIND_AIR - p.vx)),
+    y: d * wind.y * WIND_PUSH,
+  };
+}
+
 // Advance a ballistic body by one frame. `p` = {x, y, vx, vy, age}. Returns null while flying,
 // or {hit:'terrain'|'tree'|'tank'|'out', tank?}. Shared by real shots and the AI's simulations.
 function stepBallistic(p, terrain, wind, tanks, owner) {
-  p.vy += GRAV;
-  p.vx += wind.x;
-  p.vy += wind.y;
+  const a = windAccel(p, wind);
+  p.vx += a.x;
+  p.vy += GRAV + a.y;
   const speed = Math.hypot(p.vx, p.vy);
   const sub = Math.max(1, Math.ceil(speed / 6));
   const sx = p.vx / sub;
@@ -240,8 +298,8 @@ function stepBallistic(p, terrain, wind, tanks, owner) {
 
 // Fire a hypothetical (dispersion-free) shot and return where it lands, how far it fell from the
 // top of its arc and how fast it was going (for the altitude / kinetic damage bonuses).
-function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy) {
-  const p = { x: mx, y: my, vx, vy, age: 0 };
+function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy, drift = 1) {
+  const p = { x: mx, y: my, vx, vy, age: 0, drift };
   let peak = my;
   for (let i = 0; i < 900; i++) {
     const r = stepBallistic(p, terrain, wind, tanks, owner);

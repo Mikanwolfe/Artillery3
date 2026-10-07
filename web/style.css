@@ -142,6 +142,8 @@ option { background: var(--bg); color: var(--fg); }
 .veh h3 { font-size: 1.3em; color: var(--bright); letter-spacing: 0.04em; }
 .veh .maker { margin-top: 0.2em; }
 .veh p { margin: 0; color: var(--dim); font-size: 0.86em; line-height: 1.5; min-height: 3em; }
+.veh ul.traits { list-style: none; padding: 0; margin: 0 1em; display: grid; gap: 0.35em; font-size: 0.78em; color: var(--dim); line-height: 1.4; }
+.veh ul.traits b { display: block; color: var(--gold); font-weight: 400; letter-spacing: 0.06em; }
 .meters { display: grid; grid-template-columns: 4.6em 1fr 2.4em; gap: 0.3em 0.6em; align-items: center; font-size: 0.8em; }
 .meters .n { text-align: right; color: var(--fg); font-variant-numeric: tabular-nums; }
 .meter { height: 0.6em; background: var(--bg); border: 1px solid var(--line); position: relative; }
@@ -201,6 +203,7 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .side-scroll { overflow: auto; flex: 1; padding-right: 0.3em; }
 .side-scroll .sec:first-child { margin-top: 0; }
 .shop-side .sec { font-size: 0.78em; margin: 1.2em 0 0.5em; }
+.note { margin: 0 0 0.5em; font-size: 0.76em; color: var(--dim); line-height: 1.5; border-left: 2px solid var(--accent); padding-left: 0.6em; }
 .owned, .upg { display: flex; justify-content: space-between; align-items: center; gap: 0.6em; background: var(--bg2); border: 1px solid var(--line); padding: 0.45em 0.6em; margin-bottom: 0.3em; font-size: 0.84em; }
 .owned > span:not(.badge) { flex: 1; line-height: 1.3; }
 .upg > span { line-height: 1.35; }
@@ -223,7 +226,33 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 #chat div b { font-weight: 400; }
 #chat div.sys { color: var(--fg); border-color: var(--accent); }
 @keyframes chatfade { 0% { opacity: 0; transform: translateX(-0.4em); } 3%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
-#hints { left: 1%; bottom: 1.5%; display: flex; gap: 0.2em; font-size: 0.74em; color: var(--dim); transition: opacity .4s; }
+#dock { left: 1%; bottom: 1.5%; max-width: 64%; display: flex; flex-direction: column; align-items: flex-start; gap: 0.4em; }
+#hints { display: flex; flex-wrap: wrap; gap: 0.2em; font-size: 0.74em; color: var(--dim); transition: opacity .4s; }
+
+/* the rack: guns, then abilities and kits */
+#rack { display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 0.3em; pointer-events: auto; }
+#rack.cpu { pointer-events: none; opacity: 0.8; }
+.rack-group { display: flex; gap: 0.25em; align-items: stretch; background: var(--plate); border: 1px solid var(--line); padding: 0.25em; }
+.rk { display: flex; align-items: center; padding: 0 0.4em; color: var(--accent); font-size: 0.78em; border-right: 1px solid var(--line); margin-right: 0.1em; }
+.slot { position: relative; display: flex; align-items: center; gap: 0.5em; padding: 0.3em 0.55em; text-transform: none; letter-spacing: 0; font-size: 0.8em; background: var(--bg2); border: 1px solid var(--line); color: var(--fg); text-align: left; }
+.slot .txt { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.slot .nm { max-width: 11.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot .st { font-size: 0.82em; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cool); }
+.slot.w.on { border-color: var(--pc, var(--accent)); box-shadow: inset 0 -2px 0 var(--pc, var(--accent)); background: var(--bg3); }
+.slot.w.on .st { color: var(--bright); }
+.slot.rl, .slot.rl:hover { opacity: 1; color: var(--ash); background: var(--bg); }
+.slot.rl .st { color: var(--hot); }
+.slot.rl .badge { opacity: 0.45; }
+.slot:disabled .nm { color: var(--ash); }
+.rlbar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--line); }
+.rlbar i { position: absolute; inset: 0 auto 0 0; background: var(--hot); }
+.pips { display: flex; gap: 2px; }
+.pips i { width: 0.45em; height: 0.9em; border: 1px solid var(--accent); }
+.pips i.f { background: var(--accent); }
+.slot .kb { color: var(--accent); border: 1px solid var(--line); padding: 0 0.35em; font-size: 0.9em; }
+.slot.a.armed { border-color: var(--gold); background: rgba(242,196,90,.12); }
+.slot.a.armed .st, .slot.a.armed .kb { color: var(--gold); }
+.slot.uplink { cursor: default; }
 #hints span { background: var(--plate); padding: 0.3em 0.6em; border: 1px solid var(--line); }
 #hints b { color: var(--accent); font-weight: 400; margin-right: 0.3em; }
 #hints.quiet { opacity: 0.35; }
@@ -241,11 +270,16 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 #touch { display: none; inset: auto 0 0 0; justify-content: space-between; padding: 0 1.5% 1.5%; }
 #touch .pad { display: grid; grid-template-columns: repeat(2, 4.6em); gap: 0.35em; pointer-events: auto; }
 #touch button { height: 3.4em; touch-action: none; background: var(--plate); }
-#touch .fire { grid-column: 1 / -1; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+#touch .fire, #touch .wide { grid-column: 1 / -1; }
+#touch .fire { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
 @media (pointer: coarse) {
   #stage { font-size: 1.2cqw; }
   #touch { display: flex; align-items: flex-end; }
   #touch .pad.r { margin-bottom: 8cqw; } /* clear of the power and fuel meters */
   #hints { display: none; }
+  #dock { left: 50%; transform: translateX(-50%); max-width: 56%; align-items: center; }
+  #rack { flex-wrap: wrap; justify-content: center; }
+  .slot .txt .nm { display: none; }
+  .rk { display: none; }
 }
 @media (max-aspect-ratio: 1/1) { #stage { font-size: 1.5cqw; } }
