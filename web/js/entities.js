@@ -166,8 +166,15 @@ class Tank {
     return { x: this.x + dx, y: this.y + a.pivot[1] + (this.tilt || 0) * dx };
   }
 
+  // hull pitch in degrees for the given facing (+ = nose up), from the ground-slope tilt
+  hullAngle(facing = this.facing) {
+    return deg(Math.atan(-(this.tilt || 0) * facing));
+  }
+
+  // A3 measured elevation from the hull, not from level ground (Weapon._relativeAngle), so on a
+  // slope the whole elevation range pitches with the vehicle
   aimVec(elev = this.elev, facing = this.facing) {
-    const e = rad(elev);
+    const e = rad(elev + this.hullAngle(facing));
     return { x: facing * Math.cos(e), y: -Math.sin(e) };
   }
 
