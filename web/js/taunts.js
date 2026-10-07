@@ -12,6 +12,7 @@
 //   low_hp / death          I'm nearly dead / just died
 //   fire_*                  weapon-specific lines as a shot leaves (see Game.fireLine)
 //   rival_down              someone else was destroyed
+//   revenge                 I'm about to go after whoever last hit me
 //   round_win / round_lose / match_win
 // Anything missing from a personality falls back to TAUNTS.any.
 
@@ -335,6 +336,10 @@ const TAUNTS = {
     hit_tree: ['That tree had it coming.', 'Timber!', 'Who put a tree there?', 'Deforestation: complete.', 'The tree started it.'],
     repair: ['Patching up.', 'Just a flesh wound.', 'Duct tape: applied.', 'Back in a minute.', 'Nobody look, I am fixing things.'],
     crate: ['Mine!', 'Finders keepers.', 'Thanks for the delivery.', 'Christmas came early.', 'Ooh, presents.'],
+    revenge: ["You started this, {foe}.", 'Remember me, {foe}? Returning the favour.', 'This one has your name on it, {foe}.',
+      'An eye for an eye, {foe}.', "Payback's due, {foe}.", "Don't think I forgot, {foe}.", 'Return to sender.',
+      'You shot first, {foe}. I shoot last.', 'Settling accounts with {foe}.', 'Right back at you, {foe}.'],
+    double: ['Two for one.', 'Double tap.', 'And again!'],
     round_draw: ['Well. That was mutual.', 'Nobody wins. Everybody loses.', 'We all did great. Terribly.', 'Draw! Tidy.'],
   },
 };

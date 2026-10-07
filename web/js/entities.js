@@ -107,6 +107,8 @@ class Tank {
     this.upgrades = { hp: 0, armour: 0 };
     this.weapons = [this.vehicle.weapon.id];
     this.kits = 0; // repair kits carried (consumable)
+    this.abilities = { double: 0, over: 0, shield: 0 }; // one-shot abilities carried (see ABILITIES)
+    this.lastAttacker = null; // CPUs go after whoever last hurt them
     this.weaponIdx = 0;
     this.stats = { dealt: 0, kills: 0 };
     this.lastCharge = 0;
@@ -120,6 +122,8 @@ class Tank {
   get maxHp() { return Math.round(this.vehicle.hp * Math.pow(1.3, this.upgrades.hp)); }
   get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)); }
   get weapon() { return WEAPON_BY_ID[this.weapons[this.weaponIdx]] || WEAPON_BY_ID[this.weapons[0]]; }
+  // full-charge muzzle speed for the next shot (Overcharge raises it)
+  chargeCap() { return this.weapon.maxCharge * (this.armed.over ? OVERCHARGE : 1); }
 
   resetRound(x, terrain) {
     this.x = x;
@@ -137,6 +141,9 @@ class Tank {
     this.flash = 0;
     this.tilt = terrain ? groundSlope(terrain, x) : 0;
     this.falling = false;
+    this.fallFrom = 0;
+    this.armed = { double: false, over: false };
+    this.shield = false;
     this.shotsLeft = 0;
     this.roundDealt = 0;
     this.dmgAcc = 0;
@@ -246,6 +253,15 @@ class Tank {
       ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.85})`;
       box(-18, -22, 36, 22);
     }
+    if (this.shield) {
+      // Deflector: a ring of pale squares around the hull, pulsing
+      const a = 0.45 + 0.2 * Math.sin((this.blink || 0) * 5);
+      ctx.fillStyle = `rgba(150,210,255,${a})`;
+      for (let i = 0; i < 20; i++) {
+        const t = (i / 20) * TAU;
+        sq(ctx, x + Math.cos(t) * 30, y - 12 + Math.sin(t) * 22, 4);
+      }
+    }
     if (active) {
       // A3 sight: green marks at the elevation limits
       ctx.fillStyle = '#2e8b57';
@@ -271,6 +287,20 @@ class Tank {
     }
     ctx.fillStyle = active ? '#20204a' : '#4a4a72';
     ctx.fillText(title, Math.round(sx), Math.round(sy - 65));
+    // a CPU's grudge: a square in the colour of whoever it is out for
+    if (this.isCpu && this.lastAttacker && this.lastAttacker.alive) {
+      ctx.fillStyle = this.lastAttacker.color;
+      ctx.fillRect(Math.round(sx + tw / 2 + 4), Math.round(sy - 76), 12, 12);
+    }
+    // bounty on the match leader
+    if (this.bounty > 0) {
+      ctx.fillStyle = '#ffd84a';
+      ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 80), 48, 20);
+      ctx.fillStyle = '#20204a';
+      ctx.font = '13px "Maven Pro", Verdana, sans-serif';
+      ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 65));
+      ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+    }
     // armour | health bar | health  (A3 layout)
     const bw = 100;
     ctx.fillStyle = 'rgba(232,230,244,0.88)';
@@ -324,6 +354,19 @@ class Tank {
         ctx.fillRect(kx + 4, ky, 4, 12);
         ctx.fillRect(kx, ky + 4, 12, 4);
       }
+      // abilities carried: "key tag xN", lit up when armed
+      const tags = ABILITIES.filter((a) => this.abilities[a.id] > 0 || this.armed[a.id]);
+      ctx.font = '13px "Maven Pro", Verdana, sans-serif';
+      tags.forEach((a, i) => {
+        const on = this.armed[a.id] || (a.id === 'shield' && this.shield);
+        const txt = `${a.key} ${a.tag} ×${this.abilities[a.id]}`;
+        const bw2 = 76;
+        const ax = Math.round(sx - (tags.length * (bw2 + 4)) / 2 + i * (bw2 + 4));
+        ctx.fillStyle = on ? '#ffd84a' : 'rgba(200,200,214,0.88)';
+        ctx.fillRect(ax, Math.round(sy + 54), bw2, 18);
+        ctx.fillStyle = '#20204a';
+        ctx.fillText(txt, ax + bw2 / 2, Math.round(sy + 67));
+      });
     }
   }
 
@@ -372,11 +415,13 @@ class Projectile {
     this.age = 0;
     this.main = main;
     this.trail = [];
+    this.peak = y; // highest point reached (smallest y), for the altitude bonus
   }
 
   update() {
     const g = this.game;
     const r = stepBallistic(this, g.terrain, g.wind, g.tanks, this.owner);
+    if (this.y < this.peak) this.peak = this.y;
     if (this.age % 2 === 0) {
       this.trail.push(this.x, this.y);
       if (this.trail.length > 24) this.trail.splice(0, 2);

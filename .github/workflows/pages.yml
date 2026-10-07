@@ -26,6 +26,8 @@ jobs:
         run: |
           site="$(mktemp -d)"
           cp -r web/. "$site/"
+          # stamp the menu with the commit being published
+          sed -i "s/^const A3_VERSION = .*/const A3_VERSION = '${GITHUB_SHA::7}';/" "$site/js/version.js"
           touch "$site/.nojekyll"
           cd "$site"
           git init -q -b gh-pages

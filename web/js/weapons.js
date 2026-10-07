@@ -92,6 +92,18 @@ function badgeText(w) {
   return RARITY[w.rarity].word[0] + KIND_LETTER[w.kind];
 }
 
+// One-use abilities bought in the shop (carry up to ABILITY_MAX of each). Double Shot and
+// Overcharge are armed with their key and spent on the next shot; Deflector switches on at once
+// and lasts until your next turn. None of them uses up the turn.
+const ABILITIES = [
+  { id: 'double', key: '1', tag: 'x2', name: 'Double Shot', cost: 1400, desc: 'Arm, then fire: the shot is fired twice.' },
+  { id: 'over', key: '2', tag: 'OVR', name: 'Overcharge', cost: 900, desc: 'Arm, then charge: the bar goes 35% further, for range and kinetic damage.' },
+  { id: 'shield', key: '3', tag: 'SHD', name: 'Deflector', cost: 1100, desc: 'Halves all damage you take until your next turn.' },
+];
+const ABILITY_MAX = 2;
+const OVERCHARGE = 1.35;
+const SHIELD_FACTOR = 0.5;
+
 const WEAPON_BY_ID = Object.fromEntries([...WEAPONS, ...VEHICLES.map((v) => v.weapon)].map((w) => [w.id, w]));
 const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
 
@@ -131,12 +143,24 @@ function stepBallistic(p, terrain, wind, tanks, owner) {
   return null;
 }
 
-// Fire a hypothetical (dispersion-free) shot and return where it lands.
+// Fire a hypothetical (dispersion-free) shot and return where it lands, how far it fell from the
+// top of its arc and how fast it was going (for the altitude / kinetic damage bonuses).
 function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy) {
   const p = { x: mx, y: my, vx, vy, age: 0 };
+  let peak = my;
   for (let i = 0; i < 900; i++) {
     const r = stepBallistic(p, terrain, wind, tanks, owner);
-    if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null };
+    if (p.y < peak) peak = p.y;
+    if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null, drop: p.y - peak, speed: Math.hypot(p.vx, p.vy) };
   }
-  return { x: p.x, y: p.y, hit: 'out', tank: null };
+  return { x: p.x, y: p.y, hit: 'out', tank: null, drop: 0, speed: 0 };
+}
+
+// Damage multiplier a shell gets from its altitude and kinetic bonuses (Game.shotBonus), counting
+// kinetic damage only when it lands close enough to matter. Lasers get none.
+function bonusFactor(w, drop, speed, close) {
+  if (w.kind === 'laser') return 1;
+  const alt = Math.min(ALTITUDE_MAX, Math.max(0, drop) * ALTITUDE_RATE);
+  const kin = close ? Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED : 0;
+  return 1 + alt + kin;
 }

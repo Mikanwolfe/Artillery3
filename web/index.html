@@ -19,7 +19,7 @@
       <button class="icon" id="btn-pause" title="Pause (Esc)">Ⅱ</button>
     </div>
     <div id="chat"></div>
-    <div id="hints">←→ move · ↑↓ aim (Shift: fine) · hold <b>Space</b> to charge, release to fire · <b>S</b> switch weapon · <b>R</b> repair kit · <b>Enter</b> end turn · drag to look around</div>
+    <div id="hints">←→ move · ↑↓ aim (Shift: fine) · hold <b>Space</b> to charge, release to fire · <b>S</b> switch weapon · <b>R</b> repair kit · <b>1</b> double shot · <b>2</b> overcharge · <b>3</b> deflector · <b>Enter</b> end turn · drag to look around</div>
     <div id="touch">
       <div class="pad">
         <button data-k="left">◀</button><button data-k="right">▶</button>
@@ -27,7 +27,8 @@
       </div>
       <div class="pad r">
         <button data-q="1">S</button><button data-end="1">END</button>
-        <button data-rep="1">REP</button><span></span>
+        <button data-rep="1">REP</button><button data-ab="double">×2</button>
+        <button data-ab="over">OVR</button><button data-ab="shield">SHD</button>
         <button data-k="charge" class="fire">FIRE</button>
       </div>
     </div>
@@ -38,7 +39,7 @@
   <section id="menu" class="screen left">
     <div class="side">
       <h1>Artillery3</h1>
-      <p class="by">by mikanwolfe</p>
+      <p class="by">by mikanwolfe <a id="version" target="_blank" rel="noopener"></a></p>
       <div id="players"></div>
       <div class="row-btns">
         <button id="add-player">+ player</button>
@@ -52,13 +53,17 @@
       <details class="how"><summary>how to play</summary>
         <p>Take turns to move, aim and fire. Hold <b>Space</b> to charge and release to fire; the tick on the charge bar marks your last shot.
         Armour soaks damage until it's gone, then health takes it. Autoloaders fire several times per turn; satellite-enabled guns
-        call down the MAIA ion cannon wherever their shell lands. Everyone is paid after each round; spend it in the shop.</p>
+        call down the MAIA ion cannon wherever their shell lands. Shells hit harder the further they fall from the top of their arc,
+        and fast impacts add kinetic damage close in, so lob high. Blasts can start snow slides, and a long drop hurts.
+        CPUs go after whoever last hit them. Kills pay a bounty, and the match leader carries a bigger one.
+        Everyone is paid after each round; spend it in the shop.</p>
         <table class="keys">
           <tr><td>← →</td><td>move (uses fuel)</td></tr>
           <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
           <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
           <tr><td>S</td><td>switch weapon (before firing)</td></tr>
           <tr><td>R</td><td>use a repair kit (takes your turn)</td></tr>
+          <tr><td>1 · 2 · 3</td><td>double shot · overcharge · deflector (if bought)</td></tr>
           <tr><td>Enter</td><td>end turn</td></tr>
           <tr><td>drag</td><td>look around</td></tr>
           <tr><td>M · Esc</td><td>mute · pause</td></tr>
@@ -98,6 +103,8 @@
           <div id="shop-upg"></div>
           <h3>Consumables</h3>
           <div id="shop-kits"></div>
+          <h3>Abilities</h3>
+          <div id="shop-abil"></div>
           <button id="shop-done" class="primary">done</button>
         </div>
       </div>
@@ -118,6 +125,7 @@
   </section>
 </div>
 
+<script src="js/version.js"></script>
 <script src="js/util.js"></script>
 <script src="js/terrain.js"></script>
 <script src="js/background.js"></script>

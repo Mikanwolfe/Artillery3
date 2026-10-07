@@ -11,7 +11,11 @@ Open `web/index.html` in a browser, or serve the folder (e.g. `python3 -m http.s
 
 It lifts as much as it can from A3s, in the original's world units (2400-wide terrain, 1600x900 camera, gravity 0.6, muzzle speed = charge):
 
-- **Snowy Day** environment: midpoint-displacement terrain (reduction 0.45), lavender sky, three parallax ridges, snow.
+- **Snowy Day** environment: lavender sky, three parallax ridges, snow. The terrain is A3's midpoint displacement made rougher and deeper (reduction 0.5), with two or three massifs on top, so there is usually a ridge between you and the target (`MOUNTAIN_*` in `web/js/terrain.js`).
+- **Arcade damage for high shots**: a shell's blast is scaled up by how far it fell from the top of its arc (up to double; "altitude +N%" pops up), and fast impacts add **kinetic** damage concentrated in about a third of the blast radius. Lasers get neither. Tune `ALTITUDE_*` / `KINETIC_*` in `web/js/game.js`.
+- **Snow slides and falls**: a blast on a steep face makes the loose snow around it slide downhill for a moment, and a vehicle whose ground drops away takes fall damage past a short drop (credited to whoever fired).
+- **Abilities** (shop, carry 2 of each, none of them uses your turn): `1` **Double Shot** fires your next shot twice, `2` **Overcharge** lets the charge bar run 35% further, `3` **Deflector** halves damage you take until your next turn. CPUs buy and use Double Shot and Deflector.
+- **Bounties**: a kill pays the killer $250 at once, and the match leader (most round wins) carries an extra $400 bounty per win of lead, shown next to their label.
 - **Characters**: G.W. Tiger, Object 15X and Innocentia, each with health + armour (armour soaks hits first) and their original starting gun.
 - **The MAIA satellite** ("Maia-Class Low Orbit Ion Cannon": a round box-built body with arms curling round to the emitter and a wing of antennas on one side, turning as a whole to aim) sits above the map, gains damage every turn, and fires on wherever a satellite-enabled shell lands.
 - **Satellite tiers**: MAIA is upgraded through the match (three levels spread over the rounds: 70 / 120 / 190 damage, growing radius, plus A3's +0.5 per turn within a round), and each level adds arms, wing layers and orbiting rings.
@@ -35,14 +39,16 @@ Everything in the world is drawn as plain axis-aligned boxes that never rotate: 
 | Charge / fire | hold `Space` / release |
 | Switch weapon | `S` (before firing) |
 | Repair kit | `R` (uses your turn) |
+| Abilities | `1` double shot · `2` overcharge · `3` deflector |
 | End turn | `Enter` |
 | Look around | drag (either mouse button) |
 | Mute / pause | `M` / `Esc` |
 
-**CPU players** come in Easy / Normal / Hard: a brute-force ballistic solver that tries shots against the real physics, then adds aim error that grows with range (deadly up close, shaky across the map; tune `RANGE_ERR_BASE` / `RANGE_ERR_SCALE` in `web/js/ai.js`). Weapon dispersion adds more.
+**CPU players** come in Easy / Normal / Hard (the default match is you against Ace (Normal), Rookie (Easy) and Sarge (Hard)). They hold grudges: a CPU goes after whoever last damaged it (a square in that player's colour by its label), even for a somewhat worse shot (`RETALIATE` in `web/js/ai.js`). The solver is a brute-force ballistic one that tries shots against the real physics and weighs the altitude / kinetic bonuses, so among shots that land it prefers high plunging lobs (Hard most, Easy least; `arc` in `DIFFICULTY`). It then adds aim error that grows with range (deadly up close, shaky across the map; tune `RANGE_ERR_BASE` / `RANGE_ERR_SCALE` in `web/js/ai.js`). Weapon dispersion adds more.
 Each CPU has a fixed personality picked by name (Ace: cocky, Major: polite, Rookie: nervous, Sarge: deadpan, Byron: poet, Unit 7: robot; custom names get one at random) and reacts to what actually happened, e.g. "that was close" after a near miss or "missed me!" when someone fires wide of them. The ~450 pre-written lines live in `web/js/taunts.js`; tune how often CPUs speak with `CHATTINESS` in `web/js/game.js`.
 
 Layout: `web/js/` — `terrain.js` (midpoint displacement + craters), `weapons.js` (vehicles, weapon table, shared ballistic stepper), `entities.js` (tank, projectile, acid, laser, satellite), `ai.js` (solver, CPU controller), `taunts.js` (banter), `game.js` (camera, rules, turn flow, rendering, HUD), `ui.js` (menu, character select, shop), plus `background.js`, `particles.js`, `audio.js`.
+The menu shows the build: the publish workflow writes the short git hash into `web/js/version.js` (it reads "dev build" locally).
 Test hooks: `?seed=N` (deterministic), `?auto=N&types=hard,normal&speed=40` (all-CPU match).
 
 ### Update: 7/08/19
