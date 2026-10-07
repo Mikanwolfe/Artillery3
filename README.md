@@ -6,25 +6,34 @@
 
 ### Update: web rewrite
 
-The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step, no dependencies, no image or audio files (everything is drawn and synthesised).
+The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step or dependencies (sound is synthesised; the only asset is the original Maven Pro font).
 Open `web/index.html` in a browser, or serve the folder (e.g. `python3 -m http.server -d web`).
 
-The look is deliberately plain: everything in the world is an axis-aligned square (terrain blocks, tanks, a barrel of five squares, explosions, snow) that can move, resize and fade but never rotates; the menus are old-web grey panels.
+It lifts as much as it can from A3s, in the original's world units (2400-wide terrain, 1600x900 camera, gravity 0.6, muzzle speed = charge):
 
-It keeps what made A3 interesting (midpoint-displacement terrain, charge-and-release firing, wind, craters, the weapon roster, the shop between rounds) and drops the class-hierarchy machinery that was the learning exercise. Hotseat for 2-4 players, with CPU opponents.
+- **Snowy Day** environment: midpoint-displacement terrain (reduction 0.45), lavender sky, three parallax ridges, snow.
+- **Characters**: G.W. Tiger, Object 15X and Innocentia, each with health + armour (armour soaks hits first) and their original starting gun.
+- **The MAIA satellite** ("Maia-Class Low Orbit Ion Cannon") sits above the map, gains damage every turn, and fires on wherever a satellite-enabled shell lands.
+- **Weapons and shop**: the full A3RData roster with its names, flavour text, rarity colours, autoloader clips, multi-round salvos, aim dispersion, lasers and acid; four equip slots; Health++ / Armour++ on the original cost curve; everyone is paid 500 + half the round's damage (scaled up each round).
+- **Camera**: proportional control (closes 1/10 of the distance per frame) following the tank, the shell and the satellite; drag to look around.
+- **HUD**: player | vehicle labels with armour / health, minimap, wind marker, charge bar with last-charge tick, fuel bar.
+
+Everything in the world is drawn as plain axis-aligned boxes (tanks, the barrel's five squares, the satellite, lasers, explosions, snow).
 
 | Command | Key |
 | --- | --- |
-| Move | `←` `→` / `A` `D` (uses fuel) |
-| Aim | `↑` `↓` / `W` `S` (`Shift` = fine) |
+| Move | `←` `→` (uses fuel) |
+| Aim | `↑` `↓` (`Shift` = fine) |
 | Charge / fire | hold `Space` / release |
-| Switch weapon | `Q` `E` / `Tab` / `1`-`9` |
+| Switch weapon | `S` (before firing) |
+| End turn | `Enter` |
+| Look around | drag (either mouse button) |
 | Mute / pause | `M` / `Esc` |
 
-**CPU players** come in Easy / Normal / Hard: a brute-force ballistic solver that tries shots against the real physics, then adds aim error.
-Each CPU has a fixed personality picked by name (Ace: cocky, Major: polite, Rookie: nervous, Sarge: deadpan, Byron: poet, Unit 7: robot; custom names get one at random) and reacts to what actually happened, e.g. "that was close" after a near miss, "missed me!" when someone fires wide of them, and gloating or grumbling on hits, kills, falls and round results. The ~450 pre-written lines live in `web/js/taunts.js`; add or edit lines there, and tune how often CPUs speak with `CHATTINESS` in `web/js/game.js`.
+**CPU players** come in Easy / Normal / Hard: a brute-force ballistic solver that tries shots against the real physics, then adds aim error (weapon dispersion adds more).
+Each CPU has a fixed personality picked by name (Ace: cocky, Major: polite, Rookie: nervous, Sarge: deadpan, Byron: poet, Unit 7: robot; custom names get one at random) and reacts to what actually happened, e.g. "that was close" after a near miss or "missed me!" when someone fires wide of them. The ~450 pre-written lines live in `web/js/taunts.js`; tune how often CPUs speak with `CHATTINESS` in `web/js/game.js`.
 
-Layout: `web/js/` — `terrain.js` (midpoint displacement + crater/shaft carving), `weapons.js` (roster + shared ballistic stepper), `ai.js` (solver, CPU controller), `taunts.js` (banter), `game.js` (state machine, rules, rendering), `ui.js` (menu/HUD/shop), plus `background.js`, `particles.js`, `audio.js`, `entities.js`.
+Layout: `web/js/` — `terrain.js` (midpoint displacement + craters), `weapons.js` (vehicles, weapon table, shared ballistic stepper), `entities.js` (tank, projectile, acid, laser, satellite), `ai.js` (solver, CPU controller), `taunts.js` (banter), `game.js` (camera, rules, turn flow, rendering, HUD), `ui.js` (menu, character select, shop), plus `background.js`, `particles.js`, `audio.js`.
 Test hooks: `?seed=N` (deterministic), `?auto=N&types=hard,normal&speed=40` (all-CPU match).
 
 ### Update: 7/08/19

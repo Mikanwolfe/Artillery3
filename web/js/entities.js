@@ -1,62 +1,58 @@
 'use strict';
-// Game objects. Tanks hold persistent per-player state (cash, wins, ammo) plus
-// per-round state. Projectiles/acid/beams get a `game` handle for terrain, damage etc.
+// Game objects. Everything is drawn as plain axis-aligned boxes (no rotation): a tank is one
+// square with a barrel of five small squares, the MAIA satellite is three nested squares,
+// a laser is a line of squares. Tanks hold per-player state (money, wins, weapons, upgrades).
 
-const PLAYER_COLORS = ['#3fd0d4', '#f4ad42', '#ef6461', '#a58bf0'];
-const TANK_FUEL = 100;
-const TANK_HP = 100;
-
-function shade(hex, k) {
-  const c = hexToRgb(hex);
-  return k >= 0 ? rgb(mixRgb(c, [255, 255, 255], k)) : rgb(mixRgb(c, [0, 0, 0], -k));
-}
+const TANK_SIZE = 16;
+const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
+const TANK_SPEED = 1.5; // A3 Constants.PlayerSpeed
+const PLAYER_COLORS = ['#3d6fa8', '#b8433a', '#3e8a5a', '#7a4d9a'];
 
 class Tank {
   constructor(idx, cfg) {
     this.idx = idx;
     this.name = cfg.name;
-    this.type = cfg.type; // 'human' | 'easy' | 'normal' | 'hard' | 'llm'
+    this.type = cfg.type; // 'human' | 'easy' | 'normal' | 'hard'
+    this.vehicle = VEHICLES.find((v) => v.id === cfg.vehicle) || VEHICLES[0];
     this.color = PLAYER_COLORS[idx % PLAYER_COLORS.length];
-    this.cash = 1500;
+    this.money = 0;
     this.wins = 0;
-    this.ammo = {};
-    for (const w of WEAPONS) this.ammo[w.id] = w.infinite ? Infinity : 0;
-    this.upgrades = { armor: 0, engine: 0 };
+    this.upgrades = { hp: 0, armour: 0 };
+    this.weapons = [this.vehicle.weapon.id];
+    this.weaponIdx = 0;
     this.stats = { dealt: 0, kills: 0 };
-    this.weaponId = 'howitzer';
-    this.lastPower = 0;
+    this.lastCharge = 0;
     this.lastTrail = null;
     this.speech = null;
-    this.resetRound(W / 2);
+    this.resetRound(WORLD_W / 2);
   }
 
   get isCpu() { return this.type !== 'human'; }
-  get maxHp() { return TANK_HP + 20 * this.upgrades.armor; }
-  get maxFuel() { return TANK_FUEL + 40 * this.upgrades.engine; }
-  get weapon() { return WEAPON_BY_ID[this.weaponId]; }
+  // A3 shop: Health++ / Armour++ multiply by 1.3 per level
+  get maxHp() { return Math.round(this.vehicle.hp * Math.pow(1.3, this.upgrades.hp)); }
+  get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)); }
+  get weapon() { return WEAPON_BY_ID[this.weapons[this.weaponIdx]] || WEAPON_BY_ID[this.weapons[0]]; }
 
   resetRound(x, terrain) {
     this.x = x;
-    this.y = terrain ? terrain.hAt(x) : H / 2;
+    this.y = terrain ? terrain.hAt(x) : 1000;
     this.vy = 0;
     this.alive = true;
     this.hp = this.maxHp;
-    this.fuel = this.maxFuel;
-    this.facing = x < W / 2 ? 1 : -1;
-    this.elev = 45;
-    this.power = 0;
+    this.armour = this.maxArmour;
+    this.fuel = TANK_FUEL;
+    this.facing = x < WORLD_W / 2 ? 1 : -1;
+    this.weaponIdx = Math.min(this.weaponIdx, this.weapons.length - 1);
+    this.elev = (this.weapon.elevMin + this.weapon.elevMax) / 2;
+    this.charge = 0;
     this.recoil = 0;
     this.flash = 0;
     this.falling = false;
-    this.fallFrom = 0;
-    this.dmgAcc = 0;
+    this.shotsLeft = 0;
     this.roundDealt = 0;
-    this.roundEarned = 0;
+    this.dmgAcc = 0;
     this.speech = null;
-    if (!this.weapon || (this.ammo[this.weaponId] <= 0)) this.weaponId = 'howitzer';
   }
-
-  ownedWeapons() { return WEAPONS.filter((w) => this.ammo[w.id] > 0); }
 
   clampElev() {
     const w = this.weapon;
@@ -64,28 +60,17 @@ class Tank {
   }
 
   cycleWeapon(dir) {
-    const owned = this.ownedWeapons();
-    const i = owned.findIndex((w) => w.id === this.weaponId);
-    this.selectWeapon(owned[(i + dir + owned.length) % owned.length].id);
-  }
-
-  selectWeapon(id) {
-    if (!(this.ammo[id] > 0)) return;
-    this.weaponId = id;
+    this.weaponIdx = (this.weaponIdx + dir + this.weapons.length) % this.weapons.length;
+    this.charge = 0;
     this.clampElev();
   }
 
-  // `delay` (seconds) holds the bubble back so several CPUs don't all talk at once
   say(text, secs, delay = 0) {
     this.speech = { text, age: -delay, dur: secs || Math.max(3.2, 1.6 + text.length * 0.055) };
   }
 
-  center() { return { x: this.x, y: this.y - 7 }; }
-
-  // turret pivot; tanks never rotate, so this is a fixed offset above the ground point
-  pivot() {
-    return { x: this.x, y: this.y - 13 };
-  }
+  center() { return { x: this.x, y: this.y - TANK_SIZE / 2 }; }
+  pivot() { return { x: this.x, y: this.y - TANK_SIZE }; }
 
   aimVec(elev = this.elev, facing = this.facing) {
     const e = rad(elev);
@@ -95,7 +80,7 @@ class Tank {
   muzzle(elev = this.elev, facing = this.facing) {
     const p = this.pivot();
     const v = this.aimVec(elev, facing);
-    return { x: p.x + v.x * 19, y: p.y + v.y * 19 };
+    return { x: p.x + v.x * 24, y: p.y + v.y * 24 };
   }
 
   update(dt) {
@@ -107,69 +92,82 @@ class Tank {
     }
   }
 
-  // tank = a little cluster of squares; the barrel is 5 squares slid along the aim direction
-  draw(ctx) {
+  // world space
+  draw(ctx, active) {
     if (!this.alive) return;
-    const x = Math.round(this.x);
-    const y = Math.round(this.drawY ?? this.y);
-    const f = this.facing;
-    ctx.fillStyle = '#2b2d33';
-    for (let i = -12; i <= 12; i += 4) sq(ctx, x + i, y - 2, 4);
-    ctx.fillStyle = '#6b6f78';
-    for (let i = -10; i <= 10; i += 8) sq(ctx, x + i, y - 2, 2);
-    ctx.fillStyle = this.color;
-    for (const dx of [-9, -3, 3, 9]) sq(ctx, x + dx, y - 7, 6);
-    ctx.fillStyle = shade(this.color, 0.3);
-    for (const dx of [-6, 0, 6]) sq(ctx, x + dx, y - 9, 2);
-    ctx.fillStyle = shade(this.color, -0.3);
-    sq(ctx, x, y - 13, 8);
-    ctx.fillStyle = '#fff3c0';
-    sq(ctx, x + f * 11, y - 8, 2);
-    // barrel
     const v = this.aimVec();
-    const back = this.recoil * 4;
+    const p = this.pivot();
+    ctx.fillStyle = shade(this.color, -0.45);
     for (let i = 0; i < 5; i++) {
-      const d = 6 + i * 3.5 - back;
-      ctx.fillStyle = i === 4 ? shade(this.color, -0.15) : shade(this.color, -0.55);
-      sq(ctx, x + v.x * d, y - 13 + v.y * d, i === 4 ? 4 : 4 - i * 0.25);
+      const d = 6 + i * 4.5 - this.recoil * 6;
+      sq(ctx, p.x + v.x * d, p.y + v.y * d, 5);
     }
+    ctx.fillStyle = this.color;
+    ctx.fillRect(Math.round(this.x - TANK_SIZE / 2), Math.round(this.y - TANK_SIZE), TANK_SIZE, TANK_SIZE);
     if (this.flash > 0) {
-      ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.8})`;
-      sq(ctx, x, y - 8, 26);
+      ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.85})`;
+      ctx.fillRect(Math.round(this.x - TANK_SIZE / 2), Math.round(this.y - TANK_SIZE), TANK_SIZE, TANK_SIZE);
     }
-  }
-
-  drawLabel(ctx, active, t) {
-    if (!this.alive) return;
-    const x = Math.round(this.x);
-    const y = Math.round(this.drawY ?? this.y);
-    const bw = 34;
-    const bx = x - bw / 2;
-    const by = y - 32;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(bx - 1, by - 1, bw + 2, 6);
-    const pct = clamp(this.hp / this.maxHp, 0, 1);
-    ctx.fillStyle = pct > 0.5 ? '#3fcf5a' : pct > 0.25 ? '#e8c22e' : '#e2412f';
-    ctx.fillRect(bx, by, Math.round(bw * pct), 4);
-    ctx.font = 'bold 10px Verdana, Tahoma, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#000';
-    ctx.fillText(this.name, x + 1, by - 3);
-    ctx.fillStyle = active ? '#ffffff' : '#d8dde6';
-    ctx.fillText(this.name, x, by - 4);
     if (active) {
-      const bob = Math.round(Math.sin(t * 5) * 2);
-      ctx.fillStyle = this.color;
-      sq(ctx, x, by - 22 + bob, 8);
-      sq(ctx, x, by - 17 + bob, 4);
+      // A3 sight: green marks at the elevation limits
+      ctx.fillStyle = '#2e8b57';
+      for (const e of [this.weapon.elevMin, this.weapon.elevMax]) {
+        const u = this.aimVec(e);
+        for (let d = 32; d <= 48; d += 8) sq(ctx, p.x + u.x * d, p.y + u.y * d, 3);
+      }
     }
   }
 
-  drawSpeech(ctx) {
+  // screen space (1600x900 HUD units); sx, sy = ground point on screen
+  drawLabel(ctx, sx, sy, active) {
+    if (!this.alive) return;
+    ctx.textAlign = 'center';
+    ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+    const title = `${this.name} | ${this.vehicle.name}`;
+    const tw = ctx.measureText(title).width + 24;
+    ctx.fillStyle = 'rgba(232,230,244,0.88)';
+    ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 80), Math.round(tw), 20);
+    if (active) {
+      ctx.fillStyle = this.color;
+      ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 80), 5, 20);
+    }
+    ctx.fillStyle = active ? '#20204a' : '#4a4a72';
+    ctx.fillText(title, Math.round(sx), Math.round(sy - 65));
+    // armour | health bar | health  (A3 layout)
+    const bw = 100;
+    ctx.fillStyle = 'rgba(232,230,244,0.88)';
+    ctx.fillRect(Math.round(sx - bw / 2), Math.round(sy - 56), bw, 16);
+    ctx.fillStyle = 'rgb(87,128,109)';
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 52), Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 8);
+    ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(Math.ceil(this.armour), Math.round(sx - bw / 2 - 6), Math.round(sy - 42));
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#5a5a7a';
+    ctx.fillText(Math.ceil(this.hp), Math.round(sx + bw / 2 + 6), Math.round(sy - 42));
+    if (active) {
+      const w = this.weapon;
+      ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+      ctx.textAlign = 'center';
+      const ww = ctx.measureText(w.name).width + 30;
+      ctx.fillStyle = 'rgba(200,200,214,0.88)';
+      ctx.fillRect(Math.round(sx - ww / 2), Math.round(sy + 18), Math.round(ww), 20);
+      ctx.fillStyle = w.rarity === 7 ? '#20204a' : RARITY[w.rarity].color;
+      ctx.fillText(w.name, Math.round(sx), Math.round(sy + 33));
+      // autoloader rounds left this turn
+      for (let i = 0; i < w.clip; i++) {
+        ctx.fillStyle = i < this.shotsLeft ? '#4682b4' : 'rgba(40,40,70,0.35)';
+        ctx.fillRect(Math.round(sx - (w.clip * 10) / 2 + i * 10), Math.round(sy + 42), 7, 7);
+      }
+    }
+  }
+
+  drawSpeech(ctx, sx, sy) {
     const s = this.speech;
-    if (!s || !this.alive) return;
-    ctx.font = '11px Verdana, Tahoma, sans-serif';
-    const maxW = 170;
+    if (!s || !this.alive || s.age < 0) return;
+    ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+    const maxW = 260;
     const words = s.text.split(/\s+/);
     const lines = [];
     let cur = '';
@@ -178,89 +176,74 @@ class Tank {
       if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test;
     }
     if (cur) lines.push(cur);
-    const lh = 14;
-    const bw = Math.round(Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 14);
-    const bh = lines.length * lh + 8;
-    const x = Math.round(this.x);
-    const bx = Math.round(clamp(x - bw / 2, 6, W - bw - 6));
-    const by = Math.round((this.drawY ?? this.y) - 52 - bh - 8);
-    if (s.age < 0) return;
+    const lh = 19;
+    const bw = Math.round(Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20);
+    const bh = lines.length * lh + 10;
+    const bx = Math.round(clamp(sx - bw / 2, 8, VIEW_W - bw - 8));
+    const by = Math.round(sy - 96 - bh);
     ctx.globalAlpha = clamp((s.dur - s.age) * 3, 0, 1);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
-    ctx.fillStyle = '#fffff4';
+    ctx.fillStyle = 'rgba(250,250,255,0.95)';
     ctx.fillRect(bx, by, bw, bh);
     ctx.fillStyle = this.color;
-    ctx.fillRect(bx, by, 4, bh);
-    ctx.fillStyle = '#000';
-    sq(ctx, x, by + bh + 4, 6);
-    sq(ctx, x, by + bh + 9, 3);
-    ctx.fillStyle = '#111';
+    ctx.fillRect(bx, by, 5, bh);
+    sq(ctx, sx, by + bh + 5, 8);
+    ctx.fillStyle = '#20204a';
     ctx.textAlign = 'center';
-    lines.forEach((l, i) => ctx.fillText(l, bx + 2 + bw / 2, by + 4 + lh * (i + 0.8)));
+    lines.forEach((l, i) => ctx.fillText(l, bx + 3 + bw / 2, by + 6 + lh * (i + 0.75)));
     ctx.globalAlpha = 1;
   }
 }
 
+function shade(hex, k) {
+  const c = hexToRgb(hex);
+  return k >= 0 ? rgb(mixRgb(c, [255, 255, 255], k)) : rgb(mixRgb(c, [0, 0, 0], -k));
+}
+
 class Projectile {
-  constructor(game, w, owner, x, y, vx, vy) {
+  constructor(game, w, owner, x, y, vx, vy, main) {
+    this.game = game;
     this.w = w;
     this.owner = owner;
-    this.x = x;
-    this.y = y;
-    this.vx = vx;
-    this.vy = vy;
+    this.x = x; this.y = y; this.vx = vx; this.vy = vy;
     this.age = 0;
-    this.split = false;
+    this.main = main;
     this.trail = [];
-    this.game = game;
   }
 
-  // returns false when the projectile is finished
   update() {
     const g = this.game;
-    const r = stepBallistic(this, this.w, g.terrain, g.wind, g.tanks, this.owner);
-    this.trail.push(this.x, this.y);
-    if (this.trail.length > 28) this.trail.splice(0, 2);
+    const r = stepBallistic(this, g.terrain, g.wind, g.tanks, this.owner);
     if (this.age % 2 === 0) {
-      if (this.w.id === 'coil' || this.w.kind === 'marker') g.particles.trailSpark(this.x, this.y, hexToRgb(this.w.color));
-      else if (this.w.id !== 'bomblet') g.particles.smoke(this.x, this.y, 2.5);
+      this.trail.push(this.x, this.y);
+      if (this.trail.length > 24) this.trail.splice(0, 2);
     }
-    if (!r) {
-      if (this.w.kind === 'cluster' && !this.split && this.vy > 0 && this.age > 10) {
-        this.split = true;
-        g.clusterSplit(this);
-        return false;
-      }
-      return true;
-    }
-    if (r.hit === 'out') return false;
-    g.impact(this, r);
+    if (!r) return true;
+    if (r.hit !== 'out') g.impact(this, r);
     return false;
   }
 
   draw(ctx) {
-    const c = hexToRgb(this.w.color);
-    const small = this.w.id === 'bomblet';
+    const col = this.w.kind === 'laser' ? [0, 200, 220] : this.w.kind === 'acid' ? [80, 170, 60] : [50, 50, 64];
     for (let i = 0; i < this.trail.length; i += 2) {
       const a = (i + 2) / this.trail.length;
-      ctx.fillStyle = rgb(c, a * 0.6);
-      sq(ctx, this.trail[i], this.trail[i + 1], 1 + a * (small ? 2 : 3));
+      ctx.fillStyle = rgb(col, a * 0.5);
+      sq(ctx, this.trail[i], this.trail[i + 1], 2 + a * 4);
     }
-    ctx.fillStyle = rgb(c);
-    sq(ctx, this.x, this.y, small ? 4 : 6);
-    ctx.fillStyle = '#fff';
-    sq(ctx, this.x, this.y, 2);
+    ctx.fillStyle = rgb(col);
+    sq(ctx, this.x, this.y, 8);
   }
 }
 
 class AcidDrop {
-  constructor(game, owner, x, y, vx, vy) {
+  constructor(game, owner, x, y, vx, vy, dmg) {
     this.game = game;
     this.owner = owner;
     this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+    this.dmg = dmg;
+    this.color = [[255, 165, 0], [240, 220, 40], [60, 160, 50]][Math.floor(Math.random() * 3)];
+    this.size = 5 + Math.random() * 5;
     this.stuck = false;
-    this.life = 70 + Math.floor(Math.random() * 60);
+    this.life = 90 + Math.floor(Math.random() * 90);
     this.tick = 0;
   }
 
@@ -268,76 +251,86 @@ class AcidDrop {
     const g = this.game;
     this.tick++;
     if (!this.stuck) {
-      this.vy += 0.12;
-      this.vx += g.wind * 0.5;
+      this.vy += 0.3;
+      this.vx += g.wind.x;
       this.x += this.vx;
       this.y += this.vy;
-      if (this.x < -20 || this.x > W + 20 || this.y > H + 20) return false;
+      if (this.x < -50 || this.x > WORLD_W + 50 || this.y > WORLD_BOTTOM) return false;
       for (const t of g.tanks) {
-        if (t.alive && Math.abs(this.x - t.x) < 13 && this.y > t.y - 15 && this.y < t.y + 2) {
-          g.damage(t, 0.9, this.owner, true);
+        if (t.alive && Math.abs(this.x - t.x) < TANK_SIZE / 2 + 3 && this.y > t.y - TANK_SIZE - 3 && this.y < t.y + 3) {
+          g.damage(t, this.dmg * 6, this.owner, true);
           return false;
         }
       }
-      if (this.x >= 0 && this.x < W && this.y >= g.terrain.hAt(this.x)) {
+      if (this.x >= 0 && this.x < WORLD_W && this.y >= g.terrain.hAt(this.x)) {
         this.stuck = true;
-        this.y = g.terrain.hAt(this.x);
-        g.terrain.erode(this.x, 1.1);
+        g.terrain.erode(this.x, 2);
       }
       return true;
     }
-    if (this.tick % 5 === 0) g.terrain.erode(this.x, 0.1);
     this.y = g.terrain.hAt(this.x);
+    if (this.tick % 6 === 0) g.terrain.erode(this.x, 0.4);
     for (const t of g.tanks) {
-      if (t.alive && Math.abs(this.x - t.x) < 11 && Math.abs(this.y - t.y) < 8) g.damage(t, 0.05, this.owner, true);
+      if (t.alive && Math.abs(this.x - t.x) < TANK_SIZE && Math.abs(this.y - t.y) < 10) g.damage(t, this.dmg * 0.15, this.owner, true);
     }
     return --this.life > 0;
   }
 
   draw(ctx) {
-    const a = this.stuck ? clamp(this.life / 30, 0, 1) * 0.85 : 1;
-    ctx.fillStyle = `rgba(130,230,70,${a})`;
-    sq(ctx, this.x, this.y - (this.stuck ? 1 : 0), this.stuck ? 4 : 3);
-    if (this.stuck && this.tick % 3 === 0 && Math.random() < 0.15) this.game.particles.smoke(this.x, this.y - 2, 2);
+    ctx.fillStyle = rgb(this.color, this.stuck ? clamp(this.life / 40, 0, 1) : 1);
+    sq(ctx, this.x, this.y - (this.stuck ? this.size / 2 : 0), this.size);
   }
 }
 
-// Orbital strike: telegraphed warning, then a column of light that bores a shaft.
-class Beam {
-  constructor(game, w, owner, x) {
-    this.game = game;
-    this.w = w;
-    this.owner = owner;
-    this.x = clamp(x, 6, W - 6);
-    this.t = 0;
-    this.warn = 55;
-    this.fire = 24;
-    game.sfx.beamWarn();
+// A line of squares from (x0,y0) to (x1,y1) that fades out (A3 Laser).
+class Laser {
+  constructor(x0, y0, x1, y1, color, width = 14, life = 70) {
+    Object.assign(this, { x0, y0, x1, y1, color: hexToRgb(color), width, life, max: life });
   }
 
-  update() {
-    this.t++;
-    if (this.t === this.warn) this.game.beamStrike(this);
-    return this.t < this.warn + this.fire;
-  }
+  update() { return --this.life > 0; }
 
   draw(ctx) {
-    const gy = this.game.terrain.hAt(this.x);
-    if (this.t < this.warn) {
-      const p = this.t / this.warn;
-      const pulse = 0.5 + 0.5 * Math.sin(this.t * (0.3 + p * 0.9));
-      ctx.fillStyle = `rgba(255,120,200,${0.3 + 0.6 * pulse})`;
-      for (let y = 6; y < gy; y += 12) sq(ctx, this.x, y, 3);
-      const r = 8 + (1 - p) * 26;
-      for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) sq(ctx, this.x + dx * r, gy + dy * r * 0.6, 5);
-      return;
+    const t = this.life / this.max;
+    const len = dist(this.x0, this.y0, this.x1, this.y1);
+    const n = Math.max(1, Math.floor(len / 10));
+    ctx.fillStyle = rgb(this.color, 0.55 * t);
+    for (let i = 0; i <= n; i++) sq(ctx, lerp(this.x0, this.x1, i / n), lerp(this.y0, this.y1, i / n), this.width * (0.4 + 0.6 * t));
+    ctx.fillStyle = `rgba(255,255,255,${t})`;
+    for (let i = 0; i <= n; i++) sq(ctx, lerp(this.x0, this.x1, i / n), lerp(this.y0, this.y1, i / n), this.width * 0.3);
+  }
+}
+
+// MAIA-class Low Orbit Ion Cannon. Sits above the map, gains damage every turn, and fires at
+// wherever a satellite-enabled weapon's shell lands.
+class Satellite {
+  constructor() {
+    this.name = 'Maia';
+    this.x = WORLD_W / 2;
+    this.y = -300;
+    this.damage = 60;
+    this.explR = 15;
+    this.dmgR = 150;
+    this.angle = Math.PI / 2;
+    this.angleDest = Math.PI / 2;
+  }
+
+  get level() { return Math.floor(this.damage / 60); }
+  newTurn() { this.damage += 0.5; }
+  lookAt(pt) { this.angleDest = Math.atan2(pt.y - this.y, pt.x - this.x); }
+  update() { this.angle += (this.angleDest - this.angle) / 20; }
+
+  draw(ctx) {
+    const main = 'rgb(120,32,78)';
+    ctx.fillStyle = main;
+    sq(ctx, this.x, this.y, 100);
+    ctx.fillStyle = 'rgb(23,23,47)';
+    sq(ctx, this.x, this.y, 90);
+    ctx.fillStyle = main;
+    sq(ctx, this.x, this.y, 80);
+    for (let i = 0; i < 5; i++) {
+      const d = 50 + i * 12;
+      sq(ctx, this.x + Math.cos(this.angle) * d, this.y + Math.sin(this.angle) * d, 12);
     }
-    const p = (this.t - this.warn) / this.fire;
-    const outer = Math.max(2, (1 - p) * (this.w.beamHalf + 6) * 2.4);
-    const inner = Math.max(1, outer * 0.4);
-    ctx.fillStyle = `rgba(255,120,210,${0.8 * (1 - p * 0.6)})`;
-    for (let y = gy; y > -outer; y -= outer) sq(ctx, this.x, y, outer);
-    ctx.fillStyle = `rgba(255,255,255,${1 - p})`;
-    for (let y = gy; y > -inner; y -= inner) sq(ctx, this.x, y, inner);
   }
 }

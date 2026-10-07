@@ -3,9 +3,16 @@
 // All gameplay randomness goes through `rng` so a match can be replayed with ?seed=N.
 // Visual-only randomness (particles, snow) uses Math.random.
 
+// Canvas is drawn at W x H CSS pixels; the camera looks at VIEW_W x VIEW_H world units
+// (the original's 1600x900 window), so world numbers below are lifted straight from A3.
 const W = 1024;
 const H = 576;
-const GRAV = 0.14; // px / step^2
+const VIEW_W = 1600;
+const VIEW_H = 900;
+const VIEW_SCALE = W / VIEW_W;
+const WORLD_W = 2400; // Constants.TerrainWidth
+const WORLD_BOTTOM = 1800; // Constants.TerrainDepth
+const GRAV = 0.6; // Constants.Gravity, px / frame^2
 const DT = 1 / 60;
 const TAU = Math.PI * 2;
 

@@ -3,91 +3,99 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Artillery 3 — Web</title>
+<title>Artillery 3</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="stage">
   <canvas id="view" width="1024" height="576"></canvas>
 
-  <!-- in-game HUD -->
+  <!-- in-game HUD (the rest is drawn on the canvas, as in the original) -->
   <div id="hud" hidden>
-    <div id="roster"></div>
-    <div id="top-center">
-      <div id="turn"></div>
-      <div id="wind"><span id="wind-arrow"></span><span id="wind-val"></span></div>
-    </div>
-    <div id="top-right">
+    <div id="topleft">
       <span id="roundinfo"></span>
+      <span id="turn"></span>
       <button class="icon" id="btn-mute" title="Mute (M)">♪</button>
       <button class="icon" id="btn-pause" title="Pause (Esc)">Ⅱ</button>
     </div>
     <div id="chat"></div>
-    <div id="aimbox">
-      <div class="row"><span>ELEV</span><b id="a-elev">45°</b></div>
-      <div class="row"><span>POWER</span><div class="bar"><i id="a-power"></i><u id="a-last"></u></div></div>
-      <div class="row"><span>FUEL</span><div class="bar fuel"><i id="a-fuel"></i></div></div>
-      <div class="row"><span>HP</span><div class="bar hp"><i id="a-hp"></i></div></div>
-    </div>
-    <div id="weaponbar"></div>
-    <div id="hints">←→ move · ↑↓ aim (Shift = fine) · <b>hold Space</b> to charge, release to fire · Q/E or 1–9 weapon</div>
+    <div id="hints">←→ move · ↑↓ aim (Shift: fine) · hold <b>Space</b> to charge, release to fire · <b>S</b> switch weapon · <b>Enter</b> end turn · drag to look around</div>
     <div id="touch">
       <div class="pad">
         <button data-k="left">◀</button><button data-k="right">▶</button>
         <button data-k="up">▲</button><button data-k="down">▼</button>
       </div>
       <div class="pad r">
-        <button data-q="-1">◂W</button><button data-q="1">W▸</button>
+        <button data-q="1">S</button><button data-end="1">END</button>
         <button data-k="charge" class="fire">FIRE</button>
       </div>
     </div>
     <div id="banner"></div>
   </div>
 
-  <!-- main menu -->
-  <section id="menu" class="screen">
-    <div class="panel menu-panel">
-      <h1>ARTILLERY <span>3</span></h1>
-      <p class="sub">web edition · a rewrite of an old OOP-unit experiment</p>
+  <!-- main menu, laid out like the original -->
+  <section id="menu" class="screen left">
+    <div class="side">
+      <h1>Artillery3</h1>
+      <p class="by">by mikanwolfe</p>
       <div id="players"></div>
       <div class="row-btns">
-        <button id="add-player" class="ghost">+ Player</button>
-        <button id="rem-player" class="ghost">− Player</button>
-        <label class="inline">Rounds
+        <button id="add-player">+ player</button>
+        <button id="rem-player">− player</button>
+        <label class="inline">rounds
           <select id="rounds"><option>3</option><option selected>5</option><option>7</option></select>
         </label>
       </div>
-      <button id="start" class="primary">Start match</button>
-      <details class="how"><summary>How to play</summary>
-        <p>Take turns to move, aim and fire across the mountains. Wind pushes shells and changes every turn.
-        <b>Hold Space to charge, release to fire.</b> The white tick on the power line marks your last shot, and dots show its path.
-        Last tank standing takes the round. Damage and kills earn cash; spend it in the shop between rounds on new weapons and upgrades.</p>
+      <button id="start" class="primary">start</button>
+      <details class="how"><summary>how to play</summary>
+        <p>Take turns to move, aim and fire. Hold <b>Space</b> to charge and release to fire; the tick on the charge bar marks your last shot.
+        Armour soaks damage until it's gone, then health takes it. Autoloaders fire several times per turn; satellite-enabled guns
+        call down the MAIA ion cannon wherever their shell lands. Everyone is paid after each round; spend it in the shop.</p>
         <table class="keys">
-          <tr><td>← → / A D</td><td>move (uses fuel)</td></tr>
-          <tr><td>↑ ↓ / W S</td><td>aim (Shift: fine)</td></tr>
+          <tr><td>← →</td><td>move (uses fuel)</td></tr>
+          <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
           <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
-          <tr><td>Q E / Tab / 1–9</td><td>switch weapon</td></tr>
+          <tr><td>S</td><td>switch weapon (before firing)</td></tr>
+          <tr><td>Enter</td><td>end turn</td></tr>
+          <tr><td>drag</td><td>look around</td></tr>
           <tr><td>M · Esc</td><td>mute · pause</td></tr>
         </table>
       </details>
     </div>
   </section>
 
+  <!-- A3 "Select a Character" -->
+  <section id="vehicles" class="screen" hidden>
+    <div class="panel wide">
+      <h2>Select a Character</h2>
+      <p id="veh-player" class="sub"></p>
+      <div id="veh-grid"></div>
+    </div>
+  </section>
+
   <section id="roundend" class="screen" hidden>
     <div class="panel">
       <h2 id="re-title"></h2>
+      <p id="re-award" class="sub"></p>
       <table id="re-table"></table>
       <div id="re-quips"></div>
-      <button id="re-next" class="primary">Continue</button>
+      <button id="re-next" class="primary">continue</button>
     </div>
   </section>
 
   <section id="shop" class="screen" hidden>
     <div class="panel shop-panel">
       <div class="shop-head"><h2 id="shop-title"></h2><div id="shop-cash"></div></div>
-      <div id="shop-grid"></div>
-      <div id="shop-upg"></div>
-      <button id="shop-done" class="primary">Done</button>
+      <div class="shop-body">
+        <div id="shop-grid"></div>
+        <div class="shop-side">
+          <h3>Equipped <span id="shop-count"></span></h3>
+          <div id="shop-owned"></div>
+          <h3>Upgrades</h3>
+          <div id="shop-upg"></div>
+          <button id="shop-done" class="primary">done</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -96,12 +104,12 @@
       <h2 id="ge-title"></h2>
       <table id="ge-table"></table>
       <div id="ge-quips"></div>
-      <button id="ge-again" class="primary">Back to menu</button>
+      <button id="ge-again" class="primary">back to menu</button>
     </div>
   </section>
 
   <section id="pause" class="screen" hidden>
-    <div class="panel small"><h2>Paused</h2><button id="resume" class="primary">Resume</button></div>
+    <div class="panel small"><h2>paused</h2><button id="resume" class="primary">resume</button></div>
   </section>
 </div>
 
@@ -110,8 +118,8 @@
 <script src="js/background.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/particles.js"></script>
-<script src="js/weapons.js"></script>
 <script src="js/entities.js"></script>
+<script src="js/weapons.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/taunts.js"></script>
 <script src="js/ui.js"></script>

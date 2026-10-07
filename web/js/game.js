@@ -1,6 +1,46 @@
 'use strict';
-// Game: owns the match state machine (menu -> aim -> resolve -> roundEnd -> shop -> ... -> gameEnd),
-// the fixed-timestep simulation, damage/economy rules and canvas rendering.
+// Game: match state machine (menu -> aim -> resolve -> roundEnd -> shop -> ... -> gameEnd),
+// the camera, rules lifted from A3 (armour then HP, autoloader clips, salvos, satellite strikes,
+// wind every 12 turns, end-of-round prize money) and rendering.
+
+const CHATTINESS = 0.7; // scales every reaction probability in react(); lower = quieter CPUs
+const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
+const SALVO_DELAY = 15; // A3 ProjectileFactory._firingDelay (frames between salvo rounds)
+const WIND_SCALE = 0.06; // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
+
+// Proportional-control camera: every frame it closes 1/CAM_EASE of the distance to its target.
+// The target is whatever it's focused on (tank, shell, satellite), or a point the player dragged to.
+class Camera {
+  constructor() {
+    this.x = 0;
+    this.y = 0;
+    this.focus = null;
+    this.manual = null;
+  }
+
+  follow(obj) { this.focus = obj; this.manual = null; }
+
+  target() {
+    const f = this.manual || this.focus;
+    if (!f) return null;
+    return {
+      x: clamp(f.x - VIEW_W / 2, 0, WORLD_W - VIEW_W),
+      y: clamp(f.y - VIEW_H * 0.55, -1000, WORLD_BOTTOM - VIEW_H),
+    };
+  }
+
+  update() {
+    const t = this.target();
+    if (!t) return;
+    this.x += (t.x - this.x) / CAM_EASE;
+    this.y += (t.y - this.y) / CAM_EASE;
+  }
+
+  snap() {
+    const t = this.target();
+    if (t) { this.x = t.x; this.y = t.y; }
+  }
+}
 
 class Input {
   constructor(game) {
@@ -19,28 +59,23 @@ class Input {
     switch (e.code) {
       case 'ArrowLeft': case 'KeyA': c.left = down; break;
       case 'ArrowRight': case 'KeyD': c.right = down; break;
-      case 'ArrowUp': case 'KeyW': c.up = down; break;
-      case 'ArrowDown': case 'KeyS': c.down = down; break;
+      case 'ArrowUp': c.up = down; break;
+      case 'ArrowDown': c.down = down; break;
       case 'ShiftLeft': case 'ShiftRight': c.fine = down; break;
       case 'Space':
         if (down && !e.repeat) c.charge = true;
         else if (!down) c.charge = false;
         break;
+      case 'KeyS': case 'KeyE': case 'Tab': if (down && !e.repeat) this.queue.push({ cycle: 1 }); break;
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
-      case 'KeyE': case 'Tab': if (down && !e.repeat) this.queue.push({ cycle: 1 }); break;
+      case 'Enter': if (down && !e.repeat && this.g.phase === 'aim') this.queue.push({ endTurn: true }); else handled = false; break;
       case 'KeyM': if (down && !e.repeat) this.g.toggleMute(); break;
       case 'Escape': if (down && !e.repeat) this.g.togglePause(); break;
-      default:
-        if (/^Digit[1-9]$/.test(e.code)) {
-          if (down && !e.repeat) this.queue.push({ slot: +e.code.slice(5) - 1 });
-        } else handled = false;
+      default: handled = false;
     }
     if (handled && this.g.phase !== 'menu') e.preventDefault();
   }
 }
-
-// scales every reaction probability in Game.react(); lower = quieter CPUs
-const CHATTINESS = 0.7;
 
 class Game {
   constructor(canvas, ui) {
@@ -50,16 +85,23 @@ class Game {
     this.sfx = new Sfx();
     this.particles = new Particles();
     this.terrain = new Terrain();
-    this.bg = null;
+    this.cam = new Camera();
+    this.satellite = new Satellite();
     this.tanks = [];
     this.projectiles = [];
     this.drops = [];
-    this.beams = [];
-    this.wind = 0;
+    this.lasers = [];
+    this.salvo = null;
+    this.satSeq = null;
+    this.satTarget = null;
+    this.wind = { x: 0, y: 0 };
+    this.windDir = 0;
+    this.windMag = 0;
+    this.windMarker = 0;
     this.shake = 0;
     this.phase = 'menu';
     this.round = 0;
-    this.rounds = 3;
+    this.rounds = 5;
     this.events = [];
     this.time = 0;
     this.speed = 1;
@@ -69,18 +111,41 @@ class Game {
     this.charging = false;
     this.k = 1;
     this.input = new Input(this);
+    this.initDrag();
     this.newEnvironment();
+    this.cam.follow({ x: WORLD_W / 2, y: 0.6 * WORLD_BOTTOM });
+    this.cam.snap();
+  }
+
+  // drag (either mouse button, or touch) pans the camera; it eases back on the next event
+  initDrag() {
+    const c = this.canvas;
+    c.addEventListener('contextmenu', (e) => e.preventDefault());
+    c.addEventListener('pointerdown', (e) => {
+      if (this.phase === 'menu') return;
+      this.sfx.unlock();
+      this.drag = { x: e.clientX, y: e.clientY, cx: this.cam.x, cy: this.cam.y };
+      c.setPointerCapture(e.pointerId);
+    });
+    c.addEventListener('pointermove', (e) => {
+      if (!this.drag) return;
+      const sc = VIEW_W / c.clientWidth;
+      this.cam.manual = {
+        x: this.drag.cx - (e.clientX - this.drag.x) * sc + VIEW_W / 2,
+        y: this.drag.cy - (e.clientY - this.drag.y) * sc + VIEW_H * 0.55,
+      };
+    });
+    const end = () => { this.drag = null; };
+    c.addEventListener('pointerup', end);
+    c.addEventListener('pointercancel', end);
   }
 
   // ------------------------------------------------------------ setup
   newEnvironment() {
-    const p = rng.pick(PRESETS);
-    this.bg = new Background(p);
-    this.terrain.setPalette({ rockTop: p.rockTop, rockBot: p.rockBot, snow: p.snow });
     this.terrain.generate();
+    this.bg = new Background();
   }
 
-  // integer backing scale + no smoothing keeps every square's edges hard
   resize(cssWidth) {
     this.k = clamp(Math.round((cssWidth * (window.devicePixelRatio || 1)) / W), 1, 3);
     this.canvas.width = W * this.k;
@@ -92,6 +157,8 @@ class Game {
     this.sfx.unlock();
     this.turnSerial = 0;
     this.report = null;
+    this.awardMult = 1;
+    this.satellite = new Satellite();
     this.tanks = configs.map((c, i) => new Tank(i, c));
     this.rounds = rounds;
     this.round = 0;
@@ -105,26 +172,43 @@ class Game {
     this.newEnvironment();
     this.projectiles = [];
     this.drops = [];
-    this.beams = [];
+    this.lasers = [];
+    this.salvo = null;
+    this.satSeq = null;
+    this.satTarget = null;
     this.particles.clear();
     this.placeTanks();
-    this.wind = rng.range(-0.012, 0.012);
+    this.setWind();
+    this.windMarker = this.windDir;
     this.turnCount = 0;
-    this.order = rng.shuffle(this.tanks.map((_, i) => i));
+    this.roundDamage = 0;
+    // A3 cycles players in order; the starting player rotates each round
+    this.order = this.tanks.map((_, i) => (i + this.round - 1) % this.tanks.length);
     this.turnPtr = -1;
-    this.events.push(`Round ${this.round} begins on the ${this.bg.preset.name.toLowerCase()} range.`);
+    this.events.push(`Round ${this.round} begins.`);
     this.nextTurn();
+    this.cam.snap();
   }
 
   placeTanks() {
     const n = this.tanks.length;
-    const slot = (W - 120) / n;
-    const xs = this.tanks.map((_, i) => 60 + slot * (i + 0.5) + rng.range(-slot * 0.2, slot * 0.2));
+    const slot = (WORLD_W - 200) / n;
+    const xs = this.tanks.map((_, i) => 100 + slot * (i + 0.5) + rng.range(-slot * 0.25, slot * 0.25));
     rng.shuffle(xs);
     this.tanks.forEach((t, i) => {
-      this.terrain.flatten(xs[i], 16);
+      this.terrain.flatten(xs[i], 14);
       t.resetRound(xs[i], this.terrain);
     });
+  }
+
+  // A3 Wind.SetWind: a random direction avoiding the steep vertical bands, magnitude 0..0.5
+  setWind() {
+    let d = rng.int(0, 179);
+    if (d > 45) d += 90;
+    if (d > 225) d += 90;
+    this.windDir = rad(d);
+    this.windMag = 0.5 * rng.next();
+    this.wind = { x: Math.cos(this.windDir) * this.windMag * WIND_SCALE, y: Math.sin(this.windDir) * this.windMag * WIND_SCALE };
   }
 
   nextTurn() {
@@ -134,9 +218,21 @@ class Game {
     const t = this.tanks[this.order[this.turnPtr]];
     this.active = t;
     this.turnSerial++;
-    if (this.turnCount++ > 0) this.wind = clamp(this.wind + rng.range(-0.005, 0.005), -0.012, 0.012);
-    t.fuel = t.maxFuel;
-    t.power = 0;
+    this.turnCount++;
+    if (this.turnCount > 1 && this.turnCount % 12 === 0) {
+      this.setWind();
+      this.events.push('The wind has changed.');
+    }
+    this.satellite.newTurn();
+    t.fuel = TANK_FUEL;
+    t.shotsLeft = t.weapon.clip; // autoloaders reload every turn
+    t.firedThisTurn = false;
+    this.startAim();
+  }
+
+  startAim() {
+    const t = this.active;
+    t.charge = 0;
     t.clampElev();
     this.input.ctl.reset();
     this.input.queue.length = 0;
@@ -144,6 +240,7 @@ class Game {
     this.sfx.chargeStop();
     this.phase = 'aim';
     this.cpu = t.isCpu ? new CpuController(this, t) : null;
+    this.cam.follow(t);
     this.ui.turn(t);
   }
 
@@ -152,13 +249,17 @@ class Game {
     this.time += DT;
     this.bg.update(DT, this.wind);
     this.particles.update(DT);
+    this.satellite.update();
     for (const t of this.tanks) {
       t.update(DT);
-      if (t.alive && t.hp < 35 && Math.random() < 0.04) this.particles.smoke(t.x, t.y - 10, 3);
+      if (t.alive && t.hp < t.maxHp * 0.3 && Math.random() < 0.04) this.particles.puff(t.x, t.y - TANK_SIZE, [90, 90, 100]);
     }
     this.stepTanks();
-    if (this.phase === 'aim') this.updateAim(DT);
+    if (this.phase === 'aim') this.updateAim();
     else if (this.phase === 'resolve') this.updateResolve();
+    this.lasers = this.lasers.filter((l) => l.update());
+    this.windMarker += (this.windDir - this.windMarker) / 20;
+    this.cam.update();
     this.shake *= 0.9;
   }
 
@@ -167,214 +268,233 @@ class Game {
       if (!t.alive) continue;
       const gy = this.terrain.hAt(t.x);
       if (t.y < gy - 0.5) {
-        if (!t.falling) { t.falling = true; t.fallFrom = t.y; t.vy = 0; }
-        t.vy += 0.22;
+        t.falling = true;
+        t.vy += GRAV;
         t.y += t.vy;
-        if (t.y >= gy) { t.y = gy; this.land(t); }
+        if (t.y >= gy) { t.y = gy; t.vy = 0; t.falling = false; this.particles.puff(t.x, t.y); }
       } else {
-        if (t.falling) this.land(t);
         t.y = gy;
+        t.falling = false;
       }
-      t.drawY = t.falling ? t.y : this.terrain.blockTop(t.x);
     }
   }
 
-  land(t) {
-    const fall = t.y - t.fallFrom;
-    t.falling = false;
-    t.vy = 0;
-    if (fall > 4) { this.sfx.thud(); this.particles.dust(t.x, t.y, 8); }
-    if (fall > 35) this.damage(t, (fall - 35) * 0.4, null);
-  }
-
-  moveTank(t, dir, dt) {
+  moveTank(t, dir) {
     t.facing = dir;
     if (t.fuel <= 0) return;
-    const step = 38 * dt;
-    const nx = t.x + dir * step;
-    if (nx < 14 || nx > W - 14) return;
-    if ((this.terrain.hAt(t.x) - this.terrain.hAt(nx)) / step > 1.4) return;
+    const nx = t.x + dir * TANK_SPEED;
+    if (nx < 20 || nx > WORLD_W - 20) return;
+    if ((this.terrain.hAt(t.x) - this.terrain.hAt(nx)) / TANK_SPEED > 1.6) return;
     for (const o of this.tanks) {
-      if (o !== t && o.alive && Math.abs(o.x - nx) < 24 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
+      if (o !== t && o.alive && Math.abs(o.x - nx) < TANK_SIZE + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
     }
     t.x = nx;
-    t.fuel = Math.max(0, t.fuel - step);
+    t.fuel--;
   }
 
-  updateAim(dt) {
+  updateAim() {
     const t = this.active;
     let c;
     if (this.cpu) {
-      this.cpu.update(dt);
+      this.cpu.update(DT);
       c = this.cpu.ctl;
     } else {
       c = this.input.ctl;
-      const q = this.input.queue.splice(0);
-      for (const a of q) {
-        if (a.cycle) { t.cycleWeapon(a.cycle); this.sfx.click(); }
-        else if (a.slot !== undefined) {
-          const w = t.ownedWeapons()[a.slot];
-          if (w) { t.selectWeapon(w.id); this.sfx.click(); }
+      for (const a of this.input.queue.splice(0)) {
+        if (a.cycle && !t.firedThisTurn) {
+          t.cycleWeapon(a.cycle);
+          t.shotsLeft = t.weapon.clip;
+          this.sfx.click();
+        } else if (a.endTurn) {
+          this.sfx.chargeStop();
+          this.charging = false;
+          this.finishTurnEarly();
+          return;
         }
       }
     }
-    if (c.left) this.moveTank(t, -1, dt);
-    if (c.right) this.moveTank(t, 1, dt);
-    const rate = (c.fine ? 10 : 40) * dt;
+    if (c.left) this.moveTank(t, -1);
+    if (c.right) this.moveTank(t, 1);
+    const rate = c.fine ? 0.2 : 1; // A3: one degree per frame
     if (c.up) t.elev += rate;
     if (c.down) t.elev -= rate;
     t.clampElev();
+    const w = t.weapon;
     if (c.charge) {
       if (!this.charging) { this.charging = true; this.sfx.chargeStart(); }
-      t.power = Math.min(100, t.power + 55 * dt);
-      this.sfx.chargeUpdate(t.power);
+      t.charge = Math.min(w.maxCharge, t.charge + w.maxCharge * 0.005); // A3 Weapon.Update
+      this.sfx.chargeUpdate((100 * t.charge) / w.maxCharge);
     } else if (this.charging) {
       this.charging = false;
       this.sfx.chargeStop();
-      if (t.power >= 5) this.fire(t);
-      else t.power = 0;
+      if (t.charge >= w.maxCharge * 0.03) this.fire(t);
+      else t.charge = 0;
     }
+  }
+
+  finishTurnEarly() {
+    this.events.push(`${this.active.name} ended their turn.`);
+    this.nextTurn();
   }
 
   fire(t) {
     const w = t.weapon;
-    if (!(t.ammo[w.id] > 0)) return;
-    if (!w.infinite) t.ammo[w.id]--;
-    const m = t.muzzle();
-    const v = t.power * SPEED_PER_POWER * w.speed;
-    const a = rad(t.elev);
-    const p = new Projectile(this, w, t, m.x, m.y, t.facing * v * Math.cos(a), -v * Math.sin(a));
-    p.rec = [];
-    this.projectiles.push(p);
+    t.shotsLeft--;
+    t.firedThisTurn = true;
     const dir = t.aimVec();
-    this.particles.muzzle(m.x, m.y, Math.atan2(dir.y, dir.x));
-    this.sfx.shot(w);
-    this.shake = Math.max(this.shake, 2 + t.power * 0.03);
+    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo, timer: 0, first: true };
+    t.lastCharge = t.charge / w.maxCharge;
+    t.charge = 0;
     t.recoil = 1;
-    t.lastPower = t.power;
-    t.power = 0;
-    this.events.push(`${t.name} fired the ${w.name}.`);
+    this.sfx.shot(w);
+    this.shake = Math.max(this.shake, 3 + w.dmg / 200);
+    this.events.push(`${t.name} fired the ${w.name.replace(/\.$/, "")}.`);
     this.report = { shooter: t, blasts: [], dmg: new Map(), fall: new Map(), kills: [] };
-    if (t.isCpu && TAUNTS.any['fire_' + w.id] && Math.random() < 0.25) this.banter(t, 'fire_' + w.id);
+    this.satTarget = null;
+    const line = this.fireLine(w);
+    if (t.isCpu && line && Math.random() < 0.25) this.banter(t, line);
     this.phase = 'resolve';
     this.resolveSteps = 0;
     this.quiet = 0;
     this.ui.turn(t);
   }
 
+  fireLine(w) {
+    if (w.sat) return 'fire_satellite';
+    if (w.kind === 'laser') return 'fire_laser';
+    if (w.kind === 'acid') return 'fire_acid';
+    if (w.salvo > 1) return 'fire_salvo';
+    if (w.dmg >= 500) return 'fire_heavy';
+    return null;
+  }
+
+  spawnSalvoRound() {
+    const s = this.salvo;
+    const t = s.t;
+    const m = t.muzzle();
+    // dispersion: random jitter on each round's velocity (A3 RandomPoint2D, made symmetric)
+    const vx = s.vx + (rng.next() - 0.5) * s.w.disp;
+    const vy = s.vy + (rng.next() - 0.5) * s.w.disp;
+    const p = new Projectile(this, s.w, t, m.x, m.y, vx, vy, s.first);
+    if (s.first) {
+      p.rec = [];
+      this.cam.follow(p);
+    }
+    this.particles.muzzle(m.x, m.y, t.aimVec());
+    if (!s.first) this.sfx.shot(s.w);
+    s.first = false;
+    s.left--;
+    s.timer = SALVO_DELAY;
+    this.projectiles.push(p);
+  }
+
   updateResolve() {
     this.resolveSteps++;
-    // projectiles may spawn others (cluster split) mid-update: queue those instead of
-    // pushing into the array being rebuilt
+    const s = this.salvo;
+    if (s && s.left > 0 && --s.timer <= 0) this.spawnSalvoRound();
     const next = [];
-    this.spawned = [];
     for (const p of this.projectiles) {
       const alive = p.update();
       if (p.rec && p.age % 3 === 0) p.rec.push(p.x, p.y);
       if (!alive && p.rec) p.owner.lastTrail = p.rec;
       if (alive) next.push(p);
     }
-    this.projectiles = next.concat(this.spawned);
-    this.spawned = [];
+    this.projectiles = next;
+    // keep the camera on a live shell while the salvo is in the air
+    if (this.cam.focus instanceof Projectile && !next.includes(this.cam.focus) && next.length) this.cam.follow(next[next.length - 1]);
     this.drops = this.drops.filter((d) => d.update());
-    this.beams = this.beams.filter((b) => b.update());
-    const busy = this.projectiles.length || this.drops.length || this.beams.length || this.tanks.some((t) => t.alive && t.falling);
+    const salvoPending = s && s.left > 0;
+    if (!next.length && !salvoPending && this.satTarget && !this.satSeq) this.startSatellite();
+    if (this.satSeq) this.updateSatellite();
+    const busy = next.length || salvoPending || this.drops.length || this.satSeq || this.lasers.length || this.tanks.some((t) => t.alive && t.falling);
     this.quiet = busy ? 0 : this.quiet + 1;
-    if (this.quiet > 45 || this.resolveSteps > 60 * 30) {
-      this.projectiles.length = this.drops.length = this.beams.length = 0;
-      this.finishTurn();
+    if (this.quiet > 40 || this.resolveSteps > 60 * 40) {
+      this.projectiles.length = this.drops.length = 0;
+      this.salvo = this.satSeq = this.satTarget = null;
+      this.finishShot();
     }
   }
 
-  finishTurn() {
+  finishShot() {
     const t = this.active;
-    if (t && t.ammo[t.weaponId] <= 0) t.weaponId = 'howitzer';
     if (this.events.length > 40) this.events.splice(0, this.events.length - 40);
     this.react(this.report);
     this.report = null;
-    this.nextTurn();
+    const alive = this.tanks.filter((x) => x.alive).length;
+    if (alive <= 1) this.endRound();
+    else if (t.alive && t.shotsLeft > 0) this.startAim(); // autoloader: same tank fires again
+    else this.nextTurn();
+  }
+
+  // ------------------------------------------------------------ satellite
+  startSatellite() {
+    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner };
+    this.satTarget = null;
+    this.satellite.lookAt(this.satSeq.target);
+    this.cam.follow(this.satellite);
+    this.sfx.satPrep();
+    this.events.push(`MAIA locks onto ${this.satSeq.owner.name}'s mark.`);
+  }
+
+  updateSatellite() {
+    const s = this.satSeq;
+    const sat = this.satellite;
+    s.t++;
+    if (s.t === 75) {
+      const tg = s.target;
+      this.lasers.push(new Laser(sat.x + Math.cos(sat.angle) * 100, sat.y + Math.sin(sat.angle) * 100, tg.x, tg.y, '#fffff0', 22, 90));
+      this.sfx.satFire();
+      this.explode(tg.x, tg.y, { dmg: sat.damage, dmgR: sat.dmgR, explR: sat.explR }, s.owner, 'laser');
+      this.cam.follow({ x: tg.x, y: tg.y });
+    }
+    if (s.t > 75 + 70) this.satSeq = null;
   }
 
   // ------------------------------------------------------------ combat rules
-  impact(p, r) {
+  impact(p) {
     const w = p.w;
-    if (w.kind === 'marker') {
-      this.particles.explosion(p.x, p.y, 8, [255, 140, 220]);
-      this.beams.push(new Beam(this, w, p.owner, p.x));
-      return;
-    }
-    if (w.kind === 'cluster') {
-      const s = w.sub;
-      this.explode(p.x, p.y, { dmg: s.dmg * 1.8, blast: s.blast * 1.5, dmgR: s.dmgR * 1.4 }, p.owner);
-      return;
-    }
-    this.explode(p.x, p.y, w, p.owner);
-    if (w.kind === 'acid') {
-      for (let i = 0; i < 70; i++) {
-        const a = -Math.PI * (0.08 + 0.84 * Math.random());
-        const s = 1.2 + Math.random() * 3.2;
-        this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 2, Math.cos(a) * s, Math.sin(a) * s));
+    if (w.kind === 'laser') {
+      // A3 LaserTargetProjectile: the shell marks a point, the gun's laser hits it
+      const m = p.owner.alive ? p.owner.muzzle() : { x: p.owner.x, y: p.owner.y - TANK_SIZE };
+      const c = RARITY[w.rarity].color;
+      this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
+      this.sfx.laser();
+      this.explode(p.x, p.y, w, p.owner, 'laser');
+    } else {
+      this.explode(p.x, p.y, w, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
+      if (w.kind === 'acid') {
+        for (let i = 0; i < 30; i++) {
+          const a = -Math.PI * (0.1 + 0.8 * Math.random());
+          const sp = 2 + Math.random() * 6;
+          this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 4, Math.cos(a) * sp, Math.sin(a) * sp, w.acid));
+        }
+        this.sfx.acid();
       }
-      this.sfx.acid();
     }
+    if (w.sat && p.main) this.satTarget = { x: p.x, y: p.y, owner: p.owner };
   }
 
-  clusterSplit(p) {
-    const s = p.w.sub;
-    this.particles.add({ type: 'fireball', x: p.x, y: p.y, life: 0.2, r: 16, color: [255, 200, 120] });
-    this.sfx.click();
-    const def = { id: 'bomblet', kind: 'shell', grav: 1, wind: 1, speed: 1, color: '#ffcf8a', dmg: s.dmg, blast: s.blast, dmgR: s.dmgR };
-    for (let i = 0; i < s.count; i++) {
-      // the centre bomblet keeps the parent's exact velocity so it lands where the shell would have
-      const spread = (i - (s.count - 1) / 2) * 0.45;
-      const jitter = i === (s.count - 1) / 2 ? 0 : (Math.random() - 0.3) * 0.4;
-      this.spawned.push(new Projectile(this, def, p.owner, p.x, p.y, p.vx + spread, p.vy + jitter));
-    }
-  }
-
-  explode(x, y, def, owner) {
+  explode(x, y, def, owner, palette = 'shell') {
     if (this.report) this.report.blasts.push({ x, y });
-    this.terrain.crater(x, y, def.blast);
+    this.terrain.crater(x, def.explR || 10);
     for (const t of this.tanks) {
       if (!t.alive) continue;
       const c = t.center();
       const d = dist(c.x, c.y, x, y);
-      if (d < def.dmgR + 8) {
-        const amt = def.dmg * clamp(1 - (d - 6) / def.dmgR, 0, 1);
-        if (amt >= 1) this.damage(t, amt, owner);
-      }
+      if (d < def.dmgR) this.damage(t, def.dmg * (1 - d / def.dmgR), owner);
     }
-    this.particles.explosion(x, y, def.blast * 0.9 + 6);
-    this.sfx.explosion(def.blast);
-    this.shake = Math.max(this.shake, Math.min(12, def.blast * 0.22));
+    this.particles.explosion(x, y, def.dmgR, palette);
+    this.sfx.explosion(Math.min(60, (def.explR || 10) + def.dmgR * 0.1));
+    this.shake = Math.max(this.shake, Math.min(14, 2 + def.dmgR * 0.05));
   }
 
-  beamStrike(b) {
-    const half = b.w.beamHalf;
-    this.sfx.beamFire();
-    for (const t of this.tanks) {
-      if (!t.alive) continue;
-      const dx = Math.abs(t.x - b.x);
-      const amt = b.w.dmg * (dx <= half ? 1 : clamp(1 - (dx - half) / 40, 0, 1));
-      if (amt >= 1) this.damage(t, amt, b.owner);
-    }
-    const gy = this.terrain.hAt(b.x);
-    if (this.report) this.report.blasts.push({ x: b.x, y: gy });
-    this.terrain.shaft(b.x, half - 1, 85);
-    this.particles.explosion(b.x, gy, 30, [255, 150, 225]);
-    for (let i = 0; i < 40; i++) {
-      this.particles.add({
-        type: 'spark', x: b.x + (Math.random() - 0.5) * 12, y: gy - Math.random() * 120,
-        vx: (Math.random() - 0.5) * 2, vy: -1 - Math.random() * 3, g: 0.05, life: 0.6, size: 1.6, color: [255, 190, 240],
-      });
-    }
-    this.shake = Math.max(this.shake, 9);
-  }
-
+  // A3 Character.Damage: armour soaks hits until it is gone, then health takes them
   damage(t, amt, owner, quiet = false) {
     if (!t.alive || amt <= 0) return;
-    t.hp -= amt;
+    if (t.armour > 0) t.armour = Math.max(0, t.armour - amt);
+    else t.hp -= amt;
     t.flash = 1;
+    this.roundDamage += amt;
     if (this.report) {
       const m = owner ? this.report.dmg : this.report.fall;
       m.set(t, (m.get(t) || 0) + amt);
@@ -382,20 +502,17 @@ class Game {
     if (owner && owner !== t) {
       owner.stats.dealt += amt;
       owner.roundDealt += amt;
-      owner.cash += amt * 3;
-      owner.roundEarned += amt * 3;
     }
     if (quiet) {
       t.dmgAcc += amt;
-      if (t.dmgAcc >= 6) {
-        this.particles.text(t.x, t.y - 42, '-' + Math.round(t.dmgAcc), '#b6f27a');
+      if (t.dmgAcc >= 5) {
+        this.particles.text(t.x, t.y - 40, String(Math.round(t.dmgAcc)), '#c8f0a0');
         t.dmgAcc = 0;
       }
-    } else {
-      this.particles.text(t.x, t.y - 42, '-' + Math.round(amt), '#ff9d8a', amt > 40);
+    } else if (amt > 3) {
+      this.particles.text(t.x + (Math.random() - 0.5) * 20, t.y - 40, String(Math.round(amt)), '#ffffff', amt > 100);
       this.sfx.hit();
       if (owner && owner !== t) this.events.push(`${owner.name} hit ${t.name} for ${Math.round(amt)}.`);
-      else if (!owner) this.events.push(`${t.name} took ${Math.round(amt)} from a fall.`);
     }
     if (t.hp <= 0) this.kill(t, owner);
   }
@@ -405,19 +522,13 @@ class Game {
     t.alive = false;
     t.speech = null;
     if (this.report) this.report.kills.push({ victim: t, killer: owner && owner !== t ? owner : null });
-    this.particles.explosion(t.x, t.y - 6, 36, [255, 170, 70]);
-    this.particles.explosion(t.x, t.y - 14, 20, [255, 120, 60]);
-    this.sfx.explosion(45);
-    this.shake = Math.max(this.shake, 10);
+    this.particles.explosion(t.x, t.y - 8, 160, 'shell');
+    this.sfx.explosion(55);
+    this.shake = Math.max(this.shake, 12);
     if (owner && owner !== t) {
       owner.stats.kills++;
-      owner.cash += 300;
-      owner.roundEarned += 300;
-      this.particles.text(t.x, t.y - 55, '+$300', '#ffe27a', true);
       this.events.push(`${owner.name} destroyed ${t.name}!`);
-    } else {
-      this.events.push(`${t.name} destroyed themselves.`);
-    }
+    } else this.events.push(`${t.name} destroyed themselves.`);
   }
 
   say(tank, text, delay = 0) {
@@ -426,18 +537,17 @@ class Game {
     this.ui.chat(tank, text);
   }
 
-  // CPU tank says a canned line for `situation` (no-op if it has none)
   banter(tank, situation, foe, delay = 0) {
     const line = pickTaunt(tank, situation, foe && foe.name);
     if (line) this.say(tank, line, delay);
   }
 
   // Decide who (if anyone) comments on the shot that just resolved. Roughly 0-2 CPUs speak per
-  // turn, with a per-tank cooldown, so it reads as banter rather than a chat log.
+  // shot, with a per-tank cooldown, so it reads as banter rather than a chat log.
   react(rep) {
     if (!rep) return;
     const s = rep.shooter;
-    const cands = []; // {tank, sit, foe, p, force}
+    const cands = [];
     let dealt = 0;
     for (const [t, a] of rep.dmg) if (t !== s) dealt += a;
     const self = rep.dmg.get(s) || 0;
@@ -447,34 +557,28 @@ class Game {
 
     if (s.isCpu && s.alive) {
       if (killedBy.length) cands.push({ tank: s, sit: 'kill', foe: killedBy[0].victim, p: 0.9 });
-      else if (dealt >= 40) cands.push({ tank: s, sit: 'hit_big', foe: this.firstVictim(rep, s), p: 0.7 });
-      else if (dealt >= 3) cands.push({ tank: s, sit: 'hit', foe: this.firstVictim(rep, s), p: 0.45 });
+      else if (dealt >= 80) cands.push({ tank: s, sit: 'hit_big', foe: this.firstVictim(rep, s), p: 0.7 });
+      else if (dealt >= 5) cands.push({ tank: s, sit: 'hit', foe: this.firstVictim(rep, s), p: 0.45 });
       else if (self >= 5) cands.push({ tank: s, sit: 'self_hit', p: 0.8 });
-      else if (!rep.blasts.length) { /* shot flew off the map: say nothing */ }
-      else {
+      else if (rep.blasts.length) {
         const closest = Math.min(...rep.blasts.map(nearest));
-        if (closest <= 85) cands.push({ tank: s, sit: 'miss_close', foe: this.nearestEnemy(rep, s), p: 0.6 });
+        if (closest <= 140) cands.push({ tank: s, sit: 'miss_close', foe: this.nearestEnemy(rep, s), p: 0.6 });
         else cands.push({ tank: s, sit: 'miss_far', p: 0.28 });
       }
     }
     for (const c of this.tanks) {
-      if (c === s || !c.isCpu) continue;
+      if (c === s || !c.isCpu || !c.alive) continue;
       const took = rep.dmg.get(c) || 0;
-      if (c.alive) {
-        if (took >= 40) cands.push({ tank: c, sit: 'got_hit_big', foe: s, p: 0.65 });
-        else if (took >= 3) cands.push({ tank: c, sit: c.hp < c.maxHp * 0.3 ? 'low_hp' : 'got_hit', foe: s, p: 0.6 });
-        else if (rep.blasts.some((b) => dist(b.x, b.y, c.x, c.y - 7) <= 95)) cands.push({ tank: c, sit: 'enemy_missed_me', foe: s, p: 0.75 });
-        else if ((rep.fall.get(c) || 0) >= 5) cands.push({ tank: c, sit: 'fall', p: 0.5 });
-      }
+      if (took >= 80) cands.push({ tank: c, sit: 'got_hit_big', foe: s, p: 0.65 });
+      else if (took >= 5) cands.push({ tank: c, sit: c.hp < c.maxHp * 0.3 ? 'low_hp' : 'got_hit', foe: s, p: 0.6 });
+      else if (rep.blasts.some((b) => dist(b.x, b.y, c.x, c.y - 8) <= 160)) cands.push({ tank: c, sit: 'enemy_missed_me', foe: s, p: 0.75 });
     }
-    if (s.isCpu && s.alive && (rep.fall.get(s) || 0) >= 5) cands.push({ tank: s, sit: 'fall', p: 0.5 });
     for (const k of rep.kills) {
       if (k.victim.isCpu) cands.push({ tank: k.victim, sit: 'death', foe: k.killer || undefined, p: 1, force: true });
       for (const c of this.tanks) {
         if (c.isCpu && c.alive && c !== k.victim && c !== k.killer) cands.push({ tank: c, sit: 'rival_down', foe: k.victim, p: 0.3 });
       }
     }
-    // dead tanks have the last word (chat log only); the rest are limited to two live speakers
     let speakers = 0;
     const used = new Set();
     for (const c of rng.shuffle(cands.slice()).sort((a, b) => (b.force ? 1 : 0) - (a.force ? 1 : 0))) {
@@ -509,23 +613,18 @@ class Game {
   endRound() {
     this.phase = 'roundEnd';
     this.sfx.chargeStop();
-    const alive = this.tanks.filter((t) => t.alive);
-    const winner = alive[0] || null;
-    for (const t of this.tanks) {
-      t.cash += 400;
-      t.roundEarned += 400;
-    }
+    const winner = this.tanks.find((t) => t.alive) || null;
     if (winner) {
       winner.wins++;
-      winner.cash += 600;
-      winner.roundEarned += 600;
       this.sfx.win();
       this.events.push(`${winner.name} wins round ${this.round}.`);
     } else this.events.push(`Round ${this.round} ends in mutual destruction.`);
-    for (const t of this.tanks) t.cash = Math.round(t.cash);
+    // A3 CombatGameState: everyone gets 500 + half the round's total damage, scaled up each round
+    const award = Math.round(500 + (this.roundDamage / 2) * this.awardMult);
+    this.awardMult += 0.08;
+    for (const t of this.tanks) t.money += award;
     const last = this.round >= this.rounds;
-    this.ui.showRoundEnd({ round: this.round, winner, tanks: this.tanks }, last);
-    // round-end banter from CPUs (the dead can still talk)
+    this.ui.showRoundEnd({ round: this.round, winner, tanks: this.tanks, award }, last);
     const cpus = this.tanks.filter((t) => t.isCpu);
     if (winner) {
       if (winner.isCpu) this.ui.addQuip(winner, pickTaunt(winner, 'round_win'));
@@ -537,7 +636,7 @@ class Game {
 
   afterRoundEnd() {
     if (this.round >= this.rounds) {
-      const st = this.tanks.slice().sort((a, b) => b.wins - a.wins || b.cash - a.cash);
+      const st = this.tanks.slice().sort((a, b) => b.wins - a.wins || b.stats.dealt - a.stats.dealt);
       this.phase = 'gameEnd';
       this.ui.showHud(false);
       this.ui.showGameEnd(st);
@@ -556,37 +655,48 @@ class Game {
     this.ui.showShop(t, () => this.nextShop());
   }
 
+  // A3 UI_StatUpgradeButton cost curve
+  upgradeCost(level) { return Math.floor(Math.pow(1.9, level * 0.9) * 40) + 300; }
+  sellValue(w) { return Math.floor(w.cost / 2); }
+
   buy(tank, kind, id) {
-    let item;
-    let cost;
     if (kind === 'weapon') {
-      item = WEAPON_BY_ID[id];
-      cost = item.cost;
+      const w = WEAPON_BY_ID[id];
+      if (tank.weapons.includes(id) || tank.weapons.length >= MAX_WEAPONS || tank.money < w.cost) { this.sfx.deny(); return false; }
+      tank.money -= w.cost;
+      tank.weapons.push(id);
     } else {
-      item = UPGRADES.find((u) => u.id === id);
-      cost = item.cost;
-      if (tank.upgrades[id] >= item.max) return false;
+      const cost = this.upgradeCost(tank.upgrades[id]);
+      if (tank.money < cost) { this.sfx.deny(); return false; }
+      tank.money -= cost;
+      tank.upgrades[id]++;
     }
-    if (tank.cash < cost) { this.sfx.deny(); return false; }
-    tank.cash -= cost;
-    if (kind === 'weapon') tank.ammo[id] += item.pack;
-    else tank.upgrades[id]++;
+    this.sfx.buy();
+    return true;
+  }
+
+  sell(tank, id) {
+    if (tank.weapons.length <= 1) { this.sfx.deny(); return false; }
+    tank.weapons = tank.weapons.filter((x) => x !== id);
+    tank.weaponIdx = 0;
+    tank.money += this.sellValue(WEAPON_BY_ID[id]);
     this.sfx.buy();
     return true;
   }
 
   autoBuy(t) {
-    const shopW = WEAPONS.filter((w) => w.cost > 0).sort((a, b) => b.cost - a.cost);
-    for (let n = 0; n < 3; n++) {
-      if (rng.chance(0.3)) {
-        const u = rng.pick(UPGRADES);
-        if (t.upgrades[u.id] < u.max && t.cash >= u.cost) { t.cash -= u.cost; t.upgrades[u.id]++; continue; }
+    for (let n = 0; n < 4; n++) {
+      const afford = WEAPONS.filter((w) => w.cost <= t.money && !t.weapons.includes(w.id)).sort((a, b) => b.cost - a.cost);
+      if (afford.length && t.weapons.length < MAX_WEAPONS && rng.chance(0.75)) {
+        t.money -= afford[0].cost;
+        t.weapons.push(afford[0].id);
+        continue;
       }
-      const afford = shopW.filter((w) => w.cost <= t.cash);
-      if (!afford.length) break;
-      const w = afford[Math.floor(Math.pow(rng.next(), 2) * afford.length)];
-      t.cash -= w.cost;
-      t.ammo[w.id] += w.pack;
+      const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour';
+      const cost = this.upgradeCost(t.upgrades[stat]);
+      if (t.money < cost) break;
+      t.money -= cost;
+      t.upgrades[stat]++;
     }
   }
 
@@ -617,73 +727,135 @@ class Game {
   render() {
     const ctx = this.ctx;
     const k = this.k;
+    const s = k * VIEW_SCALE;
+    const cam = this.cam;
     ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    ctx.save();
-    if (this.shake > 0.5) ctx.translate(Math.round((Math.random() - 0.5) * this.shake * 2), Math.round((Math.random() - 0.5) * this.shake * 2));
-    this.bg.drawBack(ctx);
-    this.terrain.render();
-    ctx.drawImage(this.terrain.canvas, 0, 0);
+    this.bg.drawSky(ctx);
 
-    const active = this.phase === 'aim' ? this.active : null;
-    if (active && !this.cpu) this.drawGhost(ctx, active);
-    for (const t of this.tanks) t.draw(ctx);
-    if (active) this.drawAim(ctx, active);
-    for (const b of this.beams) b.draw(ctx);
+    // world
+    const sx = this.shake > 0.5 ? (Math.random() - 0.5) * this.shake * 2 : 0;
+    const sy = this.shake > 0.5 ? (Math.random() - 0.5) * this.shake * 2 : 0;
+    ctx.setTransform(s, 0, 0, s, -(cam.x + sx) * s, -(cam.y + sy) * s);
+    this.satellite.draw(ctx);
+    this.bg.drawRidges(ctx, cam);
+    this.terrain.draw(ctx, cam.x, cam.x + VIEW_W);
+    const aiming = this.phase === 'aim' ? this.active : null;
+    if (aiming && !this.cpu) this.drawGhost(ctx, aiming);
+    for (const t of this.tanks) t.draw(ctx, t === aiming);
     for (const d of this.drops) d.draw(ctx);
-    for (const p of this.projectiles) {
-      p.draw(ctx);
-      if (p.y < -6) this.drawOffscreen(ctx, p);
-    }
+    for (const p of this.projectiles) p.draw(ctx);
+    for (const l of this.lasers) l.draw(ctx);
     this.particles.draw(ctx);
+
+    // snow (screen pixels)
+    ctx.setTransform(k, 0, 0, k, 0, 0);
     this.bg.drawSnow(ctx);
-    // labels and text last so they stay readable
-    for (const t of this.tanks) t.drawLabel(ctx, t === active || (this.phase === 'resolve' && t === this.active), this.time);
-    this.particles.drawText(ctx);
-    for (const t of this.tanks) t.drawSpeech(ctx);
-    ctx.restore();
+
+    // HUD in the original's 1600x900 screen units
+    ctx.setTransform(s, 0, 0, s, 0, 0);
+    if (this.phase !== 'menu') this.drawHud(ctx);
   }
 
   drawGhost(ctx, t) {
     if (!t.lastTrail || t.lastTrail.length < 4) return;
     ctx.fillStyle = t.color;
-    ctx.globalAlpha = 0.5;
-    for (let i = 0; i < t.lastTrail.length; i += 2) sq(ctx, t.lastTrail[i], t.lastTrail[i + 1], 3);
+    ctx.globalAlpha = 0.45;
+    for (let i = 0; i < t.lastTrail.length; i += 2) sq(ctx, t.lastTrail[i], t.lastTrail[i + 1], 5);
     ctx.globalAlpha = 1;
   }
 
-  drawOffscreen(ctx, p) {
-    const x = clamp(p.x, 8, W - 8);
-    ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = clamp(1 + p.y / 400, 0.4, 1);
-    sq(ctx, x, 5, 3);
-    sq(ctx, x, 9, 6);
-    sq(ctx, x, 14, 9);
-    ctx.globalAlpha = 1;
-    ctx.font = 'bold 10px Verdana, Tahoma, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(Math.round(-p.y) + 'm', Math.round(x), 30);
-  }
-
-  drawAim(ctx, t) {
-    const w = t.weapon;
-    const pv = { x: t.x, y: (t.drawY ?? t.y) - 13 };
-    // allowed elevation range: a dotted arc of squares
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    for (let e = w.elevMin; e <= w.elevMax; e += 6) {
-      const v = t.aimVec(e);
-      sq(ctx, pv.x + v.x * 32, pv.y + v.y * 32, 2);
-    }
-    const v = t.aimVec();
-    if (t.power > 0) {
-      const frac = t.power / 100;
-      ctx.fillStyle = `hsl(${120 - frac * 120},85%,55%)`;
-      for (let d = 24; d <= 24 + t.power * 0.6; d += 5) sq(ctx, pv.x + v.x * d, pv.y + v.y * d, 3);
-    }
-    if (t.lastPower > 0 && !this.cpu) {
-      const d = 24 + t.lastPower * 0.6;
+  drawHud(ctx) {
+    const cam = this.cam;
+    const sat = this.satellite;
+    // satellite caption (A3 Satellite.Draw)
+    if (sat.y - cam.y > -80) {
+      ctx.font = '18px "Maven Pro", Verdana, sans-serif';
+      ctx.textAlign = 'left';
       ctx.fillStyle = '#ffffff';
-      sq(ctx, pv.x + v.x * d, pv.y + v.y * d, 5);
+      ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x + 70), Math.round(sat.y - cam.y + 25));
+      ctx.fillText(`Level: ${sat.level}`, Math.round(sat.x - cam.x + 70), Math.round(sat.y - cam.y + 47));
     }
+    const live = this.phase === 'aim' ? this.active : null;
+    for (const t of this.tanks) t.drawLabel(ctx, t.x - cam.x, t.y - cam.y, t === live);
+    this.particles.drawText(ctx, cam);
+    for (const t of this.tanks) t.drawSpeech(ctx, t.x - cam.x, t.y - cam.y);
+    // shells above the view
+    ctx.fillStyle = '#ffffff';
+    for (const p of this.projectiles) {
+      if (p.y < cam.y) {
+        const x = clamp(p.x - cam.x, 10, VIEW_W - 10);
+        sq(ctx, x, 8, 6);
+        sq(ctx, x, 16, 12);
+      }
+    }
+    this.drawMinimap(ctx);
+    this.drawWindMarker(ctx);
+    if (this.active && this.phase !== 'roundEnd') this.drawBars(ctx, this.active);
+  }
+
+  // A3 UI_Minimap: a line at the top right with a dot per tank
+  drawMinimap(ctx) {
+    const x0 = 1250, y0 = 80, w = 300, h = 20;
+    const mx = (x) => x0 + (w * clamp(x, 0, WORLD_W)) / WORLD_W;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x0, y0 + h / 2 - 1, w, 2);
+    ctx.fillRect(x0 - 2, y0, 4, h);
+    ctx.fillRect(x0 + w - 2, y0, 4, h);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(mx(this.cam.x), y0 + 3, (w * VIEW_W) / WORLD_W, h - 6);
+    for (const t of this.tanks) {
+      if (!t.alive) continue;
+      ctx.fillStyle = t.color;
+      sq(ctx, mx(t.x), y0 + h / 2, 8);
+    }
+    const box = (x, s, col) => {
+      ctx.fillStyle = col;
+      ctx.fillRect(x - s / 2, y0 + h / 2 - s / 2, s, 2);
+      ctx.fillRect(x - s / 2, y0 + h / 2 + s / 2 - 2, s, 2);
+      ctx.fillRect(x - s / 2, y0 + h / 2 - s / 2, 2, s);
+      ctx.fillRect(x + s / 2 - 2, y0 + h / 2 - s / 2, 2, s);
+    };
+    if (this.active) box(mx(this.active.x), 16, 'purple');
+    const shell = this.projectiles[0];
+    if (shell) box(mx(shell.x), 10, 'orange');
+  }
+
+  // A3 UI_WindMarker (a rotated kite) as a trail of squares pointing downwind; longer = stronger
+  drawWindMarker(ctx) {
+    const cx = 800, cy = 60;
+    const n = 1 + Math.round((this.windMag / 0.5) * 5);
+    const step = 14;
+    const dx = Math.cos(this.windMarker);
+    const dy = Math.sin(this.windMarker);
+    const ox = cx - (dx * step * (n - 1)) / 2;
+    const oy = cy - (dy * step * (n - 1)) / 2;
+    ctx.fillStyle = 'rgb(255,120,40)';
+    sq(ctx, ox - dx * step, oy - dy * step, 6);
+    for (let i = 0; i < n; i++) {
+      const f = n === 1 ? 1 : i / (n - 1);
+      ctx.fillStyle = rgb(mixRgb([170, 40, 40], [10, 10, 16], f));
+      sq(ctx, ox + dx * step * i, oy + dy * step * i, 10 + f * 10);
+    }
+  }
+
+  // A3 UI_Combat: charge bar (with last-charge tick) and fuel bar, bottom right
+  drawBars(ctx, t) {
+    const x0 = 1120, w = 400;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x0, 801, w, 10);
+    ctx.fillRect(x0 - 2, 790, 4, 32);
+    ctx.fillRect(x0 + w - 2, 790, 4, 32);
+    ctx.fillStyle = 'orange';
+    ctx.fillRect(x0 + 2, 796, Math.round((w - 4) * (t.charge / t.weapon.maxCharge)), 20);
+    if (t.lastCharge > 0) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(Math.round(x0 + w * t.lastCharge) - 1, 790, 2, 32);
+    }
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x0 - 2, 828, 4, 20);
+    ctx.fillRect(x0 + w - 2, 828, 4, 20);
+    ctx.fillStyle = 'steelblue';
+    ctx.fillRect(x0 + 2, 834, Math.round((w - 4) * (t.fuel / TANK_FUEL)), 8);
   }
 }

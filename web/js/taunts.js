@@ -10,6 +10,7 @@
 //   self_hit                I damaged myself
 //   fall                    I took fall damage
 //   low_hp / death          I'm nearly dead / just died
+//   fire_*                  weapon-specific lines as a shot leaves (see Game.fireLine)
 //   rival_down              someone else was destroyed
 //   round_win / round_lose / match_win
 // Anything missing from a personality falls back to TAUNTS.any.
@@ -326,11 +327,11 @@ const TAUNTS = {
 
   // shared by everyone
   any: {
-    fire_claymore: ['Surprise!', 'Hope you like confetti.', 'Five for the price of one.', 'Fragmenting, as promised.'],
+    fire_salvo: ['Surprise!', 'Hope you like confetti.', 'Several for the price of one.', 'Incoming. Lots of it.'],
     fire_acid: ["Hope you weren't fond of the paint.", 'Something corrosive this way comes.', 'Slime time.', "That's going to sting. And melt."],
-    fire_coil: ['Too fast to dodge.', "Blink and you'll miss it.", 'Rail time.', 'Zip. Done.'],
-    fire_signal: ['Look up.', 'A satellite sends its regards.', 'Stand still. Please.', 'Orbital courtesy call.'],
-    fire_terminus: ['Sorry about the crater.', "This one's called Big Bertha.", 'Duck.', 'Heavy mail, incoming.'],
+    fire_laser: ['Too fast to dodge.', "Blink and you'll miss it.", 'Zip. Done.', 'Lasers. Obviously.'],
+    fire_satellite: ['Look up.', 'MAIA sends its regards.', 'Stand still. Please.', 'Orbital courtesy call.'],
+    fire_heavy: ['Sorry about the crater.', 'Duck.', 'Heavy mail, incoming.', 'Bring a shovel.'],
     round_draw: ['Well. That was mutual.', 'Nobody wins. Everybody loses.', 'We all did great. Terribly.', 'Draw! Tidy.'],
   },
 };

@@ -20,7 +20,7 @@
     const types = (params.get('types') || 'normal,hard,easy,hard').split(',');
     const n = clamp(+params.get('auto') || 3, 2, 4);
     const cfgs = [];
-    for (let i = 0; i < n; i++) cfgs.push({ name: AI_NAMES[i], type: types[i % types.length] });
+    for (let i = 0; i < n; i++) cfgs.push({ name: AI_NAMES[i], type: types[i % types.length], vehicle: VEHICLES[i % VEHICLES.length].id });
     game.startMatch(cfgs, +params.get('rounds') || 3);
   }
 
