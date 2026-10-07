@@ -75,6 +75,9 @@ summary { cursor: pointer; color: var(--accent); }
 .veh h3 { margin: 0; font-size: 1.5em; }
 .veh .box { width: 2.2em; height: 2.2em; }
 .veh canvas.girl { width: 8em; height: 9.5em; image-rendering: pixelated; align-self: center; }
+.veh .portrait { position: relative; height: 13em; display: flex; justify-content: center; }
+.veh .portrait img { height: 100%; width: auto; max-width: 100%; object-fit: contain; }
+.veh .portrait canvas.girl.mini { position: absolute; right: 0; bottom: 0; width: 4em; height: 4.75em; }
 .veh p { margin: 0; color: var(--dim); font-size: 0.9em; }
 .stats { display: grid; grid-template-columns: auto 1fr; gap: 0.1em 0.8em; font-size: 0.85em; }
 .stats span:nth-child(odd) { color: var(--dim); }

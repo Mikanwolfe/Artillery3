@@ -7,6 +7,9 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const TYPE_LABELS = { human: 'Human', easy: 'CPU · Easy', normal: 'CPU · Normal', hard: 'CPU · Hard' };
 const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
 
+// the user's original turret-girl illustrations from the first Artillery game
+const PORTRAITS = { gwt: 'images/girl_gwt.png', obj: 'images/girl_obj.png', int: 'images/girl_int.png' };
+
 const UI = {
   game: null,
   players: [],
@@ -116,7 +119,11 @@ const UI = {
       $("veh-player").textContent = `${c.name}:`;
       $('veh-grid').innerHTML = VEHICLES.map((v) => {
         const w = v.weapon;
-        return `<div class="veh${v.id === 'nxi' ? ' nxi' : ''}" data-v="${v.id}"><canvas class="girl" width="160" height="190" data-g="${v.id}"></canvas><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
+        // the original Artillery illustrations where they exist (mikanwolfe/artillery), else the pixel girl
+        const art = PORTRAITS[v.id]
+          ? `<div class="portrait"><img src="${PORTRAITS[v.id]}" alt="${esc(v.name)}, the original illustration"><canvas class="girl mini" width="160" height="190" data-g="${v.id}"></canvas></div>`
+          : `<canvas class="girl" width="160" height="190" data-g="${v.id}"></canvas>`;
+        return `<div class="veh${v.id === 'nxi' ? ' nxi' : ''}" data-v="${v.id}">${art}<h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
           <div class="stats"><span>Health</span><span>${v.hp}</span><span>Armour</span><span>${v.armour}</span></div>
           <div class="veh-wpn">${this.badge(w, true)}<h3 style="font-size:1em;color:${RARITY[w.rarity].color}">${esc(w.name)}</h3></div><p>${esc(w.short)}</p>
           <div class="stats">${this.weaponStats(w)}</div></div>`;
