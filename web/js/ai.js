@@ -44,7 +44,7 @@ function solveShot(game, tank, w, target) {
   const evalShot = (elev, v) => {
     const m = tank.muzzle(elev, facing);
     const u = tank.aimVec(elev, facing); // elevation is relative to the hull
-    const r = simulateShot(game.terrain, game.wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v);
+    const r = simulateShot(game.terrain, game.wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift);
     let err;
     if (r.hit === 'tank' && r.tank === target) err = 0;
     else err = Math.max(0, dist(r.x, r.y, tc.x, tc.y) - w.dmgR * 0.25);
@@ -99,7 +99,7 @@ class CpuController {
     const enemies = g.tanks.filter((x) => x.alive && x !== t).concat(g.mobs.filter((d) => d.alive));
     const grudge = t.lastAttacker && t.lastAttacker.alive && t.lastAttacker !== t ? t.lastAttacker : null;
     // weapon is locked once the clip has started; otherwise pick by difficulty
-    let options = t.firedThisTurn ? [t.weapon] : t.weapons.map((id) => WEAPON_BY_ID[id]);
+    let options = t.firedThisTurn ? [t.weapon] : t.weapons.filter((id) => t.weaponReady(id)).map((id) => WEAPON_BY_ID[id]);
     options = options.slice().sort((a, b) => weaponValue(b) - weaponValue(a));
     if (t.type === 'easy') options = rng.chance(0.6) ? [rng.pick(options)] : options.slice(-1);
     else if (t.type === 'normal' && rng.chance(0.4)) options = [rng.pick(options)];

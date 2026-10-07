@@ -21,16 +21,17 @@
       <button class="icon" id="btn-pause" title="Pause (Esc)">Ⅱ</button>
     </div>
     <div id="chat"></div>
-    <div id="hints"><span><b>←→</b> move</span><span><b>↑↓</b> aim</span><span><b>Space</b> hold to fire</span><span><b>S</b> weapon</span><span><b>Enter</b> end turn</span><span><b>H</b> all controls</span></div>
+    <div id="dock">
+      <div id="hints"><span><b>←→</b> move</span><span><b>↑↓</b> aim</span><span><b>Space</b> hold to fire</span><span><b>Enter</b> end turn</span><span><b>H</b> all controls</span></div>
+      <div id="rack"><div id="rack-w" class="rack-group"></div><div id="rack-a" class="rack-group"></div></div>
+    </div>
     <div id="touch">
       <div class="pad">
         <button data-k="left">◀</button><button data-k="right">▶</button>
         <button data-k="up">▲</button><button data-k="down">▼</button>
       </div>
       <div class="pad r">
-        <button data-q="1">WPN</button><button data-end="1">END</button>
-        <button data-rep="1">REP</button><button data-ab="double">×2</button>
-        <button data-ab="over">OVR</button><button data-ab="shield">SHD</button><button data-ab="barrier">BAR</button>
+        <button data-end="1" class="wide">END TURN</button>
         <button data-k="charge" class="fire">FIRE</button>
       </div>
     </div>
@@ -74,12 +75,14 @@
       Armour soaks damage until it's gone, then health takes it. Autoloaders fire several times per turn; satellite-enabled guns
       call down the MAIA ion cannon wherever their shell lands. Shells hit harder the further they fall from the top of their arc,
       and fast impacts add kinetic damage close in, so lob high. CPUs go after whoever last hit them.
-      Kills pay a bounty, the match leader carries a bigger one, and everyone is paid after each round.</p>
+      Kills pay a bounty, the match leader carries a bigger one, and everyone is paid after each round.
+      With rebalanced weapons, a bought gun reloads for a few of your turns after it fires (more for rarer guns), so a rack of guns
+      lets you fire a big one every turn. Your starter never reloads. The rack at the bottom shows what is loaded.</p>
       <table class="keys">
         <tr><td>← →</td><td>move (uses fuel)</td></tr>
         <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
         <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
-        <tr><td>S · Q</td><td>next · previous weapon (before firing)</td></tr>
+        <tr><td>S · Q</td><td>next · previous loaded weapon (before firing), or click one in the rack</td></tr>
         <tr><td>R</td><td>use a repair kit (takes your turn)</td></tr>
         <tr><td>1 2 3 4</td><td>double shot · overcharge · deflector · barrier (if bought)</td></tr>
         <tr><td>Enter</td><td>end turn</td></tr>
@@ -122,6 +125,7 @@
         <div class="shop-side">
           <div class="side-scroll">
             <h3 class="sec">Loadout <span id="shop-count"></span></h3>
+            <p id="shop-note" class="note"></p>
             <div id="shop-owned"></div>
             <h3 class="sec">Upgrades</h3>
             <div id="shop-upg"></div>
