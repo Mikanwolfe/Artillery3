@@ -111,7 +111,7 @@ function stepBallistic(p, terrain, wind, tanks, owner) {
     if (p.x >= 0 && p.x < WORLD_W && p.y >= terrain.hAt(p.x)) return { hit: 'terrain' };
     for (const t of tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;
-      if (Math.abs(p.x - t.x) < TANK_SIZE / 2 + 2 && p.y > t.y - TANK_SIZE - 2 && p.y < t.y + 2) return { hit: 'tank', tank: t };
+      if (Math.abs(p.x - t.x) < TANK_W / 2 + 2 && p.y > t.y - TANK_H - 2 && p.y < t.y + 2) return { hit: 'tank', tank: t };
     }
   }
   p.age++;

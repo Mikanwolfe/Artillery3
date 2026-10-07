@@ -24,6 +24,7 @@ class Particles {
 
   explosion(x, y, size, palette = 'shell') {
     const cols = PALETTES[palette];
+    this.add({ x, y, vx: 0, vy: 0, g: 0, drag: 1, life: 0.12, size: 20 + size * 0.5, color: [255, 252, 235] });
     const n = Math.min(90, 24 + size * 0.35);
     for (let i = 0; i < n; i++) {
       const a = Math.random() * TAU;
