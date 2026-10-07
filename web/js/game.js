@@ -6,6 +6,11 @@
 const CHATTINESS = 0.7; // scales every reaction probability in react(); lower = quieter CPUs
 const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
 const SALVO_DELAY = 15; // A3 ProjectileFactory._firingDelay (frames between salvo rounds)
+// Aim guide (human players): a dotted line along the barrel that fades out; while Space is held it
+// becomes the predicted arc for the current charge, still fading after a set distance.
+const AIM_LINE_LEN = 260;
+const AIM_ARC_LEN = 650;
+const AIM_GUIDE_WIND = false; // true = the guide also bends with the wind (much easier)
 const WIND_SCALE = 0.06; // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
 
 // Proportional-control camera: every frame it closes 1/CAM_EASE of the distance to its target.
@@ -199,6 +204,7 @@ class Game {
       this.terrain.flatten(xs[i], 14);
       t.resetRound(xs[i], this.terrain);
     });
+    this.terrain.plantTrees(xs);
   }
 
   // A3 Wind.SetWind: a random direction avoiding the steep vertical bands, magnitude 0..0.5
@@ -266,7 +272,8 @@ class Game {
 
   stepTanks() {
     for (const t of this.tanks) {
-      if (!t.alive) continue;
+      t.tilt += (groundSlope(this.terrain, t.x) - t.tilt) * 0.2;
+      if (!t.alive) { t.y = this.terrain.hAt(t.x); continue; } // wrecks settle into new craters
       const gy = this.terrain.hAt(t.x);
       if (t.y < gy - 0.5) {
         t.falling = true;
@@ -288,6 +295,9 @@ class Game {
     if ((this.terrain.hAt(t.x) - this.terrain.hAt(nx)) / TANK_SPEED > 1.6) return;
     for (const o of this.tanks) {
       if (o !== t && o.alive && Math.abs(o.x - nx) < TANK_W + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
+    }
+    for (const tr of this.terrain.trees) {
+      if (tr.alive && Math.abs(tr.x - nx) < TANK_W / 2 + 3 && Math.abs(tr.x - nx) < Math.abs(tr.x - t.x)) return;
     }
     t.x = nx;
     t.fuel--;
@@ -454,8 +464,9 @@ class Game {
   }
 
   // ------------------------------------------------------------ combat rules
-  impact(p) {
+  impact(p, r) {
     const w = p.w;
+    if (r && r.hit === 'tree' && this.report) this.report.treeHit = true;
     if (w.kind === 'laser') {
       // A3 LaserTargetProjectile: the shell marks a point, the gun's laser hits it
       const m = p.owner.alive ? p.owner.muzzle() : { x: p.owner.x, y: p.owner.y - TANK_H };
@@ -480,6 +491,12 @@ class Game {
   explode(x, y, def, owner, palette = 'shell') {
     if (this.report) this.report.blasts.push({ x, y });
     this.terrain.crater(x, def.explR || 10);
+    for (const t of this.terrain.fellTrees(x, y, Math.max(30, def.dmgR * 0.5))) {
+      const top = this.terrain.hAt(t.x) - this.terrain.treeHeight(t) / 2;
+      for (let i = 0; i < 10; i++) {
+        this.particles.add({ x: t.x, y: top + (Math.random() - 0.5) * 30, vx: (Math.random() - 0.5) * 5, vy: -Math.random() * 4, g: 0.2, drag: 0.97, life: 0.8 + Math.random() * 0.6, size: 4 + Math.random() * 5, color: i % 3 ? [38, 62, 64] : [236, 240, 246] });
+      }
+    }
     for (const t of this.tanks) {
       if (!t.alive) continue;
       const c = t.center();
@@ -563,6 +580,7 @@ class Game {
       else if (dealt >= 80) cands.push({ tank: s, sit: 'hit_big', foe: this.firstVictim(rep, s), p: 0.7 });
       else if (dealt >= 5) cands.push({ tank: s, sit: 'hit', foe: this.firstVictim(rep, s), p: 0.45 });
       else if (self >= 5) cands.push({ tank: s, sit: 'self_hit', p: 0.8 });
+      else if (rep.treeHit) cands.push({ tank: s, sit: 'hit_tree', p: 0.6 });
       else if (rep.blasts.length) {
         const closest = Math.min(...rep.blasts.map(nearest));
         if (closest <= 140) cands.push({ tank: s, sit: 'miss_close', foe: this.nearestEnemy(rep, s), p: 0.6 });
@@ -743,9 +761,11 @@ class Game {
     this.satellite.draw(ctx);
     this.bg.drawRidges(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + VIEW_W);
+    this.terrain.drawTrees(ctx, cam.x, cam.x + VIEW_W);
     const aiming = this.phase === 'aim' ? this.active : null;
     if (aiming && !this.cpu) this.drawGhost(ctx, aiming);
     for (const t of this.tanks) t.draw(ctx, t === aiming);
+    if (aiming && !this.cpu) this.drawAimGuide(ctx, aiming);
     for (const d of this.drops) d.draw(ctx);
     for (const p of this.projectiles) p.draw(ctx);
     for (const l of this.lasers) l.draw(ctx);
@@ -766,6 +786,40 @@ class Game {
     ctx.globalAlpha = 0.45;
     for (let i = 0; i < t.lastTrail.length; i += 2) sq(ctx, t.lastTrail[i], t.lastTrail[i + 1], 5);
     ctx.globalAlpha = 1;
+  }
+
+  drawAimGuide(ctx, t) {
+    const m = t.muzzle();
+    const v = t.aimVec();
+    const dot = (x, y, d, len) => {
+      const a = 0.8 * clamp((len - d) / (len * 0.6), 0, 1); // solid at first, then fades out
+      ctx.fillStyle = `rgba(32,32,74,${a})`;
+      sq(ctx, x, y, 4);
+    };
+    if (t.charge <= 0) {
+      for (let d = 8; d < AIM_LINE_LEN; d += 14) dot(m.x + v.x * d, m.y + v.y * d, d, AIM_LINE_LEN);
+      return;
+    }
+    // predicted arc for the current charge (gravity, terrain and trees; no dispersion)
+    const p = { x: m.x, y: m.y, vx: v.x * t.charge, vy: v.y * t.charge, age: 0 };
+    const wind = AIM_GUIDE_WIND ? this.wind : { x: 0, y: 0 };
+    let travelled = 0;
+    let next = 8;
+    let px = p.x;
+    let py = p.y;
+    for (let i = 0; i < 600 && next < AIM_ARC_LEN; i++) {
+      const r = stepBallistic(p, this.terrain, wind, this.tanks, t);
+      const seg = dist(px, py, p.x, p.y);
+      while (seg > 0 && next <= travelled + seg && next < AIM_ARC_LEN) {
+        const f = (next - travelled) / seg;
+        dot(lerp(px, p.x, f), lerp(py, p.y, f), next, AIM_ARC_LEN);
+        next += 14;
+      }
+      travelled += seg;
+      px = p.x;
+      py = p.y;
+      if (r) break;
+    }
   }
 
   drawHud(ctx) {

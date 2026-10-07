@@ -26,8 +26,8 @@ function solveShot(game, tank, w, target) {
   const maxV = Math.min(w.maxCharge, 140); // beyond this everything leaves the map anyway
   const evalShot = (elev, v) => {
     const m = tank.muzzle(elev, facing);
-    const a = rad(elev);
-    const r = simulateShot(game.terrain, game.wind, game.tanks, tank, m.x, m.y, facing * v * Math.cos(a), -v * Math.sin(a));
+    const u = tank.aimVec(elev, facing); // elevation is relative to the hull
+    const r = simulateShot(game.terrain, game.wind, game.tanks, tank, m.x, m.y, u.x * v, u.y * v);
     let err;
     if (r.hit === 'tank' && r.tank === target) err = 0;
     else err = Math.max(0, dist(r.x, r.y, tc.x, tc.y) - w.dmgR * 0.25);

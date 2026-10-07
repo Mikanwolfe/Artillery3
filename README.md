@@ -16,6 +16,9 @@ It lifts as much as it can from A3s, in the original's world units (2400-wide te
 - **The MAIA satellite** ("Maia-Class Low Orbit Ion Cannon") sits above the map, gains damage every turn, and fires on wherever a satellite-enabled shell lands.
 - **Weapons and shop**: the full A3RData roster with its names, flavour text, rarity colours, autoloader clips, multi-round salvos, aim dispersion, lasers and acid; four equip slots; Health++ / Armour++ on the original cost curve; everyone is paid 500 + half the round's damage (scaled up each round).
 - **Camera**: proportional control (closes 1/10 of the distance per frame) following the tank, the shell and the satellite; drag to look around.
+- **Aim guide** (human players): a dotted line along the barrel that fades out; hold Space and it bends into the predicted arc for the current charge (gravity only, no wind), still fading before the landing point. Tune with `AIM_LINE_LEN`, `AIM_ARC_LEN` and `AIM_GUIDE_WIND` in `web/js/game.js`.
+- **Trees**: pine stands on the battlefield stop shells (they burst in the branches), block driving, and get knocked down by explosions. The AI and the aim guide both account for them.
+- **Vehicles sit on slopes**: tilt follows the average gradient under each vehicle; boxes are sheared vertically rather than rotated. As in A3, elevation is measured from the hull, so every slope pitches your whole elevation range (nose-up lifts the arc, nose-down can stop you lobbing at all).
 - **HUD**: player | vehicle labels with armour / health, minimap, wind marker, charge bar with last-charge tick, fuel bar.
 
 Everything in the world is drawn as plain axis-aligned boxes that never rotate: self-propelled guns (tracks, hull and a rear gun mount; G.W. Tiger, Object 15X and Innocentia each get their own design), a box-art MAIA satellite with solar wings and a swivelling emitter, box pine trees, a windsock for the wind marker, wrecks, lasers, explosions and snow.

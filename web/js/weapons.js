@@ -95,7 +95,7 @@ function weaponValue(w) {
 }
 
 // Advance a ballistic body by one frame. `p` = {x, y, vx, vy, age}. Returns null while flying,
-// or {hit:'terrain'|'tank'|'out', tank?}. Shared by real shots and the AI's simulations.
+// or {hit:'terrain'|'tree'|'tank'|'out', tank?}. Shared by real shots and the AI's simulations.
 function stepBallistic(p, terrain, wind, tanks, owner) {
   p.vy += GRAV;
   p.vx += wind.x;
@@ -108,7 +108,14 @@ function stepBallistic(p, terrain, wind, tanks, owner) {
     p.x += sx;
     p.y += sy;
     if (p.x < -300 || p.x > WORLD_W + 300 || p.y > WORLD_BOTTOM + 200) return { hit: 'out' };
-    if (p.x >= 0 && p.x < WORLD_W && p.y >= terrain.hAt(p.x)) return { hit: 'terrain' };
+    if (p.x >= 0 && p.x < WORLD_W) {
+      const gy = terrain.hAt(p.x);
+      if (p.y >= gy) return { hit: 'terrain' };
+      if (p.y > gy - TREE_MAX_H) {
+        const tree = terrain.treeAt(p.x, p.y);
+        if (tree) return { hit: 'tree', tree };
+      }
+    }
     for (const t of tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;
       if (Math.abs(p.x - t.x) < TANK_W / 2 + 2 && p.y > t.y - TANK_H - 2 && p.y < t.y + 2) return { hit: 'tank', tank: t };

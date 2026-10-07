@@ -4,6 +4,8 @@
 // heightmap: height[x] is the y of the surface (bigger = lower). Drawn as flat stepped columns.
 
 const TERRAIN_STEP = 5; // width of a drawn column (world units)
+const TREE_HALF_W = 8; // tree hitbox half-width
+const TREE_MAX_H = 48; // tallest tree (trunk + 5 tiers of 8)
 
 // Classic 1-D midpoint displacement over n segments (n must be a power of two).
 function midpoint(n, rough, disp, a, b) {
@@ -31,10 +33,12 @@ class Terrain {
   constructor() {
     this.height = new Float32Array(WORLD_W);
     this.color = 'rgb(241,243,246)';
+    this.trees = [];
   }
 
   generate() {
     this.height = generateHeights(0.6 * WORLD_BOTTOM, 0.45);
+    this.trees = [];
     for (let i = 0; i < WORLD_W; i++) this.height[i] = clamp(this.height[i], 450, WORLD_BOTTOM - 150);
   }
 
@@ -63,6 +67,65 @@ class Terrain {
       if (x < 0 || x >= WORLD_W) continue;
       const d = explRad * (1 - Math.cos((TAU * i) / width));
       this.height[x] = Math.min(WORLD_BOTTOM - 10, this.height[x] + d);
+    }
+  }
+
+  // Pine trees on the battlefield: they stop shells (which burst in them) and block driving,
+  // and explosions knock them down. Stands are kept clear of the vehicles' starting spots.
+  plantTrees(avoid) {
+    this.trees = [];
+    for (let x = rng.range(60, 300); x < WORLD_W - 60; x += rng.range(160, 420)) {
+      const stand = rng.int(1, 3);
+      for (let k = 0; k < stand; k++) {
+        const tx = Math.round(x + k * rng.range(16, 26));
+        if (tx > WORLD_W - 30 || avoid.some((a) => Math.abs(a - tx) < 70)) continue;
+        this.trees.push({ x: tx, h: rng.int(3, 5), alive: true });
+      }
+    }
+  }
+
+  treeHeight(t) { return 8 + t.h * 8; }
+
+  // standing tree whose hitbox contains (px, py), if any
+  treeAt(px, py) {
+    for (const t of this.trees) {
+      if (!t.alive || Math.abs(px - t.x) > TREE_HALF_W) continue;
+      const base = this.hAt(t.x);
+      if (py <= base && py > base - this.treeHeight(t)) return t;
+    }
+    return null;
+  }
+
+  // knock down standing trees within r of (x, y); returns the ones felled
+  fellTrees(x, y, r) {
+    const out = [];
+    for (const t of this.trees) {
+      if (!t.alive) continue;
+      const base = this.hAt(t.x);
+      const cy = base - this.treeHeight(t) / 2;
+      if (Math.abs(t.x - x) < r + TREE_HALF_W && Math.abs(cy - y) < r + this.treeHeight(t) / 2) {
+        t.alive = false;
+        out.push(t);
+      }
+    }
+    return out;
+  }
+
+  drawTrees(ctx, x0, x1) {
+    for (const t of this.trees) {
+      if (t.x < x0 - 40 || t.x > x1 + 40) continue;
+      const base = Math.round(this.hAt(t.x));
+      ctx.fillStyle = 'rgb(70,56,50)';
+      if (!t.alive) { ctx.fillRect(t.x - 3, base - 5, 6, 5); continue; } // stump
+      ctx.fillRect(t.x - 2, base - 8, 4, 8);
+      for (let i = 0; i < t.h; i++) {
+        const w = (t.h - i) * 6 + 4;
+        const y = base - 8 - (i + 1) * 8;
+        ctx.fillStyle = 'rgb(38,62,64)';
+        ctx.fillRect(t.x - w / 2, y, w, 8);
+        ctx.fillStyle = 'rgb(236,240,246)';
+        ctx.fillRect(t.x - w / 2, y, Math.ceil(w * 0.45), 2); // snow on the boughs
+      }
     }
   }
 
