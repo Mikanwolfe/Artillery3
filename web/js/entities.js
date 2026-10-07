@@ -425,7 +425,8 @@ class Projectile {
 
   update() {
     const g = this.game;
-    const r = stepBallistic(this, g.terrain, g.wind, g.tanks, this.owner);
+    const r = stepBallistic(this, g.terrain, g.wind, g.targets(), this.owner);
+    g.frontCheck(this);
     if (this.y < this.peak) this.peak = this.y;
     if (this.age % 2 === 0) g.trace(this.x, this.y);
     // soot flecks shed in flight: they fall away behind the shell and fade

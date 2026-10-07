@@ -86,6 +86,29 @@ const WEAPONS = [
     short: 'A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.', long: 'Holding two rounds, it was salvaged from KTNS Hatsuyuki.' }),
 ];
 
+// Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every shop gun's
+// damage is fitted so its per-turn worth (weaponValue without the rarity bonus) follows one curve:
+// (1 + 0.1 per rarity tier) * cost^0.75, divided by 1 + 0.15 per extra autoloader shot, because with
+// the aim guide every follow-up shot in a clip is an aimed shot. The worst autoloaders also lose
+// rounds from their clip (B.C. 155 5->3; Type-11, Kotona Rifle, Terminus Est 3->2; Natsuki 4->3).
+// Starting guns are unchanged.
+const REBALANCE = {
+  howitzer: { dmg: 250 }, claymore: { dmg: 90 }, lensx2: { dmg: 225 }, lance: { dmg: 200 }, coil: { dmg: 65 },
+  obj261: { dmg: 420 }, type11: { dmg: 170, clip: 2 }, lensae: { dmg: 385, clip: 2 }, type91: { dmg: 125 },
+  bc155: { dmg: 205, clip: 3 }, typ67: { dmg: 370 }, gwt290: { dmg: 390 }, cls220: { dmg: 155 }, lfs75: { dmg: 415 },
+  triple: { dmg: 355 }, laser88: { dmg: 485 }, laser15x: { dmg: 1680 }, acid220: { dmg: 485 }, cls770: { dmg: 610, clip: 3 },
+  horizon: { dmg: 680 }, terminus: { dmg: 820, clip: 2 }, massdriver: { dmg: 3000 },
+};
+const CLASSIC = Object.fromEntries(WEAPONS.map((w) => [w.id, { dmg: w.dmg, clip: w.clip }]));
+let BALANCE = 'rebalanced';
+
+// switch the shared weapon objects between the classic and rebalanced numbers
+function applyBalance(mode) {
+  BALANCE = mode === 'classic' ? 'classic' : 'rebalanced';
+  for (const w of WEAPONS) Object.assign(w, CLASSIC[w.id], BALANCE === 'rebalanced' ? REBALANCE[w.id] : {});
+}
+applyBalance(BALANCE);
+
 // A3 shop badge: rarity initial + projectile-type initial, e.g. "Cs" (Common shell), "Gl" (Godly laser)
 const KIND_LETTER = { shell: 's', gun: 'g', laser: 'l', acid: 'a' };
 function badgeText(w) {

@@ -109,7 +109,7 @@ const UI = {
     const queue = cfgs.filter((c) => c.type === 'human');
     const next = () => {
       const c = queue.shift();
-      if (!c) { $('vehicles').hidden = true; this.game.startMatch(cfgs, +$('rounds').value); return; }
+      if (!c) { $('vehicles').hidden = true; this.game.startMatch(cfgs, +$('rounds').value, { balance: $('balance').value, events: $('events').value === 'on' }); return; }
       $('menu').hidden = true;
       $('vehicles').hidden = false;
       $("veh-player").textContent = `${c.name}:`;

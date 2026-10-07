@@ -139,6 +139,10 @@ class Game {
     this.traces = [];
     this.crates = [];
     this.slides = [];
+    this.fronts = [];
+    this.drones = [];
+    this.fogY = null;
+    this.events_on = true; // later-round complications (hazards.js)
     this.salvo = null;
     this.satSeq = null;
     this.satTarget = null;
@@ -246,7 +250,7 @@ class Game {
     }
     const v = hi;
     // does terrain or a tree get in the way?
-    const hit = simulateShot(this.terrain, wind, this.tanks, t, m.x, m.y, u.x * v, u.y * v);
+    const hit = simulateShot(this.terrain, wind, this.targets(), t, m.x, m.y, u.x * v, u.y * v);
     return { v, frac: v / cap, blocked: dist(hit.x, hit.y, tg.x, tg.y) > 45 };
   }
 
@@ -263,7 +267,9 @@ class Game {
     this.ctx.imageSmoothingEnabled = false;
   }
 
-  startMatch(configs, rounds) {
+  // opts: { balance: 'rebalanced' | 'classic', events: bool }
+  startMatch(configs, rounds, opts = {}) {
+    this.setOptions(opts);
     this.sfx.unlock();
     this.turnSerial = 0;
     this.report = null;
@@ -294,6 +300,7 @@ class Game {
     this.placeTanks();
     this.setWind();
     this.windMarker = this.windDir;
+    this.setupHazards();
     this.turnCount = 0;
     this.roundDamage = 0;
     // A3 cycles players in order; the starting player rotates each round
@@ -310,6 +317,12 @@ class Game {
     this.sfx.roundStart();
     this.nextTurn();
     this.cam.snap();
+  }
+
+  setOptions(opts) {
+    this.balance = opts.balance === 'classic' ? 'classic' : 'rebalanced';
+    applyBalance(this.balance);
+    this.events_on = opts.events !== false;
   }
 
   placeTanks() {
@@ -337,6 +350,7 @@ class Game {
   nextTurn() {
     const alive = this.tanks.filter((t) => t.alive);
     if (alive.length <= 1) { this.endRound(); return; }
+    if (this.hazardStep()) return; // drones' bombing run / rising fog, once per cycle
     do { this.turnPtr = (this.turnPtr + 1) % this.order.length; } while (!this.tanks[this.order[this.turnPtr]].alive);
     const t = this.tanks[this.order[this.turnPtr]];
     this.active = t;
@@ -351,6 +365,8 @@ class Game {
     if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
     t.fuel = TANK_FUEL;
     t.shield = false; // a Deflector lasts until its owner's next turn
+    this.fogDamage(t);
+    if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
     t.shotsLeft = t.weapon.clip; // autoloaders reload every turn
     t.firedThisTurn = false;
@@ -383,8 +399,10 @@ class Game {
       if (!t.alive && Math.random() < 0.03) this.particles.puff(t.x, t.y - 14, [70, 70, 78]);
     }
     this.stepTanks();
+    this.updateHazards();
     if (this.phase === 'aim') this.updateAim();
     else if (this.phase === 'resolve') this.updateResolve();
+    else if (this.phase === 'hazard') this.updateHazard();
     this.lasers = this.lasers.filter((l) => l.update());
     this.updateTraces();
     for (const c of this.crates) if (c.alive) c.update(this);
@@ -683,6 +701,12 @@ class Game {
 
   finishShot() {
     const t = this.active;
+    if (this.hazardResolve) { // the drones' bombs have landed: on with the turn order
+      this.hazardResolve = false;
+      if (this.tanks.filter((x) => x.alive).length <= 1) this.endRound();
+      else this.nextTurn();
+      return;
+    }
     if (this.events.length > 40) this.events.splice(0, this.events.length - 40);
     this.react(this.report);
     this.report = null;
@@ -728,7 +752,7 @@ class Game {
       const c = RARITY[w.rarity].color;
       this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
       this.sfx.laser();
-      this.explode(p.x, p.y, w, p.owner, 'laser');
+      this.explode(p.x, p.y, p.force ? { ...w, dmg: w.dmg * FRONT_FORCE_MULT } : w, p.owner, 'laser');
     } else {
       this.explode(p.x, p.y, this.shotBonus(p), p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
@@ -740,6 +764,7 @@ class Game {
         this.sfx.acid();
       }
     }
+    if (p.storm) this.lightning(p, w);
     if ((w.sat || p.uplink) && p.main) this.satTarget = { x: p.x, y: p.y, owner: p.owner };
   }
 
@@ -750,7 +775,7 @@ class Game {
     const speed = Math.hypot(p.vx, p.vy);
     const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg;
     if (p.main && alt >= 0.2) this.particles.text(p.x, p.y - 70, `altitude +${Math.round(alt * 100)}%`, '#ffd84a');
-    return { ...w, dmg: w.dmg * (1 + alt), kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
+    return { ...w, dmg: w.dmg * (1 + alt) * (p.force ? FRONT_FORCE_MULT : 1), kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
   }
 
   explode(x, y, def, owner, palette = 'shell') {
@@ -759,7 +784,7 @@ class Game {
     if (y > this.terrain.hAt(x) - 30) this.terrain.scorch(x, Math.max(14, def.dmgR * 0.3), 0.2); // a faint scorch, ground hits only
     // a blast that catches a supply crate claims it for whoever fired
     for (const c of this.crates) {
-      if (c.alive && owner && dist(c.x, c.y - 9, x, y) < Math.max(40, def.dmgR * 0.6)) this.claimCrate(c, owner);
+      if (c.alive && owner && !owner.isDrone && dist(c.x, c.y - 9, x, y) < Math.max(40, def.dmgR * 0.6)) this.claimCrate(c, owner);
     }
     for (const t of this.terrain.fellTrees(x, y, Math.max(30, def.dmgR * 0.5))) {
       const top = this.terrain.hAt(t.x) - this.terrain.treeHeight(t) / 2;
@@ -767,7 +792,7 @@ class Game {
         this.particles.add({ x: t.x, y: top + (Math.random() - 0.5) * 30, vx: (Math.random() - 0.5) * 5, vy: -Math.random() * 4, g: 0.2, drag: 0.97, life: 0.8 + Math.random() * 0.6, size: 4 + Math.random() * 5, color: i % 3 ? [38, 62, 64] : [236, 240, 246] });
       }
     }
-    for (const t of this.tanks) {
+    for (const t of this.targets()) {
       if (!t.alive) continue;
       const c = t.center();
       const d = dist(c.x, c.y, x, y);
@@ -784,6 +809,8 @@ class Game {
   // A3 Character.Damage: armour soaks hits until it is gone, then health takes them
   damage(t, amt, owner, quiet = false) {
     if (!t.alive || amt <= 0) return;
+    if (owner && owner.isDrone) owner = null; // drone bombs count as the environment
+    if (t.isDrone) { this.damageDrone(t, amt, owner); return; }
     if (t.shield) amt *= SHIELD_FACTOR;
     if (owner && owner !== t) t.lastAttacker = owner; // CPUs retaliate against this tank
     let taken;
@@ -837,7 +864,7 @@ class Game {
         this.events.push(`${owner.name} collects the $${t.bounty} bounty on ${t.name}.`);
         this.ui.notice(`${owner.name} collects the $${t.bounty} bounty on ${t.name}!`);
       }
-    } else this.events.push(`${t.name} destroyed themselves.`);
+    } else this.events.push(owner === t ? `${t.name} destroyed themselves.` : `${t.name} was destroyed.`);
   }
 
   say(tank, text, delay = 0) {
@@ -1138,6 +1165,7 @@ class Game {
   saveMatch(resumeAt) {
     const data = {
       v: 1, resumeAt, completed: resumeAt === 'shop' ? this.round : this.round - 1, rounds: this.rounds, awardMult: this.awardMult,
+      balance: this.balance, events: this.events_on,
       tanks: this.tanks.map((t) => ({
         idx: t.idx, name: t.name, type: t.type, vehicle: t.vehicle.id, money: t.money, wins: t.wins,
         upgrades: t.upgrades, weapons: t.weapons, kits: t.kits, abilities: t.abilities, stats: t.stats,
@@ -1166,6 +1194,7 @@ class Game {
     this.turnSerial = 0;
     this.report = null;
     this.awardMult = d.awardMult || 1;
+    this.setOptions({ balance: d.balance || 'classic', events: d.events === true });
     this.satellite = new Satellite();
     this.tanks = d.tanks.map((s) => {
       const t = new Tank(s.idx, { name: s.name, type: s.type, vehicle: s.vehicle });
@@ -1234,6 +1263,7 @@ class Game {
     ctx.setTransform(s, 0, 0, s, -(cam.x + sx) * s, -(cam.y + sy) * s);
     this.satellite.draw(ctx);
     this.bg.drawRidges(ctx, cam);
+    this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + VIEW_W);
     this.terrain.drawTrees(ctx, cam.x, cam.x + VIEW_W);
     const aiming = this.phase === 'aim' ? this.active : null;
@@ -1246,6 +1276,7 @@ class Game {
     this.drawTraces(ctx);
     for (const p of this.projectiles) p.draw(ctx);
     for (const l of this.lasers) l.draw(ctx);
+    this.drawHazardsFront(ctx, cam);
     this.particles.draw(ctx);
 
     // snow (screen pixels)
@@ -1285,7 +1316,7 @@ class Game {
     let px = p.x;
     let py = p.y;
     for (let i = 0; i < 600 && next < AIM_ARC_LEN; i++) {
-      const r = stepBallistic(p, this.terrain, wind, this.tanks, t);
+      const r = stepBallistic(p, this.terrain, wind, this.targets(), t);
       const seg = dist(px, py, p.x, p.y);
       while (seg > 0 && next <= travelled + seg && next < AIM_ARC_LEN) {
         const f = (next - travelled) / seg;
@@ -1323,6 +1354,7 @@ class Game {
     }
     const live = this.phase === 'aim' ? this.active : null;
     for (const t of this.tanks) t.drawLabel(ctx, t.x - cam.x, t.y - cam.y, t === live);
+    this.drawHazardLabels(ctx, cam);
     this.particles.drawText(ctx, cam);
     for (const t of this.tanks) t.drawSpeech(ctx, t.x - cam.x, t.y - cam.y);
     // shells above the view
@@ -1364,6 +1396,11 @@ class Game {
       ctx.fillRect(x - s / 2, y0 + h / 2 - s / 2, 2, s);
       ctx.fillRect(x + s / 2 - 2, y0 + h / 2 - s / 2, 2, s);
     };
+    for (const d of this.drones) {
+      if (!d.alive) continue;
+      ctx.fillStyle = '#3c3c48';
+      sq(ctx, mx(d.x), y0 + h / 2 - 9, 6);
+    }
     for (const c of this.crates) {
       ctx.fillStyle = '#ffd84a';
       sq(ctx, mx(c.x), y0 + h / 2 - (c.landed ? 0 : 8), 7);
