@@ -277,7 +277,7 @@ const UI = {
           <button data-s="${id}" ${tank.weapons.length > 1 ? '' : 'disabled'}>sell ${money(g.sellValue(w))}</button></div>`;
       }).join('');
       $('shop-upg').innerHTML = [['hp', 'Health++', tank.maxHp], ['armour', 'Armour++', tank.maxArmour]].map(([id, label, cur]) => {
-        const cost = g.upgradeCost(tank.upgrades[id]);
+        const cost = g.upgradeCost(tank, id);
         return `<div class="upg"><span>${label}<br><small>${cur} &gt;&gt; ${Math.round(cur * 1.3)}</small></span>
           <button data-u="${id}" ${tank.money >= cost ? '' : 'disabled'}>${money(cost)}</button></div>`;
       }).join('') + VEHICLE_UPGRADES.map((u) => {

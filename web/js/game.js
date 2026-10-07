@@ -12,6 +12,7 @@ const AIM_LINE_LEN = 260;
 const AIM_ARC_LEN = 650;
 const AIM_GUIDE_WIND = false; // true = the guide also bends with the wind (much easier)
 const WIND_SCALE = 0.06;
+const UPGRADE_PER_POINT = 7.5; // rebalanced Health++ / Armour++: $ per point of health or armour
 // Repair kits: bought in the shop, used with R instead of firing that turn
 const REPAIR_COST = 450;
 const REPAIR_MAX = 3;
@@ -1015,8 +1016,16 @@ class Game {
     this.ui.showShop(t, () => this.nextShop());
   }
 
-  // A3 UI_StatUpgradeButton cost curve
-  upgradeCost(level) { return Math.floor(Math.pow(1.9, level * 0.9) * 40) + 300; }
+  // Health++ / Armour++ price. Each level adds 30% (compounding) to the stat.
+  // Classic: A3 UI_StatUpgradeButton's exponential curve, which makes the first levels a bargain.
+  // Rebalanced: a flat UPGRADE_PER_POINT for every point gained, so defence grows in step with
+  // spending, as offence does with the rebalanced weapon prices.
+  upgradeCost(tank, stat) {
+    const level = tank.upgrades[stat];
+    if (BALANCE === 'classic') return Math.floor(Math.pow(1.9, level * 0.9) * 40) + 300;
+    const cur = stat === 'hp' ? tank.maxHp : tank.maxArmour;
+    return Math.max(100, Math.round((cur * 0.3 * UPGRADE_PER_POINT) / 10) * 10);
+  }
   sellValue(w) { return Math.floor(w.cost / 2); }
 
   buy(tank, kind, id) {
@@ -1043,7 +1052,7 @@ class Game {
       tank.money -= REPAIR_COST;
       tank.kits++;
     } else {
-      const cost = this.upgradeCost(tank.upgrades[id]);
+      const cost = this.upgradeCost(tank, id);
       if (tank.money < cost) { this.sfx.deny(); return false; }
       tank.money -= cost;
       tank.upgrades[id]++;
@@ -1082,7 +1091,8 @@ class Game {
       if (t.type === 'easy' && rng.chance(0.4)) pick = rng.pick(shop.filter((w) => w.cost <= budget));
       else {
         const later = shop.find((w) => w.cost <= budget + horizon);
-        if (later && later !== pick && weaponValue(later) > weaponValue(pick) * 1.4 && t.type !== 'easy') {
+        // save only when what it can afford now is a small step up; a big jump is bought straight away
+        if (later && later !== pick && weaponValue(later) > weaponValue(pick) * 1.4 && weaponValue(pick) < bestOwned * 1.6 && t.type !== 'easy') {
           reserve = Math.min(t.money, later.cost - (full ? this.sellValue(weakest) : 0)); // save up for it
           break;
         }
@@ -1111,7 +1121,7 @@ class Game {
     }
     for (let n = 0; n < 6; n++) {
       const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour';
-      const cost = this.upgradeCost(t.upgrades[stat]);
+      const cost = this.upgradeCost(t, stat);
       if (t.money - reserve < cost) break;
       t.money -= cost;
       t.upgrades[stat]++;
