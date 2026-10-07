@@ -31,8 +31,13 @@ const UI = {
       this.renderPlayers();
     };
     $('start').onclick = () => this.selectVehicles();
+    $('load').onclick = () => {
+      const d = Game.readSave();
+      if (d) { $('menu').hidden = true; this.game.loadMatch(d); }
+    };
+    this.syncLoad();
     $('re-next').onclick = () => { $('roundend').hidden = true; game.afterRoundEnd(); };
-    $('ge-again').onclick = () => { $('gameend').hidden = true; game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); };
+    $('ge-again').onclick = () => { $('gameend').hidden = true; game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); this.syncLoad(); };
     $('resume').onclick = () => game.togglePause();
     $('btn-pause').onclick = () => game.togglePause();
     $('btn-mute').onclick = () => game.toggleMute();
@@ -136,6 +141,25 @@ const UI = {
     }
   },
 
+  // the menu's load button appears when there is an autosaved match to resume
+  syncLoad() {
+    const d = Game.readSave();
+    const b = $('load');
+    b.hidden = !d;
+    if (d) b.textContent = `load (round ${d.completed + 1}/${d.rounds}: ${d.tanks.map((t) => t.name).join(', ')})`;
+  },
+
+  // a system line in the chat log (no speaker)
+  notice(text) {
+    const d = document.createElement('div');
+    d.style.borderColor = '#5b4a8a';
+    d.textContent = text;
+    const box = $('chat');
+    box.appendChild(d);
+    while (box.children.length > 4) box.firstChild.remove();
+    setTimeout(() => d.remove(), 14000);
+  },
+
   chat(tank, text) {
     const d = document.createElement('div');
     d.style.borderColor = tank.color;
@@ -162,6 +186,9 @@ const UI = {
     });
     document.querySelectorAll('#touch [data-q]').forEach((b) => {
       b.addEventListener('pointerdown', (e) => { e.preventDefault(); g.input.queue.push({ cycle: 1 }); });
+    });
+    document.querySelectorAll('#touch [data-rep]').forEach((b) => {
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ repair: true }); });
     });
     document.querySelectorAll('#touch [data-end]').forEach((b) => {
       b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ endTurn: true }); });
@@ -225,6 +252,10 @@ const UI = {
       $('shop-grid').querySelectorAll('[data-w]').forEach((b) => { b.onclick = () => { g.buy(tank, 'weapon', b.dataset.w); render(); }; });
       $('shop-owned').querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { g.sell(tank, b.dataset.s); render(); }; });
       $('shop-upg').querySelectorAll('[data-u]').forEach((b) => { b.onclick = () => { g.buy(tank, 'upgrade', b.dataset.u); render(); }; });
+      $('shop-kits').innerHTML = `<div class="upg"><span>Repair kit <small>(${tank.kits}/${REPAIR_MAX})</small><br>
+        <small>Restores ${Math.round(REPAIR_FRAC * 100)}% health and armour. Using one (R) takes your turn.</small></span>
+        <button data-k="1" ${tank.kits < REPAIR_MAX && tank.money >= REPAIR_COST ? '' : 'disabled'}>${money(REPAIR_COST)}</button></div>`;
+      $('shop-kits').querySelector('[data-k]').onclick = () => { g.buy(tank, 'kit'); render(); };
     };
     render();
     $('shop-done').onclick = done;

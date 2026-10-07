@@ -333,6 +333,8 @@ const TAUNTS = {
     fire_satellite: ['Look up.', 'MAIA sends its regards.', 'Stand still. Please.', 'Orbital courtesy call.'],
     fire_heavy: ['Sorry about the crater.', 'Duck.', 'Heavy mail, incoming.', 'Bring a shovel.'],
     hit_tree: ['That tree had it coming.', 'Timber!', 'Who put a tree there?', 'Deforestation: complete.', 'The tree started it.'],
+    repair: ['Patching up.', 'Just a flesh wound.', 'Duct tape: applied.', 'Back in a minute.', 'Nobody look, I am fixing things.'],
+    crate: ['Mine!', 'Finders keepers.', 'Thanks for the delivery.', 'Christmas came early.', 'Ooh, presents.'],
     round_draw: ['Well. That was mutual.', 'Nobody wins. Everybody loses.', 'We all did great. Terribly.', 'Draw! Tidy.'],
   },
 };

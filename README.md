@@ -14,6 +14,11 @@ It lifts as much as it can from A3s, in the original's world units (2400-wide te
 - **Snowy Day** environment: midpoint-displacement terrain (reduction 0.45), lavender sky, three parallax ridges, snow.
 - **Characters**: G.W. Tiger, Object 15X and Innocentia, each with health + armour (armour soaks hits first) and their original starting gun.
 - **The MAIA satellite** ("Maia-Class Low Orbit Ion Cannon": a round box-built body with arms curling round to the emitter and a wing of antennas on one side, turning as a whole to aim) sits above the map, gains damage every turn, and fires on wherever a satellite-enabled shell lands.
+- **Satellite tiers**: MAIA is upgraded through the match (three levels spread over the rounds: 70 / 120 / 190 damage, growing radius, plus A3's +0.5 per turn within a round), and each level adds arms, wing layers and orbiting rings.
+- **Repair kits**: a consumable from the shop (carry up to 3, $450). Press `R` on your turn to restore 40% of health and armour; it uses that turn's shot. CPUs buy and use them too.
+- **Supply drops** (crates were on A3's design list but never built): a crate parachutes in now and then, drifting with the wind. Drive into it, or catch it in any blast, to claim it: a field repair, cash, an armour plate, or a **MAIA uplink** that makes your next shot call the satellite even with an ordinary gun. CPUs detour for crates in reach. `CRATE_CHANCE` in `web/js/game.js` sets how often they fall.
+- **Economy**: prize money counts only damage that actually came off a target (no overkill, nothing past armour), with acid drip at half rate, so acid and huge shells can no longer flood the payout.
+- **Save / load**: the match autosaves between rounds; the menu's **load** button (which never worked in A3) resumes it.
 - **Weapons and shop**: the full A3RData roster with its names, flavour text, rarity colours, autoloader clips, multi-round salvos, aim dispersion, lasers and acid; four equip slots; Health++ / Armour++ on the original cost curve; everyone is paid 500 + half the round's damage (scaled up each round).
 - **Camera**: proportional control (closes 1/10 of the distance per frame) following the tank, the shell and the satellite; drag to look around.
 - **Aim guide** (human players): a dotted line along the barrel that fades out; hold Space and it bends into the predicted arc for the current charge (gravity only, no wind), still fading before the landing point. Tune with `AIM_LINE_LEN`, `AIM_ARC_LEN` and `AIM_GUIDE_WIND` in `web/js/game.js`.
@@ -29,6 +34,7 @@ Everything in the world is drawn as plain axis-aligned boxes that never rotate: 
 | Aim | `↑` `↓` (`Shift` = fine) |
 | Charge / fire | hold `Space` / release |
 | Switch weapon | `S` (before firing) |
+| Repair kit | `R` (uses your turn) |
 | End turn | `Enter` |
 | Look around | drag (either mouse button) |
 | Mute / pause | `M` / `Esc` |

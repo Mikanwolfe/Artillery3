@@ -11,7 +11,17 @@ const SALVO_DELAY = 15; // A3 ProjectileFactory._firingDelay (frames between sal
 const AIM_LINE_LEN = 260;
 const AIM_ARC_LEN = 650;
 const AIM_GUIDE_WIND = false; // true = the guide also bends with the wind (much easier)
-const WIND_SCALE = 0.06; // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
+const WIND_SCALE = 0.06;
+// Repair kits: bought in the shop, used with R instead of firing that turn
+const REPAIR_COST = 450;
+const REPAIR_MAX = 3;
+const REPAIR_FRAC = 0.4; // of max health and of max armour
+// Prize money counts only damage that actually came off a target (no overkill, no damage past
+// armour), and acid drip at a reduced rate: acid's many small hits used to flood the payout.
+const ACID_PAY_RATE = 0.5;
+const SAVE_KEY = 'a3.save';
+const CRATE_CHANCE = 0.3; // chance of a supply drop at the start of each turn (after the first few)
+const CRATE_MAX = 2; // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
 
 // Proportional-control camera: every frame it closes 1/CAM_EASE of the distance to its target.
 // The target is whatever it's focused on (tank, shell, satellite), or a point the player dragged to.
@@ -73,6 +83,7 @@ class Input {
         break;
       case 'KeyS': case 'KeyE': case 'Tab': if (down && !e.repeat) this.queue.push({ cycle: 1 }); break;
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
+      case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
       case 'Enter': if (down && !e.repeat && this.g.phase === 'aim') this.queue.push({ endTurn: true }); else handled = false; break;
       case 'KeyM': if (down && !e.repeat) this.g.toggleMute(); break;
       case 'Escape': if (down && !e.repeat) this.g.togglePause(); break;
@@ -96,6 +107,7 @@ class Game {
     this.projectiles = [];
     this.drops = [];
     this.lasers = [];
+    this.crates = [];
     this.salvo = null;
     this.satSeq = null;
     this.satTarget = null;
@@ -178,6 +190,7 @@ class Game {
     this.projectiles = [];
     this.drops = [];
     this.lasers = [];
+    this.crates = [];
     this.salvo = null;
     this.satSeq = null;
     this.satTarget = null;
@@ -188,8 +201,15 @@ class Game {
     this.turnCount = 0;
     this.roundDamage = 0;
     // A3 cycles players in order; the starting player rotates each round
+    this.saveMatch('round');
     this.order = this.tanks.map((_, i) => (i + this.round - 1) % this.tanks.length);
     this.turnPtr = -1;
+    const tier = satelliteTier(this.round, this.rounds);
+    if (tier > this.satellite.tier) {
+      this.events.push(`MAIA has been upgraded to Level ${tier}.`);
+      this.ui.notice(`MAIA has been upgraded to Level ${tier}.`);
+    }
+    this.satellite.setTier(tier);
     this.events.push(`Round ${this.round} begins.`);
     this.nextTurn();
     this.cam.snap();
@@ -230,6 +250,7 @@ class Game {
       this.events.push('The wind has changed.');
     }
     this.satellite.newTurn();
+    if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
     t.fuel = TANK_FUEL;
     t.shotsLeft = t.weapon.clip; // autoloaders reload every turn
     t.firedThisTurn = false;
@@ -265,6 +286,8 @@ class Game {
     if (this.phase === 'aim') this.updateAim();
     else if (this.phase === 'resolve') this.updateResolve();
     this.lasers = this.lasers.filter((l) => l.update());
+    for (const c of this.crates) if (c.alive) c.update(this);
+    this.crates = this.crates.filter((c) => c.alive);
     this.windMarker += (this.windDir - this.windMarker) / 20;
     this.cam.update();
     this.shake *= 0.9;
@@ -284,7 +307,53 @@ class Game {
         t.y = gy;
         t.falling = false;
       }
+      // drive over a landed crate to claim it
+      for (const c of this.crates) {
+        if (c.alive && c.landed && Math.abs(c.x - t.x) < TANK_W / 2 + 10 && Math.abs(c.y - t.y) < 30) this.claimCrate(c, t);
+      }
     }
+  }
+
+  spawnCrate() {
+    const total = CRATE_KINDS.reduce((a, k) => a + k.w, 0);
+    let r = rng.next() * total;
+    const kind = CRATE_KINDS.find((k) => (r -= k.w) < 0).id;
+    this.crates.push(new Crate(rng.range(150, WORLD_W - 150), kind));
+    this.events.push('A supply crate is dropping in.');
+    this.ui.notice('Supply drop incoming!');
+  }
+
+  claimCrate(c, t) {
+    if (!c.alive || !t) return;
+    c.alive = false;
+    let desc;
+    if (c.kind === 'repair') {
+      const hp = Math.min(t.maxHp - t.hp, Math.round(t.maxHp * 0.3));
+      const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.2));
+      t.hp += hp;
+      t.armour += ar;
+      desc = `field repair (+${hp + ar})`;
+    } else if (c.kind === 'cash') {
+      const amt = rng.int(3, 8) * 100;
+      t.money += amt;
+      desc = `$${amt}`;
+    } else if (c.kind === 'armour') {
+      const ar = Math.round(t.maxArmour * 0.35);
+      t.armour = Math.min(Math.round(t.maxArmour * 1.5), t.armour + ar);
+      desc = `armour plating (+${ar})`;
+    } else {
+      t.uplink = true;
+      desc = 'a MAIA uplink (next shot calls the satellite)';
+    }
+    this.particles.text(c.x, c.y - 40, desc.split(' (')[0], '#ffd84a', true);
+    for (let i = 0; i < 18; i++) {
+      const a = Math.random() * TAU;
+      this.particles.add({ x: c.x, y: c.y - 9, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 - 1, g: 0.08, drag: 0.95, life: 0.7, size: 4, color: [255, 216, 74] });
+    }
+    this.sfx.buy();
+    this.events.push(`${t.name} claimed a supply crate: ${desc}.`);
+    this.ui.notice(`${t.name} claimed a supply crate: ${desc}.`);
+    if (t.isCpu && Math.random() < 0.5) this.banter(t, 'crate');
   }
 
   moveTank(t, dir) {
@@ -316,6 +385,9 @@ class Game {
           t.cycleWeapon(a.cycle);
           t.shotsLeft = t.weapon.clip;
           this.sfx.click();
+        } else if (a.repair) {
+          this.useRepair(t);
+          return;
         } else if (a.endTurn) {
           this.sfx.chargeStop();
           this.charging = false;
@@ -353,7 +425,8 @@ class Game {
     t.shotsLeft--;
     t.firedThisTurn = true;
     const dir = t.aimVec();
-    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo, timer: 0, first: true };
+    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo, timer: 0, first: true, uplink: !!t.uplink };
+    t.uplink = false;
     t.lastCharge = t.charge / w.maxCharge;
     t.charge = 0;
     t.recoil = 1;
@@ -387,6 +460,7 @@ class Game {
     const vx = s.vx + (rng.next() - 0.5) * s.w.disp;
     const vy = s.vy + (rng.next() - 0.5) * s.w.disp;
     const p = new Projectile(this, s.w, t, m.x, m.y, vx, vy, s.first);
+    p.uplink = s.uplink && s.first;
     if (s.first) {
       p.rec = [];
       this.cam.follow(p);
@@ -485,12 +559,16 @@ class Game {
         this.sfx.acid();
       }
     }
-    if (w.sat && p.main) this.satTarget = { x: p.x, y: p.y, owner: p.owner };
+    if ((w.sat || p.uplink) && p.main) this.satTarget = { x: p.x, y: p.y, owner: p.owner };
   }
 
   explode(x, y, def, owner, palette = 'shell') {
     if (this.report) this.report.blasts.push({ x, y });
     this.terrain.crater(x, def.explR || 10);
+    // a blast that catches a supply crate claims it for whoever fired
+    for (const c of this.crates) {
+      if (c.alive && owner && dist(c.x, c.y - 9, x, y) < Math.max(40, def.dmgR * 0.6)) this.claimCrate(c, owner);
+    }
     for (const t of this.terrain.fellTrees(x, y, Math.max(30, def.dmgR * 0.5))) {
       const top = this.terrain.hAt(t.x) - this.terrain.treeHeight(t) / 2;
       for (let i = 0; i < 10; i++) {
@@ -511,17 +589,23 @@ class Game {
   // A3 Character.Damage: armour soaks hits until it is gone, then health takes them
   damage(t, amt, owner, quiet = false) {
     if (!t.alive || amt <= 0) return;
-    if (t.armour > 0) t.armour = Math.max(0, t.armour - amt);
-    else t.hp -= amt;
+    let taken;
+    if (t.armour > 0) {
+      taken = Math.min(amt, t.armour);
+      t.armour -= taken;
+    } else {
+      taken = Math.min(amt, t.hp);
+      t.hp -= amt;
+    }
     t.flash = 1;
-    this.roundDamage += amt;
+    this.roundDamage += taken * (quiet ? ACID_PAY_RATE : 1);
     if (this.report) {
       const m = owner ? this.report.dmg : this.report.fall;
       m.set(t, (m.get(t) || 0) + amt);
     }
     if (owner && owner !== t) {
-      owner.stats.dealt += amt;
-      owner.roundDealt += amt;
+      owner.stats.dealt += taken;
+      owner.roundDealt += taken;
     }
     if (quiet) {
       t.dmgAcc += amt;
@@ -640,11 +724,15 @@ class Game {
       this.sfx.win();
       this.events.push(`${winner.name} wins round ${this.round}.`);
     } else this.events.push(`Round ${this.round} ends in mutual destruction.`);
-    // A3 CombatGameState: everyone gets 500 + half the round's total damage, scaled up each round
-    const award = Math.round(500 + (this.roundDamage / 2) * this.awardMult);
+    // A3 CombatGameState paid everyone 500 + half the round's damage (scaled up each round). That
+    // counted raw damage, so overkill and acid floods inflated it; we count only damage that came
+    // off a target (acid drip at ACID_PAY_RATE), and so count it in full to keep the same pace.
+    const award = Math.round(500 + this.roundDamage * this.awardMult);
     this.awardMult += 0.08;
     for (const t of this.tanks) t.money += award;
     const last = this.round >= this.rounds;
+    if (last) this.clearSave();
+    else this.saveMatch('shop');
     this.ui.showRoundEnd({ round: this.round, winner, tanks: this.tanks, award }, last);
     const cpus = this.tanks.filter((t) => t.isCpu);
     if (winner) {
@@ -657,6 +745,7 @@ class Game {
 
   afterRoundEnd() {
     if (this.round >= this.rounds) {
+      this.clearSave();
       const st = this.tanks.slice().sort((a, b) => b.wins - a.wins || b.stats.dealt - a.stats.dealt);
       this.phase = 'gameEnd';
       this.ui.showHud(false);
@@ -686,6 +775,10 @@ class Game {
       if (tank.weapons.includes(id) || tank.weapons.length >= MAX_WEAPONS || tank.money < w.cost) { this.sfx.deny(); return false; }
       tank.money -= w.cost;
       tank.weapons.push(id);
+    } else if (kind === 'kit') {
+      if (tank.kits >= REPAIR_MAX || tank.money < REPAIR_COST) { this.sfx.deny(); return false; }
+      tank.money -= REPAIR_COST;
+      tank.kits++;
     } else {
       const cost = this.upgradeCost(tank.upgrades[id]);
       if (tank.money < cost) { this.sfx.deny(); return false; }
@@ -706,6 +799,10 @@ class Game {
   }
 
   autoBuy(t) {
+    if (t.kits < 2 && t.money >= REPAIR_COST && rng.chance(0.6)) {
+      t.money -= REPAIR_COST;
+      t.kits++;
+    }
     for (let n = 0; n < 4; n++) {
       const afford = WEAPONS.filter((w) => w.cost <= t.money && !t.weapons.includes(w.id)).sort((a, b) => b.cost - a.cost);
       if (afford.length && t.weapons.length < MAX_WEAPONS && rng.chance(0.75)) {
@@ -719,6 +816,90 @@ class Game {
       t.money -= cost;
       t.upgrades[stat]++;
     }
+  }
+
+  // Repair kit: restores part of health and armour, and uses up this turn (no shot).
+  useRepair(t) {
+    if (this.phase !== 'aim' || t !== this.active || t.kits <= 0 || t.firedThisTurn) { this.sfx.deny(); return false; }
+    t.kits--;
+    const hp = Math.min(t.maxHp - t.hp, Math.round(t.maxHp * REPAIR_FRAC));
+    const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * REPAIR_FRAC));
+    t.hp += hp;
+    t.armour += ar;
+    this.particles.text(t.x, t.y - 40, `+${hp + ar}`, '#8fe0a0', true);
+    for (let i = 0; i < 16; i++) {
+      this.particles.add({ x: t.x + (Math.random() - 0.5) * 30, y: t.y - Math.random() * 20, vx: 0, vy: -0.6 - Math.random(), g: 0, drag: 0.99, life: 0.9, size: 4, color: [90, 200, 120] });
+    }
+    this.sfx.repair();
+    this.events.push(`${t.name} used a repair kit (+${hp} health, +${ar} armour).`);
+    if (t.isCpu && Math.random() < 0.6) this.banter(t, 'repair');
+    // using the kit is the turn
+    this.sfx.chargeStop();
+    this.charging = false;
+    t.charge = 0;
+    t.shotsLeft = 0;
+    t.firedThisTurn = true;
+    this.salvo = null;
+    this.report = null;
+    this.phase = 'resolve';
+    this.resolveSteps = 0;
+    this.quiet = 0;
+    return true;
+  }
+
+  // ------------------------------------------------------------ save / load
+  // The match autosaves between rounds (A3's menu had a "load" button that never worked).
+  saveMatch(resumeAt) {
+    const data = {
+      v: 1, resumeAt, completed: resumeAt === 'shop' ? this.round : this.round - 1, rounds: this.rounds, awardMult: this.awardMult,
+      tanks: this.tanks.map((t) => ({
+        idx: t.idx, name: t.name, type: t.type, vehicle: t.vehicle.id, money: t.money, wins: t.wins,
+        upgrades: t.upgrades, weapons: t.weapons, kits: t.kits, stats: t.stats,
+      })),
+      savedAt: Date.now(),
+    };
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ }
+  }
+
+  clearSave() {
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
+  }
+
+  static readSave() {
+    try {
+      const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      if (!d || d.v !== 1 || !Array.isArray(d.tanks) || d.tanks.length < 2) return null;
+      return d;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  loadMatch(d) {
+    this.sfx.unlock();
+    this.turnSerial = 0;
+    this.report = null;
+    this.awardMult = d.awardMult || 1;
+    this.satellite = new Satellite();
+    this.tanks = d.tanks.map((s) => {
+      const t = new Tank(s.idx, { name: s.name, type: s.type, vehicle: s.vehicle });
+      t.money = s.money | 0;
+      t.wins = s.wins | 0;
+      t.upgrades = { hp: s.upgrades?.hp | 0, armour: s.upgrades?.armour | 0 };
+      const ws = (s.weapons || []).filter((id) => WEAPON_BY_ID[id]).slice(0, MAX_WEAPONS);
+      t.weapons = ws.length ? ws : [t.vehicle.weapon.id];
+      t.kits = clamp(s.kits | 0, 0, REPAIR_MAX);
+      t.stats = { dealt: s.stats?.dealt || 0, kills: s.stats?.kills | 0 };
+      t.resetRound(WORLD_W / 2, this.terrain);
+      return t;
+    });
+    this.rounds = d.rounds;
+    this.round = d.completed;
+    this.satellite.setTier(satelliteTier(Math.max(1, this.round), this.rounds));
+    this.events = [`Match loaded after round ${this.round}.`];
+    this.ui.showHud(true);
+    if (d.resumeAt === 'shop') this.afterRoundEnd();
+    else this.startRound();
   }
 
   // ------------------------------------------------------------ misc controls
@@ -767,6 +948,7 @@ class Game {
     for (const t of this.tanks) t.draw(ctx, t === aiming);
     if (aiming && !this.cpu) this.drawAimGuide(ctx, aiming);
     for (const d of this.drops) d.draw(ctx);
+    for (const c of this.crates) c.draw(ctx);
     for (const p of this.projectiles) p.draw(ctx);
     for (const l of this.lasers) l.draw(ctx);
     this.particles.draw(ctx);
@@ -873,6 +1055,10 @@ class Game {
       ctx.fillRect(x - s / 2, y0 + h / 2 - s / 2, 2, s);
       ctx.fillRect(x + s / 2 - 2, y0 + h / 2 - s / 2, 2, s);
     };
+    for (const c of this.crates) {
+      ctx.fillStyle = '#ffd84a';
+      sq(ctx, mx(c.x), y0 + h / 2 - (c.landed ? 0 : 8), 7);
+    }
     if (this.active) box(mx(this.active.x), 16, 'purple');
     const shell = this.projectiles[0];
     if (shell) box(mx(shell.x), 10, 'orange');
