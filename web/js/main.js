@@ -1,0 +1,35 @@
+'use strict';
+// Bootstrap. URL params (handy for testing):
+//   ?seed=N   deterministic gameplay RNG
+//   ?auto=N   skip the menu and run an N-tank all-CPU match
+//   ?speed=X  simulation speed multiplier
+(function () {
+  const params = new URLSearchParams(location.search);
+  if (params.has('seed')) rng.seed(+params.get('seed'));
+  const game = new Game($('view'), UI);
+  UI.init(game);
+  window.A3 = game;
+  if (params.has('speed')) game.speed = +params.get('speed') || 1;
+
+  const stage = $('stage');
+  const resize = () => game.resize(stage.clientWidth);
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  if (params.has('auto')) {
+    const types = (params.get('types') || 'normal,hard,easy,hard').split(',');
+    const n = clamp(+params.get('auto') || 3, 2, 4);
+    const cfgs = [];
+    for (let i = 0; i < n; i++) cfgs.push({ name: AI_NAMES[i], type: types[i % types.length] });
+    game.startMatch(cfgs, +params.get('rounds') || 3);
+  }
+
+  let last = performance.now();
+  function loop(ts) {
+    const dt = (ts - last) / 1000;
+    last = ts;
+    try { game.frame(dt); } catch (e) { console.error(e); }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();

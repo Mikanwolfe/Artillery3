@@ -4,6 +4,28 @@
 
 --
 
+### Update: web rewrite
+
+The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step, no dependencies, no image or audio files (everything is drawn and synthesised).
+Open `web/index.html` in a browser, or serve the folder (e.g. `python3 -m http.server -d web`).
+
+It keeps what made A3 interesting (midpoint-displacement terrain, charge-and-release firing, wind, craters, the weapon roster, the shop between rounds) and drops the class-hierarchy machinery that was the learning exercise. Hotseat for 2-4 players, with CPU opponents.
+
+| Command | Key |
+| --- | --- |
+| Move | `←` `→` / `A` `D` (uses fuel) |
+| Aim | `↑` `↓` / `W` `S` (`Shift` = fine) |
+| Charge / fire | hold `Space` / release |
+| Switch weapon | `Q` `E` / `Tab` / `1`-`9` |
+| Mute / pause | `M` / `Esc` |
+
+**CPU players** come in Easy / Normal / Hard (a brute-force ballistic solver using the real physics, plus aim error) and **CPU · LLM**.
+An LLM player asks an OpenAI-compatible chat endpoint for *strategy* only (target, weapon, whether to reposition) and a taunt; the aiming maths stays local, and any failure falls back to the built-in AI.
+Enter a key under "CPU brains" in the menu. It is stored in your browser's `localStorage` and sent only to the Base URL shown there, so use a throwaway key with a spend limit. Browsers may block direct calls to some API hosts (CORS); if so, point Base URL at a small proxy.
+
+Layout: `web/js/` — `terrain.js` (midpoint displacement + crater/shaft carving), `weapons.js` (roster + shared ballistic stepper), `ai.js` (solver, CPU controller, LLM brain), `game.js` (state machine, rules, rendering), `ui.js` (menu/HUD/shop), plus `background.js`, `particles.js`, `audio.js`, `entities.js`.
+Test hooks: `?seed=N` (deterministic), `?auto=N&types=hard,normal&speed=40` (all-CPU match).
+
 ### Update: 7/08/19
 This repository seems to be broken, things got lost along the way. Recently, my machine has been formatted/reset and I've lost the source code. The release still works and all the files should still be here, however, something's broken. Will update when fixed.
 
