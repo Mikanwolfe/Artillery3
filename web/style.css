@@ -39,6 +39,8 @@ input[type=text], select { font: inherit; color: var(--ink); background: #fff; b
 .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(40, 36, 70, 0.25); }
 .panel { background: var(--box); border: 1px solid var(--line); padding: 1em 1.5em; max-height: 94%; overflow: auto; text-align: center; }
 .panel.small { padding: 1em 3em; }
+#re-end { margin-left: 0.5em; }
+.end-btn { margin-top: 0.8em; }
 .panel.wide { width: 80%; }
 h1 { margin: 0; font-weight: normal; font-size: 3.4em; color: var(--accent); letter-spacing: 0.02em; }
 h2 { margin: 0 0 0.4em; font-weight: normal; font-size: 1.8em; color: var(--accent); }

@@ -108,9 +108,16 @@ const SHIELD_FACTOR = 0.5;
 const WEAPON_BY_ID = Object.fromEntries([...WEAPONS, ...VEHICLES.map((v) => v.weapon)].map((w) => [w.id, w]));
 const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
 
-// rough per-turn damage, used by the AI to rank weapons
+// Rough worth of a weapon per turn, used by CPUs to rank, buy and pick weapons: damage over the
+// whole clip and salvo, scaled by blast radius (easier to hit with) and spread (harder), plus acid
+// and MAIA strikes. Rarity adds a little on top for what this doesn't capture.
 function weaponValue(w) {
-  return w.dmg * w.salvo * Math.min(w.clip, 3) * (w.sat ? 1.3 : 1);
+  const shots = w.salvo * Math.min(w.clip, 4);
+  const radius = Math.sqrt(w.dmgR / 80);
+  const spread = 1 / (1 + w.disp * (w.salvo > 1 ? 0.05 : 0.12));
+  const acid = w.acid * 60 * shots;
+  const sat = w.sat ? 110 * Math.min(w.clip, 3) : 0;
+  return (w.dmg * shots * radius * spread + acid + sat) * (1 + 0.12 * (w.rarity - 1));
 }
 
 // Advance a ballistic body by one frame. `p` = {x, y, vx, vy, age}. Returns null while flying,
