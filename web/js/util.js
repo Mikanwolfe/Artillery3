@@ -10,6 +10,22 @@ const H = 576;
 const VIEW_W = 1600;
 const VIEW_H = 900;
 const VIEW_SCALE = W / VIEW_W;
+const HUD_FONT = '"Cascadia Mono", ui-monospace, Menlo, Consolas, monospace';
+// canvas HUD palette (matches style.css)
+const HUD = {
+  plate: 'rgba(18,17,25,0.86)', line: '#312d42', ash: '#7a7490', dim: '#aba5c0', fg: '#e4def2', bright: '#ffffff',
+  accent: '#c3b0ff', hot: '#ff7c66', cool: '#78d8c4', gold: '#f2c45a', plateInk: '#17132a',
+};
+// a short readout on its own dark plate (numbers beside bars, captions over the scene)
+function plateText(ctx, txt, x, y, color, align = 'center') {
+  ctx.textAlign = align;
+  const w = ctx.measureText(String(txt)).width + 8;
+  const x0 = align === 'right' ? x - w : align === 'left' ? x : x - w / 2;
+  ctx.fillStyle = HUD.plate;
+  ctx.fillRect(Math.round(x0), y - 13, Math.round(w), 17);
+  ctx.fillStyle = color;
+  ctx.fillText(txt, align === 'right' ? x - 4 : align === 'left' ? x + 4 : x, y);
+}
 const WORLD_W = 2400; // Constants.TerrainWidth
 const WORLD_BOTTOM = 1800; // Constants.TerrainDepth
 const GRAV = 0.6; // Constants.Gravity, px / frame^2

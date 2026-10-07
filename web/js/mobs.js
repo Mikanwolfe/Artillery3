@@ -167,13 +167,13 @@ class Mob {
   drawLabel(ctx, sx, sy) {
     if (!this.alive) return;
     if (this.kind === 'mothership') {
-      ctx.fillStyle = 'rgba(232,230,244,0.88)';
+      ctx.fillStyle = HUD.plate;
       ctx.fillRect(Math.round(sx - 130), Math.round(sy - 128), 260, 30);
-      ctx.fillStyle = 'rgb(184,67,58)';
+      ctx.fillStyle = HUD.hot;
       ctx.fillRect(Math.round(sx - 124), Math.round(sy - 108), Math.round(248 * clamp(this.hp / this.maxHp, 0, 1)), 6);
-      ctx.font = '14px "Maven Pro", Verdana, sans-serif';
+      ctx.font = `12px ${HUD_FONT}`;
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#20204a';
+      ctx.fillStyle = HUD.fg;
       ctx.fillText(`${this.name} · ${Math.ceil(this.hp)}`, Math.round(sx), Math.round(sy - 113));
       return;
     }

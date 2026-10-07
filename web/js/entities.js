@@ -201,16 +201,16 @@ class Tank {
   drawLabel(ctx, sx, sy, active) {
     if (!this.alive) return;
     ctx.textAlign = 'center';
-    ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+    ctx.font = `13px ${HUD_FONT}`;
     const title = `${this.name} | ${this.vehicle.name}`;
     const tw = ctx.measureText(title).width + 24;
-    ctx.fillStyle = 'rgba(232,230,244,0.88)';
+    ctx.fillStyle = HUD.plate;
     ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 124), Math.round(tw), 20);
     if (active) {
       ctx.fillStyle = this.color;
       ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 124), 5, 20);
     }
-    ctx.fillStyle = active ? '#20204a' : '#4a4a72';
+    ctx.fillStyle = active ? HUD.bright : HUD.dim;
     ctx.fillText(title, Math.round(sx), Math.round(sy - 109));
     // a CPU's grudge: a square in the colour of whoever it is out for
     if (this.isCpu && this.lastAttacker && this.lastAttacker.alive) {
@@ -219,49 +219,48 @@ class Tank {
     }
     // bounty on the match leader
     if (this.bounty > 0) {
-      ctx.fillStyle = '#ffd84a';
+      ctx.fillStyle = HUD.gold;
       ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 124), 48, 20);
-      ctx.fillStyle = '#20204a';
-      ctx.font = '13px "Maven Pro", Verdana, sans-serif';
+      ctx.fillStyle = HUD.plateInk;
+      ctx.font = `12px ${HUD_FONT}`;
       ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 109));
-      ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+      ctx.font = `13px ${HUD_FONT}`;
     }
     // armour | health bar | health  (A3 layout)
     const bw = 100;
-    ctx.fillStyle = 'rgba(232,230,244,0.88)';
+    ctx.fillStyle = HUD.plate;
     ctx.fillRect(Math.round(sx - bw / 2), Math.round(sy - 100), bw, 16);
-    ctx.fillStyle = 'rgb(87,128,109)';
+    ctx.fillStyle = HUD.line;
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 96), bw - 12, 8);
+    ctx.fillStyle = HUD.cool;
     ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 96), Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 8);
-    ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+    ctx.font = `13px ${HUD_FONT}`;
     ctx.textAlign = 'right';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(Math.ceil(this.armour), Math.round(sx - bw / 2 - 6), Math.round(sy - 86));
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#5a5a7a';
-    ctx.fillText(Math.ceil(this.hp), Math.round(sx + bw / 2 + 6), Math.round(sy - 86));
+    plateText(ctx, Math.ceil(this.armour), Math.round(sx - bw / 2 - 2), Math.round(sy - 86), HUD.accent, 'right');
+    plateText(ctx, Math.ceil(this.hp), Math.round(sx + bw / 2 + 2), Math.round(sy - 86), HUD.cool, 'left');
     if (active) {
       const w = this.weapon;
-      ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+      ctx.font = `13px ${HUD_FONT}`;
       ctx.textAlign = 'center';
       const ww = ctx.measureText(w.name).width + 30;
-      ctx.fillStyle = 'rgba(200,200,214,0.88)';
+      ctx.fillStyle = HUD.plate;
       ctx.fillRect(Math.round(sx - ww / 2), Math.round(sy + 18), Math.round(ww), 20);
       // A3 badge: rarity + type letters in a square outlined in the rarity colour
       const bx = Math.round(sx - ww / 2 - 26);
       const by = Math.round(sy + 16);
-      const rc = RARITY[w.rarity].color;
-      ctx.fillStyle = 'rgba(200,200,214,0.88)';
+      const rc = RARITY[w.rarity].ui;
+      ctx.fillStyle = HUD.plate;
       ctx.fillRect(bx, by, 24, 24);
       ctx.fillStyle = rc;
       ctx.fillRect(bx, by, 24, 1); ctx.fillRect(bx, by + 23, 24, 1); ctx.fillRect(bx, by, 1, 24); ctx.fillRect(bx + 23, by, 1, 24);
-      ctx.font = '14px "Maven Pro", Verdana, sans-serif';
+      ctx.font = `12px ${HUD_FONT}`;
       ctx.fillText(badgeText(w), bx + 12, by + 17);
-      ctx.font = '15px "Maven Pro", Verdana, sans-serif';
-      ctx.fillStyle = w.rarity === 7 ? '#20204a' : RARITY[w.rarity].color;
+      ctx.font = `13px ${HUD_FONT}`;
+      ctx.fillStyle = RARITY[w.rarity].ui;
       ctx.fillText(w.name, Math.round(sx), Math.round(sy + 33));
       // autoloader rounds left this turn
       for (let i = 0; i < w.clip; i++) {
-        ctx.fillStyle = i < this.shotsLeft ? '#4682b4' : 'rgba(40,40,70,0.35)';
+        ctx.fillStyle = i < this.shotsLeft ? HUD.accent : HUD.plate;
         ctx.fillRect(Math.round(sx - (w.clip * 10) / 2 + i * 10), Math.round(sy + 42), 7, 7);
       }
       // MAIA uplink from a supply crate: the next shot calls the satellite
@@ -275,22 +274,22 @@ class Tank {
       for (let i = 0; i < this.kits; i++) {
         const kx = Math.round(sx + ww / 2 + 10 + i * 14);
         const ky = Math.round(sy + 22);
-        ctx.fillStyle = '#3e8a5a';
+        ctx.fillStyle = HUD.cool;
         ctx.fillRect(kx + 4, ky, 4, 12);
         ctx.fillRect(kx, ky + 4, 12, 4);
       }
       // abilities owned: "key tag", lit up when armed, greyed with turns left while recharging
       const tags = ABILITIES.filter((a) => this.abilities[a.id] > 0);
-      ctx.font = '13px "Maven Pro", Verdana, sans-serif';
+      ctx.font = `12px ${HUD_FONT}`;
       tags.forEach((a, i) => {
         const on = this.armed[a.id] || (a.id === 'shield' && this.shield);
         const cd = this.cooldown[a.id];
         const txt = cd > 0 && !on ? `${a.key} ${a.tag} · ${cd}` : `${a.key} ${a.tag}`;
         const bw2 = 64;
         const ax = Math.round(sx - (tags.length * (bw2 + 4)) / 2 + i * (bw2 + 4));
-        ctx.fillStyle = on ? '#ffd84a' : cd > 0 ? 'rgba(120,120,140,0.6)' : 'rgba(200,200,214,0.88)';
+        ctx.fillStyle = on ? HUD.gold : HUD.plate;
         ctx.fillRect(ax, Math.round(sy + 54), bw2, 18);
-        ctx.fillStyle = '#20204a';
+        ctx.fillStyle = on ? HUD.plateInk : cd > 0 ? HUD.ash : HUD.fg;
         ctx.fillText(txt, ax + bw2 / 2, Math.round(sy + 67));
       });
     }
@@ -299,7 +298,7 @@ class Tank {
   drawSpeech(ctx, sx, sy) {
     const s = this.speech;
     if (!s || !this.alive || s.age < 0) return;
-    ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+    ctx.font = `13px ${HUD_FONT}`;
     const maxW = 260;
     const words = s.text.split(/\s+/);
     const lines = [];
@@ -315,12 +314,12 @@ class Tank {
     const bx = Math.round(clamp(sx - bw / 2, 8, VIEW_W - bw - 8));
     const by = Math.round(sy - 140 - bh);
     ctx.globalAlpha = clamp((s.dur - s.age) * 3, 0, 1);
-    ctx.fillStyle = 'rgba(250,250,255,0.95)';
+    ctx.fillStyle = HUD.plate;
     ctx.fillRect(bx, by, bw, bh);
     ctx.fillStyle = this.color;
     ctx.fillRect(bx, by, 5, bh);
     sq(ctx, sx, by + bh + 5, 8);
-    ctx.fillStyle = '#20204a';
+    ctx.fillStyle = HUD.fg;
     ctx.textAlign = 'center';
     lines.forEach((l, i) => ctx.fillText(l, bx + 3 + bw / 2, by + 6 + lh * (i + 0.75)));
     ctx.globalAlpha = 1;

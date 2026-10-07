@@ -13,21 +13,22 @@
   <!-- in-game HUD (the rest is drawn on the canvas, as in the original) -->
   <div id="hud" hidden>
     <div id="topleft">
-      <span id="roundinfo"></span>
-      <span id="turn"></span>
+      <span id="roundinfo" class="chip"></span>
+      <span id="turn" class="chip"></span>
       <button class="icon" id="btn-mute" title="Mute (M)">♪</button>
       <button class="icon" id="btn-music" title="Music on/off (N)">♫</button>
+      <button class="icon" id="btn-keys" title="Controls (H)">?</button>
       <button class="icon" id="btn-pause" title="Pause (Esc)">Ⅱ</button>
     </div>
     <div id="chat"></div>
-    <div id="hints">←→ move · ↑↓ aim (Shift: fine) · hold <b>Space</b> to charge, release to fire · <b>S</b> switch weapon · <b>R</b> repair kit · <b>1</b> double shot · <b>2</b> overcharge · <b>3</b> deflector · <b>4</b> barrier · <b>Enter</b> end turn · <b>click</b> to mark a target (shows the power needed) · drag to look around</div>
+    <div id="hints"><span><b>←→</b> move</span><span><b>↑↓</b> aim</span><span><b>Space</b> hold to fire</span><span><b>S</b> weapon</span><span><b>Enter</b> end turn</span><span><b>H</b> all controls</span></div>
     <div id="touch">
       <div class="pad">
         <button data-k="left">◀</button><button data-k="right">▶</button>
         <button data-k="up">▲</button><button data-k="down">▼</button>
       </div>
       <div class="pad r">
-        <button data-q="1">S</button><button data-end="1">END</button>
+        <button data-q="1">WPN</button><button data-end="1">END</button>
         <button data-rep="1">REP</button><button data-ab="double">×2</button>
         <button data-ab="over">OVR</button><button data-ab="shield">SHD</button><button data-ab="barrier">BAR</button>
         <button data-k="charge" class="fire">FIRE</button>
@@ -37,107 +38,116 @@
     <div id="dispatch" hidden><b id="dispatch-title"></b><span id="dispatch-text"></span></div>
   </div>
 
-  <!-- main menu, laid out like the original -->
+  <!-- main menu: a rail on the left, the live map behind it -->
   <section id="menu" class="screen left">
     <div class="side">
-      <h1>Artillery3</h1>
-      <p class="by">by mikanwolfe <a id="version" target="_blank" rel="noopener"></a></p>
+      <header class="brand">
+        <h1>Artillery<em>3</em></h1>
+        <p class="by mgh">by mikanwolfe · <a id="version" target="_blank" rel="noopener"></a></p>
+      </header>
+
+      <h2 class="sec">Crew <span class="grip"></span></h2>
       <div id="players"></div>
-      <div class="row-btns">
-        <button id="add-player">+ player</button>
-        <button id="rem-player">− player</button>
-        <label class="inline">rounds
-          <select id="rounds"><option>3</option><option selected>5</option><option>7</option><option>10</option><option value="0">∞</option></select>
-        </label>
+      <button id="add-player" class="ghost">+ add player</button>
+
+      <h2 class="sec">Match <span class="grip"></span></h2>
+      <div class="opts">
+        <span class="mgh">Rounds</span><div class="seg" data-opt="rounds"><button data-v="3">3</button><button data-v="5">5</button><button data-v="7">7</button><button data-v="10">10</button><button data-v="0" title="Endless">∞</button></div>
+        <span class="mgh">Weapons</span><div class="seg" data-opt="balance"><button data-v="rebalanced">Rebalanced</button><button data-v="classic">Classic</button></div>
+        <span class="mgh">Events</span><div class="seg" data-opt="events"><button data-v="on">On</button><button data-v="off">Off</button></div>
+        <span class="mgh">Map</span><div class="seg wrap" data-opt="map"><button data-v="random">Random</button><button data-v="snow">Snow</button><button data-v="forest">Forest</button><button data-v="desert">Dunes</button><button data-v="alstroemeria">Alstroemeria</button></div>
       </div>
-      <div class="row-btns">
-        <label class="inline">weapons
-          <select id="balance"><option value="rebalanced" selected>rebalanced</option><option value="classic">classic</option></select>
-        </label>
-        <label class="inline">events
-          <select id="events"><option value="on" selected>on</option><option value="off">off</option></select>
-        </label>
-        <label class="inline">map
-          <select id="map"><option value="random" selected>random</option><option value="snow">snowy day</option><option value="forest">autumn forest</option><option value="desert">dune sea</option><option value="alstroemeria">alstroemeria</option></select>
-        </label>
+
+      <div class="go">
+        <button id="start" class="primary">Start match ▸</button>
+        <button id="load" class="ghost" hidden>Resume</button>
       </div>
-      <button id="start" class="primary">start</button>
-      <button id="load" hidden>load</button>
-      <details class="how story"><summary>story</summary><div id="prologue"></div></details>
-      <details class="how"><summary>how to play</summary>
-        <p>Take turns to move, aim and fire. Hold <b>Space</b> to charge and release to fire; the tick on the charge bar marks your last shot.
-        Armour soaks damage until it's gone, then health takes it. Autoloaders fire several times per turn; satellite-enabled guns
-        call down the MAIA ion cannon wherever their shell lands. Shells hit harder the further they fall from the top of their arc,
-        and fast impacts add kinetic damage close in, so lob high. Blasts can start snow slides, and a long drop hurts.
-        CPUs go after whoever last hit them. Kills pay a bounty, and the match leader carries a bigger one.
-        Everyone is paid after each round; spend it in the shop.</p>
-        <table class="keys">
-          <tr><td>← →</td><td>move (uses fuel)</td></tr>
-          <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
-          <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
-          <tr><td>S</td><td>switch weapon (before firing)</td></tr>
-          <tr><td>R</td><td>use a repair kit (takes your turn)</td></tr>
-          <tr><td>1 · 2 · 3 · 4</td><td>double shot · overcharge · deflector · barrier toward your aim (if bought)</td></tr>
-          <tr><td>Enter</td><td>end turn</td></tr>
-          <tr><td>click / tap</td><td>mark a target: shows the power it needs at your angle (click your vehicle to clear)</td></tr>
-          <tr><td>drag</td><td>look around</td></tr>
-          <tr><td>M · N · Esc</td><td>mute · music · pause</td></tr>
-        </table>
-      </details>
+      <button id="how" class="link">How to play</button>
+    </div>
+  </section>
+
+  <!-- controls and rules (menu link, H in game) -->
+  <section id="help" class="screen" hidden>
+    <div class="panel plate help">
+      <div class="phead"><h2>How to play</h2><button id="help-close" class="icon" title="Close (Esc)">✕</button></div>
+      <p>Take turns to move, aim and fire. Hold <b>Space</b> to charge and release to fire; the tick on the charge bar marks your last shot.
+      Armour soaks damage until it's gone, then health takes it. Autoloaders fire several times per turn; satellite-enabled guns
+      call down the MAIA ion cannon wherever their shell lands. Shells hit harder the further they fall from the top of their arc,
+      and fast impacts add kinetic damage close in, so lob high. CPUs go after whoever last hit them.
+      Kills pay a bounty, the match leader carries a bigger one, and everyone is paid after each round.</p>
+      <table class="keys">
+        <tr><td>← →</td><td>move (uses fuel)</td></tr>
+        <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
+        <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
+        <tr><td>S · Q</td><td>next · previous weapon (before firing)</td></tr>
+        <tr><td>R</td><td>use a repair kit (takes your turn)</td></tr>
+        <tr><td>1 2 3 4</td><td>double shot · overcharge · deflector · barrier (if bought)</td></tr>
+        <tr><td>Enter</td><td>end turn</td></tr>
+        <tr><td>Click</td><td>mark a target: shows the power it needs at your angle</td></tr>
+        <tr><td>Drag</td><td>look around</td></tr>
+        <tr><td>M · N · H · Esc</td><td>mute · music · controls · pause</td></tr>
+      </table>
     </div>
   </section>
 
   <!-- A3 "Select a Character" -->
   <section id="vehicles" class="screen" hidden>
-    <div class="panel wide">
-      <h2>Select a Character</h2>
-      <p id="veh-player" class="sub"></p>
+    <div class="panel plate wide">
+      <div class="phead"><h2>Select a character</h2><span id="veh-player" class="who"></span><button id="veh-back" class="ghost">◂ Back</button></div>
       <div id="veh-grid"></div>
+      <p class="mgh foot">Click a card, or press 1–4</p>
     </div>
   </section>
 
   <section id="roundend" class="screen" hidden>
-    <div class="panel">
-      <h2 id="re-title"></h2>
+    <div class="panel plate">
+      <p id="re-kicker" class="mgh"></p>
+      <h2 id="re-title" class="big"></h2>
       <p id="re-award" class="sub"></p>
       <table id="re-table"></table>
       <div id="re-quips"></div>
-      <button id="re-next" class="primary">continue</button>
-      <button id="re-end">end match</button>
+      <div class="actions"><button id="re-end" class="ghost">End match</button><button id="re-next" class="primary">Continue</button></div>
     </div>
   </section>
 
   <section id="shop" class="screen" hidden>
-    <div class="panel shop-panel">
-      <div class="shop-head"><h2 id="shop-title"></h2><div id="shop-cash"></div></div>
+    <div class="panel plate shop-panel">
+      <div class="shop-head">
+        <h2 id="shop-title"></h2>
+        <div class="seg" id="shop-filter"><button data-f="all">All</button><button data-f="buy">Affordable</button><button data-f="shell">Shell</button><button data-f="gun">Gun</button><button data-f="laser">Laser</button><button data-f="acid">Acid</button><button data-f="flak">Flak</button><button data-f="NXi">NXi</button></div>
+        <div id="shop-cash"></div>
+      </div>
       <div class="shop-body">
         <div id="shop-grid"></div>
         <div class="shop-side">
-          <h3>Equipped <span id="shop-count"></span></h3>
-          <div id="shop-owned"></div>
-          <h3>Upgrades</h3>
-          <div id="shop-upg"></div>
-          <h3>Consumables</h3>
-          <div id="shop-kits"></div>
-          <h3>Abilities</h3>
-          <div id="shop-abil"></div>
-          <button id="shop-done" class="primary">done</button>
+          <div class="side-scroll">
+            <h3 class="sec">Loadout <span id="shop-count"></span></h3>
+            <div id="shop-owned"></div>
+            <h3 class="sec">Upgrades</h3>
+            <div id="shop-upg"></div>
+            <h3 class="sec">Supplies</h3>
+            <div id="shop-kits"></div>
+            <h3 class="sec">Abilities</h3>
+            <div id="shop-abil"></div>
+          </div>
+          <button id="shop-done" class="primary">Done ▸</button>
         </div>
       </div>
     </div>
   </section>
 
   <section id="gameend" class="screen" hidden>
-    <div class="panel">
-      <h2 id="ge-title"></h2>
+    <div class="panel plate">
+      <p class="mgh">Final results</p>
+      <h2 id="ge-title" class="big"></h2>
       <table id="ge-table"></table>
       <div id="ge-quips"></div>
-      <button id="ge-again" class="primary">back to menu</button>
+      <div class="actions"><button id="ge-again" class="primary">Back to menu</button></div>
     </div>
   </section>
 
   <section id="pause" class="screen" hidden>
-    <div class="panel small"><h2>paused</h2><button id="resume" class="primary">resume</button><br><button id="pause-end" class="end-btn">end match</button></div>
+    <div class="panel plate small"><h2 class="big">Paused</h2><div class="stack"><button id="resume" class="primary">Resume</button><button id="pause-keys" class="ghost">Controls</button><button id="pause-end" class="ghost danger">End match</button></div></div>
   </section>
 </div>
 

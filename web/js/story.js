@@ -7,14 +7,9 @@
 // story escalates with the events: weather, drones, batteries, then the carrier.
 
 const STORY = {
-  prologue: [
-    'The last Neko War ended in a ceasefire nobody trusts. On the snowfields of Hatsuyuki Station, beside an interdimensional gate that should not be there, two arms makers are holding their trials.',
-    'CLS-T sends turret girls with guns "designed for cute girls". NXi sends the November Division, who came through the gate from another timeline and have guarded it ever since, built like battlecruisers.',
-    'Whoever wins the trials wins the contract for the gate. Above them all the MAIA ion cannon keeps watch, and in the ruins of the Hatsuyuki project, something is waking up.',
-  ],
   dispatches: [
     null,
-    'Trial one. Live rounds, no grudges. (There will be grudges.)',
+    'Trial one at Hatsuyuki Station, beside a gate that should not be there: CLS-T\'s turret girls against NXi\'s November Division, and the winner takes the contract. Live rounds, no grudges. (There will be grudges.)',
     'The weather around the gate has turned strange: fronts of force and storm roll in from nowhere. NXi calls it dimensional drift. CLS-T calls it NXi.',
     'Drones from the old Hatsuyuki project are flying again, and nobody admits to switching them on. There is a bounty on every one shot down.',
     'Shore batteries from the Neko War have woken up along the ridges, and the valleys fill with something deadly whenever a trial runs long.',

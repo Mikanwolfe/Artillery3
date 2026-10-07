@@ -4,10 +4,11 @@
 // explR the crater size, clip the autoloader (shots per turn), salvo the rounds per shot,
 // disp the random velocity jitter. Names and flavour text are the original's.
 
+// color: A3's rarity colours (gun bands, shells); ui: the same hues lifted to read on the dark UI
 const RARITY = [null,
-  { word: 'Common', color: '#4682b4' }, { word: 'Uncommon', color: '#228b22' }, { word: 'Rare', color: '#ff4500' },
-  { word: 'Epic', color: '#ff1493' }, { word: 'Mythical', color: '#800080' }, { word: 'Legendary', color: '#008b8b' },
-  { word: 'Godly', color: '#ffffff' }];
+  { word: 'Common', color: '#4682b4', ui: '#74aee0' }, { word: 'Uncommon', color: '#228b22', ui: '#52c45a' }, { word: 'Rare', color: '#ff4500', ui: '#ff7040' },
+  { word: 'Epic', color: '#ff1493', ui: '#ff5aae' }, { word: 'Mythical', color: '#800080', ui: '#c070ff' }, { word: 'Legendary', color: '#008b8b', ui: '#30c8c8' },
+  { word: 'Godly', color: '#ffffff', ui: '#ffffff' }];
 
 function weapon(id, name, kind, elevMin, elevMax, o) {
   return {
