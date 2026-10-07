@@ -80,10 +80,12 @@ class Game {
     this.terrain.generate();
   }
 
+  // integer backing scale + no smoothing keeps every square's edges hard
   resize(cssWidth) {
-    this.k = clamp((cssWidth * Math.min(2, window.devicePixelRatio || 1)) / W, 1, 2);
-    this.canvas.width = Math.round(W * this.k);
-    this.canvas.height = Math.round(H * this.k);
+    this.k = clamp(Math.round((cssWidth * (window.devicePixelRatio || 1)) / W), 1, 3);
+    this.canvas.width = W * this.k;
+    this.canvas.height = H * this.k;
+    this.ctx.imageSmoothingEnabled = false;
   }
 
   startMatch(configs, rounds) {
@@ -173,7 +175,7 @@ class Game {
         if (t.falling) this.land(t);
         t.y = gy;
       }
-      t.tilt += (clamp(this.terrain.slope(t.x, 9), -0.8, 0.8) - t.tilt) * 0.25;
+      t.drawY = t.falling ? t.y : this.terrain.blockTop(t.x);
     }
   }
 
@@ -616,8 +618,9 @@ class Game {
     const ctx = this.ctx;
     const k = this.k;
     ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.imageSmoothingEnabled = false;
     ctx.save();
-    if (this.shake > 0.15) ctx.translate((Math.random() - 0.5) * this.shake * 2, (Math.random() - 0.5) * this.shake * 2);
+    if (this.shake > 0.5) ctx.translate(Math.round((Math.random() - 0.5) * this.shake * 2), Math.round((Math.random() - 0.5) * this.shake * 2));
     this.bg.drawBack(ctx);
     this.terrain.render();
     ctx.drawImage(this.terrain.canvas, 0, 0);
@@ -625,7 +628,6 @@ class Game {
     const active = this.phase === 'aim' ? this.active : null;
     if (active && !this.cpu) this.drawGhost(ctx, active);
     for (const t of this.tanks) t.draw(ctx);
-    for (const t of this.tanks) t.drawLabel(ctx, t === active || (this.phase === 'resolve' && t === this.active), this.time);
     if (active) this.drawAim(ctx, active);
     for (const b of this.beams) b.draw(ctx);
     for (const d of this.drops) d.draw(ctx);
@@ -634,69 +636,54 @@ class Game {
       if (p.y < -6) this.drawOffscreen(ctx, p);
     }
     this.particles.draw(ctx);
-    for (const t of this.tanks) t.drawSpeech(ctx);
     this.bg.drawSnow(ctx);
+    // labels and text last so they stay readable
+    for (const t of this.tanks) t.drawLabel(ctx, t === active || (this.phase === 'resolve' && t === this.active), this.time);
+    this.particles.drawText(ctx);
+    for (const t of this.tanks) t.drawSpeech(ctx);
     ctx.restore();
   }
 
   drawGhost(ctx, t) {
     if (!t.lastTrail || t.lastTrail.length < 4) return;
     ctx.fillStyle = t.color;
-    ctx.globalAlpha = 0.4;
-    for (let i = 0; i < t.lastTrail.length; i += 2) ctx.fillRect(t.lastTrail[i] - 1, t.lastTrail[i + 1] - 1, 2, 2);
+    ctx.globalAlpha = 0.5;
+    for (let i = 0; i < t.lastTrail.length; i += 2) sq(ctx, t.lastTrail[i], t.lastTrail[i + 1], 3);
     ctx.globalAlpha = 1;
   }
 
   drawOffscreen(ctx, p) {
     const x = clamp(p.x, 8, W - 8);
     ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = clamp(1 + p.y / 400, 0.35, 1);
-    ctx.beginPath();
-    ctx.moveTo(x, 4);
-    ctx.lineTo(x - 5, 13);
-    ctx.lineTo(x + 5, 13);
-    ctx.closePath();
-    ctx.fill();
+    ctx.globalAlpha = clamp(1 + p.y / 400, 0.4, 1);
+    sq(ctx, x, 5, 3);
+    sq(ctx, x, 9, 6);
+    sq(ctx, x, 14, 9);
     ctx.globalAlpha = 1;
-    ctx.font = '10px ui-monospace, monospace';
+    ctx.font = 'bold 10px Verdana, Tahoma, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(Math.round(-p.y) + 'm', x, 25);
+    ctx.fillText(Math.round(-p.y) + 'm', Math.round(x), 30);
   }
 
   drawAim(ctx, t) {
     const w = t.weapon;
-    const pv = t.pivot();
-    // allowed elevation range
-    ctx.strokeStyle = 'rgba(190,235,255,0.28)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let e = w.elevMin; e <= w.elevMax; e += 5) {
+    const pv = { x: t.x, y: (t.drawY ?? t.y) - 13 };
+    // allowed elevation range: a dotted arc of squares
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    for (let e = w.elevMin; e <= w.elevMax; e += 6) {
       const v = t.aimVec(e);
-      const px = pv.x + v.x * 30;
-      const py = pv.y + v.y * 30;
-      if (e === w.elevMin) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      sq(ctx, pv.x + v.x * 32, pv.y + v.y * 32, 2);
     }
-    ctx.stroke();
     const v = t.aimVec();
-    const m = t.muzzle();
     if (t.power > 0) {
-      const len = 6 + t.power * 0.6;
       const frac = t.power / 100;
-      ctx.strokeStyle = `hsl(${120 - frac * 120},90%,60%)`;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(m.x + v.x * 3, m.y + v.y * 3);
-      ctx.lineTo(m.x + v.x * (3 + len), m.y + v.y * (3 + len));
-      ctx.stroke();
+      ctx.fillStyle = `hsl(${120 - frac * 120},85%,55%)`;
+      for (let d = 24; d <= 24 + t.power * 0.6; d += 5) sq(ctx, pv.x + v.x * d, pv.y + v.y * d, 3);
     }
     if (t.lastPower > 0 && !this.cpu) {
-      const len = 3 + 6 + t.lastPower * 0.6;
-      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(m.x + v.x * len - v.y * 4, m.y + v.y * len + v.x * 4);
-      ctx.lineTo(m.x + v.x * len + v.y * 4, m.y + v.y * len - v.x * 4);
-      ctx.stroke();
+      const d = 24 + t.lastPower * 0.6;
+      ctx.fillStyle = '#ffffff';
+      sq(ctx, pv.x + v.x * d, pv.y + v.y * d, 5);
     }
   }
 }

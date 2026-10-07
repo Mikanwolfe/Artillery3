@@ -15,8 +15,8 @@
 // Anything missing from a personality falls back to TAUNTS.any.
 
 const PERSONA_BY_NAME = {
-  Natsuki: 'cocky', Hatsuyuki: 'polite', Kotona: 'nervous',
-  Nadeko: 'deadpan', Shigure: 'poet', 'Neko-15X': 'robot',
+  Ace: 'cocky', Major: 'polite', Rookie: 'nervous',
+  Sarge: 'deadpan', Byron: 'poet', 'Unit 7': 'robot',
 };
 const PERSONA_KEYS = ['cocky', 'polite', 'nervous', 'deadpan', 'poet', 'robot'];
 
@@ -330,7 +330,7 @@ const TAUNTS = {
     fire_acid: ["Hope you weren't fond of the paint.", 'Something corrosive this way comes.', 'Slime time.', "That's going to sting. And melt."],
     fire_coil: ['Too fast to dodge.', "Blink and you'll miss it.", 'Rail time.', 'Zip. Done.'],
     fire_signal: ['Look up.', 'A satellite sends its regards.', 'Stand still. Please.', 'Orbital courtesy call.'],
-    fire_terminus: ['Sorry about the crater.', "This one's got a name. Terminus.", 'Duck.', 'Heavy mail, incoming.'],
+    fire_terminus: ['Sorry about the crater.', "This one's called Big Bertha.", 'Duck.', 'Heavy mail, incoming.'],
     round_draw: ['Well. That was mutual.', 'Nobody wins. Everybody loses.', 'We all did great. Terribly.', 'Draw! Tidy.'],
   },
 };

@@ -1,7 +1,8 @@
 'use strict';
 // Midpoint-displacement terrain (the original A3 research topic), stored as a 1-D
 // heightmap: height[x] is the y of the surface in screen space (bigger = lower).
-// Rendered per-column into an offscreen canvas so craters only repaint what changed.
+// Drawn as a grid of TB-sized square blocks (stepped surface) into an offscreen canvas;
+// only the block columns touched by a crater are repainted.
 
 // Classic 1-D midpoint displacement over n segments (n must be a power of two).
 function midpoint(n, rough, disp, a, b) {
@@ -18,13 +19,14 @@ function midpoint(n, rough, disp, a, b) {
   return m;
 }
 
+const TB = 8; // terrain block size (px)
+
 class Terrain {
   constructor() {
     this.height = new Float32Array(W);
     this.scorch = new Float32Array(W);
     this.canvas = makeCanvas(W, H);
     this.ctx = this.canvas.getContext('2d');
-    this.img = this.ctx.createImageData(W, H);
     this.pal = { rockTop: [120, 128, 148], rockBot: [44, 50, 68], snow: [240, 246, 252] };
     this.dirtyMin = 0;
     this.dirtyMax = W - 1;
@@ -118,57 +120,44 @@ class Terrain {
     this.markDirty(i, i);
   }
 
+  // visual surface: the top of the block column containing x (physics uses the smooth height)
+  blockTop(x) {
+    const bx = clamp(Math.floor(x / TB), 0, W / TB - 1);
+    return Math.round(this.height[bx * TB + TB / 2] / TB) * TB;
+  }
+
   render() {
     if (this.dirtyMin > this.dirtyMax) return;
-    const a = this.dirtyMin;
-    const b = this.dirtyMax;
-    for (let x = a; x <= b; x++) this.renderColumn(x);
-    this.ctx.putImageData(this.img, 0, 0, a, 0, b - a + 1, H);
+    const b0 = Math.floor(this.dirtyMin / TB);
+    const b1 = Math.floor(this.dirtyMax / TB);
+    for (let bx = b0; bx <= b1; bx++) this.renderBlockColumn(bx);
     this.dirtyMin = W;
     this.dirtyMax = -1;
   }
 
-  renderColumn(x) {
-    const data = this.img.data;
+  renderBlockColumn(bx) {
+    const c = this.ctx;
+    const x0 = bx * TB;
+    const mid = x0 + TB / 2;
+    c.clearRect(x0, 0, TB, H);
+    const top = this.blockTop(mid);
     const hs = this.height;
-    const h = hs[x];
-    const hi = Math.floor(h);
-    const frac = h - hi;
-    const slope = Math.abs(hs[Math.min(W - 1, x + 2)] - hs[Math.max(0, x - 2)]) / 4;
-    const sc = this.scorch[x];
-    let snowT = clamp(6.5 - slope * 5, 0, 6.5) + hash2(x, 7) * 1.6;
-    snowT *= 1 - clamp(sc * 1.4, 0, 1);
+    const slope = Math.abs(hs[Math.min(W - 1, x0 + TB + 2)] - hs[Math.max(0, x0 - 2)]) / (TB + 4);
+    const sc = this.scorch[mid];
+    // snow on gentle slopes: 1-2 blocks; none where scorched
+    const snowRows = sc > 0.25 ? 0 : slope < 0.35 ? 2 : slope < 0.9 ? 1 : 0;
     const { rockTop, rockBot, snow } = this.pal;
-    for (let y = 0; y < H; y++) {
-      const idx = (y * W + x) * 4;
-      if (y < hi) {
-        data[idx + 3] = 0;
-        continue;
-      }
-      const d = y - h;
-      let r, g, b, a = 255;
-      if (y === hi) a = 255 * (1 - frac);
-      if (d < snowT) {
-        const sh = 1 - 0.1 * (d / Math.max(snowT, 1)) - 0.05 * hash2(x, y);
-        r = snow[0] * sh;
-        g = snow[1] * sh;
-        b = Math.min(255, snow[2] * (sh + 0.03));
-      } else {
+    for (let y = top, row = 0; y < H; y += TB, row++) {
+      const v = 1 + (hash2(bx, y / TB) - 0.5) * 0.14;
+      let col;
+      if (row < snowRows) col = snow.map((k) => k * (row ? 0.94 : 1) * (0.97 + 0.03 * v));
+      else {
         const t = clamp((y - 80) / (H - 80), 0, 1);
-        const n = (hash2(x >> 1, y >> 1) - 0.5) * 9 + (hash2(x, y) - 0.5) * 5;
-        const band = Math.sin(y * 0.09 + x * 0.012 + hash2(x >> 4, 3) * 6) * 6;
-        r = lerp(rockTop[0], rockBot[0], t) + n + band;
-        g = lerp(rockTop[1], rockBot[1], t) + n + band;
-        b = lerp(rockTop[2], rockBot[2], t) + n + band * 0.8;
-        if (d < 12 && sc > 0) {
-          const k = 1 - 0.65 * sc * (1 - d / 12);
-          r *= k; g *= k; b *= k;
-        }
+        col = mixRgb(rockTop, rockBot, t).map((k) => k * v);
+        if (row < 2 && sc > 0) col = col.map((k) => k * (1 - 0.6 * sc * (row ? 0.5 : 1)));
       }
-      data[idx] = r;
-      data[idx + 1] = g;
-      data[idx + 2] = b;
-      data[idx + 3] = a;
+      c.fillStyle = rgb(col);
+      c.fillRect(x0, y, TB, TB);
     }
   }
 }

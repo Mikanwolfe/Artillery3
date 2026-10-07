@@ -60,6 +60,13 @@ function mixRgb(a, b, t) {
 
 const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
 
+// Art rule: everything in the world is an axis-aligned square (any size, may move, resize or
+// fade, never rotates). No curves, lines, gradients or blur. This draws one, centred on (x, y).
+function sq(ctx, x, y, s) {
+  const n = Math.max(1, Math.round(s));
+  ctx.fillRect(Math.round(x - n / 2), Math.round(y - n / 2), n, n);
+}
+
 function makeCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w;

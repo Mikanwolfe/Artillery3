@@ -45,7 +45,6 @@ class Tank {
     this.facing = x < W / 2 ? 1 : -1;
     this.elev = 45;
     this.power = 0;
-    this.tilt = 0;
     this.recoil = 0;
     this.flash = 0;
     this.falling = false;
@@ -83,8 +82,9 @@ class Tank {
 
   center() { return { x: this.x, y: this.y - 7 }; }
 
+  // turret pivot; tanks never rotate, so this is a fixed offset above the ground point
   pivot() {
-    return { x: this.x + 11 * Math.sin(this.tilt), y: this.y - 11 * Math.cos(this.tilt) };
+    return { x: this.x, y: this.y - 13 };
   }
 
   aimVec(elev = this.elev, facing = this.facing) {
@@ -107,102 +107,68 @@ class Tank {
     }
   }
 
+  // tank = a little cluster of squares; the barrel is 5 squares slid along the aim direction
   draw(ctx) {
     if (!this.alive) return;
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.tilt);
-    // tracks
-    ctx.fillStyle = '#232837';
-    ctx.beginPath();
-    ctx.roundRect(-15, -6, 30, 6.5, 3);
-    ctx.fill();
-    ctx.fillStyle = '#4b546b';
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.arc(-11 + i * 5.5, -3, 2.2, 0, TAU);
-      ctx.fill();
-    }
-    // hull
-    const g = ctx.createLinearGradient(0, -11, 0, -5);
-    g.addColorStop(0, shade(this.color, 0.35));
-    g.addColorStop(1, shade(this.color, -0.1));
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.moveTo(-13.5, -5.5);
-    ctx.lineTo(-10, -10.8);
-    ctx.lineTo(10, -10.8);
-    ctx.lineTo(13.5, -5.5);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = shade(this.color, -0.55);
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    const x = Math.round(this.x);
+    const y = Math.round(this.drawY ?? this.y);
+    const f = this.facing;
+    ctx.fillStyle = '#2b2d33';
+    for (let i = -12; i <= 12; i += 4) sq(ctx, x + i, y - 2, 4);
+    ctx.fillStyle = '#6b6f78';
+    for (let i = -10; i <= 10; i += 8) sq(ctx, x + i, y - 2, 2);
+    ctx.fillStyle = this.color;
+    for (const dx of [-9, -3, 3, 9]) sq(ctx, x + dx, y - 7, 6);
+    ctx.fillStyle = shade(this.color, 0.3);
+    for (const dx of [-6, 0, 6]) sq(ctx, x + dx, y - 9, 2);
+    ctx.fillStyle = shade(this.color, -0.3);
+    sq(ctx, x, y - 13, 8);
     ctx.fillStyle = '#fff3c0';
-    ctx.fillRect(this.facing > 0 ? 9.5 : -11.5, -9, 2, 2);
-    // turret
-    ctx.fillStyle = shade(this.color, -0.28);
-    ctx.beginPath();
-    ctx.arc(0, -11, 5.8, Math.PI, 0);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    sq(ctx, x + f * 11, y - 8, 2);
+    // barrel
+    const v = this.aimVec();
+    const back = this.recoil * 4;
+    for (let i = 0; i < 5; i++) {
+      const d = 6 + i * 3.5 - back;
+      ctx.fillStyle = i === 4 ? shade(this.color, -0.15) : shade(this.color, -0.55);
+      sq(ctx, x + v.x * d, y - 13 + v.y * d, i === 4 ? 4 : 4 - i * 0.25);
+    }
     if (this.flash > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.8})`;
-      ctx.fillRect(-14, -17, 28, 17);
+      sq(ctx, x, y - 8, 26);
     }
-    ctx.restore();
-
-    // barrel (world-space so elevation is absolute)
-    const pv = this.pivot();
-    const v = this.aimVec();
-    const len = 17 - this.recoil * 5;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = shade(this.color, -0.6);
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(pv.x, pv.y);
-    ctx.lineTo(pv.x + v.x * len, pv.y + v.y * len);
-    ctx.stroke();
-    ctx.strokeStyle = shade(this.color, 0.1);
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.lineCap = 'butt';
   }
 
   drawLabel(ctx, active, t) {
     if (!this.alive) return;
-    const bw = 36;
-    const bx = this.x - bw / 2;
-    const by = this.y - 33;
-    ctx.fillStyle = 'rgba(8,12,24,0.7)';
+    const x = Math.round(this.x);
+    const y = Math.round(this.drawY ?? this.y);
+    const bw = 34;
+    const bx = x - bw / 2;
+    const by = y - 32;
+    ctx.fillStyle = '#000';
     ctx.fillRect(bx - 1, by - 1, bw + 2, 6);
     const pct = clamp(this.hp / this.maxHp, 0, 1);
-    ctx.fillStyle = pct > 0.5 ? '#6fe08a' : pct > 0.25 ? '#f1c94b' : '#f0605d';
-    ctx.fillRect(bx, by, bw * pct, 4);
-    ctx.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillStyle = pct > 0.5 ? '#3fcf5a' : pct > 0.25 ? '#e8c22e' : '#e2412f';
+    ctx.fillRect(bx, by, Math.round(bw * pct), 4);
+    ctx.font = 'bold 10px Verdana, Tahoma, sans-serif';
     ctx.textAlign = 'center';
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = 'rgba(8,12,24,0.85)';
-    ctx.strokeText(this.name, this.x, by - 4);
-    ctx.fillStyle = active ? '#ffffff' : 'rgba(230,238,255,0.8)';
-    ctx.fillText(this.name, this.x, by - 4);
+    ctx.fillStyle = '#000';
+    ctx.fillText(this.name, x + 1, by - 3);
+    ctx.fillStyle = active ? '#ffffff' : '#d8dde6';
+    ctx.fillText(this.name, x, by - 4);
     if (active) {
-      const bob = Math.sin(t * 5) * 2;
+      const bob = Math.round(Math.sin(t * 5) * 2);
       ctx.fillStyle = this.color;
-      ctx.beginPath();
-      ctx.moveTo(this.x, by - 17 + bob + 6);
-      ctx.lineTo(this.x - 5, by - 17 + bob);
-      ctx.lineTo(this.x + 5, by - 17 + bob);
-      ctx.closePath();
-      ctx.fill();
+      sq(ctx, x, by - 22 + bob, 8);
+      sq(ctx, x, by - 17 + bob, 4);
     }
   }
 
   drawSpeech(ctx) {
     const s = this.speech;
     if (!s || !this.alive) return;
-    ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+    ctx.font = '11px Verdana, Tahoma, sans-serif';
     const maxW = 170;
     const words = s.text.split(/\s+/);
     const lines = [];
@@ -212,29 +178,26 @@ class Tank {
       if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test;
     }
     if (cur) lines.push(cur);
-    const lh = 15;
-    const bw = Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 16;
-    const bh = lines.length * lh + 10;
-    const bx = clamp(this.x - bw / 2, 6, W - bw - 6);
-    const by = this.y - 52 - bh - 8;
-    const fade = clamp(Math.min(s.age * 6, (s.dur - s.age) * 3), 0, 1);
-    ctx.globalAlpha = fade;
-    ctx.fillStyle = 'rgba(248,251,255,0.95)';
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(bx, by, bw, bh, 7);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(this.x - 5, by + bh);
-    ctx.lineTo(this.x, by + bh + 7);
-    ctx.lineTo(this.x + 5, by + bh);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#16203a';
+    const lh = 14;
+    const bw = Math.round(Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 14);
+    const bh = lines.length * lh + 8;
+    const x = Math.round(this.x);
+    const bx = Math.round(clamp(x - bw / 2, 6, W - bw - 6));
+    const by = Math.round((this.drawY ?? this.y) - 52 - bh - 8);
+    if (s.age < 0) return;
+    ctx.globalAlpha = clamp((s.dur - s.age) * 3, 0, 1);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+    ctx.fillStyle = '#fffff4';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = this.color;
+    ctx.fillRect(bx, by, 4, bh);
+    ctx.fillStyle = '#000';
+    sq(ctx, x, by + bh + 4, 6);
+    sq(ctx, x, by + bh + 9, 3);
+    ctx.fillStyle = '#111';
     ctx.textAlign = 'center';
-    lines.forEach((l, i) => ctx.fillText(l, bx + bw / 2, by + 5 + lh * (i + 0.8)));
+    lines.forEach((l, i) => ctx.fillText(l, bx + 2 + bw / 2, by + 4 + lh * (i + 0.8)));
     ctx.globalAlpha = 1;
   }
 }
@@ -278,29 +241,16 @@ class Projectile {
 
   draw(ctx) {
     const c = hexToRgb(this.w.color);
-    ctx.lineCap = 'round';
-    for (let i = 2; i < this.trail.length; i += 2) {
-      const a = i / this.trail.length;
-      ctx.strokeStyle = rgb(c, a * 0.55);
-      ctx.lineWidth = 0.8 + a * (this.w.id === 'coil' ? 1.4 : 2);
-      ctx.beginPath();
-      ctx.moveTo(this.trail[i - 2], this.trail[i - 1]);
-      ctx.lineTo(this.trail[i], this.trail[i + 1]);
-      ctx.stroke();
+    const small = this.w.id === 'bomblet';
+    for (let i = 0; i < this.trail.length; i += 2) {
+      const a = (i + 2) / this.trail.length;
+      ctx.fillStyle = rgb(c, a * 0.6);
+      sq(ctx, this.trail[i], this.trail[i + 1], 1 + a * (small ? 2 : 3));
     }
-    ctx.lineCap = 'butt';
-    ctx.globalCompositeOperation = 'lighter';
-    const r = this.w.id === 'bomblet' ? 5 : 9;
-    const gr = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, r);
-    gr.addColorStop(0, rgb(c, 0.9));
-    gr.addColorStop(1, rgb(c, 0));
-    ctx.fillStyle = gr;
-    ctx.fillRect(this.x - r, this.y - r, r * 2, r * 2);
-    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = rgb(c);
+    sq(ctx, this.x, this.y, small ? 4 : 6);
     ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.w.id === 'bomblet' ? 1.6 : 2.4, 0, TAU);
-    ctx.fill();
+    sq(ctx, this.x, this.y, 2);
   }
 }
 
@@ -345,9 +295,9 @@ class AcidDrop {
   }
 
   draw(ctx) {
-    const a = this.stuck ? clamp(this.life / 30, 0, 1) * 0.8 : 1;
-    ctx.fillStyle = `rgba(150,240,90,${a})`;
-    ctx.fillRect(this.x - 1.2, this.y - (this.stuck ? 1.5 : 1.2), 2.4, this.stuck ? 2 : 2.4);
+    const a = this.stuck ? clamp(this.life / 30, 0, 1) * 0.85 : 1;
+    ctx.fillStyle = `rgba(130,230,70,${a})`;
+    sq(ctx, this.x, this.y - (this.stuck ? 1 : 0), this.stuck ? 4 : 3);
     if (this.stuck && this.tick % 3 === 0 && Math.random() < 0.15) this.game.particles.smoke(this.x, this.y - 2, 2);
   }
 }
@@ -372,39 +322,22 @@ class Beam {
   }
 
   draw(ctx) {
-    const g = this.game;
-    const gy = g.terrain.hAt(this.x);
+    const gy = this.game.terrain.hAt(this.x);
     if (this.t < this.warn) {
       const p = this.t / this.warn;
       const pulse = 0.5 + 0.5 * Math.sin(this.t * (0.3 + p * 0.9));
-      ctx.strokeStyle = `rgba(255,143,216,${0.2 + 0.5 * pulse})`;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([6, 6]);
-      ctx.beginPath();
-      ctx.moveTo(this.x, 0);
-      ctx.lineTo(this.x, gy);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(this.x, gy, 10 + (1 - p) * 26, 0, TAU);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(this.x, gy, 4, 0, TAU);
-      ctx.stroke();
+      ctx.fillStyle = `rgba(255,120,200,${0.3 + 0.6 * pulse})`;
+      for (let y = 6; y < gy; y += 12) sq(ctx, this.x, y, 3);
+      const r = 8 + (1 - p) * 26;
+      for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) sq(ctx, this.x + dx * r, gy + dy * r * 0.6, 5);
       return;
     }
     const p = (this.t - this.warn) / this.fire;
-    const w = (1 - p) * (this.w.beamHalf + 6);
-    ctx.globalCompositeOperation = 'lighter';
-    const gr = ctx.createLinearGradient(this.x - w * 2.2, 0, this.x + w * 2.2, 0);
-    gr.addColorStop(0, 'rgba(255,100,210,0)');
-    gr.addColorStop(0.5, `rgba(255,170,230,${0.9 * (1 - p * 0.6)})`);
-    gr.addColorStop(1, 'rgba(255,100,210,0)');
-    ctx.fillStyle = gr;
-    ctx.fillRect(this.x - w * 2.2, 0, w * 4.4, gy + 4);
+    const outer = Math.max(2, (1 - p) * (this.w.beamHalf + 6) * 2.4);
+    const inner = Math.max(1, outer * 0.4);
+    ctx.fillStyle = `rgba(255,120,210,${0.8 * (1 - p * 0.6)})`;
+    for (let y = gy; y > -outer; y -= outer) sq(ctx, this.x, y, outer);
     ctx.fillStyle = `rgba(255,255,255,${1 - p})`;
-    ctx.fillRect(this.x - w * 0.55, 0, w * 1.1, gy + 4);
-    ctx.globalCompositeOperation = 'source-over';
+    for (let y = gy; y > -inner; y -= inner) sq(ctx, this.x, y, inner);
   }
 }

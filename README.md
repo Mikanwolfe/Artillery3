@@ -9,6 +9,8 @@
 The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step, no dependencies, no image or audio files (everything is drawn and synthesised).
 Open `web/index.html` in a browser, or serve the folder (e.g. `python3 -m http.server -d web`).
 
+The look is deliberately plain: everything in the world is an axis-aligned square (terrain blocks, tanks, a barrel of five squares, explosions, snow) that can move, resize and fade but never rotates; the menus are old-web grey panels.
+
 It keeps what made A3 interesting (midpoint-displacement terrain, charge-and-release firing, wind, craters, the weapon roster, the shop between rounds) and drops the class-hierarchy machinery that was the learning exercise. Hotseat for 2-4 players, with CPU opponents.
 
 | Command | Key |
@@ -20,7 +22,7 @@ It keeps what made A3 interesting (midpoint-displacement terrain, charge-and-rel
 | Mute / pause | `M` / `Esc` |
 
 **CPU players** come in Easy / Normal / Hard: a brute-force ballistic solver that tries shots against the real physics, then adds aim error.
-Each CPU has a fixed personality (cocky, polite, nervous, deadpan, poet, robot; picked by name) and reacts to what actually happened, e.g. "that was close" after a near miss, "missed me!" when someone fires wide of them, and gloating or grumbling on hits, kills, falls and round results. The ~450 pre-written lines live in `web/js/taunts.js`; add or edit lines there, and tune how often CPUs speak with `CHATTINESS` in `web/js/game.js`.
+Each CPU has a fixed personality picked by name (Ace: cocky, Major: polite, Rookie: nervous, Sarge: deadpan, Byron: poet, Unit 7: robot; custom names get one at random) and reacts to what actually happened, e.g. "that was close" after a near miss, "missed me!" when someone fires wide of them, and gloating or grumbling on hits, kills, falls and round results. The ~450 pre-written lines live in `web/js/taunts.js`; add or edit lines there, and tune how often CPUs speak with `CHATTINESS` in `web/js/game.js`.
 
 Layout: `web/js/` — `terrain.js` (midpoint displacement + crater/shaft carving), `weapons.js` (roster + shared ballistic stepper), `ai.js` (solver, CPU controller), `taunts.js` (banter), `game.js` (state machine, rules, rendering), `ui.js` (menu/HUD/shop), plus `background.js`, `particles.js`, `audio.js`, `entities.js`.
 Test hooks: `?seed=N` (deterministic), `?auto=N&types=hard,normal&speed=40` (all-CPU match).

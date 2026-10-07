@@ -1,6 +1,6 @@
 'use strict';
-// Lightweight particle system: sparks, smoke, debris, shockwave rings, fireballs and
-// floating text (the original had TextParticles for damage numbers too).
+// Lightweight particle system. Every particle is a square (sparks, smoke, debris, fireballs,
+// shockwave rings of squares); floating text is the exception and is drawn on the label pass.
 
 class Particles {
   constructor() {
@@ -97,58 +97,64 @@ class Particles {
     }
   }
 
+  // world particles (everything except text)
   draw(ctx) {
     for (const p of this.list) {
       const t = p.age / p.life;
       switch (p.type) {
         case 'fireball': {
-          const r = p.r * (0.35 + 0.65 * Math.sqrt(t));
-          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
-          g.addColorStop(0, `rgba(255,250,220,${1 - t})`);
-          g.addColorStop(0.4, rgb(p.color, 0.85 * (1 - t)));
-          g.addColorStop(1, rgb(p.color, 0));
-          ctx.globalCompositeOperation = 'lighter';
-          ctx.fillStyle = g;
-          ctx.fillRect(p.x - r, p.y - r, r * 2, r * 2);
-          ctx.globalCompositeOperation = 'source-over';
+          // a jittered cluster of squares rather than one big box
+          if (!p.bits) {
+            p.bits = [];
+            for (let i = 0; i < 7; i++) p.bits.push({ dx: (Math.random() - 0.5) * 1.1, dy: (Math.random() - 0.6) * 0.9, s: 0.45 + Math.random() * 0.5 });
+          }
+          const r = p.r * (0.4 + 0.6 * Math.sqrt(t));
+          ctx.fillStyle = rgb(p.color, 0.85 * (1 - t));
+          for (const b of p.bits) sq(ctx, p.x + b.dx * r, p.y + b.dy * r, b.s * r * 1.3);
+          ctx.fillStyle = `rgba(255,248,210,${1 - t})`;
+          for (let i = 0; i < 3; i++) sq(ctx, p.x + p.bits[i].dx * r * 0.5, p.y + p.bits[i].dy * r * 0.5, p.bits[i].s * r * 0.6 * (1 - t * 0.5));
           break;
         }
-        case 'ring':
-          ctx.strokeStyle = `rgba(255,240,210,${0.5 * (1 - t)})`;
-          ctx.lineWidth = 2 * (1 - t) + 0.5;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r * Math.sqrt(t), 0, TAU);
-          ctx.stroke();
+        case 'ring': {
+          const r = p.r * Math.sqrt(t);
+          ctx.fillStyle = `rgba(255,240,210,${0.7 * (1 - t)})`;
+          for (let i = 0; i < 12; i++) {
+            const a = (i / 12) * TAU;
+            sq(ctx, p.x + Math.cos(a) * r, p.y + Math.sin(a) * r, 5 * (1 - t) + 2);
+          }
           break;
+        }
         case 'spark':
           ctx.fillStyle = rgb(p.color, 1 - t);
-          ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+          sq(ctx, p.x, p.y, p.size + 1);
           break;
         case 'debris':
           ctx.fillStyle = rgb(p.color, 1 - t * t);
-          ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+          sq(ctx, p.x, p.y, p.size + 1);
           break;
         case 'smoke': {
-          const r = p.r * (1 + t * 1.2);
-          const c = p.snow ? [235, 242, 250] : [60, 62, 72];
-          ctx.fillStyle = rgb(c, (p.snow ? 0.5 : 0.35) * (1 - t));
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, r, 0, TAU);
-          ctx.fill();
+          const c = p.snow ? [235, 242, 250] : [70, 72, 80];
+          ctx.fillStyle = rgb(c, (p.snow ? 0.6 : 0.45) * (1 - t));
+          sq(ctx, p.x, p.y, p.r * 1.6 * (1 + t * 1.2));
           break;
         }
-        case 'text':
-          ctx.globalAlpha = clamp(1.6 * (1 - t), 0, 1);
-          ctx.font = `bold ${p.big ? 17 : 12}px ui-monospace, Menlo, Consolas, monospace`;
-          ctx.textAlign = 'center';
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = 'rgba(8,12,24,0.85)';
-          ctx.strokeText(p.str, p.x, p.y);
-          ctx.fillStyle = p.color;
-          ctx.fillText(p.str, p.x, p.y);
-          ctx.globalAlpha = 1;
-          break;
       }
+    }
+  }
+
+  // floating text, drawn above everything
+  drawText(ctx) {
+    for (const p of this.list) {
+      if (p.type !== 'text') continue;
+      const t = p.age / p.life;
+      ctx.globalAlpha = clamp(1.6 * (1 - t), 0, 1);
+      ctx.font = `bold ${p.big ? 16 : 12}px Verdana, Tahoma, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#000';
+      ctx.fillText(p.str, Math.round(p.x) + 1, Math.round(p.y) + 1);
+      ctx.fillStyle = p.color;
+      ctx.fillText(p.str, Math.round(p.x), Math.round(p.y));
+      ctx.globalAlpha = 1;
     }
   }
 }

@@ -4,7 +4,7 @@
 //   - CpuController: drives a tank through virtual key presses (the same Ctl a human uses).
 // Banter lives in taunts.js; the game decides when to use it.
 
-const AI_NAMES = ['Hatsuyuki', 'Kotona', 'Nadeko', 'Natsuki', 'Shigure', 'Neko-15X'];
+const AI_NAMES = ['Ace', 'Major', 'Rookie', 'Sarge', 'Byron', 'Unit 7'];
 
 // Virtual controller state. Humans fill it from the keyboard, CPUs from code.
 class Ctl {
