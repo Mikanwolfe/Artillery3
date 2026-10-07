@@ -166,18 +166,24 @@ class Game {
     this.cam.snap();
   }
 
-  // drag (either mouse button, or touch) pans the camera; it eases back on the next event
+  // drag (either mouse button, or touch) pans the camera; it eases back on the next event.
+  // A click / tap without dragging puts down a target marker (or clears it, near your own vehicle).
   initDrag() {
     const c = this.canvas;
     c.addEventListener('contextmenu', (e) => e.preventDefault());
     c.addEventListener('pointerdown', (e) => {
       if (this.phase === 'menu') return;
       this.sfx.unlock();
-      this.drag = { x: e.clientX, y: e.clientY, cx: this.cam.x, cy: this.cam.y };
+      this.drag = { x: e.clientX, y: e.clientY, cx: this.cam.x, cy: this.cam.y, moved: false };
       c.setPointerCapture(e.pointerId);
+    });
+    c.addEventListener('pointerup', (e) => {
+      if (this.drag && !this.drag.moved) this.placeMark(e);
     });
     c.addEventListener('pointermove', (e) => {
       if (!this.drag) return;
+      if (!this.drag.moved && Math.hypot(e.clientX - this.drag.x, e.clientY - this.drag.y) < 6) return;
+      this.drag.moved = true;
       const sc = VIEW_W / c.clientWidth;
       this.cam.manual = {
         x: this.drag.cx - (e.clientX - this.drag.x) * sc + VIEW_W / 2,
@@ -187,6 +193,61 @@ class Game {
     const end = () => { this.drag = null; };
     c.addEventListener('pointerup', end);
     c.addEventListener('pointercancel', end);
+  }
+
+  placeMark(e) {
+    const t = this.active;
+    if (this.phase !== 'aim' || !t || t.isCpu) return;
+    const r = this.canvas.getBoundingClientRect();
+    const sc = VIEW_W / r.width;
+    const x = clamp(this.cam.x + (e.clientX - r.left) * sc, 0, WORLD_W - 1);
+    let y = this.cam.y + (e.clientY - r.top) * sc;
+    if (dist(x, y, t.x, t.y - 10) < 40) { t.mark = null; this.sfx.click(); return; }
+    y = Math.min(y, this.terrain.hAt(x)); // a click below the surface marks the ground there
+    t.mark = { x, y };
+    this.sfx.click();
+  }
+
+  // Power needed to land on the marker at the current elevation, using the same physics as the aim
+  // guide (gravity, plus wind only if AIM_GUIDE_WIND). Binary search on muzzle speed for where the
+  // falling shell crosses the marker's height. frac > 1 means it can't reach at this angle.
+  markPower(t) {
+    const m = t.muzzle();
+    const u = t.aimVec();
+    const tg = t.mark;
+    const wind = AIM_GUIDE_WIND ? this.wind : { x: 0, y: 0 };
+    const dir = Math.sign(tg.x - m.x) || 1;
+    if (dir !== t.facing) return { frac: null, behind: true };
+    const reach = (v) => { // signed overshoot past the marker for speed v (null: never comes down to it)
+      let x = m.x, y = m.y, vx = u.x * v, vy = u.y * v;
+      for (let i = 0; i < 1500; i++) {
+        vy += GRAV + wind.y;
+        vx += wind.x;
+        const px = x, py = y;
+        x += vx;
+        y += vy;
+        if (vy > 0 && y >= tg.y && py < tg.y + 1e-6) {
+          const f = (tg.y - py) / (y - py || 1);
+          return (px + (x - px) * f - tg.x) * dir;
+        }
+        if (vy > 0 && y > tg.y) return null; // coming down without ever reaching its height: short
+        if ((x - tg.x) * dir > 4000) return 4000; // long past it while still above: overshoot
+      }
+      return null;
+    };
+    const cap = t.chargeCap();
+    let lo = 0.5, hi = cap * 3;
+    const top = reach(hi);
+    if (top === null || top < 0) return { frac: null, far: true };
+    for (let i = 0; i < 30; i++) {
+      const mid = (lo + hi) / 2;
+      const r = reach(mid);
+      if (r === null || r < 0) lo = mid; else hi = mid;
+    }
+    const v = hi;
+    // does terrain or a tree get in the way?
+    const hit = simulateShot(this.terrain, wind, this.tanks, t, m.x, m.y, u.x * v, u.y * v);
+    return { v, frac: v / cap, blocked: dist(hit.x, hit.y, tg.x, tg.y) > 45 };
   }
 
   // ------------------------------------------------------------ setup
@@ -695,7 +756,7 @@ class Game {
   explode(x, y, def, owner, palette = 'shell') {
     if (this.report) this.report.blasts.push({ x, y });
     this.terrain.crater(x, def.explR || 10);
-    this.terrain.scorch(x, Math.max(20, def.dmgR * 0.5), y > this.terrain.hAt(x) - 60 ? 0.45 : 0.15);
+    if (y > this.terrain.hAt(x) - 30) this.terrain.scorch(x, Math.max(14, def.dmgR * 0.3), 0.2); // a faint scorch, ground hits only
     // a blast that catches a supply crate claims it for whoever fired
     for (const c of this.crates) {
       if (c.alive && owner && dist(c.x, c.y - 9, x, y) < Math.max(40, def.dmgR * 0.6)) this.claimCrate(c, owner);
@@ -1160,6 +1221,7 @@ class Game {
     if (aiming && !this.cpu) this.drawGhost(ctx, aiming);
     for (const t of this.tanks) t.draw(ctx, t === aiming);
     if (aiming && !this.cpu) this.drawAimGuide(ctx, aiming);
+    if (aiming && !this.cpu && aiming.mark) this.drawMark(ctx, aiming);
     for (const d of this.drops) d.draw(ctx);
     for (const c of this.crates) c.draw(ctx);
     this.drawTraces(ctx);
@@ -1218,6 +1280,17 @@ class Game {
     }
   }
 
+  // target marker: a box-built crosshair in the player's colour
+  drawMark(ctx, t) {
+    const { x, y } = t.mark;
+    ctx.fillStyle = t.color;
+    for (let d = 8; d <= 20; d += 6) {
+      sq(ctx, x - d, y, 4); sq(ctx, x + d, y, 4); sq(ctx, x, y - d, 4); sq(ctx, x, y + d, 4);
+    }
+    ctx.fillStyle = '#ffffff';
+    sq(ctx, x, y, 4);
+  }
+
   drawHud(ctx) {
     const cam = this.cam;
     const sat = this.satellite;
@@ -1244,7 +1317,10 @@ class Game {
     }
     this.drawMinimap(ctx);
     this.drawWindMarker(ctx);
-    if (this.active && this.phase !== 'roundEnd') this.drawBars(ctx, this.active);
+    const t = this.active;
+    this.markInfo = this.phase === 'aim' && t && !this.cpu && t.mark ? this.markPower(t) : null;
+    if (this.markInfo) this.drawMarkLabel(ctx, t, this.markInfo);
+    if (t && this.phase !== 'roundEnd') this.drawBars(ctx, t);
   }
 
   // A3 UI_Minimap: a line at the top right with a dot per tank
@@ -1298,6 +1374,29 @@ class Game {
     }
   }
 
+  drawMarkLabel(ctx, t, info) {
+    const sx = t.mark.x - this.cam.x;
+    const sy = t.mark.y - this.cam.y;
+    let txt;
+    let col = '#20204a';
+    if (info.behind) txt = 'turn around';
+    else if (info.far || info.frac > 1) { txt = 'out of reach at this angle'; col = '#b8433a'; }
+    else { txt = `power ${Math.round(info.frac * 100)}%${info.blocked ? ' · blocked' : ''}`; if (info.blocked) col = '#b8433a'; }
+    ctx.font = '15px "Maven Pro", Verdana, sans-serif';
+    ctx.textAlign = 'center';
+    const w = ctx.measureText(txt).width + 16;
+    // by the marker while it's on screen, otherwise above the charge bar
+    const on = sx > 0 && sx < VIEW_W && sy > 60 && sy < VIEW_H - 120;
+    const bx = Math.round(on ? clamp(sx - w / 2, 8, VIEW_W - w - 8) : 1120 + 400 - w);
+    const by = Math.round(on ? sy - 52 : 752);
+    ctx.fillStyle = 'rgba(232,230,244,0.9)';
+    ctx.fillRect(bx, by, Math.round(w), 22);
+    ctx.fillStyle = t.color;
+    ctx.fillRect(bx, by, 4, 22);
+    ctx.fillStyle = col;
+    ctx.fillText(txt, bx + w / 2 + 2, by + 16);
+  }
+
   // A3 UI_Combat: charge bar (with last-charge tick) and fuel bar, bottom right
   drawBars(ctx, t) {
     const x0 = 1120, w = 400;
@@ -1310,6 +1409,13 @@ class Game {
     if (t.lastCharge > 0) {
       ctx.fillStyle = '#000';
       ctx.fillRect(Math.round(x0 + w * t.lastCharge) - 1, 790, 2, 32);
+    }
+    // power the target marker needs at this angle
+    const mi = this.markInfo;
+    if (mi && mi.frac && mi.frac <= 1) {
+      ctx.fillStyle = mi.blocked ? '#b8433a' : '#2e8b57';
+      ctx.fillRect(Math.round(x0 + w * mi.frac) - 2, 784, 4, 44);
+      sq(ctx, x0 + w * mi.frac, 780, 10);
     }
     ctx.fillStyle = '#000';
     ctx.fillRect(x0 - 2, 828, 4, 20);

@@ -145,6 +145,7 @@ class Tank {
     this.falling = false;
     this.fallFrom = 0;
     this.armed = { double: false, over: false };
+    this.mark = null; // target marker (humans): the HUD shows the power needed to land on it
     this.cooldown = { double: 0, over: 0, shield: 0 }; // own turns until each ability is ready again
     this.shield = false;
     this.shotsLeft = 0;
@@ -427,6 +428,15 @@ class Projectile {
     const r = stepBallistic(this, g.terrain, g.wind, g.tanks, this.owner);
     if (this.y < this.peak) this.peak = this.y;
     if (this.age % 2 === 0) g.trace(this.x, this.y);
+    // soot flecks shed in flight: they fall away behind the shell and fade
+    if (this.age % 3 === 0) {
+      const dark = Math.random() < 0.5;
+      g.particles.add({
+        x: this.x, y: this.y, vx: this.vx * 0.15 + (Math.random() - 0.5), vy: this.vy * 0.15 + Math.random() * 0.5,
+        g: 0.12, drag: 0.97, life: 0.5 + Math.random() * 0.6, size: 2 + Math.random() * 3,
+        color: dark ? [58, 44, 34] : [110, 78, 52],
+      });
+    }
     if (this.age % 2 === 0) {
       this.trail.push(this.x, this.y);
       if (this.trail.length > 24) this.trail.splice(0, 2);
