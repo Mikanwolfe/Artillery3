@@ -828,10 +828,10 @@ class Game {
     // satellite caption (A3 Satellite.Draw)
     if (sat.y - cam.y > -80) {
       ctx.font = '18px "Maven Pro", Verdana, sans-serif';
-      ctx.textAlign = 'center';
+      ctx.textAlign = 'left';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x), Math.round(sat.y - cam.y - 110));
-      ctx.fillText(`Level: ${sat.level}`, Math.round(sat.x - cam.x), Math.round(sat.y - cam.y - 90));
+      ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 4));
+      ctx.fillText(`Level: ${sat.level}`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 26));
     }
     const live = this.phase === 'aim' ? this.active : null;
     for (const t of this.tanks) t.drawLabel(ctx, t.x - cam.x, t.y - cam.y, t === live);
