@@ -298,6 +298,13 @@ class Tank {
         ctx.fillStyle = i < this.shotsLeft ? '#4682b4' : 'rgba(40,40,70,0.35)';
         ctx.fillRect(Math.round(sx - (w.clip * 10) / 2 + i * 10), Math.round(sy + 42), 7, 7);
       }
+      // MAIA uplink from a supply crate: the next shot calls the satellite
+      if (this.uplink) {
+        ctx.fillStyle = 'rgb(255,120,200)';
+        ctx.fillRect(Math.round(sx - ww / 2 - 22), Math.round(sy + 22), 12, 12);
+        ctx.fillStyle = 'rgb(120,32,78)';
+        ctx.fillRect(Math.round(sx - ww / 2 - 19), Math.round(sy + 25), 6, 6);
+      }
       // repair kits carried: small green crosses (press R)
       for (let i = 0; i < this.kits; i++) {
         const kx = Math.round(sx + ww / 2 + 10 + i * 14);
@@ -613,6 +620,67 @@ class Satellite {
       }
       ctx.fillStyle = `rgba(255,255,255,${this.charge})`;
       sq(ctx, l.x, l.y, 6 + this.charge * 16);
+    }
+  }
+}
+
+// Supply drop (A3's design notes listed crates and item drops as entities that never got built).
+// Parachutes in mid-round, drifting with the wind; claimed by driving into it or by catching it in
+// any blast. Contents stay hidden until it is claimed.
+const CRATE_KINDS = [
+  { id: 'repair', w: 3 }, { id: 'cash', w: 3 }, { id: 'armour', w: 2 }, { id: 'uplink', w: 2 },
+];
+
+class Crate {
+  constructor(x, kind) {
+    this.x = x;
+    this.y = -150;
+    this.kind = kind;
+    this.landed = false;
+    this.alive = true;
+    this.t = 0;
+  }
+
+  update(game) {
+    this.t++;
+    if (!this.landed) {
+      this.y += 2.2;
+      this.x = clamp(this.x + game.wind.x * 12, 40, WORLD_W - 40);
+      const gy = game.terrain.hAt(this.x);
+      if (this.y >= gy) {
+        this.y = gy;
+        this.landed = true;
+        game.particles.puff(this.x, this.y);
+      }
+    } else this.y = game.terrain.hAt(this.x);
+  }
+
+  draw(ctx) {
+    const x = Math.round(this.x);
+    const y = Math.round(this.y);
+    if (!this.landed) {
+      // striped canopy as a stepped dome, with rigging lines of squares down to the crate
+      const cy = y - 62;
+      for (let i = -4; i <= 4; i++) {
+        const h = Math.round(Math.sqrt(Math.max(0, 25 - i * i)) * 3.2);
+        ctx.fillStyle = i % 2 ? '#d8402c' : '#f4f4f8';
+        ctx.fillRect(x + i * 6 - 3, cy - h, 6, h);
+      }
+      ctx.fillStyle = '#6b6f78';
+      for (const ex of [-27, 0, 27]) {
+        for (let k = 1; k < 6; k++) sq(ctx, lerp(x + ex, x, k / 6), lerp(cy, y - 18, k / 6), 2);
+      }
+    }
+    ctx.fillStyle = 'rgb(96,72,48)';
+    ctx.fillRect(x - 10, y - 18, 20, 18);
+    ctx.fillStyle = 'rgb(176,136,84)';
+    ctx.fillRect(x - 8, y - 16, 16, 14);
+    ctx.fillStyle = 'rgb(96,72,48)';
+    ctx.fillRect(x - 8, y - 10, 16, 2);
+    ctx.fillRect(x - 1, y - 16, 2, 14);
+    if (this.landed && (this.t >> 4) % 2 === 0) {
+      ctx.fillStyle = '#ffd84a';
+      sq(ctx, x, y - 22, 4);
     }
   }
 }

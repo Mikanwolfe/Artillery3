@@ -119,6 +119,20 @@ class CpuController {
           this.game.useRepair(t);
           return;
         }
+        // a landed crate within driving range: go and get it first
+        if (!this.moved && t.fuel > 30) {
+          const reach = t.fuel * TANK_SPEED * 0.9;
+          const crate = this.game.crates.filter((c) => c.alive && c.landed && Math.abs(c.x - t.x) < reach)
+            .sort((a, b) => Math.abs(a.x - t.x) - Math.abs(b.x - t.x))[0];
+          const keen = t.type === 'easy' ? 0.5 : t.type === 'normal' ? 0.8 : 1;
+          if (crate && rng.chance(keen)) {
+            this.moved = true;
+            this.moveDir = crate.x > t.x ? 1 : -1;
+            this.moveFrames = Math.ceil(Math.abs(crate.x - t.x) / TANK_SPEED) + 6;
+            this.state = 'move';
+            return;
+          }
+        }
         this.plan = this.makePlan();
         const needMove = !this.moved && (this.plan.err > 80 || (t.type === 'easy' && rng.chance(0.15)));
         if (needMove) {

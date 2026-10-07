@@ -19,7 +19,9 @@ const REPAIR_FRAC = 0.4; // of max health and of max armour
 // Prize money counts only damage that actually came off a target (no overkill, no damage past
 // armour), and acid drip at a reduced rate: acid's many small hits used to flood the payout.
 const ACID_PAY_RATE = 0.5;
-const SAVE_KEY = 'a3.save'; // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
+const SAVE_KEY = 'a3.save';
+const CRATE_CHANCE = 0.3; // chance of a supply drop at the start of each turn (after the first few)
+const CRATE_MAX = 2; // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
 
 // Proportional-control camera: every frame it closes 1/CAM_EASE of the distance to its target.
 // The target is whatever it's focused on (tank, shell, satellite), or a point the player dragged to.
@@ -105,6 +107,7 @@ class Game {
     this.projectiles = [];
     this.drops = [];
     this.lasers = [];
+    this.crates = [];
     this.salvo = null;
     this.satSeq = null;
     this.satTarget = null;
@@ -187,6 +190,7 @@ class Game {
     this.projectiles = [];
     this.drops = [];
     this.lasers = [];
+    this.crates = [];
     this.salvo = null;
     this.satSeq = null;
     this.satTarget = null;
@@ -246,6 +250,7 @@ class Game {
       this.events.push('The wind has changed.');
     }
     this.satellite.newTurn();
+    if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
     t.fuel = TANK_FUEL;
     t.shotsLeft = t.weapon.clip; // autoloaders reload every turn
     t.firedThisTurn = false;
@@ -281,6 +286,8 @@ class Game {
     if (this.phase === 'aim') this.updateAim();
     else if (this.phase === 'resolve') this.updateResolve();
     this.lasers = this.lasers.filter((l) => l.update());
+    for (const c of this.crates) if (c.alive) c.update(this);
+    this.crates = this.crates.filter((c) => c.alive);
     this.windMarker += (this.windDir - this.windMarker) / 20;
     this.cam.update();
     this.shake *= 0.9;
@@ -300,7 +307,53 @@ class Game {
         t.y = gy;
         t.falling = false;
       }
+      // drive over a landed crate to claim it
+      for (const c of this.crates) {
+        if (c.alive && c.landed && Math.abs(c.x - t.x) < TANK_W / 2 + 10 && Math.abs(c.y - t.y) < 30) this.claimCrate(c, t);
+      }
     }
+  }
+
+  spawnCrate() {
+    const total = CRATE_KINDS.reduce((a, k) => a + k.w, 0);
+    let r = rng.next() * total;
+    const kind = CRATE_KINDS.find((k) => (r -= k.w) < 0).id;
+    this.crates.push(new Crate(rng.range(150, WORLD_W - 150), kind));
+    this.events.push('A supply crate is dropping in.');
+    this.ui.notice('Supply drop incoming!');
+  }
+
+  claimCrate(c, t) {
+    if (!c.alive || !t) return;
+    c.alive = false;
+    let desc;
+    if (c.kind === 'repair') {
+      const hp = Math.min(t.maxHp - t.hp, Math.round(t.maxHp * 0.3));
+      const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.2));
+      t.hp += hp;
+      t.armour += ar;
+      desc = `field repair (+${hp + ar})`;
+    } else if (c.kind === 'cash') {
+      const amt = rng.int(3, 8) * 100;
+      t.money += amt;
+      desc = `$${amt}`;
+    } else if (c.kind === 'armour') {
+      const ar = Math.round(t.maxArmour * 0.35);
+      t.armour = Math.min(Math.round(t.maxArmour * 1.5), t.armour + ar);
+      desc = `armour plating (+${ar})`;
+    } else {
+      t.uplink = true;
+      desc = 'a MAIA uplink (next shot calls the satellite)';
+    }
+    this.particles.text(c.x, c.y - 40, desc.split(' (')[0], '#ffd84a', true);
+    for (let i = 0; i < 18; i++) {
+      const a = Math.random() * TAU;
+      this.particles.add({ x: c.x, y: c.y - 9, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 - 1, g: 0.08, drag: 0.95, life: 0.7, size: 4, color: [255, 216, 74] });
+    }
+    this.sfx.buy();
+    this.events.push(`${t.name} claimed a supply crate: ${desc}.`);
+    this.ui.notice(`${t.name} claimed a supply crate: ${desc}.`);
+    if (t.isCpu && Math.random() < 0.5) this.banter(t, 'crate');
   }
 
   moveTank(t, dir) {
@@ -372,7 +425,8 @@ class Game {
     t.shotsLeft--;
     t.firedThisTurn = true;
     const dir = t.aimVec();
-    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo, timer: 0, first: true };
+    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo, timer: 0, first: true, uplink: !!t.uplink };
+    t.uplink = false;
     t.lastCharge = t.charge / w.maxCharge;
     t.charge = 0;
     t.recoil = 1;
@@ -406,6 +460,7 @@ class Game {
     const vx = s.vx + (rng.next() - 0.5) * s.w.disp;
     const vy = s.vy + (rng.next() - 0.5) * s.w.disp;
     const p = new Projectile(this, s.w, t, m.x, m.y, vx, vy, s.first);
+    p.uplink = s.uplink && s.first;
     if (s.first) {
       p.rec = [];
       this.cam.follow(p);
@@ -504,12 +559,16 @@ class Game {
         this.sfx.acid();
       }
     }
-    if (w.sat && p.main) this.satTarget = { x: p.x, y: p.y, owner: p.owner };
+    if ((w.sat || p.uplink) && p.main) this.satTarget = { x: p.x, y: p.y, owner: p.owner };
   }
 
   explode(x, y, def, owner, palette = 'shell') {
     if (this.report) this.report.blasts.push({ x, y });
     this.terrain.crater(x, def.explR || 10);
+    // a blast that catches a supply crate claims it for whoever fired
+    for (const c of this.crates) {
+      if (c.alive && owner && dist(c.x, c.y - 9, x, y) < Math.max(40, def.dmgR * 0.6)) this.claimCrate(c, owner);
+    }
     for (const t of this.terrain.fellTrees(x, y, Math.max(30, def.dmgR * 0.5))) {
       const top = this.terrain.hAt(t.x) - this.terrain.treeHeight(t) / 2;
       for (let i = 0; i < 10; i++) {
@@ -889,6 +948,7 @@ class Game {
     for (const t of this.tanks) t.draw(ctx, t === aiming);
     if (aiming && !this.cpu) this.drawAimGuide(ctx, aiming);
     for (const d of this.drops) d.draw(ctx);
+    for (const c of this.crates) c.draw(ctx);
     for (const p of this.projectiles) p.draw(ctx);
     for (const l of this.lasers) l.draw(ctx);
     this.particles.draw(ctx);
@@ -995,6 +1055,10 @@ class Game {
       ctx.fillRect(x - s / 2, y0 + h / 2 - s / 2, 2, s);
       ctx.fillRect(x + s / 2 - 2, y0 + h / 2 - s / 2, 2, s);
     };
+    for (const c of this.crates) {
+      ctx.fillStyle = '#ffd84a';
+      sq(ctx, mx(c.x), y0 + h / 2 - (c.landed ? 0 : 8), 7);
+    }
     if (this.active) box(mx(this.active.x), 16, 'purple');
     const shell = this.projectiles[0];
     if (shell) box(mx(shell.x), 10, 'orange');
