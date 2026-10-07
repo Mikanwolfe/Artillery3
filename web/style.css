@@ -48,6 +48,8 @@ h3 { margin: 0.6em 0 0.3em; font-weight: normal; font-size: 1.05em; color: var(-
 #menu.left { justify-content: flex-start; background: none; }
 #menu .side { height: 100%; width: 34%; background: linear-gradient(90deg, rgba(255,255,255,0.97), rgba(255,255,255,0.88)); padding: 7% 2.5% 2%; overflow: auto; }
 .by { margin: -0.2em 0 1.6em 0.2em; color: var(--accent); }
+#version { margin-left: 0.6em; font-size: 0.75em; color: var(--dim); text-decoration: none; font-variant-numeric: tabular-nums; }
+#version[href]:hover { text-decoration: underline; }
 #players { display: grid; gap: 0.4em; margin-bottom: 0.4em; }
 .prow { display: grid; grid-template-columns: 1.1em 1fr 8.5em; gap: 0.5em; align-items: center; }
 .swatch { width: 1.1em; height: 1.1em; }

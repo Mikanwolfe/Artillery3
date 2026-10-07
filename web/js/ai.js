@@ -18,6 +18,11 @@ class Ctl {
 const RANGE_ERR_BASE = 0.35;
 const RANGE_ERR_SCALE = 650;
 
+// Retaliation: a CPU strongly prefers whoever last damaged it. The bonus is in the same units as
+// the solver's miss distance, so it will take a somewhat worse shot to hit back.
+const RETALIATE = { easy: 180, normal: 260, hard: 320 };
+const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
+
 // aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge
 const DIFFICULTY = {
   easy: { se: 4, sc: 0.07 },
@@ -81,6 +86,7 @@ class CpuController {
     const g = this.game;
     const t = this.tank;
     const enemies = g.tanks.filter((x) => x.alive && x !== t);
+    const grudge = t.lastAttacker && t.lastAttacker.alive && t.lastAttacker !== t ? t.lastAttacker : null;
     // weapon is locked once the clip has started; otherwise pick by difficulty
     let options = t.firedThisTurn ? [t.weapon] : t.weapons.map((id) => WEAPON_BY_ID[id]);
     options = options.slice().sort((a, b) => weaponValue(b) - weaponValue(a));
@@ -90,7 +96,8 @@ class CpuController {
     for (const w of options) {
       for (const e of enemies) {
         const s = solveShot(g, t, w, e);
-        const score = s.err - (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1;
+        let score = s.err - (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1 - (e.bounty || 0) * BOUNTY_PULL;
+        if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
       }
       if (best && best.err < 40) break; // good enough with the strongest usable weapon
@@ -102,6 +109,7 @@ class CpuController {
     const f = clamp(RANGE_ERR_BASE + range / RANGE_ERR_SCALE, RANGE_ERR_BASE, 3);
     best.elev = clamp(best.elev + rng.gauss() * k.se * f, w.elevMin, w.elevMax);
     best.v = clamp(best.v * (1 + rng.gauss() * k.sc * f), w.maxCharge * 0.05, w.maxCharge);
+    best.revenge = best.target === grudge;
     return best;
   }
 
@@ -133,7 +141,16 @@ class CpuController {
             return;
           }
         }
+        // Deflector when hurt (it doesn't cost the turn)
+        if (t.abilities.shield > 0 && !t.shield && t.hp < t.maxHp * 0.6 && rng.chance(t.type === 'easy' ? 0.3 : 0.7)) this.game.useAbility(t, 'shield');
         this.plan = this.makePlan();
+        // a good firing solution is worth a Double Shot
+        if (!t.armed.double && t.abilities.double > 0 && this.plan.err < 40 && rng.chance(t.type === 'hard' ? 0.8 : t.type === 'normal' ? 0.5 : 0.25)) this.game.useAbility(t, 'double');
+        // announce a grudge once per attacker
+        if (this.plan.revenge && t.vowed !== this.plan.target && !t.firedThisTurn) {
+          t.vowed = this.plan.target;
+          if (rng.chance(0.6 * CHATTINESS)) this.game.banter(t, 'revenge', this.plan.target);
+        }
         const needMove = !this.moved && (this.plan.err > 80 || (t.type === 'easy' && rng.chance(0.15)));
         if (needMove) {
           this.moved = true;

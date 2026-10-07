@@ -7,6 +7,12 @@ const TERRAIN_STEP = 5; // width of a drawn column (world units)
 const TREE_HALF_W = 8; // tree hitbox half-width
 const TREE_MAX_H = 48; // tallest tree (trunk + 5 tiers of 8)
 
+const MOUNTAIN_ROUGH = 0.5; // A3 used 0.45
+const MOUNTAIN_DISP = 320; // A3 used 200
+const MOUNTAIN_PEAKS = [2, 3];
+const MOUNTAIN_H = [280, 560]; // massif height (world units)
+const MOUNTAIN_W = [320, 520]; // massif half-width
+
 // Classic 1-D midpoint displacement over n segments (n must be a power of two).
 function midpoint(n, rough, disp, a, b) {
   const m = new Float32Array(n + 1);
@@ -36,10 +42,21 @@ class Terrain {
     this.trees = [];
   }
 
+  // Mountainous: rougher, deeper midpoint displacement than A3's, plus a few raised-cosine massifs
+  // so there is usually a ridge or two to lob over rather than a straight shot.
   generate() {
-    this.height = generateHeights(0.6 * WORLD_BOTTOM, 0.45);
+    this.height = generateHeights(0.62 * WORLD_BOTTOM, MOUNTAIN_ROUGH, MOUNTAIN_DISP);
     this.trees = [];
-    for (let i = 0; i < WORLD_W; i++) this.height[i] = clamp(this.height[i], 450, WORLD_BOTTOM - 150);
+    const peaks = rng.int(MOUNTAIN_PEAKS[0], MOUNTAIN_PEAKS[1]);
+    for (let k = 0; k < peaks; k++) {
+      const cx = rng.range(250, WORLD_W - 250);
+      const hh = rng.range(MOUNTAIN_H[0], MOUNTAIN_H[1]);
+      const hw = rng.range(MOUNTAIN_W[0], MOUNTAIN_W[1]);
+      for (let i = Math.max(0, Math.floor(cx - hw)); i < Math.min(WORLD_W, cx + hw); i++) {
+        this.height[i] -= hh * 0.5 * (1 + Math.cos((Math.PI * (i - cx)) / hw));
+      }
+    }
+    for (let i = 0; i < WORLD_W; i++) this.height[i] = clamp(this.height[i], 150, WORLD_BOTTOM - 140);
   }
 
   hAt(x) {

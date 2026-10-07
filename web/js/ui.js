@@ -17,8 +17,14 @@ const UI = {
     game.ui = this;
     this.players = [
       { name: 'Player 1', type: 'human' },
-      { name: AI_NAMES[0], type: 'normal' },
+      { name: 'Ace', type: 'normal' },
+      { name: 'Rookie', type: 'easy' },
+      { name: 'Sarge', type: 'hard' },
     ];
+    // build stamp: the short git hash, written into js/version.js when the site is published
+    const v = $('version');
+    v.textContent = A3_VERSION === 'dev' ? 'dev build' : `build ${A3_VERSION}`;
+    if (A3_VERSION !== 'dev') v.href = `https://github.com/Mikanwolfe/Artillery3/commit/${A3_VERSION}`;
     this.renderPlayers();
     $('add-player').onclick = () => {
       if (this.players.length >= 4) return;
@@ -196,6 +202,9 @@ const UI = {
     document.querySelectorAll('#touch [data-rep]').forEach((b) => {
       b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ repair: true }); });
     });
+    document.querySelectorAll('#touch [data-ab]').forEach((b) => {
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ ability: b.dataset.ab }); });
+    });
     document.querySelectorAll('#touch [data-end]').forEach((b) => {
       b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ endTurn: true }); });
     });
@@ -262,6 +271,10 @@ const UI = {
         <small>Restores ${Math.round(REPAIR_FRAC * 100)}% health and armour. Using one (R) takes your turn.</small></span>
         <button data-k="1" ${tank.kits < REPAIR_MAX && tank.money >= REPAIR_COST ? '' : 'disabled'}>${money(REPAIR_COST)}</button></div>`;
       $('shop-kits').querySelector('[data-k]').onclick = () => { g.buy(tank, 'kit'); render(); };
+      $('shop-abil').innerHTML = ABILITIES.map((a) => `<div class="upg"><span>${esc(a.name)} <small>(${tank.abilities[a.id]}/${ABILITY_MAX}, key ${a.key})</small><br>
+        <small>${esc(a.desc)}</small></span>
+        <button data-a="${a.id}" ${tank.abilities[a.id] < ABILITY_MAX && tank.money >= a.cost ? '' : 'disabled'}>${money(a.cost)}</button></div>`).join('');
+      $('shop-abil').querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => { g.buy(tank, 'ability', b.dataset.a); render(); }; });
     };
     render();
     $('shop-done').onclick = done;

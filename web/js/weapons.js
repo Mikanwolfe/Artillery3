@@ -92,6 +92,18 @@ function badgeText(w) {
   return RARITY[w.rarity].word[0] + KIND_LETTER[w.kind];
 }
 
+// One-use abilities bought in the shop (carry up to ABILITY_MAX of each). Double Shot and
+// Overcharge are armed with their key and spent on the next shot; Deflector switches on at once
+// and lasts until your next turn. None of them uses up the turn.
+const ABILITIES = [
+  { id: 'double', key: '1', tag: 'x2', name: 'Double Shot', cost: 1400, desc: 'Arm, then fire: the shot is fired twice.' },
+  { id: 'over', key: '2', tag: 'OVR', name: 'Overcharge', cost: 900, desc: 'Arm, then charge: the bar goes 35% further, for range and kinetic damage.' },
+  { id: 'shield', key: '3', tag: 'SHD', name: 'Deflector', cost: 1100, desc: 'Halves all damage you take until your next turn.' },
+];
+const ABILITY_MAX = 2;
+const OVERCHARGE = 1.35;
+const SHIELD_FACTOR = 0.5;
+
 const WEAPON_BY_ID = Object.fromEntries([...WEAPONS, ...VEHICLES.map((v) => v.weapon)].map((w) => [w.id, w]));
 const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
 
