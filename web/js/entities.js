@@ -107,7 +107,7 @@ class Tank {
     this.upgrades = { hp: 0, armour: 0 };
     this.weapons = [this.vehicle.weapon.id];
     this.kits = 0; // repair kits carried (consumable)
-    this.abilities = { double: 0, over: 0, shield: 0 }; // one-shot abilities carried (see ABILITIES)
+    this.abilities = { double: 0, over: 0, shield: 0 }; // 1 = owned (see ABILITIES)
     this.lastAttacker = null; // CPUs go after whoever last hurt them
     this.weaponIdx = 0;
     this.stats = { dealt: 0, kills: 0 };
@@ -123,6 +123,8 @@ class Tank {
   get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)); }
   get weapon() { return WEAPON_BY_ID[this.weapons[this.weaponIdx]] || WEAPON_BY_ID[this.weapons[0]]; }
   // full-charge muzzle speed for the next shot (Overcharge raises it)
+  // owned and recharged
+  abilityReady(id) { return this.abilities[id] > 0 && !(this.cooldown[id] > 0); }
   chargeCap() { return this.weapon.maxCharge * (this.armed.over ? OVERCHARGE : 1); }
 
   resetRound(x, terrain) {
@@ -143,6 +145,8 @@ class Tank {
     this.falling = false;
     this.fallFrom = 0;
     this.armed = { double: false, over: false };
+    this.mark = null; // target marker (humans): the HUD shows the power needed to land on it
+    this.cooldown = { double: 0, over: 0, shield: 0 }; // own turns until each ability is ready again
     this.shield = false;
     this.shotsLeft = 0;
     this.roundDealt = 0;
@@ -354,15 +358,16 @@ class Tank {
         ctx.fillRect(kx + 4, ky, 4, 12);
         ctx.fillRect(kx, ky + 4, 12, 4);
       }
-      // abilities carried: "key tag xN", lit up when armed
-      const tags = ABILITIES.filter((a) => this.abilities[a.id] > 0 || this.armed[a.id]);
+      // abilities owned: "key tag", lit up when armed, greyed with turns left while recharging
+      const tags = ABILITIES.filter((a) => this.abilities[a.id] > 0);
       ctx.font = '13px "Maven Pro", Verdana, sans-serif';
       tags.forEach((a, i) => {
         const on = this.armed[a.id] || (a.id === 'shield' && this.shield);
-        const txt = `${a.key} ${a.tag} ×${this.abilities[a.id]}`;
-        const bw2 = 76;
+        const cd = this.cooldown[a.id];
+        const txt = cd > 0 && !on ? `${a.key} ${a.tag} · ${cd}` : `${a.key} ${a.tag}`;
+        const bw2 = 64;
         const ax = Math.round(sx - (tags.length * (bw2 + 4)) / 2 + i * (bw2 + 4));
-        ctx.fillStyle = on ? '#ffd84a' : 'rgba(200,200,214,0.88)';
+        ctx.fillStyle = on ? '#ffd84a' : cd > 0 ? 'rgba(120,120,140,0.6)' : 'rgba(200,200,214,0.88)';
         ctx.fillRect(ax, Math.round(sy + 54), bw2, 18);
         ctx.fillStyle = '#20204a';
         ctx.fillText(txt, ax + bw2 / 2, Math.round(sy + 67));
@@ -422,6 +427,16 @@ class Projectile {
     const g = this.game;
     const r = stepBallistic(this, g.terrain, g.wind, g.tanks, this.owner);
     if (this.y < this.peak) this.peak = this.y;
+    if (this.age % 2 === 0) g.trace(this.x, this.y);
+    // soot flecks shed in flight: they fall away behind the shell and fade
+    if (this.age % 3 === 0) {
+      const dark = Math.random() < 0.5;
+      g.particles.add({
+        x: this.x, y: this.y, vx: this.vx * 0.15 + (Math.random() - 0.5), vy: this.vy * 0.15 + Math.random() * 0.5,
+        g: 0.12, drag: 0.97, life: 0.5 + Math.random() * 0.6, size: 2 + Math.random() * 3,
+        color: dark ? [58, 44, 34] : [110, 78, 52],
+      });
+    }
     if (this.age % 2 === 0) {
       this.trail.push(this.x, this.y);
       if (this.trail.length > 24) this.trail.splice(0, 2);

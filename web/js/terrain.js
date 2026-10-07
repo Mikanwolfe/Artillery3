@@ -7,6 +7,8 @@ const TERRAIN_STEP = 5; // width of a drawn column (world units)
 const TREE_HALF_W = 8; // tree hitbox half-width
 const TREE_MAX_H = 48; // tallest tree (trunk + 5 tiers of 8)
 
+const SOOT_RGB = [96, 66, 44]; // brown scorch left on the snow by blasts
+
 const MOUNTAIN_ROUGH = 0.5; // A3 used 0.45
 const MOUNTAIN_DISP = 320; // A3 used 200
 const MOUNTAIN_PEAKS = [2, 3];
@@ -47,6 +49,7 @@ class Terrain {
   generate() {
     this.height = generateHeights(0.62 * WORLD_BOTTOM, MOUNTAIN_ROUGH, MOUNTAIN_DISP);
     this.trees = [];
+    this.soot = new Float32Array(WORLD_W); // 0..1 scorch per column, drawn along the surface
     const peaks = rng.int(MOUNTAIN_PEAKS[0], MOUNTAIN_PEAKS[1]);
     for (let k = 0; k < peaks; k++) {
       const cx = rng.range(250, WORLD_W - 250);
@@ -77,6 +80,15 @@ class Terrain {
 
   // A3 Projectile.BlowUpTerrain: a cosine bowl 8*explRad wide and up to 2*explRad deep,
   // dug into the ground under the blast.
+  // brown soot around a blast: darkest at the centre, spread a little wider than the crater
+  scorch(cx, r, amt = 0.8) {
+    if (!this.soot) return;
+    for (let x = Math.max(0, Math.floor(cx - r)); x < Math.min(WORLD_W, cx + r); x++) {
+      const k = 1 - Math.abs(x - cx) / r;
+      this.soot[x] = Math.min(1, this.soot[x] + amt * k * (0.6 + 0.4 * hash2(x, 7)));
+    }
+  }
+
   crater(cx, explRad) {
     const width = Math.max(8, explRad * 8 - 1);
     for (let i = 0; i < width; i++) {
@@ -155,6 +167,20 @@ class Terrain {
   draw(ctx, x0, x1) {
     ctx.fillStyle = this.color;
     fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
+    if (!this.soot) return;
+    // soot: a brown band of squares along the surface, deeper and darker where it's heavier
+    const step = TERRAIN_STEP;
+    for (let x = Math.max(0, Math.floor(x0 / step) * step); x < Math.min(WORLD_W, x1 + step); x += step) {
+      const s = this.soot[Math.min(WORLD_W - 1, x + (step >> 1))];
+      if (s < 0.04 || hash2(x, 11) > 0.25 + s) continue; // light soot is patchy
+      const top = Math.round(this.height[Math.min(WORLD_W - 1, x + (step >> 1))]);
+      ctx.fillStyle = rgb(SOOT_RGB, 0.15 + 0.6 * s);
+      ctx.fillRect(x, top, step, Math.round(2 + 8 * s));
+      if (s > 0.35 && hash2(x, 3) < s * 0.6) { // flecks thrown a little further down
+        ctx.fillStyle = rgb(SOOT_RGB, 0.35 * s);
+        ctx.fillRect(x + 1, top + Math.round(5 + 14 * s), 3, 3);
+      }
+    }
   }
 }
 

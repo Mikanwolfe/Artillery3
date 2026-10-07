@@ -6,7 +6,7 @@
 
 ### Update: web rewrite
 
-The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step or dependencies (sound is synthesised; the only asset is the original Maven Pro font).
+The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step or dependencies. The only assets are the original's: the Maven Pro font and its sounds and music (`web/sounds`, transcoded to MP3 from `Resources/sounds`; firing, hits and the charge hum are synthesised, as A3 had no samples for them).
 Open `web/index.html` in a browser, or serve the folder (e.g. `python3 -m http.server -d web`).
 
 It lifts as much as it can from A3s, in the original's world units (2400-wide terrain, 1600x900 camera, gravity 0.6, muzzle speed = charge):
@@ -14,7 +14,8 @@ It lifts as much as it can from A3s, in the original's world units (2400-wide te
 - **Snowy Day** environment: lavender sky, three parallax ridges, snow. The terrain is A3's midpoint displacement made rougher and deeper (reduction 0.5), with two or three massifs on top, so there is usually a ridge between you and the target (`MOUNTAIN_*` in `web/js/terrain.js`).
 - **Arcade damage for high shots**: a shell's blast is scaled up by how far it fell from the top of its arc (up to double; "altitude +N%" pops up), and fast impacts add **kinetic** damage concentrated in about a third of the blast radius. Lasers get neither. Tune `ALTITUDE_*` / `KINETIC_*` in `web/js/game.js`.
 - **Snow slides and falls**: a blast on a steep face makes the loose snow around it slide downhill for a moment, and a vehicle whose ground drops away takes fall damage past a short drop (credited to whoever fired).
-- **Abilities** (shop, carry 2 of each, none of them uses your turn): `1` **Double Shot** fires your next shot twice, `2` **Overcharge** lets the charge bar run 35% further, `3` **Deflector** halves damage you take until your next turn. CPUs buy and use Double Shot and Deflector.
+- **Abilities** (bought once in the shop and kept; none of them uses your turn): `1` **Double Shot** fires your next shot twice, `2` **Overcharge** lets the charge bar run 35% further, `3` **Deflector** halves damage you take until your next turn. Each is ready at the start of every round and recharges over 3-4 of your own turns after use (`cd` in `ABILITIES`, `web/js/weapons.js`); the label shows the turns left. CPUs buy and use Double Shot and Deflector.
+- **Smoke and soot**: every shell leaves a smoke trace that drifts with the wind and fades over a few seconds, and sheds brown soot flecks that fall away behind it; ground hits leave a faint scorch.
 - **Bounties**: a kill pays the killer $250 at once, and the match leader (most round wins) carries an extra $400 bounty per win of lead, shown next to their label.
 - **Characters**: G.W. Tiger, Object 15X and Innocentia, each with health + armour (armour soaks hits first) and their original starting gun.
 - **The MAIA satellite** ("Maia-Class Low Orbit Ion Cannon": a round box-built body with arms curling round to the emitter and a wing of antennas on one side, turning as a whole to aim) sits above the map, gains damage every turn, and fires on wherever a satellite-enabled shell lands.
@@ -26,6 +27,7 @@ It lifts as much as it can from A3s, in the original's world units (2400-wide te
 - **Weapons and shop**: the full A3RData roster with its names, flavour text, rarity colours (and the original shop badges: rarity + type letters such as "Cs" or "Gl" in a square outlined in the rarity colour), autoloader clips, multi-round salvos, aim dispersion, lasers and acid; four equip slots; Health++ / Armour++ on the original cost curve; everyone is paid 500 + half the round's damage (scaled up each round).
 - **Camera**: proportional control (closes 1/10 of the distance per frame) following the tank, the shell and the satellite; drag to look around.
 - **Aim guide** (human players): a dotted line along the barrel that fades out; hold Space and it bends into the predicted arc for the current charge (gravity only, no wind), still fading before the landing point. Tune with `AIM_LINE_LEN`, `AIM_ARC_LEN` and `AIM_GUIDE_WIND` in `web/js/game.js`.
+- **Target marker** (human players): click or tap anywhere to drop a crosshair; a label over it (and a green tick on the charge bar) shows the power needed to land there at your current angle, updating as you aim, or says it's out of reach or blocked by terrain. Same physics as the aim guide (no wind unless `AIM_GUIDE_WIND`). Click your own vehicle to clear it.
 - **Trees**: pine stands on the battlefield stop shells (they burst in the branches), block driving, and get knocked down by explosions. The AI and the aim guide both account for them.
 - **Vehicles sit on slopes**: tilt follows the average gradient under each vehicle; boxes are sheared vertically rather than rotated. As in A3, elevation is measured from the hull, so every slope pitches your whole elevation range (nose-up lifts the arc, nose-down can stop you lobbing at all).
 - **HUD**: player | vehicle labels with armour / health, minimap, wind marker, charge bar with last-charge tick, fuel bar.
@@ -42,7 +44,8 @@ Everything in the world is drawn as plain axis-aligned boxes that never rotate: 
 | Abilities | `1` double shot · `2` overcharge · `3` deflector |
 | End turn | `Enter` |
 | Look around | drag (either mouse button) |
-| Mute / pause | `M` / `Esc` |
+| Target marker | click / tap |
+| Mute / music / pause | `M` / `N` / `Esc` |
 
 **CPU players** come in Easy / Normal / Hard (the default match is you against Ace (Normal), Rookie (Easy) and Sarge (Hard)). They hold grudges: a CPU goes after whoever last damaged it (a square in that player's colour by its label), even for a somewhat worse shot (`RETALIATE` in `web/js/ai.js`). The solver is a brute-force ballistic one that tries shots against the real physics and weighs the altitude / kinetic bonuses, so among shots that land it prefers high plunging lobs (Hard most, Easy least; `arc` in `DIFFICULTY`). It then adds aim error that grows with range (deadly up close, shaky across the map; tune `RANGE_ERR_BASE` / `RANGE_ERR_SCALE` in `web/js/ai.js`). Weapon dispersion adds more.
 Each CPU has a fixed personality picked by name (Ace: cocky, Major: polite, Rookie: nervous, Sarge: deadpan, Byron: poet, Unit 7: robot; custom names get one at random) and reacts to what actually happened, e.g. "that was close" after a near miss or "missed me!" when someone fires wide of them. The ~450 pre-written lines live in `web/js/taunts.js`; tune how often CPUs speak with `CHATTINESS` in `web/js/game.js`.

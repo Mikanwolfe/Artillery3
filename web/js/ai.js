@@ -151,10 +151,10 @@ class CpuController {
           }
         }
         // Deflector when hurt (it doesn't cost the turn)
-        if (t.abilities.shield > 0 && !t.shield && t.hp < t.maxHp * 0.6 && rng.chance(t.type === 'easy' ? 0.3 : 0.7)) this.game.useAbility(t, 'shield');
+        if (t.abilityReady('shield') && !t.shield && t.hp < t.maxHp * 0.6 && rng.chance(t.type === 'easy' ? 0.3 : 0.7)) this.game.useAbility(t, 'shield');
         this.plan = this.makePlan();
         // a good firing solution is worth a Double Shot
-        if (!t.armed.double && t.abilities.double > 0 && this.plan.err < 40 && rng.chance(t.type === 'hard' ? 0.8 : t.type === 'normal' ? 0.5 : 0.25)) this.game.useAbility(t, 'double');
+        if (!t.armed.double && t.abilityReady('double') && this.plan.err < 40 && rng.chance(t.type === 'hard' ? 0.8 : t.type === 'normal' ? 0.5 : 0.25)) this.game.useAbility(t, 'double');
         // announce a grudge once per attacker
         if (this.plan.revenge && t.vowed !== this.plan.target && !t.firedThisTurn) {
           t.vowed = this.plan.target;

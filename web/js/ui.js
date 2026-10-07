@@ -43,10 +43,21 @@ const UI = {
     };
     this.syncLoad();
     $('re-next').onclick = () => { $('roundend').hidden = true; game.afterRoundEnd(); };
-    $('ge-again').onclick = () => { $('gameend').hidden = true; game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); this.syncLoad(); };
+    $('ge-again').onclick = () => { $('gameend').hidden = true; game.sfx.music('shop'); game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); this.syncLoad(); };
     $('resume').onclick = () => game.togglePause();
     $('btn-pause').onclick = () => game.togglePause();
     $('btn-mute').onclick = () => game.toggleMute();
+    $('btn-music').onclick = () => game.toggleMusic();
+    // A3 UI_Button: a hover blip over buttons and a confirm click (shop buttons have their own sounds)
+    const stage = $('stage');
+    stage.addEventListener('pointerover', (e) => {
+      const b = e.target.closest && e.target.closest('button, .veh');
+      if (b && !b.disabled && !b.closest('#touch') && !b.contains(e.relatedTarget)) game.sfx.hover();
+    });
+    stage.addEventListener('click', (e) => {
+      const b = e.target.closest && e.target.closest('.primary, #add-player, #rem-player, #load');
+      if (b && !b.disabled) game.sfx.confirm();
+    });
     this.syncMute();
     this.initTouch();
     window.addEventListener('keydown', (e) => {
@@ -108,7 +119,7 @@ const UI = {
           <div class="stats">${this.weaponStats(w)}</div></div>`;
       }).join('');
       $('veh-grid').querySelectorAll('.veh').forEach((el) => {
-        el.onclick = () => { c.vehicle = el.dataset.v; this.game.sfx.click(); next(); };
+        el.onclick = () => { c.vehicle = el.dataset.v; this.game.sfx.confirm(); next(); };
       });
     };
     next();
@@ -138,7 +149,10 @@ const UI = {
     this.last = {};
   },
 
-  syncMute() { $('btn-mute').textContent = this.game.sfx.muted ? '✕' : '♪'; },
+  syncMute() {
+    $('btn-mute').textContent = this.game.sfx.muted ? '✕' : '♪';
+    $('btn-music').classList.toggle('off', !this.game.sfx.musicOn);
+  },
   showPause(on) { $('pause').hidden = !on; },
 
   turn(t) {
@@ -271,9 +285,12 @@ const UI = {
         <small>Restores ${Math.round(REPAIR_FRAC * 100)}% health and armour. Using one (R) takes your turn.</small></span>
         <button data-k="1" ${tank.kits < REPAIR_MAX && tank.money >= REPAIR_COST ? '' : 'disabled'}>${money(REPAIR_COST)}</button></div>`;
       $('shop-kits').querySelector('[data-k]').onclick = () => { g.buy(tank, 'kit'); render(); };
-      $('shop-abil').innerHTML = ABILITIES.map((a) => `<div class="upg"><span>${esc(a.name)} <small>(${tank.abilities[a.id]}/${ABILITY_MAX}, key ${a.key})</small><br>
-        <small>${esc(a.desc)}</small></span>
-        <button data-a="${a.id}" ${tank.abilities[a.id] < ABILITY_MAX && tank.money >= a.cost ? '' : 'disabled'}>${money(a.cost)}</button></div>`).join('');
+      $('shop-abil').innerHTML = ABILITIES.map((a) => {
+        const owned = tank.abilities[a.id] > 0;
+        return `<div class="upg"><span>${esc(a.name)} <small>(key ${a.key})</small><br>
+        <small>${esc(a.desc)} Recharges in ${a.cd} turns; ready at the start of every round.</small></span>
+        <button data-a="${a.id}" ${!owned && tank.money >= a.cost ? '' : 'disabled'}>${owned ? 'owned' : money(a.cost)}</button></div>`;
+      }).join('');
       $('shop-abil').querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => { g.buy(tank, 'ability', b.dataset.a); render(); }; });
     };
     render();
@@ -294,5 +311,6 @@ const UI = {
        <td>${t.wins}</td><td>${t.stats.kills}</td><td>${Math.round(t.stats.dealt)}</td><td>${money(t.money)}</td></tr>`).join('');
     $('gameend').hidden = false;
     this.game.sfx.win();
+    this.game.sfx.music('shop');
   },
 };
