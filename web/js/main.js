@@ -21,7 +21,7 @@
     const n = clamp(+params.get('auto') || 3, 2, 4);
     const cfgs = [];
     for (let i = 0; i < n; i++) cfgs.push({ name: AI_NAMES[i], type: types[i % types.length], vehicle: VEHICLES[i % VEHICLES.length].id });
-    game.startMatch(cfgs, params.has('rounds') ? +params.get('rounds') : 3, { balance: params.get('balance') || 'rebalanced', events: params.get('events') !== 'off' });
+    game.startMatch(cfgs, params.has('rounds') ? +params.get('rounds') : 3, { balance: params.get('balance') || 'rebalanced', events: params.get('events') !== 'off', map: params.get('map') || 'random' });
   }
 
   let last = performance.now();

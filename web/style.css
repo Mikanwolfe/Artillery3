@@ -69,11 +69,15 @@ summary { cursor: pointer; color: var(--accent); }
 .keys td:first-child { color: var(--accent); white-space: nowrap; }
 
 /* character select */
-#veh-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em; }
+#veh-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8em; }
 .veh { background: #fff; border: 1px solid var(--line); padding: 1em; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 0.4em; }
 .veh:hover { border-color: var(--accent); background: #f6f4fd; }
 .veh h3 { margin: 0; font-size: 1.5em; }
 .veh .box { width: 2.2em; height: 2.2em; }
+.veh canvas.girl { width: 8em; height: 9.5em; image-rendering: pixelated; align-self: center; }
+.veh .portrait { position: relative; height: 13em; display: flex; justify-content: center; }
+.veh .portrait img { height: 100%; width: auto; max-width: 100%; object-fit: contain; }
+.veh .portrait canvas.girl.mini { position: absolute; right: 0; bottom: 0; width: 4em; height: 4.75em; }
 .veh p { margin: 0; color: var(--dim); font-size: 0.9em; }
 .stats { display: grid; grid-template-columns: auto 1fr; gap: 0.1em 0.8em; font-size: 0.85em; }
 .stats span:nth-child(odd) { color: var(--dim); }
@@ -106,6 +110,27 @@ table.data tr.win td { background: #ece8fa; }
 .owned .badge { background: #d9d9dc; }
 .card h4 { margin: 0; font-weight: normal; font-size: 1.05em; }
 .card .rar { font-size: 0.75em; color: var(--dim); }
+.maker { font-size: 0.68em; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+
+/* NXi look (November Division, United Aurora Federation): void navy armour plate, an aurora seam,
+   royal gold. Built from the lore; swap these tokens for NXi's real design system. */
+:root {
+  --nxi-void: #161a30;
+  --nxi-plate: #20253f;
+  --nxi-line: #3a4166;
+  --nxi-ink: #e6e8f4;
+  --nxi-dim: #a3a8c6;
+  --nxi-gold: #d8b45a;
+  --nxi-aurora: linear-gradient(90deg, #39d4b8, #6a8cff 50%, #b07cf0);
+}
+.card.nxi, .veh.nxi { background: var(--nxi-void); color: var(--nxi-ink); border: 1px solid var(--nxi-line); position: relative; }
+.card.nxi::before, .veh.nxi::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--nxi-aurora); }
+.card.nxi p, .veh.nxi p, .card.nxi .stats span:nth-child(odd), .veh.nxi .stats span:nth-child(odd) { color: var(--nxi-dim); }
+.card.nxi .maker, .veh.nxi h3 { color: var(--nxi-gold); }
+.card.nxi .badge { background: var(--nxi-plate); }
+.card.nxi button { background: var(--nxi-plate); color: var(--nxi-ink); border-color: var(--nxi-gold); }
+.card.nxi button:disabled { color: #6a6f8e; border-color: var(--nxi-line); }
+.veh.nxi:hover { background: var(--nxi-plate); border-color: var(--nxi-gold); }
 .card p { margin: 0; font-size: 0.8em; color: #4a4a5a; line-height: 1.3; }
 .card .stats { font-size: 0.75em; grid-template-columns: repeat(4, auto); justify-content: start; }
 .buyrow { display: flex; justify-content: space-between; align-items: center; margin-top: 0.15em; }
@@ -127,6 +152,13 @@ table.data tr.win td { background: #ece8fa; }
 @keyframes chatfade { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
 #hints { left: 1%; bottom: 1.5%; max-width: 62%; font-size: 0.75em; color: var(--dim); background: var(--box2); padding: 0.25em 0.6em; }
 #hints b { color: var(--accent); font-weight: normal; }
+/* story dispatch at the start of a round: an NXi-style transmission card */
+#dispatch { right: 1.5%; top: 16%; width: 30%; background: var(--nxi-void); color: var(--nxi-ink); border: 1px solid var(--nxi-line); padding: 0.7em 0.9em; font-size: 0.85em; line-height: 1.4; display: grid; gap: 0.3em; animation: dispatch 7s forwards; }
+#dispatch::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--nxi-aurora); }
+#dispatch b { color: var(--nxi-gold); font-weight: normal; font-size: 0.8em; letter-spacing: 0.1em; text-transform: uppercase; }
+@keyframes dispatch { 0% { opacity: 0; transform: translateY(-0.5em); } 6%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #dispatch { animation: none; } }
+.story p { margin: 0.4em 0; }
 #banner { left: 0; right: 0; top: 30%; text-align: center; font-size: 2.4em; color: #fff; opacity: 0; }
 #banner.show { animation: banner 1.6s ease-out; }
 @keyframes banner { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }

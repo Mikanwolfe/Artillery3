@@ -2,92 +2,30 @@
 // Complications that build up as a match goes on (menu: events on/off). The match "stage" runs 1..8
 // over a finite match (so every match reaches the full set by its last round) and = the round
 // number in infinite mode.
-//   stage 2+  Storm fronts (after GunBound's Force and Lightning weather): vertical bands across the
-//             sky. A shell through a Force front hits 1.5x as hard; one through a Storm front is
-//             electrified and throws a lightning bolt at whatever is nearest where it lands.
-//   stage 3+  Hatsuyuki drones (named after A3's shelved AI project): hostile bombers. Once per turn
-//             cycle they fly over a vehicle and drop a bomb. They can be shot down for a bounty.
-//   stage 4+  Whiteout (after Worms' sudden-death water): once a round has gone a few cycles, freezing
-//             fog rises from the bottom every cycle and hurts anything inside it at the start of its
-//             turn. High ground matters, and long rounds end.
+//   Forts (forts.js)        every events round: neutral block strongholds, cover until shelled apart.
+//   Weather fronts          stage 2+: vertical bands that form, drift with the wind, change and fade
+//                           over a few turns, after GunBound's weather. Each biome has its own set.
+//                           Wider is stronger; levels I-III come with the stage.
+//   Mobs (mobs.js)          stage 3+: drones (then gunners), stage 4+: shore batteries, reinforcements
+//                           once a round drags on, and in the last round a mothership boss.
+//   Sudden death            stage 4+: after a few cycles the biome's hazard rises from the bottom
+//                           every cycle (whiteout fog, flood, quicksand) and hurts anything in it.
 
-const FRONT_FORCE_MULT = 1.5;
-const FRONT_STORM_FRAC = 0.4; // lightning bolt damage, as a fraction of the shell's damage (min 25)
-const FRONT_STORM_RANGE = 320;
-const DRONE_SPEED = 7;
+// Fronts: strength s = width / 100 (about 0.6 at level I up to 2 at level III)
+const FRONT_TYPES = {
+  force: { name: 'Force', col: [255, 216, 74], tip: 'shells hit harder' },
+  storm: { name: 'Storm', col: [150, 210, 255], tip: 'shells throw lightning' },
+  updraft: { name: 'Updraft', col: [255, 170, 120], tip: 'lifts shells' },
+  gale: { name: 'Gale', col: [200, 222, 232], tip: 'blows shells sideways' },
+  blizzard: { name: 'Blizzard', col: [240, 244, 255], tip: 'slows shells' },
+  rain: { name: 'Rain', col: [110, 150, 214], tip: 'damps blasts' },
+  sandstorm: { name: 'Sandstorm', col: [206, 160, 100], tip: 'buffets shells' },
+};
+const FRONT_WIDTH = [null, [60, 90], [100, 140], [150, 200]];
+const FRONT_DRIFT = 1200; // world units of drift per turn per unit of wind
 const FOG_RISE = 45; // world units per turn cycle (+5 per stage)
-const FOG_DMG = 0.1; // of max health + max armour, at the start of each turn spent in the fog
-
-class Drone {
-  constructor(x, y, stage) {
-    this.isDrone = true;
-    this.name = 'Hatsuyuki drone';
-    this.x = x;
-    this.y = y; // bottom of the hitbox, like a tank's ground point
-    this.dest = null;
-    this.alive = true;
-    this.maxHp = 100 + 40 * stage;
-    this.hp = this.maxHp;
-    this.armour = 0;
-    this.maxArmour = 0;
-    this.color = '#5a5a6a';
-    this.t = Math.random() * 100;
-    this.flash = 0;
-  }
-
-  center() { return { x: this.x, y: this.y - TANK_H / 2 }; }
-
-  update(terrain) {
-    this.t++;
-    this.flash = Math.max(0, this.flash - 0.08);
-    if (!this.alive) return;
-    const hover = Drone.hoverY(terrain, this.dest ? this.dest.x : this.x);
-    if (this.dest) {
-      this.x += clamp(this.dest.x - this.x, -DRONE_SPEED, DRONE_SPEED);
-      this.y += clamp(hover - this.y, -DRONE_SPEED, DRONE_SPEED);
-    } else {
-      this.y += (hover + Math.sin(this.t / 40) * 8 - this.y) * 0.05;
-    }
-  }
-
-  arrived() { return !this.dest || Math.abs(this.dest.x - this.x) < 2; }
-
-  // cruise well clear of the highest ground underneath
-  static hoverY(terrain, x) {
-    let top = Infinity;
-    for (let dx = -80; dx <= 80; dx += 20) top = Math.min(top, terrain.hAt(clamp(x + dx, 0, WORLD_W - 1)));
-    return Math.max(-150, top - 260);
-  }
-
-  // box art: a flat body with a pink sensor, two rotor arms whose blades flicker
-  draw(ctx) {
-    if (!this.alive) return;
-    const x = Math.round(this.x);
-    const y = Math.round(this.y - TANK_H / 2);
-    ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#3c3c48';
-    ctx.fillRect(x - 14, y - 5, 28, 10);
-    ctx.fillStyle = '#5a5a6a';
-    ctx.fillRect(x - 26, y - 3, 12, 3);
-    ctx.fillRect(x + 14, y - 3, 12, 3);
-    ctx.fillStyle = '#20202a';
-    ctx.fillRect(x - 4, y + 5, 8, 4);
-    const blade = (this.t >> 2) % 2 ? 14 : 8;
-    ctx.fillStyle = 'rgba(200,200,214,0.8)';
-    ctx.fillRect(x - 20 - blade / 2, y - 7, blade, 2);
-    ctx.fillRect(x + 20 - blade / 2, y - 7, blade, 2);
-    ctx.fillStyle = (this.t >> 4) % 2 ? 'rgb(255,120,200)' : 'rgb(160,60,120)';
-    ctx.fillRect(x + 6, y - 2, 4, 4);
-  }
-
-  // screen space: a small health bar
-  drawLabel(ctx, sx, sy) {
-    if (!this.alive) return;
-    ctx.fillStyle = 'rgba(232,230,244,0.85)';
-    ctx.fillRect(Math.round(sx - 26), Math.round(sy - 42), 52, 8);
-    ctx.fillStyle = 'rgb(184,67,58)';
-    ctx.fillRect(Math.round(sx - 24), Math.round(sy - 40), Math.round(48 * clamp(this.hp / this.maxHp, 0, 1)), 4);
-  }
-}
+const FOG_DMG = 0.1; // of max health + max armour, at the start of each turn spent in it
+const ROMAN = ['', 'I', 'II', 'III'];
 
 Object.assign(Game.prototype, {
   // 1..8 across a finite match; the round number in infinite mode
@@ -98,40 +36,41 @@ Object.assign(Game.prototype, {
   },
 
   // everything a shell can hit
-  targets() { return this.drones.length ? this.tanks.concat(this.drones) : this.tanks; },
+  targets() { return this.mobs.length ? this.tanks.concat(this.mobs) : this.tanks; },
 
+  // ------------------------------------------------------------ round setup
   setupHazards() {
     this.fronts = [];
-    this.drones = [];
+    this.mobs = [];
     this.fogY = null;
+    this.fogStart = 0;
+    this.reinforceAt = 0;
+    this.shipAt = 0;
     this.hazardTurn = -1;
     const st = this.stage();
-    const avoid = this.tanks.map((t) => t.x);
+    if (!st) return;
     const notes = [];
     if (st >= 2) {
-      const n = st >= 5 ? 2 : 1;
-      for (let i = 0; i < n; i++) {
-        let x = 0;
-        for (let k = 0; k < 20; k++) {
-          x = rng.range(200, WORLD_W - 200);
-          if (avoid.every((a) => Math.abs(a - x) > 140)) break;
-        }
-        avoid.push(x);
-        this.fronts.push({ x, w: rng.range(70, 110), kind: i === 0 ? rng.pick(['force', 'storm']) : (this.fronts[0].kind === 'force' ? 'storm' : 'force') });
-      }
-      notes.push(this.fronts.map((f) => (f.kind === 'force' ? 'a Force front (shells through it hit 1.5x)' : 'a Storm front (shells through it throw lightning)')).join(' and '));
+      for (let i = 0; i < this.frontTarget(); i++) this.spawnFront(true);
+      notes.push(this.fronts.map((f) => `a ${this.frontName(f)} front (${FRONT_TYPES[f.kind].tip})`).join(' and '));
     }
     if (st >= 3) {
       const n = st >= 7 ? 3 : st >= 5 ? 2 : 1;
-      for (let i = 0; i < n; i++) {
-        const x = rng.range(200, WORLD_W - 200);
-        this.drones.push(new Drone(x, Drone.hoverY(this.terrain, x), Math.round(st)));
-      }
-      notes.push(`${n} Hatsuyuki drone${n > 1 ? 's' : ''} (bombs once a cycle; $${this.droneBounty()} to shoot one down)`);
+      for (let i = 0; i < n; i++) this.addMob(st >= 4 && i === n - 1 ? 'gunner' : 'drone', this.mobSpot(150));
+      this.reinforceAt = Math.max(2, 7 - Math.floor(st / 2));
+      notes.push(`${n} drone${n > 1 ? 's' : ''}, with more after ${this.reinforceAt} cycles`);
     }
     if (st >= 4) {
-      this.fogStart = Math.max(3, 8 - Math.floor(st / 2)); // turn cycles before the fog starts rising
-      notes.push(`whiteout after ${this.fogStart} turn cycles`);
+      const n = st >= 6 ? 2 : 1;
+      for (let i = 0; i < n; i++) this.addMob('turret', this.mobSpot());
+      notes.push(`${n} shore batter${n > 1 ? 'ies' : 'y'}`);
+      this.fogStart = Math.max(3, 8 - Math.floor(st / 2)); // turn cycles before sudden death
+      notes.push(`${this.biome.sudden.name.toLowerCase()} after ${this.fogStart} cycles`);
+    }
+    // the boss: the last round of a finite match, every 5th round in infinite mode
+    if ((this.rounds && this.round === this.rounds && this.rounds >= 3) || (!this.rounds && this.round >= 5 && this.round % 5 === 0)) {
+      this.shipAt = 2;
+      notes.push('something big on the radar');
     }
     if (notes.length) {
       const msg = `This round: ${notes.join('; ')}.`;
@@ -140,29 +79,110 @@ Object.assign(Game.prototype, {
     }
   },
 
-  droneBounty() { return 250 + 60 * Math.round(this.stage()); },
+  // ------------------------------------------------------------ weather fronts
+  frontTarget() { const st = this.stage(); return st >= 6 ? 3 : st >= 4 ? 2 : st >= 2 ? 1 : 0; },
+  frontName(f) { return `${f.kind === 'updraft' && this.biome.id === 'desert' ? 'Thermal' : FRONT_TYPES[f.kind].name} ${ROMAN[f.level]}`; },
 
-  updateHazards() {
-    for (const d of this.drones) d.update(this.terrain);
-    for (const f of this.fronts) f.t = (f.t || 0) + 1;
+  spawnFront(quiet) {
+    const st = this.stage();
+    const maxLevel = st >= 7 ? 3 : st >= 4 ? 2 : 1;
+    const level = rng.int(1, maxLevel);
+    const used = this.fronts.filter((f) => !f.dying).map((f) => f.kind);
+    const kinds = this.biome.fronts.filter((k) => !used.includes(k));
+    const kind = rng.pick(kinds.length ? kinds : this.biome.fronts);
+    const avoid = this.tanks.map((t) => t.x).concat(this.fronts.map((f) => f.x));
+    let x = WORLD_W / 2;
+    for (let k = 0; k < 20; k++) {
+      x = rng.range(200, WORLD_W - 200);
+      if (avoid.every((a) => Math.abs(a - x) > 160)) break;
+    }
+    const [w0, w1] = FRONT_WIDTH[level];
+    const f = { kind, level, x, w: rng.range(w0, w1), life: rng.int(5, 12), alpha: quiet ? 1 : 0, dying: false, t: 0, dir: rng.chance(0.5) ? 1 : -1 };
+    this.fronts.push(f);
+    if (!quiet) {
+      this.ui.notice(`A ${this.frontName(f)} front is forming (${FRONT_TYPES[kind].tip}).`);
+      this.events.push(`A ${this.frontName(f)} front forms.`);
+    }
+    return f;
   },
 
-  // shells passing through a front pick up its effect (once)
+  // every turn: fronts drift with the wind and breathe; old ones die away and new ones form
+  updateFrontsTurn(windChanged) {
+    if (!this.events_on || this.stage() < 2) return;
+    for (const f of this.fronts) {
+      if (f.dying) continue;
+      f.x = clamp(f.x + this.wind.x * FRONT_DRIFT, 80, WORLD_W - 80);
+      const [w0, w1] = FRONT_WIDTH[f.level];
+      f.w = clamp(f.w * rng.range(0.9, 1.1), w0 * 0.8, w1 * 1.1);
+      if (--f.life <= 0 || (windChanged && rng.chance(0.5))) {
+        f.dying = true;
+        this.events.push(`The ${this.frontName(f)} front breaks up.`);
+      }
+    }
+    const live = this.fronts.filter((f) => !f.dying).length;
+    if (live < this.frontTarget() && rng.chance(windChanged ? 1 : 0.4)) this.spawnFront(false);
+  },
+
+  // a front's strength: wider is stronger (0 while it fades in or out)
+  frontStrength(f) { return f.alpha < 0.5 ? 0 : f.w / 100; },
+
+  // called every frame for every projectile: fronts act on shells inside them
   frontCheck(p) {
     for (const f of this.fronts) {
       if (Math.abs(p.x - f.x) > f.w / 2) continue;
-      if (f.kind === 'force' && !p.force) { p.force = true; this.sfx.click(); }
-      if (f.kind === 'storm' && !p.storm) { p.storm = true; this.sfx.click(); }
+      const s = this.frontStrength(f);
+      if (!s) continue;
+      switch (f.kind) {
+        case 'force': p.forceMult = Math.max(p.forceMult || 1, 1 + 0.35 * s); break;
+        case 'storm': p.storm = Math.max(p.storm || 0, s); break;
+        case 'rain': p.rainMult = Math.min(p.rainMult || 1, 1 - 0.18 * s); break;
+        case 'updraft': p.vy -= GRAV * 0.35 * s; break;
+        case 'gale': p.vx += f.dir * 0.05 * s; break;
+        case 'blizzard': p.vx *= 1 - 0.007 * s; p.vy *= 1 - 0.004 * s; break;
+        case 'sandstorm': p.vx += (Math.random() - 0.5) * 0.3 * s; p.vy += (Math.random() - 0.5) * 0.3 * s; break;
+        default: break;
+      }
+      if (p.age % 3 === 0) {
+        this.particles.add({ x: p.x, y: p.y, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, g: 0, drag: 0.9, life: 0.35, size: 4, color: FRONT_TYPES[f.kind].col });
+      }
     }
-    if ((p.force || p.storm) && p.age % 2 === 0) {
-      this.particles.add({ x: p.x, y: p.y, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, g: 0, drag: 0.9, life: 0.35, size: 4, color: p.storm ? [150, 210, 255] : [255, 216, 74] });
+  },
+
+  // damage multiplier picked up from Force / Rain fronts
+  frontMult(p) { return (p.forceMult || 1) * (p.rainMult || 1); },
+
+  // a jagged bolt: a list of points from the top to the bottom
+  makeBolt(x, top, bottom) {
+    const pts = [];
+    let px = x;
+    for (let y = top; y < bottom; y += 18 + Math.random() * 16) {
+      pts.push({ x: px, y });
+      px += (Math.random() - 0.5) * 44;
+    }
+    pts.push({ x: px, y: bottom });
+    return { pts, life: 14 };
+  },
+
+  drawBolt(ctx, b, size = 6) {
+    const a = clamp(b.life / 10, 0, 1);
+    for (let i = 1; i < b.pts.length; i++) {
+      const p0 = b.pts[i - 1], p1 = b.pts[i];
+      const n = Math.ceil(dist(p0.x, p0.y, p1.x, p1.y) / 5);
+      for (let k = 0; k <= n; k++) {
+        const x = lerp(p0.x, p1.x, k / n), y = lerp(p0.y, p1.y, k / n);
+        ctx.fillStyle = `rgba(160,210,255,${0.3 * a})`;
+        sq(ctx, x, y, size * 2.6);
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        sq(ctx, x, y, size);
+      }
     }
   },
 
   // a storm-charged shell's lightning: jumps to the nearest target in range of the impact
   lightning(p, w) {
+    const s = p.storm;
     let best = null;
-    let bd = FRONT_STORM_RANGE;
+    let bd = 200 + 80 * s;
     for (const t of this.targets()) {
       if (!t.alive) continue;
       const c = t.center();
@@ -171,42 +191,40 @@ Object.assign(Game.prototype, {
     }
     if (!best) return;
     const c = best.center();
-    // a jagged bolt of squares
-    let x = p.x;
-    let y = p.y;
+    // a bright jagged bolt from the impact to the target, with a flash and thunder
+    const pts = [{ x: p.x, y: p.y }];
     const n = 7;
-    for (let i = 1; i <= n; i++) {
-      const nx = i === n ? c.x : lerp(p.x, c.x, i / n) + (Math.random() - 0.5) * 40;
-      const ny = i === n ? c.y : lerp(p.y, c.y, i / n) + (Math.random() - 0.5) * 40;
-      this.lasers.push(new Laser(x, y, nx, ny, '#a0d8ff', 8, 30));
-      x = nx;
-      y = ny;
+    for (let i = 1; i < n; i++) pts.push({ x: lerp(p.x, c.x, i / n) + (Math.random() - 0.5) * 40, y: lerp(p.y, c.y, i / n) + (Math.random() - 0.5) * 40 });
+    pts.push({ x: c.x, y: c.y });
+    this.chainBolts = (this.chainBolts || []).concat({ pts, life: 22 });
+    this.screenFlash = Math.max(this.screenFlash || 0, 0.35);
+    this.sfx.thunder();
+    this.damage(best, Math.max(20, w.dmg * 0.25 * s), p.owner);
+  },
+
+  updateHazards() {
+    for (const m of this.mobs) m.update(this);
+    for (const f of this.fronts) {
+      f.t++;
+      f.alpha = clamp(f.alpha + (f.dying ? -0.02 : 0.02), 0, 1);
+      if (f.kind === 'storm' && f.alpha > 0.6) {
+        // storms strike: a visible bolt from the sky to the ground every few seconds (more often when wide)
+        if (f.nextBolt === undefined) f.nextBolt = 40 + Math.floor(Math.random() * 120); // visual only: Math.random
+        if (--f.nextBolt <= 0) {
+          f.nextBolt = Math.round((90 + Math.random() * 150) / (f.w / 100));
+          f.bolt = this.makeBolt(f.x + (Math.random() - 0.5) * f.w * 0.66, this.cam.y - 60, this.terrain.hAt(f.x));
+          this.screenFlash = Math.max(this.screenFlash || 0, 0.25 + 0.1 * f.level);
+          this.sfx.thunder();
+        }
+      }
+      if (f.bolt && --f.bolt.life <= 0) f.bolt = null;
     }
-    this.sfx.laser();
-    this.damage(best, Math.max(25, w.dmg * FRONT_STORM_FRAC), p.owner);
+    this.fronts = this.fronts.filter((f) => !(f.dying && f.alpha <= 0));
   },
 
-  damageDrone(d, amt, owner) {
-    if (!d.alive) return;
-    d.hp -= amt;
-    d.flash = 1;
-    this.particles.text(d.x, d.y - 50, String(Math.round(amt)), '#ffffff', amt > 100);
-    if (d.hp > 0) return;
-    d.alive = false;
-    this.particles.explosion(d.x, d.y - 10, 90, 'shell');
-    this.sfx.explosion(30);
-    if (owner && !owner.isDrone) {
-      const pay = this.droneBounty();
-      owner.money += pay;
-      this.particles.text(d.x, d.y - 80, `+$${pay}`, '#ffd84a', true);
-      this.events.push(`${owner.name} shot down a drone (+$${pay}).`);
-      this.ui.notice(`${owner.name} shot down a Hatsuyuki drone! +$${pay}`);
-      if (owner.isCpu && Math.random() < 0.5) this.banter(owner, 'hit_big');
-    } else this.events.push('A drone went down.');
-  },
-
-  // Called from nextTurn: once per turn cycle the fog rises and the drones make a bombing run.
-  // Returns true if it took over the turn flow (the hazard phase will call nextTurn when done).
+  // ------------------------------------------------------------ the hazard cycle
+  // Called from nextTurn: once per turn cycle sudden death rises, reinforcements arrive and every
+  // mob takes its move. Returns true if it took over the turn flow (updateHazard calls nextTurn).
   hazardStep() {
     if (!this.events_on) return false;
     const alive = this.tanks.filter((t) => t.alive).length;
@@ -217,47 +235,41 @@ Object.assign(Game.prototype, {
     if (this.fogStart && cycles >= this.fogStart) {
       if (this.fogY === null) {
         this.fogY = WORLD_BOTTOM;
-        this.ui.notice('Whiteout! Freezing fog is rising: get to high ground.');
-        this.events.push('A whiteout sets in.');
+        this.ui.notice(this.biome.sudden.start);
+        this.events.push(`${this.biome.sudden.name} sets in.`);
       }
       this.fogY -= FOG_RISE + 5 * Math.round(this.stage());
     }
-    const drones = this.drones.filter((d) => d.alive);
-    if (!drones.length) return false;
-    const victims = this.tanks.filter((t) => t.alive);
-    drones.forEach((d, i) => {
-      const v = rng.pick(victims);
-      // drones on the same target fan out a little so they don't stack
-      const same = drones.slice(0, i).filter((o) => o.victim === v).length;
-      d.dest = { x: clamp(v.x + rng.range(-45, 45) + same * 70 * (same % 2 ? 1 : -1), 20, WORLD_W - 20) };
-      d.victim = v;
-    });
+    this.reinforce(cycles);
+    if (this.shipAt && cycles >= this.shipAt && !this.mobs.some((m) => m.kind === 'mothership')) {
+      const m = this.addMob('mothership', rng.chance(0.5) ? 160 : WORLD_W - 160);
+      this.ui.notice(`The ${m.name} has arrived! $${m.bounty} to whoever brings it down.`);
+      this.ui.dispatch('Priority transmission', STORY.boss);
+      this.events.push(`The ${m.name} arrives.`);
+      this.sfx.satPrep();
+    }
+    if (!this.planMobs()) return false;
     this.phase = 'hazard';
-    this.hazard = { t: 0, dropped: false };
-    this.cam.follow(drones[0]);
+    this.hazard = { t: 0, fired: false };
+    const lead = this.mobs.find((m) => m.alive && m.kind === 'mothership') || this.mobs.find((m) => m.alive && m.dest);
+    if (lead) this.cam.follow(lead);
     this.charging = false;
     this.sfx.chargeStop();
-    this.ui.turn({ name: 'Hatsuyuki drones', color: '#5a5a6a', isCpu: true });
+    this.ui.turn({ name: 'Hostiles', color: '#5a5a6a', isCpu: true });
     return true;
   },
 
   updateHazard() {
     const h = this.hazard;
     h.t++;
-    const drones = this.drones.filter((d) => d.alive);
-    if (!h.dropped && (drones.every((d) => d.arrived()) || h.t > 240)) {
-      h.dropped = true;
-      const st = Math.round(this.stage());
-      const bomb = { id: 'dronebomb', name: 'Drone bomb', kind: 'shell', dmg: 35 + 12 * st, dmgR: 70, explR: 8, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1 };
-      for (const d of drones) {
-        const p = new Projectile(this, bomb, d, d.x, d.y + 4, 0, 1, false);
-        this.projectiles.push(p);
-        d.dest = null;
-      }
-      this.cam.follow(this.projectiles[0]);
-      this.sfx.shot(bomb);
-      this.events.push('The drones drop their bombs.');
-      // let the normal resolve loop play the bombs out, then hand back to nextTurn
+    const live = this.mobs.filter((m) => m.alive);
+    if (!h.fired && (live.every((m) => m.arrived()) || h.t > 200)) {
+      h.fired = true;
+      for (const m of live) m.dest = null;
+      const shots = this.mobAttacks();
+      if (this.projectiles.length) this.cam.follow(this.projectiles[0]);
+      if (shots) this.sfx.shot({ kind: 'shell' });
+      // let the normal resolve loop play the shots out, then hand back to nextTurn
       this.salvo = null;
       this.report = null;
       this.hazardResolve = true;
@@ -267,36 +279,74 @@ Object.assign(Game.prototype, {
     }
   },
 
-  // start of a vehicle's turn inside the fog
+  // start of a vehicle's turn inside the rising hazard
   fogDamage(t) {
     if (this.fogY === null || !t.alive || t.y < this.fogY) return;
-    this.events.push(`${t.name} is freezing in the fog.`);
+    this.events.push(`${t.name} ${this.biome.sudden.hurt}.`);
     this.damage(t, (t.maxHp + t.maxArmour) * FOG_DMG, null);
   },
 
+  // ------------------------------------------------------------ drawing
   drawHazardsBack(ctx, cam) {
+    const top = cam.y - 40;
     for (const f of this.fronts) {
-      const col = f.kind === 'force' ? [255, 216, 74] : [150, 210, 255];
+      const T = FRONT_TYPES[f.kind];
+      const col = T.col;
       const ground = this.terrain.hAt(f.x);
-      const top = cam.y - 40;
-      ctx.fillStyle = rgb(col, 0.1);
-      ctx.fillRect(Math.round(f.x - f.w / 2), Math.round(top), Math.round(f.w), Math.round(ground - top));
-      // rising motes
-      ctx.fillStyle = rgb(col, 0.55);
-      for (let i = 0; i < 18; i++) {
-        const my = ground - (((f.t || 0) * (1.5 + (i % 3)) + i * 97) % (ground - top));
-        sq(ctx, f.x - f.w / 2 + ((i * 37) % f.w), my, 3 + (i % 3));
+      const x0 = f.x - f.w / 2;
+      const a = f.alpha;
+      ctx.fillStyle = rgb(col, (0.07 + 0.04 * f.level) * a);
+      ctx.fillRect(Math.round(x0), Math.round(top), Math.round(f.w), Math.round(ground - top));
+      ctx.fillStyle = rgb(col, 0.25 * a);
+      ctx.fillRect(Math.round(x0), Math.round(top), 2, Math.round(ground - top));
+      ctx.fillRect(Math.round(x0 + f.w - 2), Math.round(top), 2, Math.round(ground - top));
+      const span = Math.max(1, ground - top);
+      const n = Math.round(f.w / 6);
+      ctx.fillStyle = rgb(col, 0.6 * a);
+      for (let i = 0; i < n; i++) {
+        const lane = (i * 37) % Math.max(1, Math.round(f.w));
+        const speed = 1 + (i % 3);
+        const ph = f.t * speed + i * 97;
+        switch (f.kind) {
+          case 'rain': ctx.fillRect(Math.round(x0 + lane), Math.round(top + ((ph * 3) % span)), 2, 8); break;
+          case 'blizzard': sq(ctx, x0 + ((lane + ph) % f.w), top + ((ph * 2.2) % span), 3); break;
+          case 'gale': sq(ctx, x0 + (((lane + ph * 1.5 * f.dir) % f.w) + f.w) % f.w, top + ((i * 53) % span), 4); break;
+          case 'sandstorm': ctx.fillRect(Math.round(x0 + ((lane + ph * 2) % f.w)), Math.round(top + ((i * 61 + Math.sin(ph / 9) * 20) % span)), 6, 2); break;
+          case 'updraft': sq(ctx, x0 + lane, ground - ((ph * 2) % span), 3 + (i % 3)); break;
+          default: sq(ctx, x0 + lane, ground - (ph % span), 3 + (i % 3)); break;
+        }
       }
+      if (f.kind === 'force') {
+        // a beam coming down from orbit: a bright core, pulses travelling down it, a glow where it lands
+        const core = f.w * 0.28;
+        ctx.fillStyle = rgb([255, 236, 150], (0.18 + 0.06 * f.level) * a);
+        ctx.fillRect(Math.round(f.x - core / 2), Math.round(top), Math.round(core), Math.round(ground - top));
+        ctx.fillStyle = rgb([255, 250, 220], 0.35 * a);
+        ctx.fillRect(Math.round(f.x - core / 6), Math.round(top), Math.round(core / 3), Math.round(ground - top));
+        for (let k = 0; k < 5; k++) {
+          const py = top + (((f.t * (3 + f.level)) + k * span / 5) % span);
+          ctx.fillStyle = rgb([255, 244, 180], 0.45 * a);
+          ctx.fillRect(Math.round(x0 + 4), Math.round(py), Math.round(f.w - 8), 4);
+        }
+        ctx.fillStyle = rgb([255, 236, 150], 0.35 * a * (0.7 + 0.3 * Math.sin(f.t / 6)));
+        ctx.fillRect(Math.round(x0 - 6), Math.round(ground - 6), Math.round(f.w + 12), 8);
+      }
+      if (f.bolt) this.drawBolt(ctx, f.bolt, 4 + f.level);
     }
   },
 
   drawHazardsFront(ctx, cam) {
-    for (const d of this.drones) d.draw(ctx);
+    for (const m of this.mobs) m.draw(ctx);
+    if (this.chainBolts) {
+      for (const b of this.chainBolts) { this.drawBolt(ctx, b, 5); b.life--; }
+      this.chainBolts = this.chainBolts.filter((b) => b.life > 0);
+    }
     if (this.fogY !== null) {
+      const sd = this.biome.sudden;
       const y = Math.round(this.fogY);
-      ctx.fillStyle = 'rgba(236,240,250,0.62)';
+      ctx.fillStyle = rgb(sd.color, sd.alpha);
       ctx.fillRect(Math.round(cam.x) - 10, y, VIEW_W + 20, WORLD_BOTTOM + 1200 - y);
-      ctx.fillStyle = 'rgba(236,240,250,0.5)';
+      ctx.fillStyle = rgb(sd.color, sd.alpha * 0.8);
       for (let x = Math.floor(cam.x / 24) * 24; x < cam.x + VIEW_W + 24; x += 24) {
         sq(ctx, x, y - 4 + Math.sin(x * 0.05 + this.time * 1.5) * 4, 14);
       }
@@ -304,15 +354,18 @@ Object.assign(Game.prototype, {
   },
 
   drawHazardLabels(ctx, cam) {
-    for (const d of this.drones) d.drawLabel(ctx, d.x - cam.x, d.y - cam.y);
+    for (const m of this.mobs) m.drawLabel(ctx, m.x - cam.x, m.y - cam.y);
     ctx.font = '14px "Maven Pro", Verdana, sans-serif';
     ctx.textAlign = 'center';
     for (const f of this.fronts) {
       const sx = f.x - cam.x;
-      if (sx < -60 || sx > VIEW_W + 60) continue;
-      ctx.fillStyle = f.kind === 'force' ? 'rgb(150,110,0)' : 'rgb(40,90,140)';
+      if (sx < -60 || sx > VIEW_W + 60 || f.alpha < 0.3) continue;
       const sy = clamp(this.terrain.hAt(f.x) - cam.y - 40, 260, VIEW_H - 160);
-      ctx.fillText(f.kind === 'force' ? 'FORCE ×1.5' : 'STORM', Math.round(sx), Math.round(sy));
+      ctx.globalAlpha = f.alpha;
+      ctx.fillStyle = 'rgba(32,32,74,0.85)';
+      const label = `${this.frontName(f)}${f.kind === 'gale' ? (f.dir > 0 ? ' →' : ' ←') : ''}`;
+      ctx.fillText(label, Math.round(sx), Math.round(sy));
+      ctx.globalAlpha = 1;
     }
   },
 });

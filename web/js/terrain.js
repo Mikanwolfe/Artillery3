@@ -5,15 +5,10 @@
 
 const TERRAIN_STEP = 5; // width of a drawn column (world units)
 const TREE_HALF_W = 8; // tree hitbox half-width
-const TREE_MAX_H = 48; // tallest tree (trunk + 5 tiers of 8)
+const TREE_MAX_H = 62; // tallest tree of any kind (see treeHeight in biomes.js)
 
 const SOOT_RGB = [96, 66, 44]; // brown scorch left on the snow by blasts
 
-const MOUNTAIN_ROUGH = 0.5; // A3 used 0.45
-const MOUNTAIN_DISP = 320; // A3 used 200
-const MOUNTAIN_PEAKS = [2, 3];
-const MOUNTAIN_H = [280, 560]; // massif height (world units)
-const MOUNTAIN_W = [320, 520]; // massif half-width
 
 // Classic 1-D midpoint displacement over n segments (n must be a power of two).
 function midpoint(n, rough, disp, a, b) {
@@ -41,20 +36,32 @@ class Terrain {
   constructor() {
     this.height = new Float32Array(WORLD_W);
     this.color = 'rgb(241,243,246)';
+    this.cap = null;
+    this.treeKind = 'pine';
+    this.treeDensity = 1;
     this.trees = [];
+    this.forts = [];
   }
 
-  // Mountainous: rougher, deeper midpoint displacement than A3's, plus a few raised-cosine massifs
-  // so there is usually a ridge or two to lob over rather than a straight shot.
-  generate() {
-    this.height = generateHeights(0.62 * WORLD_BOTTOM, MOUNTAIN_ROUGH, MOUNTAIN_DISP);
+  // Mountainous: rougher, deeper midpoint displacement than A3's (reduction 0.45, displacement 200),
+  // plus a few raised-cosine massifs so there is usually a ridge to lob over. The biome sets the
+  // numbers (desert dunes are smoother and lower) and the colours and trees.
+  generate(biome = BIOMES.snow) {
+    const g = biome.terrain;
+    this.color = biome.ground;
+    this.cap = biome.cap;
+    this.sootColor = biome.soot;
+    this.treeKind = biome.tree;
+    this.treeDensity = biome.trees;
+    this.height = generateHeights(0.62 * WORLD_BOTTOM, g.rough, g.disp);
     this.trees = [];
+    this.forts = [];
     this.soot = new Float32Array(WORLD_W); // 0..1 scorch per column, drawn along the surface
-    const peaks = rng.int(MOUNTAIN_PEAKS[0], MOUNTAIN_PEAKS[1]);
+    const peaks = rng.int(g.peaks[0], g.peaks[1]);
     for (let k = 0; k < peaks; k++) {
       const cx = rng.range(250, WORLD_W - 250);
-      const hh = rng.range(MOUNTAIN_H[0], MOUNTAIN_H[1]);
-      const hw = rng.range(MOUNTAIN_W[0], MOUNTAIN_W[1]);
+      const hh = rng.range(g.h[0], g.h[1]);
+      const hw = rng.range(g.w[0], g.w[1]);
       for (let i = Math.max(0, Math.floor(cx - hw)); i < Math.min(WORLD_W, cx + hw); i++) {
         this.height[i] -= hh * 0.5 * (1 + Math.cos((Math.PI * (i - cx)) / hw));
       }
@@ -103,17 +110,25 @@ class Terrain {
   // and explosions knock them down. Stands are kept clear of the vehicles' starting spots.
   plantTrees(avoid) {
     this.trees = [];
-    for (let x = rng.range(60, 300); x < WORLD_W - 60; x += rng.range(160, 420)) {
-      const stand = rng.int(1, 3);
+    const d = this.treeDensity;
+    for (let x = rng.range(60, 300); x < WORLD_W - 60; x += rng.range(160, 420) / d) {
+      const stand = rng.int(1, d > 2 ? 4 : 3);
       for (let k = 0; k < stand; k++) {
         const tx = Math.round(x + k * rng.range(16, 26));
         if (tx > WORLD_W - 30 || avoid.some((a) => Math.abs(a - tx) < 70)) continue;
-        this.trees.push({ x: tx, h: rng.int(3, 5), alive: true });
+        if (this.fortAt(tx, this.hAt(tx) - 4)) continue;
+        this.trees.push({ x: tx, h: rng.int(3, 5), alive: true, autumn: rng.int(0, 2) });
       }
     }
   }
 
-  treeHeight(t) { return 8 + t.h * 8; }
+  treeHeight(t) { return treeHeight(this.treeKind, t.h); }
+
+  // forts (forts.js): solid blocks that stop shells
+  fortAt(x, y) {
+    for (const f of this.forts) if (f.at(x, y)) return f;
+    return null;
+  }
 
   // standing tree whose hitbox contains (px, py), if any
   treeAt(px, py) {
@@ -144,17 +159,12 @@ class Terrain {
     for (const t of this.trees) {
       if (t.x < x0 - 40 || t.x > x1 + 40) continue;
       const base = Math.round(this.hAt(t.x));
-      ctx.fillStyle = 'rgb(70,56,50)';
-      if (!t.alive) { ctx.fillRect(t.x - 3, base - 5, 6, 5); continue; } // stump
-      ctx.fillRect(t.x - 2, base - 8, 4, 8);
-      for (let i = 0; i < t.h; i++) {
-        const w = (t.h - i) * 6 + 4;
-        const y = base - 8 - (i + 1) * 8;
-        ctx.fillStyle = 'rgb(38,62,64)';
-        ctx.fillRect(t.x - w / 2, y, w, 8);
-        ctx.fillStyle = 'rgb(236,240,246)';
-        ctx.fillRect(t.x - w / 2, y, Math.ceil(w * 0.45), 2); // snow on the boughs
+      if (!t.alive) { // stump
+        ctx.fillStyle = this.treeKind === 'cactus' ? 'rgb(78,128,70)' : 'rgb(70,56,50)';
+        ctx.fillRect(t.x - 3, base - 5, 6, 5);
+        continue;
       }
+      drawTree(ctx, this.treeKind, t.x, base, t.h, t.autumn);
     }
   }
 
@@ -165,8 +175,16 @@ class Terrain {
 
   // draw the visible part as one stepped polygon (no seams between columns)
   draw(ctx, x0, x1) {
-    ctx.fillStyle = this.color;
-    fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
+    if (this.cap) { // grass / sand crust along the surface, then the ground under it
+      ctx.fillStyle = this.cap;
+      fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
+      ctx.fillStyle = this.color;
+      fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 7);
+    } else {
+      ctx.fillStyle = this.color;
+      fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
+    }
+    for (const f of this.forts) f.draw(ctx);
     if (!this.soot) return;
     // soot: a brown band of squares along the surface, deeper and darker where it's heavier
     const step = TERRAIN_STEP;
@@ -174,10 +192,10 @@ class Terrain {
       const s = this.soot[Math.min(WORLD_W - 1, x + (step >> 1))];
       if (s < 0.04 || hash2(x, 11) > 0.25 + s) continue; // light soot is patchy
       const top = Math.round(this.height[Math.min(WORLD_W - 1, x + (step >> 1))]);
-      ctx.fillStyle = rgb(SOOT_RGB, 0.15 + 0.6 * s);
+      ctx.fillStyle = rgb(this.sootColor || SOOT_RGB, 0.15 + 0.6 * s);
       ctx.fillRect(x, top, step, Math.round(2 + 8 * s));
       if (s > 0.35 && hash2(x, 3) < s * 0.6) { // flecks thrown a little further down
-        ctx.fillStyle = rgb(SOOT_RGB, 0.35 * s);
+        ctx.fillStyle = rgb(this.sootColor || SOOT_RGB, 0.35 * s);
         ctx.fillRect(x + 1, top + Math.round(5 + 14 * s), 3, 3);
       }
     }

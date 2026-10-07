@@ -20,19 +20,27 @@ function weapon(id, name, kind, elevMin, elevMax, o) {
 // starting vehicles: (hp, armour) and a signature gun
 const VEHICLES = [
   {
-    id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'Sturdy all-rounder with a two-round autoloader.',
+    id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'A sturdy Geschützwagen girl with a two-round autoloader on her back.',
     weapon: weapon('morser', 'G.W. 150mm/78 Morser', 'shell', -20, 90, {
       dmg: 100, disp: 3.1, clip: 2, maxCharge: 50, dmgR: 50,
       short: 'Extensively field-tested, a reliable and sturdy weapon with no equal.', long: 'Starting weapon for G.W. Tiger.' }),
   },
   {
-    id: 'obj', name: 'Object 15X', hp: 65, armour: 175, blurb: 'Heavy armour, thin hull, one huge accurate shot.',
+    id: 'obj', name: 'Object 15X', hp: 65, armour: 175, blurb: 'A heavily armoured Soviet girl: thin hull, one huge accurate shot.',
     weapon: weapon('d76', '190mm D-76ST 15X', 'shell', 0, 45, {
       dmg: 200, disp: 0.9, maxCharge: 40, dmgR: 75,
       short: 'An experimental adaption from CLS-T developed during the last Neko Wars.', long: 'Starting weapon for Object 15X.' }),
   },
+  // NXi (the user's canon): November Division of the United Aurora Federation, "Built Like A
+  // Battlecruiser": overbuilt, triple-redundant, slow, never fails. A rival to CLS-T.
   {
-    id: 'int', name: 'Innocentia', hp: 130, armour: 130, blurb: 'Balanced; its gun calls down the MAIA satellite.',
+    id: 'nxi', name: 'November', hp: 110, armour: 200, fuel: 0.7, blurb: 'An NXi battlecruiser girl: overbuilt, slow and very hard to kill.',
+    weapon: weapon('nxi0', "NXi Mk.0 'Bulkhead' 127mm Triple", 'shell', -5, 60, {
+      salvo: 3, disp: 0.6, maxCharge: 55, dmg: 45, dmgR: 50, explR: 6,
+      short: 'Triple-redundant: three shells where one would do. November Division standard issue.', long: 'Starting weapon for November.' }),
+  },
+  {
+    id: 'int', name: 'Innocentia', hp: 130, armour: 130, blurb: 'The uplink girl: her twin barrels call down the MAIA satellite.',
     weapon: weapon('katis', '120mm Kati-S / Sat. Enabled.', 'shell', 0, 45, {
       dmg: 80, salvo: 2, disp: 2.1, maxCharge: 70, dmgR: 80, sat: true,
       short: 'An early prototype that utilised the MAIA Satellite System.', long: 'Starting weapon for Innocentia.' }),
@@ -82,29 +90,58 @@ const WEAPONS = [
     short: 'What was; will be. A one-way-ticket to the worm-in-waiting.', long: "'Environmental Regulations'? What's that?" }),
   weapon('terminus', "810mm 4x3 KTS-T 'Terminus Est'", 'shell', -20, 90, { clip: 3, salvo: 4, maxCharge: 100, disp: 3, dmg: 1800, dmgR: 200, explR: 30, rarity: 7, cost: 121150,
     short: 'White haired and blue-eyed, named after the holy demon sword.', long: "What's with the trend of cute girls? Are there any here?" }),
+  // Flak (new): proximity-fused shells that burst near drones and other mobs (double damage to them)
+  // and in the air just above the ground, raining shrapnel on whatever is underneath
+  weapon('flak40', "40mm 'Hagoita' Twin Bofors", 'flak', 10, 90, { clip: 3, salvo: 2, maxCharge: 70, disp: 1.5, dmg: 40, dmgR: 70, explR: 3, rarity: 1, cost: 1400,
+    short: 'A twin Bofors from the Hagoita AA refit. Shoots down anything that buzzes.', long: 'Proximity-fused: bursts near drones and just above the ground.' }),
+  weapon('akizuki', "10cm/65 'Akizuki' High-Angle Battery", 'flak', 10, 90, { clip: 2, salvo: 2, maxCharge: 90, disp: 1, dmg: 120, dmgR: 110, explR: 5, rarity: 3, cost: 4800,
+    short: 'The pride of the Akizuki class: the finest anti-air gun ever put on a destroyer.', long: 'Airbursts over ridges and trenches. Murders drones.' }),
+  weapon('maya', "127mm 'Maya Kai Ni' AA Mount", 'flak', 5, 90, { clip: 2, salvo: 3, maxCharge: 95, disp: 2, dmg: 260, dmgR: 120, explR: 6, rarity: 4, cost: 15000,
+    short: 'Bakayaro! Refitted with more anti-air guns than common sense.', long: 'A barrage of airbursts; drones fall like rain.' }),
+  weapon('sanshiki', "46cm 'Sanshikidan' Type 3 Shell", 'flak', 0, 80, { clip: 2, maxCharge: 110, disp: 1.5, dmg: 900, dmgR: 260, explR: 12, rarity: 6, cost: 52000,
+    short: 'Incendiary shrapnel shells for the 46cm guns. Lights up the whole sky.', long: 'Enormous airbursts and a rain of burning fragments.' }),
+  // NXi, November Division: the rival to CLS-T. Overbuilt and triple-verified; accurate, a little slow
+  weapon('nxi105', "NXi Mk.I 'Bulkhead' 105mm", 'shell', -5, 60, { salvo: 3, disp: 0.6, maxCharge: 55, dmg: 60, dmgR: 55, explR: 7, rarity: 1, cost: 1500,
+    short: 'Overbuilt, over-tested, over-documented, and proud of it.', long: 'Three shells in close formation. Every one of them inspected.' }),
+  weapon('nxitv', "NXi 'Triple-Verify' 120mm Coilgun", 'gun', -10, 40, { clip: 2, salvo: 3, disp: 0.8, maxCharge: 45, dmg: 70, dmgR: 50, rarity: 2, cost: 3200,
+    short: 'Every round is verified three times before it leaves the barrel.', long: "Never fires a shot it hasn't checked. Twice a turn." }),
+  weapon('nxisec9', "NXi SEC-9 'Veto' Point-Defence Battery", 'flak', 10, 90, { clip: 2, salvo: 3, disp: 0.8, maxCharge: 85, dmg: 90, dmgR: 100, explR: 5, rarity: 3, cost: 4600,
+    short: 'SEC-9 has veto power. Drones do not get a vote.', long: 'Proximity-fused point defence for the gate.' }),
+  weapon('nxiarch7', "NXi ARCH-7 'Battlecruiser' 280mm", 'shell', -5, 70, { clip: 2, disp: 0.4, maxCharge: 70, dmg: 600, dmgR: 140, explR: 20, rarity: 4, cost: 9800,
+    short: 'Built like a battlecruiser: maximum armour, maximum redundancy, maximum reliability.', long: 'Slow to load, slower to miss.' }),
+  weapon('nxiintel3', "NXi INTEL-3 'Gatewatch' Lance", 'laser', -25, 30, { clip: 2, salvo: 2, disp: 0.4, maxCharge: 100, dmg: 600, dmgR: 70, explR: 6, rarity: 5, cost: 27500,
+    short: 'The gate is guarded at all cost. INTEL-3 sees everything that comes through it.', long: 'Paired beams, triple-verified targeting.' }),
+  weapon('nxiaeria', "NXi 'Aeria Charlotte' 406mm Royal Battery", 'shell', -5, 85, { clip: 3, salvo: 3, disp: 2, maxCharge: 110, dmg: 450, dmgR: 150, explR: 24, rarity: 6, cost: 58000,
+    short: 'Commanded by Queen Aeria Charlotte herself. Every shell is worthy of royal inspection.', long: 'Three triple turrets. For the UAF.' }),
+  weapon('nxivoid', "NXi November 'Void Between Stars' Rift Lance", 'laser', 0, 25, { clip: 2, maxCharge: 400, disp: 0.01, dmg: 4000, dmgR: 260, explR: 50, sat: true, rarity: 7, cost: 150000,
+    short: 'Opens a rift to the void between dimensions, briefly. Do not stand in it.', long: 'We advance slowly because we advance forever.' }),
   weapon('massdriver', '210mm Kinetic Mass Driver', 'laser', 0, 20, { clip: 2, maxCharge: 1000, disp: 0.001, explR: 80, dmg: 10000, dmgR: 400, sat: true, rarity: 7, cost: 195420,
     short: 'A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.', long: 'Holding two rounds, it was salvaged from KTNS Hatsuyuki.' }),
 ];
 
-// Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above).
+// Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
+// original specs (clips, rounds per shot, spread, radius, range: Terminus Est is still 4x3, the B.C.
+// 155 still holds five); what changes:
 //  - Prices follow a tiered curve instead of A3's exponential one ($1.2k Common to $52k Godly, not
-//    $195k), so a long match can reach the top.
-//  - Each gun's damage is then fitted so its per-turn worth (weaponValue without the rarity bonus)
-//    is proportional to its price: 0.165 * price * (1 + 0.1 per rarity tier), divided by 1 + 0.15
-//    per extra autoloader shot, because with the aim guide every follow-up shot is an aimed one.
-//  - The worst autoloaders lose rounds from their clip (B.C. 155 5->3; Type-11, Kotona Rifle,
-//    Terminus Est 3->2; Natsuki 4->3).
-//  - Starting guns sit just under the cheapest Commons (worth ~150 a turn each).
+//    $195k), so a long match can reach the top tiers.
+//  - Damage is fitted so a gun's per-turn worth (weaponValue without the rarity bonus) is
+//    proportional to its price: 0.165 * price * (1 + 0.1 per rarity tier), divided by 1 + 0.15 per
+//    extra autoloader shot (with the aim guide every follow-up shot is an aimed one).
+//  - Acid guns lose a further 10%, since the acid drip comes on top.
+//  - Starting guns sit just under the cheapest Commons (worth 140-165 a turn).
 const REBALANCE = {
-  morser: { dmg: 130 }, d76: { dmg: 170 }, katis: { dmg: 30 },
+  morser: { dmg: 130 }, d76: { dmg: 170 }, katis: { dmg: 30 }, nxi0: { dmg: 60 },
   howitzer: { dmg: 260, cost: 1200 }, claymore: { dmg: 85, cost: 1500 }, lensx2: { dmg: 225, cost: 1800 },
   lance: { dmg: 220, cost: 2500 }, coil: { dmg: 80, cost: 2900 }, obj261: { dmg: 515, cost: 3400 },
-  type11: { dmg: 305, cost: 4400, clip: 2 }, lensae: { dmg: 565, cost: 4900, clip: 2 }, bc155: { dmg: 305, cost: 5400, clip: 3 },
-  type91: { dmg: 570, cost: 5800 }, typ67: { dmg: 595, cost: 6500 },
-  gwt290: { dmg: 625, cost: 9000 }, cls220: { dmg: 205, cost: 12000 }, lfs75: { dmg: 550, cost: 14000 },
-  triple: { dmg: 510, cost: 18000 }, laser88: { dmg: 720, cost: 20000 },
-  laser15x: { dmg: 2505, cost: 25000 }, acid220: { dmg: 790, cost: 28000 }, cls770: { dmg: 750, cost: 33000, clip: 3 },
-  horizon: { dmg: 820, cost: 40000 }, terminus: { dmg: 940, cost: 45000, clip: 2 }, massdriver: { dmg: 2620, cost: 52000 },
+  type11: { dmg: 130, cost: 4400 }, lensae: { dmg: 335, cost: 4900 }, type91: { dmg: 515, cost: 5800 },
+  bc155: { dmg: 205, cost: 5400 }, typ67: { dmg: 595, cost: 6500 }, gwt290: { dmg: 625, cost: 9000 },
+  cls220: { dmg: 205, cost: 12000 }, lfs75: { dmg: 550, cost: 14000 }, triple: { dmg: 510, cost: 18000 },
+  laser88: { dmg: 720, cost: 20000 }, laser15x: { dmg: 2505, cost: 25000 }, acid220: { dmg: 710, cost: 28000 },
+  cls770: { dmg: 505, cost: 33000 }, horizon: { dmg: 740, cost: 40000 }, terminus: { dmg: 555, cost: 45000 },
+  flak40: { dmg: 40, cost: 1600 }, akizuki: { dmg: 195, cost: 5000 }, maya: { dmg: 305, cost: 11000 },
+  sanshiki: { dmg: 2115, cost: 30000 }, nxi105: { dmg: 110, cost: 1600 }, nxitv: { dmg: 105, cost: 3100 },
+  nxisec9: { dmg: 135, cost: 5100 }, nxiarch7: { dmg: 740, cost: 10000 }, nxiintel3: { dmg: 1040, cost: 19000 },
+  nxiaeria: { dmg: 510, cost: 30000 }, nxivoid: { dmg: 3000, cost: 48000 }, massdriver: { dmg: 2620, cost: 52000 },
 };
 const ALL_WEAPONS = [...WEAPONS, ...VEHICLES.map((v) => v.weapon)];
 const CLASSIC = Object.fromEntries(ALL_WEAPONS.map((w) => [w.id, { dmg: w.dmg, clip: w.clip, cost: w.cost }]));
@@ -118,7 +155,19 @@ function applyBalance(mode) {
 applyBalance(BALANCE);
 
 // A3 shop badge: rarity initial + projectile-type initial, e.g. "Cs" (Common shell), "Gl" (Godly laser)
-const KIND_LETTER = { shell: 's', gun: 'g', laser: 'l', acid: 'a' };
+const KIND_LETTER = { shell: 's', gun: 'g', laser: 'l', acid: 'a', flak: 'f' };
+// manufacturer, from the weapon's name: NXi (November Division) vs CLS-T and the rest
+function makerOf(w) {
+  if (w.id.startsWith('nxi')) return 'NXi';
+  const n = w.name;
+  if (n.includes('CLS-T')) return 'CLS-T';
+  if (n.includes('LFS')) return 'Lymilark';
+  if (n.includes('KTS-T') || n.includes('Kotona')) return 'Kotona';
+  if (n.includes('G.W.')) return 'G.W.';
+  if (n.includes('Hatsuyuki')) return 'Hatsuyuki';
+  return '';
+}
+
 function badgeText(w) {
   return RARITY[w.rarity].word[0] + KIND_LETTER[w.kind];
 }
@@ -131,10 +180,13 @@ const ABILITIES = [
   { id: 'double', key: '1', tag: 'x2', name: 'Double Shot', cost: 3000, cd: 4, desc: 'Arm, then fire: the shot is fired twice.' },
   { id: 'over', key: '2', tag: 'OVR', name: 'Overcharge', cost: 1800, cd: 3, desc: 'Arm, then charge: the bar goes 35% further, for range and kinetic damage.' },
   { id: 'shield', key: '3', tag: 'SHD', name: 'Deflector', cost: 2400, cd: 4, desc: 'Halves all damage you take until your next turn.' },
+  { id: 'barrier', key: '4', tag: 'BAR', name: 'Bulwark Barrier', cost: 2600, cd: 3, late: true, desc: 'Late game: raise a wall toward where you are aiming; it blocks 80% of blast damage from that side until your next turn.' },
 ];
 const ABILITY_BY_ID = Object.fromEntries(ABILITIES.map((a) => [a.id, a]));
 const OVERCHARGE = 1.35;
 const SHIELD_FACTOR = 0.5;
+const BARRIER_BLOCK = 0.8; // share of blast damage a Bulwark Barrier stops from its side
+const BARRIER_COS = Math.cos(Math.PI * 0.3); // it covers +-54 degrees around its direction
 
 const WEAPON_BY_ID = Object.fromEntries([...WEAPONS, ...VEHICLES.map((v) => v.weapon)].map((w) => [w.id, w]));
 const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
@@ -172,10 +224,13 @@ function stepBallistic(p, terrain, wind, tanks, owner) {
         const tree = terrain.treeAt(p.x, p.y);
         if (tree) return { hit: 'tree', tree };
       }
+      if (terrain.forts.length && terrain.fortAt(p.x, p.y)) return { hit: 'fort' };
     }
     for (const t of tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;
-      if (Math.abs(p.x - t.x) < TANK_W / 2 + 2 && p.y > t.y - TANK_H - 2 && p.y < t.y + 2) return { hit: 'tank', tank: t };
+      const hw = t.hw || TANK_W / 2 + 2; // mobs carry their own hitbox
+      const hh = t.hh || TANK_H + 2;
+      if (Math.abs(p.x - t.x) < hw && p.y > t.y - hh && p.y < t.y + 2) return { hit: 'tank', tank: t };
     }
   }
   p.age++;
@@ -197,9 +252,15 @@ function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy) {
 
 // Damage multiplier a shell gets from its altitude and kinetic bonuses (Game.shotBonus), counting
 // kinetic damage only when it lands close enough to matter. Lasers get none.
-function bonusFactor(w, drop, speed, close) {
+// altitude bonus: grows with how far the shell fell from its apex, capped at ALTITUDE_MAX, and scaled
+// by the launch angle (half at the horizon, full straight up), so higher-angle guns earn more of it
+function altitudeBonus(drop, launch) {
+  return Math.min(ALTITUDE_MAX, Math.max(0, drop) * ALTITUDE_RATE) * (0.5 + 0.5 * Math.max(0, Math.sin(launch)));
+}
+
+function bonusFactor(w, drop, speed, close, launch = Math.PI / 4) {
   if (w.kind === 'laser') return 1;
-  const alt = Math.min(ALTITUDE_MAX, Math.max(0, drop) * ALTITUDE_RATE);
+  const alt = altitudeBonus(drop, launch);
   const kin = close ? Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED : 0;
   return 1 + alt + kin;
 }

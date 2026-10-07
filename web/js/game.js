@@ -5,7 +5,8 @@
 
 const CHATTINESS = 0.7; // scales every reaction probability in react(); lower = quieter CPUs
 const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
-const SALVO_DELAY = 15; // A3 ProjectileFactory._firingDelay (frames between salvo rounds)
+const SALVO_DELAY = 15;
+const TREE_RAM_DMG = 6; // + 3 per tree size: driving through a tree knocks it down but hurts // A3 ProjectileFactory._firingDelay (frames between salvo rounds)
 // Aim guide (human players): a dotted line along the barrel that fades out; while Space is held it
 // becomes the predicted arc for the current charge, still fading after a set distance.
 const AIM_LINE_LEN = 260;
@@ -30,10 +31,10 @@ const TRACE_MAX = 2500;
 //  - kinetic: extra damage from impact speed, packed into a tighter radius than the blast
 //  - altitude: the whole blast is scaled up by how far the shell fell from the top of its arc
 const KINETIC_MIN_SPEED = 25; // px/frame at impact before kinetic damage starts
-const KINETIC_PER_SPEED = 0.012; // + this fraction of the weapon's damage per px/frame above that
-const KINETIC_RADIUS = 0.35; // of the weapon's damage radius
+const KINETIC_PER_SPEED = 0.022; // + this fraction of the weapon's damage per px/frame above that
+const KINETIC_RADIUS = 0.4; // of the weapon's damage radius
 const ALTITUDE_RATE = 0.0006; // + this fraction of damage per world unit fallen from the apex
-const ALTITUDE_MAX = 1; // at most double damage
+const ALTITUDE_MAX = 0.5; // at most +50%, and only for a shot fired straight up (see altitudeBonus)
 // Falls: a vehicle whose ground is blown away (or slides away) takes damage past a short drop
 const FALL_SAFE = 30;
 const FALL_DMG = 0.8; // per world unit beyond FALL_SAFE
@@ -108,7 +109,7 @@ class Input {
       case 'KeyS': case 'KeyE': case 'Tab': if (down && !e.repeat) this.queue.push({ cycle: 1 }); break;
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
-      case 'Digit1': case 'Digit2': case 'Digit3': {
+      case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': {
         const ab = ABILITIES.find((a) => a.key === e.code.slice(5));
         if (down && !e.repeat && ab) this.queue.push({ ability: ab.id });
         break;
@@ -141,8 +142,10 @@ class Game {
     this.crates = [];
     this.slides = [];
     this.fronts = [];
-    this.drones = [];
+    this.mobs = [];
     this.fogY = null;
+    this.biome = BIOMES.snow;
+    this.mapChoice = 'random';
     this.events_on = true; // later-round complications (hazards.js)
     this.salvo = null;
     this.satSeq = null;
@@ -256,9 +259,12 @@ class Game {
   }
 
   // ------------------------------------------------------------ setup
+  // a fresh map: the chosen biome (or a random one) and new terrain
   newEnvironment() {
-    this.terrain.generate();
-    this.bg = new Background();
+    const id = this.mapChoice && this.mapChoice !== 'random' ? this.mapChoice : rng.pick(BIOME_IDS);
+    this.biome = BIOMES[id] || BIOMES.snow;
+    this.terrain.generate(this.biome);
+    this.bg = new Background(this.biome);
   }
 
   resize(cssWidth) {
@@ -315,6 +321,7 @@ class Game {
     }
     this.satellite.setTier(tier);
     this.events.push(`Round ${this.round} begins.`);
+    this.ui.dispatch(`Dispatch · round ${this.round}`, storyDispatch(this));
     this.sfx.roundStart();
     this.nextTurn();
     this.cam.snap();
@@ -324,6 +331,7 @@ class Game {
     this.balance = opts.balance === 'classic' ? 'classic' : 'rebalanced';
     applyBalance(this.balance);
     this.events_on = opts.events !== false;
+    this.mapChoice = BIOMES[opts.map] ? opts.map : 'random';
   }
 
   placeTanks() {
@@ -335,6 +343,7 @@ class Game {
       this.terrain.flatten(xs[i], 14);
       t.resetRound(xs[i], this.terrain);
     });
+    this.placeForts();
     this.terrain.plantTrees(xs);
   }
 
@@ -358,14 +367,17 @@ class Game {
     this.sfx.newTurn();
     this.turnSerial++;
     this.turnCount++;
-    if (this.turnCount > 1 && this.turnCount % 12 === 0) {
+    const windChanged = this.turnCount > 1 && this.turnCount % 12 === 0;
+    if (windChanged) {
       this.setWind();
       this.events.push('The wind has changed.');
     }
+    this.updateFrontsTurn(windChanged);
     this.satellite.newTurn();
     if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
     t.fuel = t.maxFuel;
     t.shield = false; // a Deflector lasts until its owner's next turn
+    t.barrier = null; // so does a Bulwark Barrier
     if (t.upgrades.workshop && t.armour < t.maxArmour) { // field workshop: patch some armour each turn
       const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.05 * t.upgrades.workshop));
       t.armour += ar;
@@ -403,6 +415,10 @@ class Game {
       t.update(DT);
       if (t.alive && t.hp < t.maxHp * 0.3 && Math.random() < 0.04) this.particles.puff(t.x - t.facing * 6, t.y - TANK_H, [90, 90, 100]);
       if (!t.alive && Math.random() < 0.03) this.particles.puff(t.x, t.y - 14, [70, 70, 78]);
+      if (t.alive && t.recoil > 0.15 && Math.random() < 0.35) { // smoke curling from a barrel that just fired
+        const m = t.muzzle();
+        this.particles.add({ x: m.x, y: m.y, vx: (Math.random() - 0.5) * 0.6, vy: -0.6 - Math.random() * 0.6, g: -0.01, drag: 0.97, life: 0.9, size: 3 + Math.random() * 4, color: [170, 168, 180] });
+      }
     }
     this.stepTanks();
     this.updateHazards();
@@ -511,6 +527,19 @@ class Game {
     }
   }
 
+  ramTree(t, tr) {
+    tr.alive = false;
+    const top = this.terrain.hAt(tr.x) - this.terrain.treeHeight(tr) / 2;
+    const leaf = this.terrain.treeKind === 'cactus' ? [78, 128, 70] : this.terrain.treeKind === 'broadleaf' ? [196, 104, 40] : this.terrain.treeKind === 'lily' ? [244, 128, 176] : [38, 62, 64];
+    for (let i = 0; i < 12; i++) {
+      this.particles.add({ x: tr.x, y: top + (Math.random() - 0.5) * 30, vx: (Math.random() - 0.5) * 4 + t.facing * 2, vy: -Math.random() * 3, g: 0.2, drag: 0.97, life: 0.9, size: 3 + Math.random() * 5, color: i % 3 ? leaf : [84, 58, 40] });
+    }
+    this.sfx.thud();
+    this.shake = Math.max(this.shake, 3);
+    this.events.push(`${t.name} drove through a tree.`);
+    this.damage(t, TREE_RAM_DMG + 3 * tr.h, null);
+  }
+
   spawnCrate() {
     const total = CRATE_KINDS.reduce((a, k) => a + k.w, 0);
     let r = rng.next() * total;
@@ -562,11 +591,14 @@ class Game {
     for (const o of this.tanks) {
       if (o !== t && o.alive && Math.abs(o.x - nx) < TANK_W + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
     }
+    if (this.terrain.forts.length && this.fortBlocks(nx, this.terrain.hAt(nx))) return;
+    // driving into a tree knocks it down, at a cost
     for (const tr of this.terrain.trees) {
-      if (tr.alive && Math.abs(tr.x - nx) < TANK_W / 2 + 3 && Math.abs(tr.x - nx) < Math.abs(tr.x - t.x)) return;
+      if (tr.alive && Math.abs(tr.x - nx) < TANK_W / 2 + 3 && Math.abs(tr.x - nx) < Math.abs(tr.x - t.x)) this.ramTree(t, tr);
     }
     t.x = nx;
     t.fuel--;
+    t.walking = 4;
   }
 
   updateAim() {
@@ -634,6 +666,7 @@ class Game {
     t.uplink = false;
     t.charge = 0;
     t.recoil = 1;
+    t.setPose('fire');
     this.sfx.shot(w);
     this.shake = Math.max(this.shake, 3 + w.dmg / 200);
     this.events.push(`${t.name} fired the ${w.name.replace(/\.$/, "")}.`);
@@ -665,6 +698,7 @@ class Game {
     const vx = s.vx + (rng.next() - 0.5) * s.w.disp;
     const vy = s.vy + (rng.next() - 0.5) * s.w.disp;
     const p = new Projectile(this, s.w, t, m.x, m.y, vx, vy, s.first);
+    p.launch = Math.atan2(-vy, Math.abs(vx)); // launch angle above the horizon: steeper shots earn more altitude bonus
     p.uplink = s.uplink && s.first;
     if (s.first) {
       p.rec = [];
@@ -742,7 +776,7 @@ class Game {
       const lens = sat.lens();
       this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, '#fffff0', 22, 90));
       this.sfx.satFire();
-      this.explode(tg.x, tg.y, { dmg: sat.damage, dmgR: sat.dmgR, explR: sat.explR }, s.owner, 'laser');
+      this.explode(tg.x, tg.y, { dmg: sat.damage, dmgR: sat.dmgR, explR: sat.explR, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
       this.cam.follow({ x: tg.x, y: tg.y });
     }
     if (s.t > 75 + 70) this.satSeq = null;
@@ -758,9 +792,9 @@ class Game {
       const c = RARITY[w.rarity].color;
       this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
       this.sfx.laser();
-      this.explode(p.x, p.y, p.force ? { ...w, dmg: w.dmg * FRONT_FORCE_MULT } : w, p.owner, 'laser');
+      this.explode(p.x, p.y, { ...w, dmg: w.dmg * this.frontMult(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
     } else {
-      this.explode(p.x, p.y, this.shotBonus(p), p.owner, w.kind === 'acid' ? 'acid' : 'shell');
+      this.explode(p.x, p.y, { ...this.shotBonus(p), from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
         for (let i = 0; i < 30; i++) {
           const a = -Math.PI * (0.1 + 0.8 * Math.random());
@@ -769,6 +803,7 @@ class Game {
         }
         this.sfx.acid();
       }
+      if (w.kind === 'flak') this.shrapnel(p);
     }
     if (p.storm) this.lightning(p, w);
     if ((w.sat || p.uplink) && p.main) this.satTarget = { x: p.x, y: p.y, owner: p.owner };
@@ -777,20 +812,34 @@ class Game {
   // kinetic and altitude bonuses for a shell's impact (see KINETIC_* / ALTITUDE_*)
   shotBonus(p) {
     const w = p.w;
-    const alt = Math.min(ALTITUDE_MAX, Math.max(0, p.y - p.peak) * ALTITUDE_RATE);
+    const alt = altitudeBonus(p.y - p.peak, p.launch || 0);
     const speed = Math.hypot(p.vx, p.vy);
     const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg;
     if (p.main && alt >= 0.2) this.particles.text(p.x, p.y - 70, `altitude +${Math.round(alt * 100)}%`, '#ffd84a');
-    return { ...w, dmg: w.dmg * (1 + alt) * (p.force ? FRONT_FORCE_MULT : 1), kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
+    return { ...w, dmg: w.dmg * (1 + alt) * this.frontMult(p), kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
+  }
+
+  // flak burst: fragments rain down from the airburst
+  shrapnel(p) {
+    const frag = { id: 'frag', name: 'Shrapnel', kind: 'shell', dmg: p.w.dmg * 0.2, dmgR: 24, explR: 2, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 10, frag: true };
+    const n = 6 + Math.min(6, Math.round(p.w.dmgR / 40));
+    for (let i = 0; i < n; i++) {
+      const a = Math.PI / 2 + (Math.random() - 0.5) * 1.6; // a downward cone
+      const sp = 3 + Math.random() * 5;
+      const f = new Projectile(this, frag, p.owner, p.x, p.y, Math.cos(a) * sp + p.vx * 0.2, Math.sin(a) * sp, false);
+      f.age = 10;
+      this.projectiles.push(f);
+    }
   }
 
   explode(x, y, def, owner, palette = 'shell') {
     if (this.report) this.report.blasts.push({ x, y });
-    this.terrain.crater(x, def.explR || 10);
+    if (y > this.terrain.hAt(x) - (def.explR || 10) * 4 - 20) this.terrain.crater(x, def.explR || 10); // airbursts don't dig
+    if (this.terrain.forts.length) this.blastForts(x, y, def);
     if (y > this.terrain.hAt(x) - 30) this.terrain.scorch(x, Math.max(14, def.dmgR * 0.3), 0.2); // a faint scorch, ground hits only
     // a blast that catches a supply crate claims it for whoever fired
     for (const c of this.crates) {
-      if (c.alive && owner && !owner.isDrone && dist(c.x, c.y - 9, x, y) < Math.max(40, def.dmgR * 0.6)) this.claimCrate(c, owner);
+      if (c.alive && owner && !owner.isMob && dist(c.x, c.y - 9, x, y) < Math.max(40, def.dmgR * 0.6)) this.claimCrate(c, owner);
     }
     for (const t of this.terrain.fellTrees(x, y, Math.max(30, def.dmgR * 0.5))) {
       const top = this.terrain.hAt(t.x) - this.terrain.treeHeight(t) / 2;
@@ -804,7 +853,19 @@ class Game {
       const d = dist(c.x, c.y, x, y);
       let amt = d < def.dmgR ? def.dmg * (1 - d / def.dmgR) : 0;
       if (def.kin && d < def.kin.r) amt += def.kin.dmg * (1 - d / def.kin.r);
-      if (amt > 0) this.damage(t, amt, owner);
+      if (amt > 0 && t.barrier) {
+        // Bulwark Barrier: does this blast come from the side it covers? (a direct hit counts from
+        // the direction the shell arrived)
+        let dx = x - c.x, dy = y - c.y;
+        if (Math.hypot(dx, dy) < 12 && def.from) { dx = def.from.x; dy = def.from.y; }
+        const len = Math.hypot(dx, dy) || 1;
+        if ((dx * t.barrier.x + dy * t.barrier.y) / len > BARRIER_COS) {
+          amt *= 1 - BARRIER_BLOCK;
+          t.barrierHit = 1;
+          this.particles.text(t.x, t.y - 70, 'blocked', '#78e6d2');
+        }
+      }
+      if (amt > 0) this.damage(t, amt, owner, false, def);
     }
     this.startSlide(x, def.explR || 10);
     this.particles.explosion(x, y, def.dmgR, palette);
@@ -813,10 +874,10 @@ class Game {
   }
 
   // A3 Character.Damage: armour soaks hits until it is gone, then health takes them
-  damage(t, amt, owner, quiet = false) {
+  damage(t, amt, owner, quiet = false, def = null) {
     if (!t.alive || amt <= 0) return;
-    if (owner && owner.isDrone) owner = null; // drone bombs count as the environment
-    if (t.isDrone) { this.damageDrone(t, amt, owner); return; }
+    if (owner && owner.isMob) owner = null; // mob attacks count as the environment
+    if (t.isMob) { this.damageMob(t, amt, owner, def); return; }
     if (t.shield) amt *= SHIELD_FACTOR;
     if (owner && owner !== t) t.lastAttacker = owner; // CPUs retaliate against this tank
     let taken;
@@ -828,6 +889,7 @@ class Game {
       t.hp -= amt;
     }
     t.flash = 1;
+    if (!quiet && amt > 3) t.setPose('hit');
     this.roundDamage += taken * (quiet ? ACID_PAY_RATE : 1);
     if (this.report) {
       const m = owner ? this.report.dmg : this.report.fall;
@@ -962,6 +1024,7 @@ class Game {
     const winner = this.tanks.find((t) => t.alive) || null;
     if (winner) {
       winner.wins++;
+      winner.setPose('win');
       this.sfx.win();
       this.events.push(`${winner.name} wins round ${this.round}.`);
     } else this.events.push(`Round ${this.round} ends in mutual destruction.`);
@@ -1108,6 +1171,7 @@ class Game {
     }
     // abilities: Hard keeps a Double Shot and a Deflector, Normal a Double Shot, Easy now and then
     const wants = t.type === 'hard' ? ['double', 'shield'] : t.type === 'normal' ? ['double'] : rng.chance(0.4) ? [rng.pick(['double', 'shield'])] : [];
+    if (this.isLate() && t.type !== 'easy') wants.unshift('barrier'); // late game: a barrier first
     for (const id of wants) {
       const ab = ABILITIES.find((a) => a.id === id);
       if (t.abilities[id] < 1 && t.money - reserve >= ab.cost * 1.5) { t.money -= ab.cost; t.abilities[id] = 1; }
@@ -1130,10 +1194,21 @@ class Game {
 
   // Abilities (see ABILITIES): 1 / 2 arm Double Shot / Overcharge for the next shot (press again
   // to disarm; they only recharge once fired), 3 switches the Deflector on. None takes the turn.
-  useAbility(t, id) {
+  // late game: the second half of a finite match, or from round 4 in infinite mode
+  isLate() { return this.rounds ? this.round > this.rounds / 2 : this.round >= 4; }
+
+  useAbility(t, id, dir) {
     if (this.phase !== 'aim' || t !== this.active || !(t.abilities[id] > 0) || (t.cooldown[id] > 0 && !t.armed[id])) { this.sfx.deny(); return false; }
     const ab = ABILITY_BY_ID[id];
-    if (id === 'shield') {
+    if (id === 'barrier') {
+      if (t.barrier) { this.sfx.deny(); return false; }
+      t.cooldown.barrier = ab.cd;
+      const v = dir || t.aimVec();
+      const len = Math.hypot(v.x, v.y) || 1;
+      t.barrier = { x: v.x / len, y: v.y / len };
+      t.barrierHit = 1;
+      this.events.push(`${t.name} raises a Bulwark Barrier.`);
+    } else if (id === 'shield') {
       if (t.shield) { this.sfx.deny(); return false; }
       t.cooldown.shield = ab.cd;
       t.shield = true;
@@ -1193,7 +1268,7 @@ class Game {
   saveMatch(resumeAt) {
     const data = {
       v: 1, resumeAt, completed: resumeAt === 'shop' ? this.round : this.round - 1, rounds: this.rounds, awardMult: this.awardMult,
-      balance: this.balance, events: this.events_on,
+      balance: this.balance, events: this.events_on, map: this.mapChoice,
       tanks: this.tanks.map((t) => ({
         idx: t.idx, name: t.name, type: t.type, vehicle: t.vehicle.id, money: t.money, wins: t.wins,
         upgrades: t.upgrades, weapons: t.weapons, kits: t.kits, abilities: t.abilities, stats: t.stats,
@@ -1222,7 +1297,7 @@ class Game {
     this.turnSerial = 0;
     this.report = null;
     this.awardMult = d.awardMult || 1;
-    this.setOptions({ balance: d.balance || 'classic', events: d.events === true });
+    this.setOptions({ balance: d.balance || 'classic', events: d.events === true, map: d.map });
     this.satellite = new Satellite();
     this.tanks = d.tanks.map((s) => {
       const t = new Tank(s.idx, { name: s.name, type: s.type, vehicle: s.vehicle });
@@ -1308,9 +1383,14 @@ class Game {
     this.drawHazardsFront(ctx, cam);
     this.particles.draw(ctx);
 
-    // snow (screen pixels)
+    // snow (screen pixels), and the flash of a lightning strike
     ctx.setTransform(k, 0, 0, k, 0, 0);
     this.bg.drawSnow(ctx);
+    if (this.screenFlash > 0.01) {
+      ctx.fillStyle = `rgba(235,245,255,${this.screenFlash})`;
+      ctx.fillRect(0, 0, W, H);
+      this.screenFlash *= 0.82;
+    }
 
     // HUD in the original's 1600x900 screen units
     ctx.setTransform(s, 0, 0, s, 0, 0);
@@ -1426,7 +1506,7 @@ class Game {
       ctx.fillRect(x - s / 2, y0 + h / 2 - s / 2, 2, s);
       ctx.fillRect(x + s / 2 - 2, y0 + h / 2 - s / 2, 2, s);
     };
-    for (const d of this.drones) {
+    for (const d of this.mobs) {
       if (!d.alive) continue;
       ctx.fillStyle = '#3c3c48';
       sq(ctx, mx(d.x), y0 + h / 2 - 9, 6);

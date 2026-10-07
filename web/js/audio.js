@@ -203,6 +203,11 @@ class Sfx {
   thud() { this.tone('sine', 90, 35, 0.16, 0.4); }
   click() { if (!this.play('mech_move')) this.tone('square', 900, 700, 0.04, 0.07); }
   hover() { this.play('hover'); }
+  // thunder: a low rumble under a sharp crack
+  thunder() {
+    this.noise('highpass', 6000, 1200, 0.12, 0.5);
+    this.noise('lowpass', 500, 60, 1.4, 0.7, 0.8, 0.05);
+  }
   confirm() { this.play('confirm'); }
   newTurn() { this.play('new_turn'); }
   roundStart() { this.play('entryboom_combat'); this.music('combat'); }

@@ -7,6 +7,9 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const TYPE_LABELS = { human: 'Human', easy: 'CPU · Easy', normal: 'CPU · Normal', hard: 'CPU · Hard' };
 const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
 
+// the user's original turret-girl illustrations from the first Artillery game
+const PORTRAITS = { gwt: 'images/girl_gwt.png', obj: 'images/girl_obj.png', int: 'images/girl_int.png' };
+
 const UI = {
   game: null,
   players: [],
@@ -42,6 +45,7 @@ const UI = {
       if (d) { $('menu').hidden = true; this.game.loadMatch(d); }
     };
     this.syncLoad();
+    $('prologue').innerHTML = STORY.prologue.map((p) => `<p>${esc(p)}</p>`).join('');
     $('re-next').onclick = () => { $('roundend').hidden = true; game.afterRoundEnd(); };
     $('ge-again').onclick = () => { $('gameend').hidden = true; game.sfx.music('shop'); game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); this.syncLoad(); };
     $('resume').onclick = () => game.togglePause();
@@ -109,17 +113,34 @@ const UI = {
     const queue = cfgs.filter((c) => c.type === 'human');
     const next = () => {
       const c = queue.shift();
-      if (!c) { $('vehicles').hidden = true; this.game.startMatch(cfgs, +$('rounds').value, { balance: $('balance').value, events: $('events').value === 'on' }); return; }
+      if (!c) { $('vehicles').hidden = true; this.game.startMatch(cfgs, +$('rounds').value, { balance: $('balance').value, events: $('events').value === 'on', map: $('map').value }); return; }
       $('menu').hidden = true;
       $('vehicles').hidden = false;
       $("veh-player").textContent = `${c.name}:`;
       $('veh-grid').innerHTML = VEHICLES.map((v) => {
         const w = v.weapon;
-        return `<div class="veh" data-v="${v.id}"><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
+        // the original Artillery illustrations where they exist (mikanwolfe/artillery), else the pixel girl
+        const art = PORTRAITS[v.id]
+          ? `<div class="portrait"><img src="${PORTRAITS[v.id]}" alt="${esc(v.name)}, the original illustration"><canvas class="girl mini" width="160" height="190" data-g="${v.id}"></canvas></div>`
+          : `<canvas class="girl" width="160" height="190" data-g="${v.id}"></canvas>`;
+        return `<div class="veh${v.id === 'nxi' ? ' nxi' : ''}" data-v="${v.id}">${art}<h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
           <div class="stats"><span>Health</span><span>${v.hp}</span><span>Armour</span><span>${v.armour}</span></div>
           <div class="veh-wpn">${this.badge(w, true)}<h3 style="font-size:1em;color:${RARITY[w.rarity].color}">${esc(w.name)}</h3></div><p>${esc(w.short)}</p>
           <div class="stats">${this.weaponStats(w)}</div></div>`;
       }).join('');
+      // portraits: each turret girl in the player's colour, holding her starting gun
+      const col = PLAYER_COLORS[cfgs.indexOf(c) % PLAYER_COLORS.length];
+      $('veh-grid').querySelectorAll('canvas.girl').forEach((cv) => {
+        const g = cv.getContext('2d');
+        g.imageSmoothingEnabled = false;
+        g.scale(2.5, 2.5);
+        const v = VEHICLES.find((x) => x.id === cv.dataset.g);
+        const o = { id: v.id, x: 44, y: 74, facing: 1, color: col, state: 'ok', t: 0, walking: false, flash: 0 };
+        drawGirl(g, o);
+        const a = GIRL_ART[v.id] || GIRL_ART.gwt;
+        drawGun(g, v.weapon, { x: o.x + a.pivot[0], y: o.y + a.pivot[1] }, { x: Math.cos(rad(30)), y: -Math.sin(rad(30)) }, 1, 0, shade(col, -0.5), 0);
+        drawGirlMount(g, o);
+      });
       $('veh-grid').querySelectorAll('.veh').forEach((el) => {
         el.onclick = () => { c.vehicle = el.dataset.v; this.game.sfx.confirm(); next(); };
       });
@@ -175,6 +196,19 @@ const UI = {
     const b = $('load');
     b.hidden = !d;
     if (d) b.textContent = `load (round ${d.completed + 1}${d.rounds ? '/' + d.rounds : ''}: ${d.tanks.map((t) => t.name).join(', ')})`;
+  },
+
+  // a story transmission card (fades by itself)
+  dispatch(title, text) {
+    if (!text) return;
+    const d = $('dispatch');
+    $('dispatch-title').textContent = title;
+    $('dispatch-text').textContent = text;
+    d.hidden = true;
+    void d.offsetWidth;
+    d.hidden = false;
+    clearTimeout(this.dispatchTimer);
+    this.dispatchTimer = setTimeout(() => { d.hidden = true; }, 7000);
   },
 
   // a system line in the chat log (no speaker)
@@ -259,12 +293,15 @@ const UI = {
       $('shop-title').innerHTML = `<span class="dot" style="background:${tank.color}"></span>${esc(tank.name)} | ${esc(tank.vehicle.name)}`;
       $('shop-cash').textContent = 'Money : ' + money(tank.money);
       const full = tank.weapons.length >= 4;
-      $('shop-grid').innerHTML = WEAPONS.map((w) => {
+      $('shop-grid').innerHTML = WEAPONS.slice().sort((a, b) => a.cost - b.cost).map((w) => {
         const r = RARITY[w.rarity];
         const owned = tank.weapons.includes(w.id);
         const can = !owned && !full && tank.money >= w.cost;
-        return `<div class="card">${this.badge(w)}<div class="card-body">
-          <h4 style="color:${r.color}">${esc(w.name)}</h4>
+        const maker = makerOf(w);
+        const nxi = maker === 'NXi';
+        return `<div class="card${nxi ? ' nxi' : ''}">${this.badge(w)}<div class="card-body">
+          ${maker ? `<span class="maker">${nxi ? 'NXi · November Division' : esc(maker)}</span>` : ''}
+          <h4 style="color:${nxi ? 'var(--nxi-ink)' : r.color}">${esc(w.name)}</h4>
           <p>${esc(w.short)}</p><p><i>${esc(w.long)}</i></p>
           <div class="stats">${this.weaponStats(w)}</div>
           <div class="buyrow"><span class="cost">Price: ${money(w.cost)}</span>
@@ -297,9 +334,10 @@ const UI = {
       $('shop-kits').querySelector('[data-k]').onclick = () => { g.buy(tank, 'kit'); render(); };
       $('shop-abil').innerHTML = ABILITIES.map((a) => {
         const owned = tank.abilities[a.id] > 0;
+        const locked = a.late && !g.isLate();
         return `<div class="upg"><span>${esc(a.name)} <small>(key ${a.key})</small><br>
         <small>${esc(a.desc)} Recharges in ${a.cd} turns; ready at the start of every round.</small></span>
-        <button data-a="${a.id}" ${!owned && tank.money >= a.cost ? '' : 'disabled'}>${owned ? 'owned' : money(a.cost)}</button></div>`;
+        <button data-a="${a.id}" ${!owned && !locked && tank.money >= a.cost ? '' : 'disabled'}>${owned ? 'owned' : locked ? 'late game' : money(a.cost)}</button></div>`;
       }).join('');
       $('shop-abil').querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => { g.buy(tank, 'ability', b.dataset.a); render(); }; });
     };
@@ -315,6 +353,13 @@ const UI = {
     const tie = st[1] && st[1].wins === champ.wins;
     $('ge-quips').innerHTML = '';
     $('ge-title').innerHTML = tie ? 'A draw' : `<span style="color:${champ.color}">${esc(champ.name)}</span> takes the match`;
+    if (!tie) {
+      const q = document.createElement('div');
+      q.className = 'quip';
+      q.style.borderColor = 'var(--nxi-gold)';
+      q.textContent = STORY.ending(champ);
+      $('ge-quips').appendChild(q);
+    }
     $('ge-table').className = 'data';
     $('ge-table').innerHTML = '<tr><th>#</th><th>Tank</th><th>Rounds</th><th>Kills</th><th>Damage</th><th>Money</th></tr>' + st.map((t, i) =>
       `<tr class="${i === 0 ? 'win' : ''}"><td>${i + 1}</td><td><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</td>

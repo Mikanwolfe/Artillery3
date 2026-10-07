@@ -22,7 +22,7 @@ const RANGE_ERR_SCALE = 650;
 // the solver's miss distance, so it will take a somewhat worse shot to hit back.
 const RETALIATE = { easy: 180, normal: 260, hard: 320 };
 const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
-const DRONE_DISLIKE = 90; // score penalty for going after a drone instead of a player
+const MOB_DISLIKE = 90; // score penalty for going after a mob instead of a player (less for big bounties / with flak)
 
 // aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge.
 // arc: how much the solver values the altitude / kinetic damage bonuses, in miss-distance units per
@@ -53,7 +53,7 @@ function solveShot(game, tank, w, target) {
     if (selfD < Math.max(w.dmgR, w.sat ? 150 : 0) + 20 && r.tank !== target) err += 400;
     // only shots that would actually do damage earn the bonus
     const d = dist(r.x, r.y, tc.x, tc.y);
-    const f = d < w.dmgR ? bonusFactor(w, r.drop, r.speed, d < kinR) : 1;
+    const f = d < w.dmgR ? bonusFactor(w, r.drop, r.speed, d < kinR, rad(elev + tank.hullAngle(facing))) : 1;
     return { err, score: err - arc * (f - 1), f };
   };
   let best = { err: Infinity, score: Infinity, f: 1, elev: (w.elevMin + w.elevMax) / 2, v: maxV / 2, facing };
@@ -96,7 +96,7 @@ class CpuController {
     const g = this.game;
     const t = this.tank;
     // drones are fair game too, but a CPU would rather hit a rival
-    const enemies = g.tanks.filter((x) => x.alive && x !== t).concat(g.drones.filter((d) => d.alive));
+    const enemies = g.tanks.filter((x) => x.alive && x !== t).concat(g.mobs.filter((d) => d.alive));
     const grudge = t.lastAttacker && t.lastAttacker.alive && t.lastAttacker !== t ? t.lastAttacker : null;
     // weapon is locked once the clip has started; otherwise pick by difficulty
     let options = t.firedThisTurn ? [t.weapon] : t.weapons.map((id) => WEAPON_BY_ID[id]);
@@ -109,7 +109,7 @@ class CpuController {
         const s = solveShot(g, t, w, e);
         let score = s.score - (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1 - (e.bounty || 0) * BOUNTY_PULL;
         if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
-        if (e.isDrone) score += DRONE_DISLIKE;
+        if (e.isMob) score += MOB_DISLIKE - Math.min(150, e.bounty * 0.03) - (w.kind === 'flak' ? 120 : 0);
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
       }
       if (best && best.err < 40) break; // good enough with the strongest usable weapon
@@ -161,6 +161,13 @@ class CpuController {
           this.moveFrames = 160;
           this.state = 'move';
           return;
+        }
+        // Bulwark Barrier toward whoever it expects fire from (its grudge, else the nearest rival),
+        // tilted up because most of that fire comes down in an arc
+        if (t.abilityReady('barrier') && !t.barrier && rng.chance(t.type === 'easy' ? 0.3 : 0.8)) {
+          const foes = this.game.tanks.filter((x) => x.alive && x !== t);
+          const foe = t.lastAttacker && t.lastAttacker.alive ? t.lastAttacker : foes.sort((a, b) => Math.abs(a.x - t.x) - Math.abs(b.x - t.x))[0];
+          if (foe) this.game.useAbility(t, 'barrier', { x: Math.sign(foe.x - t.x) || 1, y: -1 });
         }
         // Deflector when hurt (it doesn't cost the turn)
         if (t.abilityReady('shield') && !t.shield && t.hp < t.maxHp * 0.6 && rng.chance(t.type === 'easy' ? 0.3 : 0.7)) this.game.useAbility(t, 'shield');
