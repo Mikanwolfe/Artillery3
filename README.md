@@ -18,7 +18,7 @@ It lifts as much as it can from A3s, in the original's world units (2400-wide te
 - **Camera**: proportional control (closes 1/10 of the distance per frame) following the tank, the shell and the satellite; drag to look around.
 - **HUD**: player | vehicle labels with armour / health, minimap, wind marker, charge bar with last-charge tick, fuel bar.
 
-Everything in the world is drawn as plain axis-aligned boxes that never rotate: tanks (tracks, hull, turret, a five-square barrel), a box-art MAIA satellite with solar wings and a swivelling emitter, box pine trees, a windsock for the wind marker, wrecks, lasers, explosions and snow.
+Everything in the world is drawn as plain axis-aligned boxes that never rotate: self-propelled guns (tracks, hull and a rear gun mount; G.W. Tiger, Object 15X and Innocentia each get their own design), a box-art MAIA satellite with solar wings and a swivelling emitter, box pine trees, a windsock for the wind marker, wrecks, lasers, explosions and snow.
 
 | Command | Key |
 | --- | --- |

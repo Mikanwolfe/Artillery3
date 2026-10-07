@@ -9,6 +9,87 @@ const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
 const TANK_SPEED = 1.5; // A3 Constants.PlayerSpeed
 const PLAYER_COLORS = ['#3d6fa8', '#b8433a', '#3e8a5a', '#7a4d9a'];
 
+// Self-propelled guns, one box-art design per vehicle. `body` draws the chassis, `mount` the gun
+// mount drawn over the barrel's root, `pivot` is the gun trunnion (local coords, facing right, so
+// a negative x is towards the rear). All in world units around the ground point.
+const WRECK_PAL = {
+  hull: '#46464d', light: '#55555c', dark: '#3a3a40', deep: '#2a2a2e', track: '#2a2a2e', wheel: '#3a3a40', metal: '#3a3a40', lamp: '#3a3a40',
+};
+
+// `fill(colour, lx, ty, w, h)` draws one box in the vehicle's local, facing-mirrored coords
+function tracks(fill, pal, half, wheels) {
+  fill(pal.track, -half + 2, -7, half * 2 - 4, 7);
+  fill(pal.track, -half, -5, half * 2, 3);
+  for (let i = 0; i < wheels; i++) fill(pal.wheel, -half + 3 + (i * (half * 2 - 9)) / (wheels - 1), -5, 3, 3);
+}
+
+const VEHICLE_ART = {
+  // Geschuetzwagen: long low six-wheel chassis, small driver's cab up front, open-topped raised
+  // fighting platform at the rear with a gun shield. Long barrel with a muzzle brake.
+  gwt: {
+    pivot: [-9, -18],
+    gun: { n: 6, size: 4, step: 4.5, start: 6, brake: 6 },
+    body(fill, pal) {
+      tracks(fill, pal, 19, 6);
+      fill(pal.hull, -17, -11, 33, 4);
+      fill(pal.light, -17, -11, 33, 1);
+      fill(pal.dark, 9, -14, 6, 3);
+      fill(pal.deep, 12, -13, 2, 1);
+      fill(pal.hull, -18, -16, 16, 5);
+      fill(pal.deep, -1, -10, 8, 2);
+      fill(pal.lamp, 15, -10, 2, 2);
+    },
+    mount(fill, pal) {
+      fill(pal.dark, -6, -22, 4, 9);
+      fill(pal.deep, -18, -18, 2, 2);
+      fill(pal.deep, -12, -18, 2, 2);
+    },
+  },
+  // Object 15X: engine deck and exhaust at the front, a tall armoured gun housing at the rear,
+  // a stowed recoil spade on the tail, and a short fat heavy gun.
+  obj: {
+    pivot: [-10, -20],
+    gun: { n: 5, size: 6, step: 4.5, start: 6, brake: 8 },
+    body(fill, pal) {
+      tracks(fill, pal, 17, 5);
+      fill(pal.hull, -16, -12, 32, 5);
+      fill(pal.light, -16, -10, 32, 1);
+      fill(pal.dark, 9, -14, 7, 2);
+      fill(pal.deep, 12, -17, 2, 3);
+      fill(pal.deep, -20, -7, 3, 5);
+      fill(pal.deep, -22, -3, 3, 3);
+      fill(pal.lamp, 15, -11, 2, 2);
+    },
+    mount(fill, pal) {
+      fill(pal.dark, -17, -22, 13, 10);
+      fill(pal.light, -17, -22, 13, 1);
+      fill(pal.deep, -7, -20, 4, 7);
+    },
+  },
+  // Innocentia: lighter chassis with a sloped nose, an enclosed rear casemate, twin barrels for
+  // its two-round salvo, and a satellite uplink (mast, dish and a beacon in MAIA's colour).
+  int: {
+    pivot: [-6, -17],
+    gun: { n: 7, size: 3, step: 3, start: 5, twin: true },
+    body(fill, pal, t) {
+      tracks(fill, pal, 16, 5);
+      fill(pal.hull, -15, -11, 28, 4);
+      fill(pal.hull, 11, -13, 3, 2);
+      fill(pal.hull, 13, -9, 2, 2);
+      fill(pal.lamp, 13, -11, 2, 1);
+      fill(pal.metal, -15, -31, 1, 12);
+      fill('#c8ccd8', -19, -32, 6, 2);
+      fill('#c8ccd8', -17, -34, 2, 2);
+      if (Math.floor(t * 2) % 2 === 0) fill('rgb(255,120,200)', -16, -36, 3, 2);
+    },
+    mount(fill, pal) {
+      fill(pal.dark, -16, -20, 14, 9);
+      fill(pal.light, -16, -20, 14, 1);
+      fill(pal.deep, -13, -16, 3, 2);
+    },
+  },
+};
+
 class Tank {
   constructor(idx, cfg) {
     this.idx = idx;
@@ -71,7 +152,11 @@ class Tank {
   }
 
   center() { return { x: this.x, y: this.y - TANK_H / 2 }; }
-  pivot() { return { x: this.x + this.facing * 2, y: this.y - 15 }; }
+  // the gun is mounted at the back of the superstructure (these are SPGs, not tanks)
+  pivot() {
+    const a = VEHICLE_ART[this.vehicle.id] || VEHICLE_ART.gwt;
+    return { x: this.x + this.facing * a.pivot[0], y: this.y + a.pivot[1] };
+  }
 
   aimVec(elev = this.elev, facing = this.facing) {
     const e = rad(elev);
@@ -79,12 +164,15 @@ class Tank {
   }
 
   muzzle(elev = this.elev, facing = this.facing) {
-    const p = this.pivot();
+    const a = VEHICLE_ART[this.vehicle.id] || VEHICLE_ART.gwt;
+    const p = { x: this.x + facing * a.pivot[0], y: this.y + a.pivot[1] };
     const v = this.aimVec(elev, facing);
-    return { x: p.x + v.x * 26, y: p.y + v.y * 26 };
+    const len = a.gun.start + a.gun.step * a.gun.n;
+    return { x: p.x + v.x * len, y: p.y + v.y * len };
   }
 
   update(dt) {
+    this.blink = (this.blink || 0) + dt;
     this.recoil = Math.max(0, this.recoil - dt * 2.5);
     this.flash = Math.max(0, this.flash - dt * 4);
     if (this.speech) {
@@ -94,63 +182,51 @@ class Tank {
   }
 
   // world space. Box helper takes facing-right local coords (lx = left edge, ty = top edge
-  // relative to the ground point) and mirrors them when the tank faces left.
+  // relative to the ground point) and mirrors them when the vehicle faces left.
   draw(ctx, active) {
     const f = this.facing;
     const x = Math.round(this.x);
     const y = Math.round(this.y);
     const box = (lx, ty, w, h) => ctx.fillRect(f > 0 ? x + lx : x - lx - w, y + ty, w, h);
+    const art = VEHICLE_ART[this.vehicle.id] || VEHICLE_ART.gwt;
+    const fill = (c, lx, ty, w, h) => { ctx.fillStyle = c; box(lx, ty, w, h); };
     if (!this.alive) {
-      // burnt-out wreck: same boxes, charred, turret knocked back and barrel drooping
+      // burnt-out wreck: the same silhouette in charred greys, gun drooped
+      art.body(fill, WRECK_PAL, 0);
       ctx.fillStyle = '#2a2a2e';
-      box(-15, -6, 30, 6);
-      ctx.fillStyle = '#45454c';
-      box(-16, -11, 27, 5);
-      ctx.fillStyle = '#38383e';
-      box(-13, -15, 11, 4);
-      ctx.fillStyle = '#2a2a2e';
-      for (let i = 0; i < 3; i++) box(-1 + i * 4, -12 + i * 2, 4, 3);
+      for (let i = 0; i < 3; i++) box(art.pivot[0] + i * 4, art.pivot[1] + 2 + i * 2, 4, 3);
       return;
     }
+    const pal = {
+      hull: this.color, light: shade(this.color, 0.3), dark: shade(this.color, -0.25), deep: shade(this.color, -0.5),
+      track: '#2b2d33', wheel: '#6b6f78', metal: '#8a8fa0', lamp: '#fff3c0',
+    };
+    art.body(fill, pal, this.blink || 0);
+    // gun on the rear mount, drawn over the hull so it reads as firing forward across the deck
     const v = this.aimVec();
     const p = this.pivot();
-    // barrel first so the turret overlaps its root
-    ctx.fillStyle = shade(this.color, -0.5);
-    for (let i = 0; i < 5; i++) {
-      const d = 7 + i * 4 - this.recoil * 6;
-      sq(ctx, p.x + v.x * d, p.y + v.y * d, i === 4 ? 5 : 4);
+    const g = art.gun;
+    ctx.fillStyle = pal.deep;
+    for (let k = 0; k < (g.twin ? 2 : 1); k++) {
+      const off = g.twin ? (k ? 2.5 : -2.5) : 0;
+      const ox = -v.y * off * f;
+      const oy = v.x * off * f;
+      for (let i = 0; i < g.n; i++) {
+        const d = g.start + i * g.step - this.recoil * 6;
+        sq(ctx, p.x + ox + v.x * d, p.y + oy + v.y * d, i === g.n - 1 && g.brake ? g.brake : g.size);
+      }
     }
-    // tracks with stepped ends and road wheels
-    ctx.fillStyle = '#2b2d33';
-    box(-15, -7, 30, 7);
-    box(-17, -5, 34, 3);
-    ctx.fillStyle = '#6b6f78';
-    for (const lx of [-13, -7, -1, 5, 11]) box(lx, -5, 3, 3);
-    // hull: long body, stepped glacis at the front, lighter top edge
-    ctx.fillStyle = this.color;
-    box(-16, -12, 28, 5);
-    box(12, -11, 3, 4);
-    box(15, -9, 2, 2);
-    ctx.fillStyle = shade(this.color, 0.3);
-    box(-16, -12, 28, 1);
-    // turret with a stepped mantlet, hatch and front light
-    ctx.fillStyle = shade(this.color, -0.25);
-    box(-8, -18, 12, 6);
-    box(4, -17, 3, 5);
-    ctx.fillStyle = shade(this.color, -0.45);
-    box(-5, -20, 4, 2);
-    ctx.fillStyle = '#fff3c0';
-    box(13, -10, 2, 2);
+    art.mount(fill, pal);
     if (this.flash > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.85})`;
-      box(-17, -20, 34, 20);
+      box(-18, -22, 36, 22);
     }
     if (active) {
       // A3 sight: green marks at the elevation limits
       ctx.fillStyle = '#2e8b57';
       for (const e of [this.weapon.elevMin, this.weapon.elevMax]) {
         const u = this.aimVec(e);
-        for (let d = 34; d <= 50; d += 8) sq(ctx, p.x + u.x * d, p.y + u.y * d, 3);
+        for (let d = 36; d <= 52; d += 8) sq(ctx, p.x + u.x * d, p.y + u.y * d, 3);
       }
     }
   }
