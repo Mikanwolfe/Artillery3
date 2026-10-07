@@ -148,9 +148,9 @@ const GIRL_LEGS_SIT = { at: 33, x0: 20, rows: ['..........F', 'AAAATTBBBBF', 'AA
 
 // Layers: { at: first row, x0: first column, rows: [...] }.
 const GIRL_DEFS = {
-  // G.W. Tiger: long straight platinum hair past her waist, red-orange eyes, a navy sleeveless
-  // top with a gold collar ornament, player-colour pleated skirt, black thigh-highs; leaning on
-  // one hip, hand on hip. Dark-steel hip pack with a round turret raised behind her shoulder.
+  // G.W. Tiger: long straight platinum hair past her waist (player-colour bow), red-orange eyes,
+  // a dark navy sleeveless bodysuit with a gold collar ornament on a player-colour choker, black
+  // thigh-highs; leaning on one hip, hand on hip. Dark-steel back pack with a round turret.
   gwt: {
     pivot: [7, 10],
     barrel: { size: 4, twin: false, n: 6, step: 4.5, start: 5 },
@@ -183,9 +183,9 @@ const GIRL_DEFS = {
       '.hhLhhhH',
       '.hhLhhhH',
       '.hhLhhhH',
-      'hhhLhhH',
-      'hhLhhhH',
-      'hhLhhH',
+      'pphpphH',
+      'pqPqphH',
+      'pphppH',
       'hhhhhH',
       '.hhhhH',
       '.hhhH',
@@ -203,23 +203,23 @@ const GIRL_DEFS = {
       '...H',
     ] },
     body: { at: 17, x0: 14, rows: [
-      '....SS',
+      '....pP',
       '..suuyus',
       '.szuuuuU',
       '.szuuuuU',
       '.s.uuuU',
-      '.Sqqqqqp',
-      '.ppPppPpp',
-      '.PPPPPPPP',
+      '.SzuuuuU',
+      '..zuuuU',
+      '.ss..ss',
     ] },
     arm: { at: 19, x0: 21, rows: ['.s', '..s', '.s', 's'] },
     sleeve: 'sSs',
     mount: [['R', -1, -1, 4, 3], ['g', -1, -1, 4, 1], ['p', 0, 1, 2, 1]],
   },
 
-  // Object 15X: blonde high ponytail with a blue tie swinging behind her, blue eyes, khaki cropped
-  // jacket with a high collar, player-colour pleated skirt, black thigh-highs and boots, one boot
-  // forward, hand on hip. Brass/olive hip pack with a stowed spade and a turret on a tall mast.
+  // Object 15X: blonde high ponytail (player-colour tie) swinging behind her, blue eyes, khaki
+  // cropped jacket with a high collar, khaki pleated mini skirt, player-colour armband, black
+  // thigh-highs and boots, one boot forward, hand on hip. Brass/olive hip pack with a stowed spade and a turret on a tall mast.
   obj: {
     pivot: [6, 4],
     barrel: { size: 6, twin: false, n: 5, step: 4.5, start: 6 },
@@ -254,8 +254,8 @@ const GIRL_DEFS = {
     ] },
     tail: { at: 5, x0: 1, sway: [9, 12], rows: [
       '........hh',
-      '......hhhhnn',
-      '...hhhhLhhnn',
+      '......hhhhpp',
+      '...hhhhLhhpP',
       '.hhhLLhhhH',
       'hhhLhhhHH',
       'hhLhhHH',
@@ -280,18 +280,18 @@ const GIRL_DEFS = {
       '.szuuyuU',
       '.szuuuuU',
       '.s.UUUU',
-      '.Sqqqqqp',
-      '.ppPppPpp',
-      '.PPPPPPPP',
+      '.Szzzzzu',
+      '.uuUuuUuu',
+      '.UUUUUUUU',
     ] },
-    arm: { at: 19, x0: 21, rows: ['.s', '..s', '.s', 's'] },
-    sleeve: 'sSs',
+    arm: { at: 18, x0: 21, rows: ['pP', '.s', '..s', '.s', 's'] },
+    sleeve: 'sSp',
     mount: [['R', -2, -1, 5, 3], ['g', -2, -1, 5, 1], ['p', -1, 1, 3, 1]],
   },
 
   // Innocentia: short-medium red hair with an ahoge and a little uplink antenna clip with a
-  // blinking MAIA-pink beacon, violet eyes, a long red scarf with gold ends trailing behind, a tan
-  // sleeveless top, player-colour skirt, black knee socks and chunky boots, hugging a shell.
+  // blinking MAIA-pink beacon, violet eyes, a long player-colour scarf with gold ends trailing
+  // behind, a tan sleeveless bodysuit, black knee socks and chunky boots, hugging a shell.
   // White uplink pack with a dish and a twin-gun turret behind her shoulder.
   int: {
     pivot: [6, 10],
@@ -318,15 +318,15 @@ const GIRL_DEFS = {
       '...RRRRRRR',
     ] },
     tail: { at: 17, x0: 8, sway: [21, 24], rows: [
-      '......ccc',
-      '....cccC',
-      '...ccCc',
-      '..ccC.cC',
-      '..cC..cC',
-      '.ccC..yY',
-      '.cC',
-      'ccC',
-      'cC',
+      '......ppp',
+      '....pppP',
+      '...ppPp',
+      '..ppP.pP',
+      '..pP..pP',
+      '.ppP..yY',
+      '.pP',
+      'ppP',
+      'pP',
       'yY',
       'yY',
     ] },
@@ -346,14 +346,14 @@ const GIRL_DEFS = {
       '...H',
     ] },
     body: { at: 17, x0: 14, rows: [
-      '...cccc',
-      '..cccccC',
+      '...pppp',
+      '..qppppP',
       '.szuuuuU',
       '.szuuuuU',
       '...uuuU',
-      '..qqqqqp',
-      '.ppPppPpp',
-      '.PPPPPPPP',
+      '..zuuuuU',
+      '...uuuU',
+      '..ss.ss',
     ] },
     // both arms round a shell (brass, grey nose)
     arm: { at: 19, x0: 13, rows: ['.Yyysyyysyy.', 'YYYYsYYYsYTT', '.YYY.....T'] },
@@ -364,7 +364,7 @@ const GIRL_DEFS = {
   // November (NXi, November Division of the United Aurora Federation): composed at parade rest.
   // White peaked cap with the Queen's gold crown, long teal hair with a violet streak and an
   // aurora tip, teal eyes, a void-navy jacket with gold trim and coat tails, player-colour sash and
-  // skirt, navy thigh boots with gold bands. Battlecruiser hip block (aurora seam, player plates)
+  // armband, navy thigh boots with gold bands. Battlecruiser hip block (aurora seam, player plates)
   // with a wide triple turret behind her shoulder.
   nxi: {
     pivot: [5, 10],
@@ -425,15 +425,15 @@ const GIRL_DEFS = {
     ] },
     body: { at: 17, x0: 14, rows: [
       '...yuuy',
-      '..zuuuuy',
-      '..zuuupU',
-      '.uzuupuU',
-      'uu.upuU',
-      'uuqqqqqp',
-      'uyppPppPpp',
-      'yyPPPPPPPP',
+      '..zuuupy',
+      '..zuuppU',
+      '.uzuppuU',
+      'uu.ppuU',
+      'uuzpuuuU',
+      'uyyyyyyy',
+      'uyss.ss',
     ] },
-    arm: { at: 19, x0: 21, rows: ['u', 'U'] },
+    arm: { at: 19, x0: 21, rows: ['p', 'P'] },
     sleeve: 'uUp',
     mount: [['R', -2, -1, 5, 3], ['g', -2, -1, 5, 1], ['a', -1, 1, 3, 1]],
   },
