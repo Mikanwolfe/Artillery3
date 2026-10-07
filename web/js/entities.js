@@ -1,10 +1,10 @@
 'use strict';
-// Game objects. Everything is drawn as plain axis-aligned boxes (no rotation): a tank is a
-// stack of boxes (tracks, road wheels, hull, turret) with a barrel of five small squares, the MAIA satellite is three nested squares,
+// Game objects. Everything is drawn as plain axis-aligned boxes (no rotation): a vehicle is a pixel
+// turret girl with her rigging and a barrel of squares, the MAIA satellite is built from squares, and
 // a laser is a line of squares. Tanks hold per-player state (money, wins, weapons, upgrades).
 
 const TANK_W = 34; // hitbox / footprint (world units)
-const TANK_H = 20;
+const TANK_H = 34; // a turret girl stands about 44 tall; the hitbox covers her body and rigging
 const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
 const TANK_SPEED = 1.5; // A3 Constants.PlayerSpeed
 const TANK_CLIMB = 1.6; // steepest slope (dy/dx) a vehicle can drive up
@@ -18,86 +18,7 @@ const VEHICLE_UPGRADES = [
 ];
 const PLAYER_COLORS = ['#3d6fa8', '#b8433a', '#3e8a5a', '#7a4d9a'];
 
-// Self-propelled guns, one box-art design per vehicle. `body` draws the chassis, `mount` the gun
-// mount drawn over the barrel's root, `pivot` is the gun trunnion (local coords, facing right, so
-// a negative x is towards the rear). All in world units around the ground point.
-const WRECK_PAL = {
-  hull: '#46464d', light: '#55555c', dark: '#3a3a40', deep: '#2a2a2e', track: '#2a2a2e', wheel: '#3a3a40', metal: '#3a3a40', lamp: '#3a3a40',
-};
-
-// `fill(colour, lx, ty, w, h)` draws one box in the vehicle's local, facing-mirrored coords
-function tracks(fill, pal, half, wheels) {
-  fill(pal.track, -half + 2, -7, half * 2 - 4, 7);
-  fill(pal.track, -half, -5, half * 2, 3);
-  for (let i = 0; i < wheels; i++) fill(pal.wheel, -half + 3 + (i * (half * 2 - 9)) / (wheels - 1), -5, 3, 3);
-}
-
-const VEHICLE_ART = {
-  // Geschuetzwagen: long low six-wheel chassis, small driver's cab up front, open-topped raised
-  // fighting platform at the rear with a gun shield. Long barrel with a muzzle brake.
-  gwt: {
-    pivot: [-9, -18],
-    gun: { n: 6, size: 4, step: 4.5, start: 6, brake: 6 },
-    body(fill, pal) {
-      tracks(fill, pal, 19, 6);
-      fill(pal.hull, -17, -11, 33, 4);
-      fill(pal.light, -17, -11, 33, 1);
-      fill(pal.dark, 9, -14, 6, 3);
-      fill(pal.deep, 12, -13, 2, 1);
-      fill(pal.hull, -18, -16, 16, 5);
-      fill(pal.deep, -1, -10, 8, 2);
-      fill(pal.lamp, 15, -10, 2, 2);
-    },
-    mount(fill, pal) {
-      fill(pal.dark, -6, -22, 4, 9);
-      fill(pal.deep, -18, -18, 2, 2);
-      fill(pal.deep, -12, -18, 2, 2);
-    },
-  },
-  // Object 15X: engine deck and exhaust at the front, a tall armoured gun housing at the rear,
-  // a stowed recoil spade on the tail, and a short fat heavy gun.
-  obj: {
-    pivot: [-10, -20],
-    gun: { n: 5, size: 6, step: 4.5, start: 6, brake: 8 },
-    body(fill, pal) {
-      tracks(fill, pal, 17, 5);
-      fill(pal.hull, -16, -12, 32, 5);
-      fill(pal.light, -16, -10, 32, 1);
-      fill(pal.dark, 9, -14, 7, 2);
-      fill(pal.deep, 12, -17, 2, 3);
-      fill(pal.deep, -20, -7, 3, 5);
-      fill(pal.deep, -22, -3, 3, 3);
-      fill(pal.lamp, 15, -11, 2, 2);
-    },
-    mount(fill, pal) {
-      fill(pal.dark, -17, -22, 13, 10);
-      fill(pal.light, -17, -22, 13, 1);
-      fill(pal.deep, -7, -20, 4, 7);
-    },
-  },
-  // Innocentia: lighter chassis with a sloped nose, an enclosed rear casemate, twin barrels for
-  // its two-round salvo, and a satellite uplink (mast, dish and a beacon in MAIA's colour).
-  int: {
-    pivot: [-6, -17],
-    gun: { n: 7, size: 3, step: 3, start: 5, twin: true },
-    body(fill, pal, t) {
-      tracks(fill, pal, 16, 5);
-      fill(pal.hull, -15, -11, 28, 4);
-      fill(pal.hull, 11, -13, 3, 2);
-      fill(pal.hull, 13, -9, 2, 2);
-      fill(pal.lamp, 13, -11, 2, 1);
-      fill(pal.metal, -15, -31, 1, 12);
-      fill('#c8ccd8', -19, -32, 6, 2);
-      fill('#c8ccd8', -17, -34, 2, 2);
-      if (Math.floor(t * 2) % 2 === 0) fill('rgb(255,120,200)', -16, -36, 3, 2);
-    },
-    mount(fill, pal) {
-      fill(pal.dark, -16, -20, 14, 9);
-      fill(pal.light, -16, -20, 14, 1);
-      fill(pal.deep, -13, -16, 3, 2);
-    },
-  },
-};
+// Vehicles are drawn as turret girls (girls.js) carrying their weapon's skin (weaponskins.js).
 
 // average slope of the ground under a vehicle's footprint (dy/dx), used to tilt it
 function groundSlope(terrain, x) {
@@ -183,10 +104,11 @@ class Tank {
   center() { return { x: this.x, y: this.y - TANK_H / 2 }; }
   // the gun is mounted at the back of the superstructure (these are SPGs, not tanks)
   // (vehicles sit on slopes by shearing their boxes vertically, so the mount moves with the tilt)
+  // (the girls stand upright on slopes, so the mount doesn't shift with the tilt; the hull angle
+  // still pitches the elevation range, see aimVec)
   pivot(facing = this.facing) {
-    const a = VEHICLE_ART[this.vehicle.id] || VEHICLE_ART.gwt;
-    const dx = facing * a.pivot[0];
-    return { x: this.x + dx, y: this.y + a.pivot[1] + (this.tilt || 0) * dx };
+    const a = GIRL_ART[this.vehicle.id] || GIRL_ART.gwt;
+    return { x: this.x + facing * a.pivot[0], y: this.y + a.pivot[1] };
   }
 
   // hull pitch in degrees for the given facing (+ = nose up), from the ground-slope tilt
@@ -202,16 +124,16 @@ class Tank {
   }
 
   muzzle(elev = this.elev, facing = this.facing) {
-    const a = VEHICLE_ART[this.vehicle.id] || VEHICLE_ART.gwt;
     const p = this.pivot(facing);
     const v = this.aimVec(elev, facing);
-    const len = a.gun.start + a.gun.step * a.gun.n;
+    const len = gunLength(this.weapon);
     return { x: p.x + v.x * len, y: p.y + v.y * len };
   }
 
   update(dt) {
     this.blink = (this.blink || 0) + dt;
     this.recoil = Math.max(0, this.recoil - dt * 2.5);
+    this.walking = Math.max(0, (this.walking || 0) - 1);
     this.flash = Math.max(0, this.flash - dt * 4);
     if (this.speech) {
       this.speech.age += dt;
@@ -226,60 +148,26 @@ class Tank {
     const f = this.facing;
     const x = Math.round(this.x);
     const y = Math.round(this.y);
-    const k = this.tilt || 0;
-    const box = (lx, ty, w, h) => {
-      const left = f > 0 ? x + lx : x - lx - w;
-      // long boxes are drawn as 6-unit columns so the whole silhouette steps with the slope
-      for (let c = 0; c < w; c += 6) {
-        const cw = Math.min(6, w - c);
-        ctx.fillRect(left + c, y + ty + Math.round(k * (left + c + cw / 2 - x)), cw, h);
-      }
-    };
-    const art = VEHICLE_ART[this.vehicle.id] || VEHICLE_ART.gwt;
-    const fill = (c, lx, ty, w, h) => { ctx.fillStyle = c; box(lx, ty, w, h); };
-    if (!this.alive) {
-      // burnt-out wreck: the same silhouette in charred greys, gun drooped
-      art.body(fill, WRECK_PAL, 0);
-      ctx.fillStyle = '#2a2a2e';
-      for (let i = 0; i < 3; i++) box(art.pivot[0] + i * 4, art.pivot[1] + 2 + i * 2, 4, 3);
-      return;
-    }
-    const pal = {
-      hull: this.color, light: shade(this.color, 0.3), dark: shade(this.color, -0.25), deep: shade(this.color, -0.5),
-      track: '#2b2d33', wheel: '#6b6f78', metal: '#8a8fa0', lamp: '#fff3c0',
-    };
-    art.body(fill, pal, this.blink || 0);
-    // gun on the rear mount, drawn over the hull so it reads as firing forward across the deck
-    const v = this.aimVec();
-    const p = this.pivot();
-    const g = art.gun;
-    ctx.fillStyle = pal.deep;
-    for (let k = 0; k < (g.twin ? 2 : 1); k++) {
-      const off = g.twin ? (k ? 2.5 : -2.5) : 0;
-      const ox = -v.y * off * f;
-      const oy = v.x * off * f;
-      for (let i = 0; i < g.n; i++) {
-        const d = g.start + i * g.step - this.recoil * 6;
-        sq(ctx, p.x + ox + v.x * d, p.y + oy + v.y * d, i === g.n - 1 && g.brake ? g.brake : g.size);
-      }
-    }
-    art.mount(fill, pal);
-    if (this.flash > 0) {
-      ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.85})`;
-      box(-18, -22, 36, 22);
-    }
+    const state = !this.alive ? 'wreck' : this.hp < this.maxHp * 0.5 ? 'damaged' : 'ok';
+    const o = { id: this.vehicle.id, x, y, facing: f, color: this.color, state, t: this.blink || 0, walking: this.walking > 0, flash: this.flash };
+    // a turret girl (girls.js) with her rigging; the gun is the equipped weapon's skin (weaponskins.js)
+    drawGirl(ctx, o);
+    if (!this.alive) return;
+    drawGun(ctx, this.weapon, this.pivot(), this.aimVec(), f, this.recoil, shade(this.color, -0.5), this.blink || 0);
+    drawGirlMount(ctx, o);
     if (this.shield) {
       // Deflector: a ring of pale squares around the hull, pulsing
       const a = 0.45 + 0.2 * Math.sin((this.blink || 0) * 5);
       ctx.fillStyle = `rgba(150,210,255,${a})`;
       for (let i = 0; i < 20; i++) {
         const t = (i / 20) * TAU;
-        sq(ctx, x + Math.cos(t) * 30, y - 12 + Math.sin(t) * 22, 4);
+        sq(ctx, x + Math.cos(t) * 32, y - 22 + Math.sin(t) * 30, 4);
       }
     }
     if (active) {
       // A3 sight: green marks at the elevation limits
       ctx.fillStyle = '#2e8b57';
+      const p = this.pivot();
       for (const e of [this.weapon.elevMin, this.weapon.elevMax]) {
         const u = this.aimVec(e);
         for (let d = 36; d <= 52; d += 8) sq(ctx, p.x + u.x * d, p.y + u.y * d, 3);
@@ -295,40 +183,40 @@ class Tank {
     const title = `${this.name} | ${this.vehicle.name}`;
     const tw = ctx.measureText(title).width + 24;
     ctx.fillStyle = 'rgba(232,230,244,0.88)';
-    ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 80), Math.round(tw), 20);
+    ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 100), Math.round(tw), 20);
     if (active) {
       ctx.fillStyle = this.color;
-      ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 80), 5, 20);
+      ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 100), 5, 20);
     }
     ctx.fillStyle = active ? '#20204a' : '#4a4a72';
-    ctx.fillText(title, Math.round(sx), Math.round(sy - 65));
+    ctx.fillText(title, Math.round(sx), Math.round(sy - 85));
     // a CPU's grudge: a square in the colour of whoever it is out for
     if (this.isCpu && this.lastAttacker && this.lastAttacker.alive) {
       ctx.fillStyle = this.lastAttacker.color;
-      ctx.fillRect(Math.round(sx + tw / 2 + 4), Math.round(sy - 76), 12, 12);
+      ctx.fillRect(Math.round(sx + tw / 2 + 4), Math.round(sy - 96), 12, 12);
     }
     // bounty on the match leader
     if (this.bounty > 0) {
       ctx.fillStyle = '#ffd84a';
-      ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 80), 48, 20);
+      ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 100), 48, 20);
       ctx.fillStyle = '#20204a';
       ctx.font = '13px "Maven Pro", Verdana, sans-serif';
-      ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 65));
+      ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 85));
       ctx.font = '15px "Maven Pro", Verdana, sans-serif';
     }
     // armour | health bar | health  (A3 layout)
     const bw = 100;
     ctx.fillStyle = 'rgba(232,230,244,0.88)';
-    ctx.fillRect(Math.round(sx - bw / 2), Math.round(sy - 56), bw, 16);
+    ctx.fillRect(Math.round(sx - bw / 2), Math.round(sy - 76), bw, 16);
     ctx.fillStyle = 'rgb(87,128,109)';
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 52), Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 8);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 72), Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 8);
     ctx.font = '15px "Maven Pro", Verdana, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(Math.ceil(this.armour), Math.round(sx - bw / 2 - 6), Math.round(sy - 42));
+    ctx.fillText(Math.ceil(this.armour), Math.round(sx - bw / 2 - 6), Math.round(sy - 62));
     ctx.textAlign = 'left';
     ctx.fillStyle = '#5a5a7a';
-    ctx.fillText(Math.ceil(this.hp), Math.round(sx + bw / 2 + 6), Math.round(sy - 42));
+    ctx.fillText(Math.ceil(this.hp), Math.round(sx + bw / 2 + 6), Math.round(sy - 62));
     if (active) {
       const w = this.weapon;
       ctx.font = '15px "Maven Pro", Verdana, sans-serif';
@@ -403,7 +291,7 @@ class Tank {
     const bw = Math.round(Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20);
     const bh = lines.length * lh + 10;
     const bx = Math.round(clamp(sx - bw / 2, 8, VIEW_W - bw - 8));
-    const by = Math.round(sy - 96 - bh);
+    const by = Math.round(sy - 116 - bh);
     ctx.globalAlpha = clamp((s.dur - s.age) * 3, 0, 1);
     ctx.fillStyle = 'rgba(250,250,255,0.95)';
     ctx.fillRect(bx, by, bw, bh);
@@ -436,8 +324,10 @@ class Projectile {
 
   update() {
     const g = this.game;
+    if (this.delay > 0) { this.delay--; return true; } // waiting its turn in a burst
     const r = stepBallistic(this, g.terrain, g.wind, g.targets(), this.owner);
     g.frontCheck(this);
+    if (!r && this.w.kind === 'flak' && this.fuse(g)) { g.impact(this, { hit: 'air' }); return false; }
     if (this.y < this.peak) this.peak = this.y;
     if (this.age % 2 === 0) g.trace(this.x, this.y);
     // soot flecks shed in flight: they fall away behind the shell and fade
@@ -458,8 +348,22 @@ class Projectile {
     return false;
   }
 
+  // flak proximity fuse: bursts near a mob or an enemy vehicle, or just above the ground on the way down
+  fuse(g) {
+    if (this.age < 10) return false;
+    const r = 30 + this.w.dmgR * 0.25;
+    for (const t of g.targets()) {
+      if (!t.alive || t === this.owner) continue;
+      const c = t.center();
+      if (dist(c.x, c.y, this.x, this.y) < (t.isMob ? r + t.hw * 0.5 : r * 0.6)) return true;
+    }
+    return this.vy > 0 && this.y > g.terrain.hAt(this.x) - 60;
+  }
+
   draw(ctx) {
-    const col = this.w.kind === 'laser' ? [0, 200, 220] : this.w.kind === 'acid' ? [70, 160, 50] : [50, 50, 64];
+    if (this.delay > 0) return;
+    const sk = shellSkin(this.w);
+    const col = sk.body;
     for (let i = 0; i < this.trail.length; i += 2) {
       const a = (i + 2) / this.trail.length;
       ctx.fillStyle = rgb([200, 200, 214], a * 0.6);
@@ -470,9 +374,9 @@ class Projectile {
     const nx = this.vx / sp;
     const ny = this.vy / sp;
     ctx.fillStyle = rgb(col);
-    sq(ctx, this.x - nx * 3, this.y - ny * 3, 8);
-    ctx.fillStyle = rgb(mixRgb(col, [255, 255, 255], 0.45));
-    sq(ctx, this.x + nx * 4, this.y + ny * 4, 5);
+    sq(ctx, this.x - nx * 3, this.y - ny * 3, sk.size);
+    ctx.fillStyle = rgb(sk.nose);
+    sq(ctx, this.x + nx * (sk.size / 2 + 1), this.y + ny * (sk.size / 2 + 1), Math.max(2, sk.size * 0.6));
   }
 }
 

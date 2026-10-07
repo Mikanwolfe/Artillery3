@@ -109,17 +109,30 @@ const UI = {
     const queue = cfgs.filter((c) => c.type === 'human');
     const next = () => {
       const c = queue.shift();
-      if (!c) { $('vehicles').hidden = true; this.game.startMatch(cfgs, +$('rounds').value, { balance: $('balance').value, events: $('events').value === 'on' }); return; }
+      if (!c) { $('vehicles').hidden = true; this.game.startMatch(cfgs, +$('rounds').value, { balance: $('balance').value, events: $('events').value === 'on', map: $('map').value }); return; }
       $('menu').hidden = true;
       $('vehicles').hidden = false;
       $("veh-player").textContent = `${c.name}:`;
       $('veh-grid').innerHTML = VEHICLES.map((v) => {
         const w = v.weapon;
-        return `<div class="veh" data-v="${v.id}"><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
+        return `<div class="veh" data-v="${v.id}"><canvas class="girl" width="160" height="150" data-g="${v.id}"></canvas><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
           <div class="stats"><span>Health</span><span>${v.hp}</span><span>Armour</span><span>${v.armour}</span></div>
           <div class="veh-wpn">${this.badge(w, true)}<h3 style="font-size:1em;color:${RARITY[w.rarity].color}">${esc(w.name)}</h3></div><p>${esc(w.short)}</p>
           <div class="stats">${this.weaponStats(w)}</div></div>`;
       }).join('');
+      // portraits: each turret girl in the player's colour, holding her starting gun
+      const col = PLAYER_COLORS[cfgs.indexOf(c) % PLAYER_COLORS.length];
+      $('veh-grid').querySelectorAll('canvas.girl').forEach((cv) => {
+        const g = cv.getContext('2d');
+        g.imageSmoothingEnabled = false;
+        g.scale(2.5, 2.5);
+        const v = VEHICLES.find((x) => x.id === cv.dataset.g);
+        const o = { id: v.id, x: 32, y: 56, facing: 1, color: col, state: 'ok', t: 0, walking: false, flash: 0 };
+        drawGirl(g, o);
+        const a = GIRL_ART[v.id] || GIRL_ART.gwt;
+        drawGun(g, v.weapon, { x: o.x + a.pivot[0], y: o.y + a.pivot[1] }, { x: Math.cos(rad(30)), y: -Math.sin(rad(30)) }, 1, 0, shade(col, -0.5), 0);
+        drawGirlMount(g, o);
+      });
       $('veh-grid').querySelectorAll('.veh').forEach((el) => {
         el.onclick = () => { c.vehicle = el.dataset.v; this.game.sfx.confirm(); next(); };
       });
@@ -259,7 +272,7 @@ const UI = {
       $('shop-title').innerHTML = `<span class="dot" style="background:${tank.color}"></span>${esc(tank.name)} | ${esc(tank.vehicle.name)}`;
       $('shop-cash').textContent = 'Money : ' + money(tank.money);
       const full = tank.weapons.length >= 4;
-      $('shop-grid').innerHTML = WEAPONS.map((w) => {
+      $('shop-grid').innerHTML = WEAPONS.slice().sort((a, b) => a.cost - b.cost).map((w) => {
         const r = RARITY[w.rarity];
         const owned = tank.weapons.includes(w.id);
         const can = !owned && !full && tank.money >= w.cost;

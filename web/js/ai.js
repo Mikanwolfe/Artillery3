@@ -22,7 +22,7 @@ const RANGE_ERR_SCALE = 650;
 // the solver's miss distance, so it will take a somewhat worse shot to hit back.
 const RETALIATE = { easy: 180, normal: 260, hard: 320 };
 const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
-const DRONE_DISLIKE = 90; // score penalty for going after a drone instead of a player
+const MOB_DISLIKE = 90; // score penalty for going after a mob instead of a player (less for big bounties / with flak)
 
 // aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge.
 // arc: how much the solver values the altitude / kinetic damage bonuses, in miss-distance units per
@@ -96,7 +96,7 @@ class CpuController {
     const g = this.game;
     const t = this.tank;
     // drones are fair game too, but a CPU would rather hit a rival
-    const enemies = g.tanks.filter((x) => x.alive && x !== t).concat(g.drones.filter((d) => d.alive));
+    const enemies = g.tanks.filter((x) => x.alive && x !== t).concat(g.mobs.filter((d) => d.alive));
     const grudge = t.lastAttacker && t.lastAttacker.alive && t.lastAttacker !== t ? t.lastAttacker : null;
     // weapon is locked once the clip has started; otherwise pick by difficulty
     let options = t.firedThisTurn ? [t.weapon] : t.weapons.map((id) => WEAPON_BY_ID[id]);
@@ -109,7 +109,7 @@ class CpuController {
         const s = solveShot(g, t, w, e);
         let score = s.score - (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1 - (e.bounty || 0) * BOUNTY_PULL;
         if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
-        if (e.isDrone) score += DRONE_DISLIKE;
+        if (e.isMob) score += MOB_DISLIKE - Math.min(150, e.bounty * 0.03) - (w.kind === 'flak' ? 120 : 0);
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
       }
       if (best && best.err < 40) break; // good enough with the strongest usable weapon
