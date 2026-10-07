@@ -798,18 +798,32 @@ class Game {
     return true;
   }
 
+  // CPU shopping between rounds: keep a couple of repair kits, buy the strongest gun it can afford
+  // (Easy sometimes buys at random), trade its weakest gun in when slots are full and something
+  // clearly better is affordable, then put what's left into Health++ / Armour++.
   autoBuy(t) {
-    if (t.kits < 2 && t.money >= REPAIR_COST && rng.chance(0.6)) {
-      t.money -= REPAIR_COST;
-      t.kits++;
-    }
-    for (let n = 0; n < 4; n++) {
-      const afford = WEAPONS.filter((w) => w.cost <= t.money && !t.weapons.includes(w.id)).sort((a, b) => b.cost - a.cost);
-      if (afford.length && t.weapons.length < MAX_WEAPONS && rng.chance(0.75)) {
+    const kitsWanted = t.type === 'hard' ? 3 : 2;
+    while (t.kits < kitsWanted && t.money >= REPAIR_COST * 2) { t.money -= REPAIR_COST; t.kits++; }
+    for (let n = 0; n < 6; n++) {
+      const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id));
+      if (t.weapons.length < MAX_WEAPONS) {
+        let afford = shop.filter((w) => w.cost <= t.money).sort((a, b) => weaponValue(b) - weaponValue(a));
+        if (!afford.length) break;
+        if (t.type === 'easy' && rng.chance(0.5)) afford = [rng.pick(afford)];
         t.money -= afford[0].cost;
         t.weapons.push(afford[0].id);
         continue;
       }
+      // slots full: swap the weakest for something at least 25% stronger (counting the sale)
+      const weakest = t.weapons.map((id) => WEAPON_BY_ID[id]).sort((a, b) => weaponValue(a) - weaponValue(b))[0];
+      const budget = t.money + this.sellValue(weakest);
+      const better = shop.filter((w) => w.cost <= budget && weaponValue(w) > weaponValue(weakest) * 1.25).sort((a, b) => weaponValue(b) - weaponValue(a))[0];
+      if (!better || (t.type === 'easy' && rng.chance(0.5))) break;
+      t.money = budget - better.cost;
+      t.weapons = t.weapons.filter((id) => id !== weakest.id).concat(better.id);
+      t.weaponIdx = 0;
+    }
+    for (let n = 0; n < 6; n++) {
       const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour';
       const cost = this.upgradeCost(t.upgrades[stat]);
       if (t.money < cost) break;

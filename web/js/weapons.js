@@ -86,6 +86,12 @@ const WEAPONS = [
     short: 'A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.', long: 'Holding two rounds, it was salvaged from KTNS Hatsuyuki.' }),
 ];
 
+// A3 shop badge: rarity initial + projectile-type initial, e.g. "Cs" (Common shell), "Gl" (Godly laser)
+const KIND_LETTER = { shell: 's', gun: 'g', laser: 'l', acid: 'a' };
+function badgeText(w) {
+  return RARITY[w.rarity].word[0] + KIND_LETTER[w.kind];
+}
+
 const WEAPON_BY_ID = Object.fromEntries([...WEAPONS, ...VEHICLES.map((v) => v.weapon)].map((w) => [w.id, w]));
 const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
 
