@@ -26,7 +26,7 @@ function plateText(ctx, txt, x, y, color, align = 'center') {
   ctx.fillStyle = color;
   ctx.fillText(txt, align === 'right' ? x - 4 : align === 'left' ? x + 4 : x, y);
 }
-const WORLD_W = 2400; // Constants.TerrainWidth
+const WORLD_W = 3600; // A3 Constants.TerrainWidth was 2400; widened for room to move and lob
 const WORLD_BOTTOM = 1800; // Constants.TerrainDepth
 const GRAV = 0.6; // Constants.Gravity, px / frame^2
 const DT = 1 / 60;

@@ -119,7 +119,7 @@ Object.assign(Game.prototype, {
     this.terrain.forts = [];
     const st = this.stage();
     if (!st) return;
-    const n = st >= 5 ? 2 : 1;
+    const n = (st >= 5 ? 2 : 1) + (WORLD_W > 3000 ? 1 : 0);
     for (let i = 0; i < n; i++) {
       const avoid = this.tanks.map((t) => t.x).concat(this.terrain.forts.map((f) => f.x0 + f.cols * FORT_CELL / 2));
       let x = 0;

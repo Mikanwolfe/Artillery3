@@ -1487,7 +1487,7 @@ class Game {
 
   // A3 UI_Minimap: a track at the top right with a dot per tank, on a dark plate
   drawMinimap(ctx) {
-    const x0 = 1250, y0 = 80, w = 300, h = 20;
+    const x0 = 1190, y0 = 80, w = 360, h = 20;
     const mx = (x) => x0 + (w * clamp(x, 0, WORLD_W)) / WORLD_W;
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(x0 - 10, y0 - 12, w + 20, h + 24);
