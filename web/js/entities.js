@@ -1,9 +1,10 @@
 'use strict';
-// Game objects. Everything is drawn as plain axis-aligned boxes (no rotation): a tank is one
-// square with a barrel of five small squares, the MAIA satellite is three nested squares,
+// Game objects. Everything is drawn as plain axis-aligned boxes (no rotation): a tank is a
+// stack of boxes (tracks, road wheels, hull, turret) with a barrel of five small squares, the MAIA satellite is three nested squares,
 // a laser is a line of squares. Tanks hold per-player state (money, wins, weapons, upgrades).
 
-const TANK_SIZE = 16;
+const TANK_W = 34; // hitbox / footprint (world units)
+const TANK_H = 20;
 const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
 const TANK_SPEED = 1.5; // A3 Constants.PlayerSpeed
 const PLAYER_COLORS = ['#3d6fa8', '#b8433a', '#3e8a5a', '#7a4d9a'];
@@ -69,8 +70,8 @@ class Tank {
     this.speech = { text, age: -delay, dur: secs || Math.max(3.2, 1.6 + text.length * 0.055) };
   }
 
-  center() { return { x: this.x, y: this.y - TANK_SIZE / 2 }; }
-  pivot() { return { x: this.x, y: this.y - TANK_SIZE }; }
+  center() { return { x: this.x, y: this.y - TANK_H / 2 }; }
+  pivot() { return { x: this.x + this.facing * 2, y: this.y - 15 }; }
 
   aimVec(elev = this.elev, facing = this.facing) {
     const e = rad(elev);
@@ -80,7 +81,7 @@ class Tank {
   muzzle(elev = this.elev, facing = this.facing) {
     const p = this.pivot();
     const v = this.aimVec(elev, facing);
-    return { x: p.x + v.x * 24, y: p.y + v.y * 24 };
+    return { x: p.x + v.x * 26, y: p.y + v.y * 26 };
   }
 
   update(dt) {
@@ -92,28 +93,64 @@ class Tank {
     }
   }
 
-  // world space
+  // world space. Box helper takes facing-right local coords (lx = left edge, ty = top edge
+  // relative to the ground point) and mirrors them when the tank faces left.
   draw(ctx, active) {
-    if (!this.alive) return;
+    const f = this.facing;
+    const x = Math.round(this.x);
+    const y = Math.round(this.y);
+    const box = (lx, ty, w, h) => ctx.fillRect(f > 0 ? x + lx : x - lx - w, y + ty, w, h);
+    if (!this.alive) {
+      // burnt-out wreck: same boxes, charred, turret knocked back and barrel drooping
+      ctx.fillStyle = '#2a2a2e';
+      box(-15, -6, 30, 6);
+      ctx.fillStyle = '#45454c';
+      box(-16, -11, 27, 5);
+      ctx.fillStyle = '#38383e';
+      box(-13, -15, 11, 4);
+      ctx.fillStyle = '#2a2a2e';
+      for (let i = 0; i < 3; i++) box(-1 + i * 4, -12 + i * 2, 4, 3);
+      return;
+    }
     const v = this.aimVec();
     const p = this.pivot();
-    ctx.fillStyle = shade(this.color, -0.45);
+    // barrel first so the turret overlaps its root
+    ctx.fillStyle = shade(this.color, -0.5);
     for (let i = 0; i < 5; i++) {
-      const d = 6 + i * 4.5 - this.recoil * 6;
-      sq(ctx, p.x + v.x * d, p.y + v.y * d, 5);
+      const d = 7 + i * 4 - this.recoil * 6;
+      sq(ctx, p.x + v.x * d, p.y + v.y * d, i === 4 ? 5 : 4);
     }
+    // tracks with stepped ends and road wheels
+    ctx.fillStyle = '#2b2d33';
+    box(-15, -7, 30, 7);
+    box(-17, -5, 34, 3);
+    ctx.fillStyle = '#6b6f78';
+    for (const lx of [-13, -7, -1, 5, 11]) box(lx, -5, 3, 3);
+    // hull: long body, stepped glacis at the front, lighter top edge
     ctx.fillStyle = this.color;
-    ctx.fillRect(Math.round(this.x - TANK_SIZE / 2), Math.round(this.y - TANK_SIZE), TANK_SIZE, TANK_SIZE);
+    box(-16, -12, 28, 5);
+    box(12, -11, 3, 4);
+    box(15, -9, 2, 2);
+    ctx.fillStyle = shade(this.color, 0.3);
+    box(-16, -12, 28, 1);
+    // turret with a stepped mantlet, hatch and front light
+    ctx.fillStyle = shade(this.color, -0.25);
+    box(-8, -18, 12, 6);
+    box(4, -17, 3, 5);
+    ctx.fillStyle = shade(this.color, -0.45);
+    box(-5, -20, 4, 2);
+    ctx.fillStyle = '#fff3c0';
+    box(13, -10, 2, 2);
     if (this.flash > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.85})`;
-      ctx.fillRect(Math.round(this.x - TANK_SIZE / 2), Math.round(this.y - TANK_SIZE), TANK_SIZE, TANK_SIZE);
+      box(-17, -20, 34, 20);
     }
     if (active) {
       // A3 sight: green marks at the elevation limits
       ctx.fillStyle = '#2e8b57';
       for (const e of [this.weapon.elevMin, this.weapon.elevMax]) {
         const u = this.aimVec(e);
-        for (let d = 32; d <= 48; d += 8) sq(ctx, p.x + u.x * d, p.y + u.y * d, 3);
+        for (let d = 34; d <= 50; d += 8) sq(ctx, p.x + u.x * d, p.y + u.y * d, 3);
       }
     }
   }
@@ -223,14 +260,20 @@ class Projectile {
   }
 
   draw(ctx) {
-    const col = this.w.kind === 'laser' ? [0, 200, 220] : this.w.kind === 'acid' ? [80, 170, 60] : [50, 50, 64];
+    const col = this.w.kind === 'laser' ? [0, 200, 220] : this.w.kind === 'acid' ? [70, 160, 50] : [50, 50, 64];
     for (let i = 0; i < this.trail.length; i += 2) {
       const a = (i + 2) / this.trail.length;
-      ctx.fillStyle = rgb(col, a * 0.5);
-      sq(ctx, this.trail[i], this.trail[i + 1], 2 + a * 4);
+      ctx.fillStyle = rgb([200, 200, 214], a * 0.6);
+      sq(ctx, this.trail[i], this.trail[i + 1], 2 + a * 5);
     }
+    // a shell is a body square with a lighter nose square pointing the way it flies
+    const sp = Math.hypot(this.vx, this.vy) || 1;
+    const nx = this.vx / sp;
+    const ny = this.vy / sp;
     ctx.fillStyle = rgb(col);
-    sq(ctx, this.x, this.y, 8);
+    sq(ctx, this.x - nx * 3, this.y - ny * 3, 8);
+    ctx.fillStyle = rgb(mixRgb(col, [255, 255, 255], 0.45));
+    sq(ctx, this.x + nx * 4, this.y + ny * 4, 5);
   }
 }
 
@@ -257,7 +300,7 @@ class AcidDrop {
       this.y += this.vy;
       if (this.x < -50 || this.x > WORLD_W + 50 || this.y > WORLD_BOTTOM) return false;
       for (const t of g.tanks) {
-        if (t.alive && Math.abs(this.x - t.x) < TANK_SIZE / 2 + 3 && this.y > t.y - TANK_SIZE - 3 && this.y < t.y + 3) {
+        if (t.alive && Math.abs(this.x - t.x) < TANK_W / 2 + 3 && this.y > t.y - TANK_H - 3 && this.y < t.y + 3) {
           g.damage(t, this.dmg * 6, this.owner, true);
           return false;
         }
@@ -271,7 +314,7 @@ class AcidDrop {
     this.y = g.terrain.hAt(this.x);
     if (this.tick % 6 === 0) g.terrain.erode(this.x, 0.4);
     for (const t of g.tanks) {
-      if (t.alive && Math.abs(this.x - t.x) < TANK_SIZE && Math.abs(this.y - t.y) < 10) g.damage(t, this.dmg * 0.15, this.owner, true);
+      if (t.alive && Math.abs(this.x - t.x) < TANK_W / 2 + 4 && Math.abs(this.y - t.y) < 10) g.damage(t, this.dmg * 0.15, this.owner, true);
     }
     return --this.life > 0;
   }
@@ -302,7 +345,8 @@ class Laser {
 }
 
 // MAIA-class Low Orbit Ion Cannon. Sits above the map, gains damage every turn, and fires at
-// wherever a satellite-enabled weapon's shell lands.
+// wherever a satellite-enabled weapon's shell lands. Drawn as boxes: solar wings, a body in the
+// original's plum/navy, an antenna dish and an emitter barrel that swings toward the target.
 class Satellite {
   constructor() {
     this.name = 'Maia';
@@ -313,24 +357,82 @@ class Satellite {
     this.dmgR = 150;
     this.angle = Math.PI / 2;
     this.angleDest = Math.PI / 2;
+    this.charge = 0; // 0..1 while powering up for a strike
+    this.t = 0;
   }
 
   get level() { return Math.floor(this.damage / 60); }
   newTurn() { this.damage += 0.5; }
   lookAt(pt) { this.angleDest = Math.atan2(pt.y - this.y, pt.x - this.x); }
-  update() { this.angle += (this.angleDest - this.angle) / 20; }
+  update() {
+    this.t++;
+    this.angle += (this.angleDest - this.angle) / 20;
+  }
+
+  // emitter tip, where the beam leaves
+  lens() {
+    return { x: this.x + Math.cos(this.angle) * 100, y: this.y + Math.sin(this.angle) * 100 };
+  }
 
   draw(ctx) {
+    const x = Math.round(this.x);
+    const y = Math.round(this.y + Math.sin(this.t / 50) * 4);
     const main = 'rgb(120,32,78)';
+    const accent = 'rgb(23,23,47)';
+    // solar wings: navy frame, blue cells, a strut to the body
+    for (const s of [-1, 1]) {
+      const wx = s < 0 ? x - 168 : x + 58;
+      ctx.fillStyle = '#8a8fa0';
+      ctx.fillRect(s < 0 ? x - 60 : x + 35, y - 3, 25, 6);
+      ctx.fillStyle = accent;
+      ctx.fillRect(wx, y - 26, 110, 52);
+      ctx.fillStyle = 'rgb(62,78,150)';
+      for (let i = 0; i < 5; i++) for (let j = 0; j < 2; j++) ctx.fillRect(wx + 4 + i * 21, y - 22 + j * 23, 18, 20);
+      ctx.fillStyle = 'rgba(190,205,255,0.35)';
+      for (let i = 0; i < 5; i++) ctx.fillRect(wx + 4 + i * 21, y - 22, 6, 4);
+      // blinking navigation light at the wingtip
+      if ((this.t >> 5) % 2 === (s < 0 ? 0 : 1)) {
+        ctx.fillStyle = s < 0 ? '#ff4040' : '#40ff80';
+        sq(ctx, s < 0 ? wx - 4 : wx + 114, y, 6);
+      }
+    }
+    // antenna mast and stepped dish
+    ctx.fillStyle = '#8a8fa0';
+    ctx.fillRect(x - 2, y - 66, 4, 30);
+    ctx.fillStyle = '#c8ccd8';
+    ctx.fillRect(x - 14, y - 72, 28, 6);
+    ctx.fillRect(x - 9, y - 78, 18, 6);
     ctx.fillStyle = main;
-    sq(ctx, this.x, this.y, 100);
-    ctx.fillStyle = 'rgb(23,23,47)';
-    sq(ctx, this.x, this.y, 90);
+    sq(ctx, x, y - 82, 5);
+    // body (the original's nested circles, as nested boxes)
     ctx.fillStyle = main;
-    sq(ctx, this.x, this.y, 80);
-    for (let i = 0; i < 5; i++) {
-      const d = 50 + i * 12;
-      sq(ctx, this.x + Math.cos(this.angle) * d, this.y + Math.sin(this.angle) * d, 12);
+    sq(ctx, x, y, 76);
+    ctx.fillStyle = accent;
+    sq(ctx, x, y, 62);
+    ctx.fillStyle = main;
+    sq(ctx, x, y, 44);
+    const pulse = 0.5 + 0.5 * Math.sin(this.t / 12);
+    ctx.fillStyle = `rgba(255,190,230,${0.4 + 0.4 * pulse + this.charge * 0.2})`;
+    sq(ctx, x, y, 14 + this.charge * 14);
+    // emitter barrel
+    const ca = Math.cos(this.angle);
+    const sa = Math.sin(this.angle);
+    ctx.fillStyle = accent;
+    for (let i = 0; i < 6; i++) sq(ctx, x + ca * (40 + i * 11), y + sa * (40 + i * 11), 16 - i);
+    ctx.fillStyle = main;
+    sq(ctx, x + ca * 100, y + sa * 100, 12);
+    // charging: sparks spiral into the lens and the tip whitens
+    if (this.charge > 0) {
+      const lx = x + ca * 100;
+      const ly = y + sa * 100;
+      for (let i = 0; i < 10; i++) {
+        const a = i * 0.63 + this.t * 0.15;
+        const r = 70 * (1 - ((this.charge * 3 + i / 10) % 1));
+        ctx.fillStyle = `rgba(255,240,250,${0.4 + this.charge * 0.6})`;
+        sq(ctx, lx + Math.cos(a) * r, ly + Math.sin(a) * r, 5);
+      }
+      ctx.fillStyle = `rgba(255,255,255,${this.charge})`;
+      sq(ctx, lx, ly, 6 + this.charge * 16);
     }
   }
 }

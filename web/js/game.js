@@ -252,7 +252,8 @@ class Game {
     this.satellite.update();
     for (const t of this.tanks) {
       t.update(DT);
-      if (t.alive && t.hp < t.maxHp * 0.3 && Math.random() < 0.04) this.particles.puff(t.x, t.y - TANK_SIZE, [90, 90, 100]);
+      if (t.alive && t.hp < t.maxHp * 0.3 && Math.random() < 0.04) this.particles.puff(t.x - t.facing * 6, t.y - TANK_H, [90, 90, 100]);
+      if (!t.alive && Math.random() < 0.03) this.particles.puff(t.x, t.y - 14, [70, 70, 78]);
     }
     this.stepTanks();
     if (this.phase === 'aim') this.updateAim();
@@ -286,7 +287,7 @@ class Game {
     if (nx < 20 || nx > WORLD_W - 20) return;
     if ((this.terrain.hAt(t.x) - this.terrain.hAt(nx)) / TANK_SPEED > 1.6) return;
     for (const o of this.tanks) {
-      if (o !== t && o.alive && Math.abs(o.x - nx) < TANK_SIZE + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
+      if (o !== t && o.alive && Math.abs(o.x - nx) < TANK_W + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
     }
     t.x = nx;
     t.fuel--;
@@ -440,9 +441,11 @@ class Game {
     const s = this.satSeq;
     const sat = this.satellite;
     s.t++;
+    sat.charge = s.t < 75 ? clamp((s.t - 25) / 50, 0, 1) : 0;
     if (s.t === 75) {
       const tg = s.target;
-      this.lasers.push(new Laser(sat.x + Math.cos(sat.angle) * 100, sat.y + Math.sin(sat.angle) * 100, tg.x, tg.y, '#fffff0', 22, 90));
+      const lens = sat.lens();
+      this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, '#fffff0', 22, 90));
       this.sfx.satFire();
       this.explode(tg.x, tg.y, { dmg: sat.damage, dmgR: sat.dmgR, explR: sat.explR }, s.owner, 'laser');
       this.cam.follow({ x: tg.x, y: tg.y });
@@ -455,7 +458,7 @@ class Game {
     const w = p.w;
     if (w.kind === 'laser') {
       // A3 LaserTargetProjectile: the shell marks a point, the gun's laser hits it
-      const m = p.owner.alive ? p.owner.muzzle() : { x: p.owner.x, y: p.owner.y - TANK_SIZE };
+      const m = p.owner.alive ? p.owner.muzzle() : { x: p.owner.x, y: p.owner.y - TANK_H };
       const c = RARITY[w.rarity].color;
       this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
       this.sfx.laser();
@@ -771,10 +774,10 @@ class Game {
     // satellite caption (A3 Satellite.Draw)
     if (sat.y - cam.y > -80) {
       ctx.font = '18px "Maven Pro", Verdana, sans-serif';
-      ctx.textAlign = 'left';
+      ctx.textAlign = 'center';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x + 70), Math.round(sat.y - cam.y + 25));
-      ctx.fillText(`Level: ${sat.level}`, Math.round(sat.x - cam.x + 70), Math.round(sat.y - cam.y + 47));
+      ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x), Math.round(sat.y - cam.y - 110));
+      ctx.fillText(`Level: ${sat.level}`, Math.round(sat.x - cam.x), Math.round(sat.y - cam.y - 90));
     }
     const live = this.phase === 'aim' ? this.active : null;
     for (const t of this.tanks) t.drawLabel(ctx, t.x - cam.x, t.y - cam.y, t === live);
@@ -821,21 +824,23 @@ class Game {
     if (shell) box(mx(shell.x), 10, 'orange');
   }
 
-  // A3 UI_WindMarker (a rotated kite) as a trail of squares pointing downwind; longer = stronger
+  // A3 UI_WindMarker, reinterpreted as a windsock: a mast with a striped sock of squares that
+  // points downwind, gets longer with strength and droops when the wind is light
   drawWindMarker(ctx) {
-    const cx = 800, cy = 60;
-    const n = 1 + Math.round((this.windMag / 0.5) * 5);
-    const step = 14;
+    const mx = 790, top = 38;
+    ctx.fillStyle = '#4a4a5c';
+    ctx.fillRect(mx - 2, top, 4, 54);
+    ctx.fillRect(mx - 8, top + 52, 16, 4);
+    const strength = this.windMag / 0.5;
+    const n = 2 + Math.round(strength * 4);
     const dx = Math.cos(this.windMarker);
     const dy = Math.sin(this.windMarker);
-    const ox = cx - (dx * step * (n - 1)) / 2;
-    const oy = cy - (dy * step * (n - 1)) / 2;
-    ctx.fillStyle = 'rgb(255,120,40)';
-    sq(ctx, ox - dx * step, oy - dy * step, 6);
+    const sway = Math.sin(this.time * 6) * (1 + strength * 2);
     for (let i = 0; i < n; i++) {
-      const f = n === 1 ? 1 : i / (n - 1);
-      ctx.fillStyle = rgb(mixRgb([170, 40, 40], [10, 10, 16], f));
-      sq(ctx, ox + dx * step * i, oy + dy * step * i, 10 + f * 10);
+      const d = 12 + i * 13;
+      const droop = (1 - strength) * i * i * 1.6;
+      ctx.fillStyle = i % 2 ? '#f4f4f8' : '#d8402c';
+      sq(ctx, mx + dx * d, top + 6 + dy * d + droop + (i ? sway * (i / n) : 0), 16 - i * 1.4);
     }
   }
 

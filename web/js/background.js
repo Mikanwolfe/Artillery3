@@ -18,10 +18,20 @@ class Background {
     const avg = 0.6 * WORLD_BOTTOM;
     // A3 Environment generates each ridge like the terrain but rougher; the grey-blue one sits
     // highest and hides the dark ones except where their roughness pokes through
-    this.layers = PRESET.layers.map((l) => ({ ...l, height: generateHeights(avg - l.lift, l.rough) }));
+    this.layers = PRESET.layers.map((l) => ({ ...l, height: generateHeights(avg - l.lift, l.rough), trees: this.plantTrees() }));
     this.flakes = [];
     for (let i = 0; i < 70; i++) this.flakes.push(this.newFlake(true));
     this.t = 0;
+  }
+
+  // stands of box pine trees along a ridge (the original's dark ridges read as treelines)
+  plantTrees() {
+    const trees = [];
+    for (let x = rng.range(0, 200); x < WORLD_W; x += rng.range(40, 260)) {
+      const stand = rng.int(1, 4);
+      for (let k = 0; k < stand; k++) trees.push({ x: Math.round(x + k * rng.range(10, 18)), h: rng.int(3, 5) });
+    }
+    return trees;
   }
 
   newFlake(anywhere) {
@@ -57,7 +67,18 @@ class Background {
   drawRidges(ctx, cam) {
     for (const l of this.layers) {
       ctx.fillStyle = l.color;
-      fillSteps(ctx, l.height, cam.x, cam.x + VIEW_W, 8, cam.x * (1 - l.parallax), 0);
+      const ox = cam.x * (1 - l.parallax);
+      fillSteps(ctx, l.height, cam.x, cam.x + VIEW_W, 8, ox, 0);
+      for (const t of l.trees) {
+        const tx = t.x + ox;
+        if (tx < cam.x - 40 || tx > cam.x + VIEW_W + 40) continue;
+        const base = Math.round(l.height[Math.min(WORLD_W - 1, t.x)]) + 2;
+        ctx.fillRect(tx - 2, base - 6, 4, 6);
+        for (let i = 0; i < t.h; i++) {
+          const w = (t.h - i) * 5 + 2;
+          ctx.fillRect(tx - w / 2, base - 6 - (i + 1) * 7, w, 7);
+        }
+      }
     }
   }
 
