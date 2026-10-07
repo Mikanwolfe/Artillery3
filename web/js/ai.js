@@ -22,6 +22,7 @@ const RANGE_ERR_SCALE = 650;
 // the solver's miss distance, so it will take a somewhat worse shot to hit back.
 const RETALIATE = { easy: 180, normal: 260, hard: 320 };
 const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
+const DRONE_DISLIKE = 90; // score penalty for going after a drone instead of a player
 
 // aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge.
 // arc: how much the solver values the altitude / kinetic damage bonuses, in miss-distance units per
@@ -43,7 +44,7 @@ function solveShot(game, tank, w, target) {
   const evalShot = (elev, v) => {
     const m = tank.muzzle(elev, facing);
     const u = tank.aimVec(elev, facing); // elevation is relative to the hull
-    const r = simulateShot(game.terrain, game.wind, game.tanks, tank, m.x, m.y, u.x * v, u.y * v);
+    const r = simulateShot(game.terrain, game.wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v);
     let err;
     if (r.hit === 'tank' && r.tank === target) err = 0;
     else err = Math.max(0, dist(r.x, r.y, tc.x, tc.y) - w.dmgR * 0.25);
@@ -94,7 +95,8 @@ class CpuController {
   makePlan() {
     const g = this.game;
     const t = this.tank;
-    const enemies = g.tanks.filter((x) => x.alive && x !== t);
+    // drones are fair game too, but a CPU would rather hit a rival
+    const enemies = g.tanks.filter((x) => x.alive && x !== t).concat(g.drones.filter((d) => d.alive));
     const grudge = t.lastAttacker && t.lastAttacker.alive && t.lastAttacker !== t ? t.lastAttacker : null;
     // weapon is locked once the clip has started; otherwise pick by difficulty
     let options = t.firedThisTurn ? [t.weapon] : t.weapons.map((id) => WEAPON_BY_ID[id]);
@@ -107,6 +109,7 @@ class CpuController {
         const s = solveShot(g, t, w, e);
         let score = s.score - (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1 - (e.bounty || 0) * BOUNTY_PULL;
         if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
+        if (e.isDrone) score += DRONE_DISLIKE;
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
       }
       if (best && best.err < 40) break; // good enough with the strongest usable weapon
@@ -149,6 +152,15 @@ class CpuController {
             this.state = 'move';
             return;
           }
+        }
+        // in the whiteout fog: head for the higher side first
+        if (!this.moved && this.game.fogY !== null && t.y > this.game.fogY - 80 && t.fuel > 30) {
+          const tr = this.game.terrain;
+          this.moved = true;
+          this.moveDir = tr.hAt(t.x - 160) < tr.hAt(t.x + 160) ? -1 : 1;
+          this.moveFrames = 160;
+          this.state = 'move';
+          return;
         }
         // Deflector when hurt (it doesn't cost the turn)
         if (t.abilityReady('shield') && !t.shield && t.hp < t.maxHp * 0.6 && rng.chance(t.type === 'easy' ? 0.3 : 0.7)) this.game.useAbility(t, 'shield');

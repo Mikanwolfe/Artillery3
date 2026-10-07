@@ -46,7 +46,15 @@
         <button id="add-player">+ player</button>
         <button id="rem-player">− player</button>
         <label class="inline">rounds
-          <select id="rounds"><option>3</option><option selected>5</option><option>7</option></select>
+          <select id="rounds"><option>3</option><option selected>5</option><option>7</option><option>10</option><option value="0">∞</option></select>
+        </label>
+      </div>
+      <div class="row-btns">
+        <label class="inline">weapons
+          <select id="balance"><option value="rebalanced" selected>rebalanced</option><option value="classic">classic</option></select>
+        </label>
+        <label class="inline">events
+          <select id="events"><option value="on" selected>on</option><option value="off">off</option></select>
         </label>
       </div>
       <button id="start" class="primary">start</button>
@@ -90,6 +98,7 @@
       <table id="re-table"></table>
       <div id="re-quips"></div>
       <button id="re-next" class="primary">continue</button>
+      <button id="re-end">end match</button>
     </div>
   </section>
 
@@ -123,7 +132,7 @@
   </section>
 
   <section id="pause" class="screen" hidden>
-    <div class="panel small"><h2>paused</h2><button id="resume" class="primary">resume</button></div>
+    <div class="panel small"><h2>paused</h2><button id="resume" class="primary">resume</button><br><button id="pause-end" class="end-btn">end match</button></div>
   </section>
 </div>
 
@@ -139,6 +148,7 @@
 <script src="js/taunts.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/game.js"></script>
+<script src="js/hazards.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

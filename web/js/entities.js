@@ -425,7 +425,8 @@ class Projectile {
 
   update() {
     const g = this.game;
-    const r = stepBallistic(this, g.terrain, g.wind, g.tanks, this.owner);
+    const r = stepBallistic(this, g.terrain, g.wind, g.targets(), this.owner);
+    g.frontCheck(this);
     if (this.y < this.peak) this.peak = this.y;
     if (this.age % 2 === 0) g.trace(this.x, this.y);
     // soot flecks shed in flight: they fall away behind the shell and fade
@@ -545,8 +546,10 @@ const SAT_TIERS = [null,
 ];
 const SAT_TURN_GAIN = 0.5; // A3 Constants.SatelliteDamageIncPerTurn
 
-// which tier is active for a given round: thirds of the match
+// which tier is active for a given round: thirds of the match (infinite mode, rounds = 0: level 2
+// from round 3, level 3 from round 6)
 function satelliteTier(round, rounds) {
+  if (!rounds) return round >= 6 ? 3 : round >= 3 ? 2 : 1;
   return clamp(1 + Math.floor(((round - 1) * 3) / Math.max(1, rounds)), 1, 3);
 }
 

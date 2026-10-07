@@ -45,6 +45,8 @@ const UI = {
     $('re-next').onclick = () => { $('roundend').hidden = true; game.afterRoundEnd(); };
     $('ge-again').onclick = () => { $('gameend').hidden = true; game.sfx.music('shop'); game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); this.syncLoad(); };
     $('resume').onclick = () => game.togglePause();
+    $('pause-end').onclick = () => game.endMatch();
+    $('re-end').onclick = () => { $('roundend').hidden = true; game.endMatch(); };
     $('btn-pause').onclick = () => game.togglePause();
     $('btn-mute').onclick = () => game.toggleMute();
     $('btn-music').onclick = () => game.toggleMusic();
@@ -107,7 +109,7 @@ const UI = {
     const queue = cfgs.filter((c) => c.type === 'human');
     const next = () => {
       const c = queue.shift();
-      if (!c) { $('vehicles').hidden = true; this.game.startMatch(cfgs, +$('rounds').value); return; }
+      if (!c) { $('vehicles').hidden = true; this.game.startMatch(cfgs, +$('rounds').value, { balance: $('balance').value, events: $('events').value === 'on' }); return; }
       $('menu').hidden = true;
       $('vehicles').hidden = false;
       $("veh-player").textContent = `${c.name}:`;
@@ -172,7 +174,7 @@ const UI = {
     const d = Game.readSave();
     const b = $('load');
     b.hidden = !d;
-    if (d) b.textContent = `load (round ${d.completed + 1}/${d.rounds}: ${d.tanks.map((t) => t.name).join(', ')})`;
+    if (d) b.textContent = `load (round ${d.completed + 1}${d.rounds ? '/' + d.rounds : ''}: ${d.tanks.map((t) => t.name).join(', ')})`;
   },
 
   // a system line in the chat log (no speaker)
@@ -198,7 +200,7 @@ const UI = {
 
   updateHud(g) {
     if ($('hud').hidden) return;
-    const r = `Round ${g.round}/${g.rounds}`;
+    const r = `Round ${g.round}${g.rounds ? '/' + g.rounds : ''}`;
     if (this.last.r !== r) { this.last.r = r; $('roundinfo').textContent = r; }
   },
 
@@ -236,6 +238,7 @@ const UI = {
        <td>${esc(t.vehicle.name)}</td><td>${Math.round(t.roundDealt)}</td><td>${t.wins}</td><td>${money(t.money)}</td></tr>`).join('');
     $('re-quips').innerHTML = '';
     $('re-next').textContent = last ? 'final results' : 'to the shop';
+    $('re-end').hidden = last;
     $('roundend').hidden = false;
   },
 
