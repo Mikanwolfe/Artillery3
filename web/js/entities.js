@@ -106,6 +106,7 @@ class Tank {
     this.wins = 0;
     this.upgrades = { hp: 0, armour: 0 };
     this.weapons = [this.vehicle.weapon.id];
+    this.kits = 0; // repair kits carried (consumable)
     this.weaponIdx = 0;
     this.stats = { dealt: 0, kills: 0 };
     this.lastCharge = 0;
@@ -297,6 +298,14 @@ class Tank {
         ctx.fillStyle = i < this.shotsLeft ? '#4682b4' : 'rgba(40,40,70,0.35)';
         ctx.fillRect(Math.round(sx - (w.clip * 10) / 2 + i * 10), Math.round(sy + 42), 7, 7);
       }
+      // repair kits carried: small green crosses (press R)
+      for (let i = 0; i < this.kits; i++) {
+        const kx = Math.round(sx + ww / 2 + 10 + i * 14);
+        const ky = Math.round(sy + 22);
+        ctx.fillStyle = '#3e8a5a';
+        ctx.fillRect(kx + 4, ky, 4, 12);
+        ctx.fillRect(kx, ky + 4, 12, 4);
+      }
     }
   }
 
@@ -444,19 +453,32 @@ class Laser {
   }
 }
 
-// MAIA-class Low Orbit Ion Cannon. Sits above the map, gains damage every turn, and fires at
-// wherever a satellite-enabled weapon's shell lands. Box-art but round: a stepped-disc body (the
-// original's nested plum/navy circles), two arms that curl around it to claws by the emitter, and a
-// fan of antenna spars flaring out on one side like a wing. Every part is placed in the satellite's
-// own frame, so the whole thing turns to face its target; the squares themselves never rotate.
+// MAIA-class Low Orbit Ion Cannon. Sits above the map and fires at wherever a satellite-enabled
+// weapon's shell lands. It is upgraded as the match goes on: three tiers spread across the rounds,
+// each hitting harder and wider (and, as in A3, creeping up a little every turn within a round).
+// Box-art but round: a stepped-disc body (the original's nested plum/navy circles), arms that curl
+// around it, and antenna spars flaring out on one side like a wing; each tier adds rings and wing.
+// Every part is placed in the satellite's own frame, so the whole thing turns to face its target;
+// the squares themselves never rotate.
+const SAT_TIERS = [null,
+  { dmg: 70, dmgR: 130, explR: 12 },
+  { dmg: 120, dmgR: 165, explR: 16 },
+  { dmg: 190, dmgR: 210, explR: 22 },
+];
+const SAT_TURN_GAIN = 0.5; // A3 Constants.SatelliteDamageIncPerTurn
+
+// which tier is active for a given round: thirds of the match
+function satelliteTier(round, rounds) {
+  return clamp(1 + Math.floor(((round - 1) * 3) / Math.max(1, rounds)), 1, 3);
+}
+
 class Satellite {
   constructor() {
     this.name = 'Maia';
     this.x = WORLD_W / 2;
     this.y = -300;
-    this.damage = 60;
-    this.explR = 15;
-    this.dmgR = 150;
+    this.tier = 1;
+    this.turns = 0;
     this.angle = Math.PI / 2;
     this.angleDest = Math.PI / 2;
     this.charge = 0; // 0..1 while powering up for a strike
@@ -464,8 +486,16 @@ class Satellite {
     this.bob = 0;
   }
 
-  get level() { return Math.floor(this.damage / 60); }
-  newTurn() { this.damage += 0.5; }
+  setTier(tier) {
+    this.tier = tier;
+    this.turns = 0;
+  }
+
+  get damage() { return SAT_TIERS[this.tier].dmg + SAT_TURN_GAIN * this.turns; }
+  get dmgR() { return SAT_TIERS[this.tier].dmgR; }
+  get explR() { return SAT_TIERS[this.tier].explR; }
+  get level() { return this.tier; }
+  newTurn() { this.turns++; }
   lookAt(pt) { this.angleDest = Math.atan2(pt.y - this.y, pt.x - this.x); }
   update() {
     this.t++;
@@ -485,9 +515,11 @@ class Satellite {
   lens() { return this.toWorld(104, 0); }
 
   draw(ctx) {
+    const tier = this.tier;
     const main = 'rgb(120,32,78)';
     const accent = 'rgb(23,23,47)';
     const light = 'rgb(176,74,128)';
+    const gold = 'rgb(232,190,90)';
     const metal = '#9aa0b4';
     const dot = (lx, ly, size, col) => {
       const p = this.toWorld(lx, ly);
@@ -495,37 +527,61 @@ class Satellite {
       sq(ctx, p.x, p.y, size);
     };
     const polar = (r, deg) => [Math.cos(rad(deg)) * r, Math.sin(rad(deg)) * r];
+    const c = this.toWorld(0, 0);
 
-    // wing: five antenna spars fanning out from a hub at the back, on one side only
-    const hub = [-34, 18];
-    [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]].forEach(([deg, len], k) => {
-      const [ux, uy] = polar(1, deg);
-      for (let d = 10; d <= len; d += 6) {
-        dot(hub[0] + ux * d, hub[1] + uy * d, 4, metal);
-        // panel "feathers" along the inner half of each spar
-        if (d > 24 && d < len * 0.75 && (d / 6) % 2 < 1) dot(hub[0] + ux * d - uy * 6, hub[1] + uy * d + ux * 6, 7, 'rgba(62,78,150,0.9)');
+    // orbiting rings (tier II: one; tier III: two, counter-rotating). They spin on their own,
+    // independent of where the satellite is pointing.
+    const ring = (r, n, size, speed, col) => {
+      ctx.fillStyle = col;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * TAU + this.t * speed;
+        sq(ctx, c.x + Math.cos(a) * r, c.y + Math.sin(a) * r * 0.45, i % 3 === 0 ? size + 3 : size);
       }
-      const tipOn = ((this.t >> 4) + k) % 5 === 0;
-      dot(hub[0] + ux * (len + 6), hub[1] + uy * (len + 6), 7, tipOn ? '#ff8fd0' : light);
-    });
-    dot(hub[0], hub[1], 12, accent);
+    };
+    if (tier >= 2) ring(150, 26, 6, 0.004, 'rgba(140,50,100,0.8)');
+    if (tier >= 3) ring(185, 34, 5, -0.006, 'rgba(214,160,50,0.9)');
 
-    // two arms curling around the body from the back to claws beside the emitter
+    // wing: antenna spars fanning out from a hub at the back, on one side only
+    const fan = (hub, spars, scale, feathers, tipCol) => {
+      spars.forEach(([deg, len], k) => {
+        const L = len * scale;
+        const [ux, uy] = polar(1, deg);
+        for (let d = 10; d <= L; d += 6) {
+          dot(hub[0] + ux * d, hub[1] + uy * d, 4, metal);
+          if (feathers && d > 24 && d < L * 0.75 && (d / 6) % 2 < 1) dot(hub[0] + ux * d - uy * 6, hub[1] + uy * d + ux * 6, 7, 'rgba(62,78,150,0.9)');
+        }
+        const tipOn = ((this.t >> 4) + k) % spars.length === 0;
+        dot(hub[0] + ux * (L + 6), hub[1] + uy * (L + 6), 7, tipOn ? '#ff8fd0' : tipCol);
+      });
+      dot(hub[0], hub[1], 12, accent);
+    };
+    if (tier >= 3) fan([-46, 30], [[122, 120], [137, 150], [152, 170], [167, 150], [182, 116]], 1, true, gold);
+    if (tier === 1) fan([-34, 18], [[131, 90], [146, 110], [161, 90]], 1, false, light);
+    else fan([-34, 18], [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]], 1, true, light);
+
+    // arms curling around the body (tier I: short stubs; II: full to claws; III: doubled, gold claws)
     for (const side of [-1, 1]) {
-      for (let deg = 160; deg >= 38; deg -= 7.5) {
+      const end = tier === 1 ? 95 : 38;
+      for (let deg = 160; deg >= end; deg -= 7.5) {
         const [ox, oy] = polar(64, deg * side);
         const [ix, iy] = polar(54, deg * side);
         dot(ix, iy, 5, accent);
         dot(ox, oy, 10, main);
+        if (tier >= 3 && deg < 150) {
+          const [qx, qy] = polar(78, deg * side);
+          dot(qx, qy, 6, light);
+        }
       }
-      const [cx, cy] = polar(66, 32 * side);
-      dot(cx, cy, 14, light);
-      dot(cx + 8, cy + side * -4, 6, light);
-      if ((this.t >> 5) % 2 === (side < 0 ? 0 : 1)) dot(cx, cy, 5, side < 0 ? '#ff4040' : '#40ff80');
+      if (tier >= 2) {
+        const [cx, cy] = polar(66, 32 * side);
+        const clawCol = tier >= 3 ? gold : light;
+        dot(cx, cy, 14, clawCol);
+        dot(cx + 8, cy + side * -4, 6, clawCol);
+        if ((this.t >> 5) % 2 === (side < 0 ? 0 : 1)) dot(cx, cy, 5, side < 0 ? '#ff4040' : '#40ff80');
+      }
     }
 
     // round body as stepped discs (unrotated rows of boxes)
-    const c = this.toWorld(0, 0);
     const disc = (r, col) => {
       ctx.fillStyle = col;
       for (let y = -r; y < r; y += 6) {
@@ -537,17 +593,19 @@ class Satellite {
     disc(44, main);
     disc(37, accent);
     disc(28, main);
+    if (tier >= 3) disc(18, light);
     const pulse = 0.5 + 0.5 * Math.sin(this.t / 12);
     ctx.fillStyle = `rgba(255,190,230,${0.45 + 0.35 * pulse + this.charge * 0.2})`;
     sq(ctx, c.x, c.y, 14 + this.charge * 16);
 
-    // emitter barrel and lens
-    for (let i = 0; i < 6; i++) dot(40 + i * 11, 0, 16 - i, accent);
-    dot(104, 0, 12, main);
+    // emitter barrel and lens (heavier at higher tiers)
+    for (let i = 0; i < 6; i++) dot(40 + i * 11, 0, 16 - i + (tier - 1) * 2, accent);
+    if (tier >= 2) { dot(60, -10, 5, light); dot(60, 10, 5, light); }
+    dot(104, 0, 12 + (tier - 1) * 3, tier >= 3 ? gold : main);
     // charging: sparks spiral into the lens and the tip whitens
     if (this.charge > 0) {
       const l = this.lens();
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 10 + tier * 4; i++) {
         const an = i * 0.63 + this.t * 0.15;
         const r = 70 * (1 - ((this.charge * 3 + i / 10) % 1));
         ctx.fillStyle = `rgba(255,240,250,${0.4 + this.charge * 0.6})`;

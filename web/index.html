@@ -19,7 +19,7 @@
       <button class="icon" id="btn-pause" title="Pause (Esc)">Ⅱ</button>
     </div>
     <div id="chat"></div>
-    <div id="hints">←→ move · ↑↓ aim (Shift: fine) · hold <b>Space</b> to charge, release to fire · <b>S</b> switch weapon · <b>Enter</b> end turn · drag to look around</div>
+    <div id="hints">←→ move · ↑↓ aim (Shift: fine) · hold <b>Space</b> to charge, release to fire · <b>S</b> switch weapon · <b>R</b> repair kit · <b>Enter</b> end turn · drag to look around</div>
     <div id="touch">
       <div class="pad">
         <button data-k="left">◀</button><button data-k="right">▶</button>
@@ -27,6 +27,7 @@
       </div>
       <div class="pad r">
         <button data-q="1">S</button><button data-end="1">END</button>
+        <button data-rep="1">REP</button><span></span>
         <button data-k="charge" class="fire">FIRE</button>
       </div>
     </div>
@@ -47,6 +48,7 @@
         </label>
       </div>
       <button id="start" class="primary">start</button>
+      <button id="load" hidden>load</button>
       <details class="how"><summary>how to play</summary>
         <p>Take turns to move, aim and fire. Hold <b>Space</b> to charge and release to fire; the tick on the charge bar marks your last shot.
         Armour soaks damage until it's gone, then health takes it. Autoloaders fire several times per turn; satellite-enabled guns
@@ -56,6 +58,7 @@
           <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
           <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
           <tr><td>S</td><td>switch weapon (before firing)</td></tr>
+          <tr><td>R</td><td>use a repair kit (takes your turn)</td></tr>
           <tr><td>Enter</td><td>end turn</td></tr>
           <tr><td>drag</td><td>look around</td></tr>
           <tr><td>M · Esc</td><td>mute · pause</td></tr>
@@ -93,6 +96,8 @@
           <div id="shop-owned"></div>
           <h3>Upgrades</h3>
           <div id="shop-upg"></div>
+          <h3>Consumables</h3>
+          <div id="shop-kits"></div>
           <button id="shop-done" class="primary">done</button>
         </div>
       </div>

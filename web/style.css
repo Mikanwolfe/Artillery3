@@ -55,6 +55,7 @@ h3 { margin: 0.6em 0 0.3em; font-weight: normal; font-size: 1.05em; color: var(-
 label.inline { display: flex; gap: 0.4em; align-items: center; color: var(--dim); }
 label.inline select { width: auto; }
 #start { margin: 0.4em 0 1em; }
+#load { margin: 0.4em 0 1em 0.4em; padding: 0.35em 1.2em; font-size: 1.15em; }
 details { text-align: left; border-top: 1px solid var(--line); padding-top: 0.5em; }
 summary { cursor: pointer; color: var(--accent); }
 .how p { font-size: 0.9em; line-height: 1.45; color: var(--dim); }

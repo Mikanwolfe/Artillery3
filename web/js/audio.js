@@ -94,6 +94,7 @@ class Sfx {
     this.tone('sine', 70, 25, 0.9, 0.7);
   }
   laser() { this.tone('sawtooth', 1800, 300, 0.25, 0.22); this.noise('highpass', 5000, 1500, 0.2, 0.25); }
+  repair() { [440, 554, 659, 880].forEach((f, i) => this.tone('triangle', f, f * 1.01, 0.12, 0.14, i * 0.06)); }
   acid() { this.noise('highpass', 5000, 2500, 0.35, 0.3); }
   thud() { this.tone('sine', 90, 35, 0.16, 0.4); }
   click() { this.tone('square', 900, 700, 0.04, 0.07); }

@@ -113,6 +113,12 @@ class CpuController {
       case 'think': {
         this.timer -= dt;
         if (this.timer > 0) return;
+        // badly hurt and carrying a kit: patch up instead of shooting
+        if (t.kits > 0 && !t.firedThisTurn && t.hp < t.maxHp * 0.45 && rng.chance(0.75)) {
+          this.state = 'done';
+          this.game.useRepair(t);
+          return;
+        }
         this.plan = this.makePlan();
         const needMove = !this.moved && (this.plan.err > 80 || (t.type === 'easy' && rng.chance(0.15)));
         if (needMove) {
