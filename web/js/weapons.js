@@ -143,12 +143,24 @@ function stepBallistic(p, terrain, wind, tanks, owner) {
   return null;
 }
 
-// Fire a hypothetical (dispersion-free) shot and return where it lands.
+// Fire a hypothetical (dispersion-free) shot and return where it lands, how far it fell from the
+// top of its arc and how fast it was going (for the altitude / kinetic damage bonuses).
 function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy) {
   const p = { x: mx, y: my, vx, vy, age: 0 };
+  let peak = my;
   for (let i = 0; i < 900; i++) {
     const r = stepBallistic(p, terrain, wind, tanks, owner);
-    if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null };
+    if (p.y < peak) peak = p.y;
+    if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null, drop: p.y - peak, speed: Math.hypot(p.vx, p.vy) };
   }
-  return { x: p.x, y: p.y, hit: 'out', tank: null };
+  return { x: p.x, y: p.y, hit: 'out', tank: null, drop: 0, speed: 0 };
+}
+
+// Damage multiplier a shell gets from its altitude and kinetic bonuses (Game.shotBonus), counting
+// kinetic damage only when it lands close enough to matter. Lasers get none.
+function bonusFactor(w, drop, speed, close) {
+  if (w.kind === 'laser') return 1;
+  const alt = Math.min(ALTITUDE_MAX, Math.max(0, drop) * ALTITUDE_RATE);
+  const kin = close ? Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED : 0;
+  return 1 + alt + kin;
 }

@@ -23,16 +23,22 @@ const RANGE_ERR_SCALE = 650;
 const RETALIATE = { easy: 180, normal: 260, hard: 320 };
 const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
 
-// aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge
+// aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge.
+// arc: how much the solver values the altitude / kinetic damage bonuses, in miss-distance units per
+// +100% damage. Higher = happier to trade a little accuracy for a high, plunging lob.
 const DIFFICULTY = {
-  easy: { se: 4, sc: 0.07 },
-  normal: { se: 2, sc: 0.035 },
-  hard: { se: 0.7, sc: 0.012 },
+  easy: { se: 4, sc: 0.07, arc: 25 },
+  normal: { se: 2, sc: 0.035, arc: 60 },
+  hard: { se: 0.7, sc: 0.012, arc: 90 },
 };
 
+// Search for the best shot at `target`. Each candidate is scored by its miss distance minus a bonus
+// for the damage multiplier it would earn (bonusFactor), so among shots that land, high arcs win.
 function solveShot(game, tank, w, target) {
   const facing = target.x >= tank.x ? 1 : -1;
   const tc = target.center();
+  const arc = (DIFFICULTY[tank.type] || DIFFICULTY.normal).arc;
+  const kinR = Math.max(18, w.dmgR * KINETIC_RADIUS);
   const maxV = Math.min(w.maxCharge, 140); // beyond this everything leaves the map anyway
   const evalShot = (elev, v) => {
     const m = tank.muzzle(elev, facing);
@@ -44,14 +50,17 @@ function solveShot(game, tank, w, target) {
     if (r.hit === 'out') err += 1000;
     const selfD = dist(r.x, r.y, tank.x, tank.y - 8);
     if (selfD < Math.max(w.dmgR, w.sat ? 150 : 0) + 20 && r.tank !== target) err += 400;
-    return err;
+    // only shots that would actually do damage earn the bonus
+    const d = dist(r.x, r.y, tc.x, tc.y);
+    const f = d < w.dmgR ? bonusFactor(w, r.drop, r.speed, d < kinR) : 1;
+    return { err, score: err - arc * (f - 1), f };
   };
-  let best = { err: Infinity, elev: (w.elevMin + w.elevMax) / 2, v: maxV / 2, facing };
+  let best = { err: Infinity, score: Infinity, f: 1, elev: (w.elevMin + w.elevMax) / 2, v: maxV / 2, facing };
   const vStep = maxV / 40;
   for (let e = w.elevMin; e <= w.elevMax; e += 3) {
     for (let v = maxV * 0.08; v <= maxV; v += vStep) {
-      const err = evalShot(e, v);
-      if (err < best.err) best = { err, elev: e, v, facing };
+      const r = evalShot(e, v);
+      if (r.score < best.score) best = { ...r, elev: e, v, facing };
     }
   }
   for (const [de, dv, n] of [[0.5, vStep / 4, 6], [0.1, vStep / 20, 6]]) {
@@ -63,8 +72,8 @@ function solveShot(game, tank, w, target) {
       for (let j = -n; j <= n; j++) {
         const v = v0 + j * dv;
         if (v <= 0 || v > maxV) continue;
-        const err = evalShot(e, v);
-        if (err < best.err) best = { err, elev: e, v, facing };
+        const r = evalShot(e, v);
+        if (r.score < best.score) best = { ...r, elev: e, v, facing };
       }
     }
   }
@@ -96,7 +105,7 @@ class CpuController {
     for (const w of options) {
       for (const e of enemies) {
         const s = solveShot(g, t, w, e);
-        let score = s.err - (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1 - (e.bounty || 0) * BOUNTY_PULL;
+        let score = s.score - (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1 - (e.bounty || 0) * BOUNTY_PULL;
         if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
       }
