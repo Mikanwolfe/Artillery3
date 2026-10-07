@@ -273,7 +273,7 @@ class Game {
   }
 
   resize(cssWidth) {
-    this.k = clamp(Math.round((cssWidth * (window.devicePixelRatio || 1)) / W), 1, 3);
+    this.k = clamp(Math.ceil((cssWidth * (window.devicePixelRatio || 1)) / W), 1, 3);
     this.canvas.width = W * this.k;
     this.canvas.height = H * this.k;
     this.ctx.imageSmoothingEnabled = false;

@@ -4,7 +4,11 @@
 // a laser is a line of squares. Tanks hold per-player state (money, wins, weapons, upgrades).
 
 const TANK_W = 34; // hitbox / footprint (world units)
-const TANK_H = 56; // a turret girl stands 64-72 tall (hair, hats, antenna included); the hitbox covers her body and rigging
+// girls.js draws the turret girls 64-72 tall; in the world they're scaled down to about the size
+// the original vehicles were (34 x 20), so the map keeps its sense of scale
+const GIRL_SCALE = 0.6;
+const TANK_H = 34; // hitbox height: her body and rigging at GIRL_SCALE
+const LABEL_LIFT = 38; // HUD labels sit this much lower than they did over full-size girls
 const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
 const TANK_SPEED = 1.5; // A3 Constants.PlayerSpeed
 const TANK_CLIMB = 2.2; // steepest slope (dy/dx) a vehicle can drive up
@@ -148,7 +152,7 @@ class Tank {
   // still pitches the elevation range, see aimVec)
   pivot(facing = this.facing) {
     const a = GIRL_ART[this.vehicle.id] || GIRL_ART.gwt;
-    return { x: this.x + facing * a.pivot[0], y: this.y + a.pivot[1] };
+    return { x: this.x + facing * a.pivot[0] * GIRL_SCALE, y: this.y + a.pivot[1] * GIRL_SCALE };
   }
 
   // hull pitch in degrees for the given facing (+ = nose up), from the ground-slope tilt
@@ -166,7 +170,7 @@ class Tank {
   muzzle(elev = this.elev, facing = this.facing) {
     const p = this.pivot(facing);
     const v = this.aimVec(elev, facing);
-    const len = gunLength(this.weapon);
+    const len = gunLength(this.weapon) * GIRL_SCALE;
     return { x: p.x + v.x * len, y: p.y + v.y * len };
   }
 
@@ -193,12 +197,20 @@ class Tank {
     const state = !this.alive ? 'wreck' : this.hp < this.maxHp * 0.5 ? 'damaged' : 'ok';
     const o = { id: this.vehicle.id, x, y, facing: f, color: this.color, state, t: this.blink || 0, walking: this.walking > 0, flash: this.flash, pose: this.pose || 'idle', poseT: this.poseT || 0 };
     // a turret girl (girls.js) with her rigging; the gun is the equipped weapon's skin (weaponskins.js)
+    // drawn at full size in girls.js units, scaled down about her feet
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(GIRL_SCALE, GIRL_SCALE);
+    ctx.translate(-x, -y);
     drawGirl(ctx, o);
+    if (this.alive) {
+      const a = GIRL_ART[this.vehicle.id] || GIRL_ART.gwt;
+      const off = girlPivotOffset(o); // the victory hop lifts her rigging
+      drawGun(ctx, this.weapon, { x: x + (a.pivot[0] + off[0]) * f, y: y + a.pivot[1] + off[1] }, this.aimVec(), f, this.recoil, shade(this.color, -0.5), this.blink || 0, active ? this.charge / this.chargeCap() : 0);
+      drawGirlMount(ctx, o);
+    }
+    ctx.restore();
     if (!this.alive) return;
-    const p0 = this.pivot();
-    const off = girlPivotOffset(o); // the victory hop lifts her rigging
-    drawGun(ctx, this.weapon, { x: p0.x + off[0] * f, y: p0.y + off[1] }, this.aimVec(), f, this.recoil, shade(this.color, -0.5), this.blink || 0, active ? this.charge / this.chargeCap() : 0);
-    drawGirlMount(ctx, o);
     if (this.barrier) {
       // Bulwark Barrier: an arc of plates on the side it faces, pulsing; brighter when it just blocked
       const b = this.barrier;
@@ -207,7 +219,7 @@ class Tank {
       for (let i = -6; i <= 6; i++) {
         const a = base + (i / 6) * Math.PI * 0.3;
         ctx.fillStyle = i % 2 ? `rgba(120,230,210,${pulse})` : `rgba(255,214,120,${pulse})`;
-        sq(ctx, x + Math.cos(a) * 48, y - 28 + Math.sin(a) * 48, 6);
+        sq(ctx, x + Math.cos(a) * 36, y - 18 + Math.sin(a) * 36, 5);
       }
     }
     if (this.shield) {
@@ -216,7 +228,7 @@ class Tank {
       ctx.fillStyle = `rgba(150,210,255,${a})`;
       for (let i = 0; i < 20; i++) {
         const t = (i / 20) * TAU;
-        sq(ctx, x + Math.cos(t) * 40, y - 30 + Math.sin(t) * 38, 4);
+        sq(ctx, x + Math.cos(t) * 30, y - 19 + Math.sin(t) * 28, 4);
       }
     }
     if (active) {
@@ -225,7 +237,7 @@ class Tank {
       const p = this.pivot();
       for (const e of [this.weapon.elevMin, this.weapon.elevMax]) {
         const u = this.aimVec(e);
-        for (let d = 36; d <= 52; d += 8) sq(ctx, p.x + u.x * d, p.y + u.y * d, 3);
+        for (let d = 26; d <= 40; d += 7) sq(ctx, p.x + u.x * d, p.y + u.y * d, 3);
       }
     }
   }
@@ -238,39 +250,39 @@ class Tank {
     const title = `${this.name} | ${this.vehicle.name}`;
     const tw = ctx.measureText(title).width + 24;
     ctx.fillStyle = HUD.plate;
-    ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 124), Math.round(tw), 20);
+    ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 124 + LABEL_LIFT), Math.round(tw), 20);
     if (active) {
       ctx.fillStyle = this.color;
-      ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 124), 5, 20);
+      ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 124 + LABEL_LIFT), 5, 20);
     }
     ctx.fillStyle = active ? HUD.bright : HUD.dim;
-    ctx.fillText(title, Math.round(sx), Math.round(sy - 109));
+    ctx.fillText(title, Math.round(sx), Math.round(sy - 109 + LABEL_LIFT));
     // a CPU's grudge: a square in the colour of whoever it is out for
     if (this.isCpu && this.lastAttacker && this.lastAttacker.alive) {
       ctx.fillStyle = this.lastAttacker.color;
-      ctx.fillRect(Math.round(sx + tw / 2 + 4), Math.round(sy - 120), 12, 12);
+      ctx.fillRect(Math.round(sx + tw / 2 + 4), Math.round(sy - 120 + LABEL_LIFT), 12, 12);
     }
     // bounty on the match leader
     if (this.bounty > 0) {
       ctx.fillStyle = HUD.gold;
-      ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 124), 48, 20);
+      ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 124 + LABEL_LIFT), 48, 20);
       ctx.fillStyle = HUD.plateInk;
       ctx.font = `12px ${HUD_FONT}`;
-      ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 109));
+      ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 109 + LABEL_LIFT));
       ctx.font = `13px ${HUD_FONT}`;
     }
     // armour | health bar | health  (A3 layout)
     const bw = 100;
     ctx.fillStyle = HUD.plate;
-    ctx.fillRect(Math.round(sx - bw / 2), Math.round(sy - 100), bw, 16);
+    ctx.fillRect(Math.round(sx - bw / 2), Math.round(sy - 100 + LABEL_LIFT), bw, 16);
     ctx.fillStyle = HUD.line;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 96), bw - 12, 8);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 96 + LABEL_LIFT), bw - 12, 8);
     ctx.fillStyle = HUD.cool;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 96), Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 8);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 96 + LABEL_LIFT), Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 8);
     ctx.font = `13px ${HUD_FONT}`;
     ctx.textAlign = 'right';
-    plateText(ctx, Math.ceil(this.armour), Math.round(sx - bw / 2 - 2), Math.round(sy - 86), HUD.accent, 'right');
-    plateText(ctx, Math.ceil(this.hp), Math.round(sx + bw / 2 + 2), Math.round(sy - 86), HUD.cool, 'left');
+    plateText(ctx, Math.ceil(this.armour), Math.round(sx - bw / 2 - 2), Math.round(sy - 86 + LABEL_LIFT), HUD.accent, 'right');
+    plateText(ctx, Math.ceil(this.hp), Math.round(sx + bw / 2 + 2), Math.round(sy - 86 + LABEL_LIFT), HUD.cool, 'left');
     if (active) {
       const w = this.weapon;
       ctx.font = `13px ${HUD_FONT}`;
@@ -316,7 +328,7 @@ class Tank {
     const bw = Math.round(Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20);
     const bh = lines.length * lh + 10;
     const bx = Math.round(clamp(sx - bw / 2, 8, VIEW_W - bw - 8));
-    const by = Math.round(sy - 140 - bh);
+    const by = Math.round(sy - 140 + LABEL_LIFT - bh);
     ctx.globalAlpha = clamp((s.dur - s.age) * 3, 0, 1);
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(bx, by, bw, bh);
