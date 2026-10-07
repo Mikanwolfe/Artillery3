@@ -22,6 +22,9 @@ const ACID_PAY_RATE = 0.5;
 const SAVE_KEY = 'a3.save';
 const CRATE_CHANCE = 0.3; // chance of a supply drop at the start of each turn (after the first few)
 const CRATE_MAX = 2;
+// Smoke traces: every shell leaves a line of grey squares that drift with the wind and fade
+const TRACE_LIFE = 360; // frames (~6 s)
+const TRACE_MAX = 2500;
 // Arcade bonuses that reward high, plunging shots (shells, guns and acid; not lasers):
 //  - kinetic: extra damage from impact speed, packed into a tighter radius than the blast
 //  - altitude: the whole blast is scaled up by how far the shell fell from the top of its arc
@@ -133,6 +136,7 @@ class Game {
     this.projectiles = [];
     this.drops = [];
     this.lasers = [];
+    this.traces = [];
     this.crates = [];
     this.slides = [];
     this.salvo = null;
@@ -218,6 +222,7 @@ class Game {
     this.projectiles = [];
     this.drops = [];
     this.lasers = [];
+    this.traces = [];
     this.crates = [];
     this.slides = [];
     this.salvo = null;
@@ -285,6 +290,7 @@ class Game {
     if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
     t.fuel = TANK_FUEL;
     t.shield = false; // a Deflector lasts until its owner's next turn
+    for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
     t.shotsLeft = t.weapon.clip; // autoloaders reload every turn
     t.firedThisTurn = false;
     this.startAim();
@@ -319,6 +325,7 @@ class Game {
     if (this.phase === 'aim') this.updateAim();
     else if (this.phase === 'resolve') this.updateResolve();
     this.lasers = this.lasers.filter((l) => l.update());
+    this.updateTraces();
     for (const c of this.crates) if (c.alive) c.update(this);
     this.crates = this.crates.filter((c) => c.alive);
     this.windMarker += (this.windDir - this.windMarker) / 20;
@@ -393,6 +400,30 @@ class Game {
       if (moved > 40 && !s.loud) { s.loud = true; this.sfx.explosion(6); this.events.push('Snow slides down the slope.'); }
       return moved > 0.5 && --s.life > 0;
     });
+  }
+
+  trace(x, y) {
+    if (this.traces.length >= TRACE_MAX) this.traces.shift();
+    this.traces.push({ x, y, age: 0 });
+  }
+
+  updateTraces() {
+    let n = 0;
+    for (const t of this.traces) {
+      t.age++;
+      t.x += this.wind.x * 8;
+      t.y -= 0.05;
+    }
+    while (n < this.traces.length && this.traces[n].age > TRACE_LIFE) n++;
+    if (n) this.traces.splice(0, n);
+  }
+
+  drawTraces(ctx) {
+    for (const t of this.traces) {
+      const k = t.age / TRACE_LIFE;
+      ctx.fillStyle = `rgba(96,90,108,${0.5 * (1 - k)})`;
+      sq(ctx, t.x, t.y, 4 + k * 10);
+    }
   }
 
   spawnCrate() {
@@ -508,10 +539,10 @@ class Game {
     t.shotsLeft--;
     t.firedThisTurn = true;
     const dir = t.aimVec();
-    // armed abilities are spent on this shot
-    const dbl = t.armed.double && t.abilities.double > 0;
-    if (dbl) t.abilities.double--;
-    if (t.armed.over) t.abilities.over = Math.max(0, t.abilities.over - 1);
+    // armed abilities go on this shot, then recharge
+    const dbl = t.armed.double;
+    if (dbl) t.cooldown.double = ABILITY_BY_ID.double.cd;
+    if (t.armed.over) t.cooldown.over = ABILITY_BY_ID.over.cd;
     t.lastCharge = t.charge / t.chargeCap();
     t.armed = { double: false, over: false };
     this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo * (dbl ? 2 : 1), timer: 0, first: true, uplink: !!t.uplink };
@@ -664,6 +695,7 @@ class Game {
   explode(x, y, def, owner, palette = 'shell') {
     if (this.report) this.report.blasts.push({ x, y });
     this.terrain.crater(x, def.explR || 10);
+    this.terrain.scorch(x, Math.max(20, def.dmgR * 0.5), y > this.terrain.hAt(x) - 60 ? 0.45 : 0.15);
     // a blast that catches a supply crate claims it for whoever fired
     for (const c of this.crates) {
       if (c.alive && owner && dist(c.x, c.y - 9, x, y) < Math.max(40, def.dmgR * 0.6)) this.claimCrate(c, owner);
@@ -895,9 +927,9 @@ class Game {
       return true;
     } else if (kind === 'ability') {
       const ab = ABILITIES.find((a) => a.id === id);
-      if (!ab || tank.abilities[id] >= ABILITY_MAX || tank.money < ab.cost) { this.sfx.deny(); return false; }
+      if (!ab || tank.abilities[id] > 0 || tank.money < ab.cost) { this.sfx.deny(); return false; }
       tank.money -= ab.cost;
-      tank.abilities[id]++;
+      tank.abilities[id] = 1;
     } else if (kind === 'kit') {
       if (tank.kits >= REPAIR_MAX || tank.money < REPAIR_COST) { this.sfx.deny(); return false; }
       tank.money -= REPAIR_COST;
@@ -931,7 +963,7 @@ class Game {
     const wants = t.type === 'hard' ? ['double', 'shield'] : t.type === 'normal' ? ['double'] : rng.chance(0.4) ? [rng.pick(['double', 'shield'])] : [];
     for (const id of wants) {
       const ab = ABILITIES.find((a) => a.id === id);
-      if (t.abilities[id] < 1 && t.money >= ab.cost * 1.5) { t.money -= ab.cost; t.abilities[id]++; }
+      if (t.abilities[id] < 1 && t.money >= ab.cost * 1.5) { t.money -= ab.cost; t.abilities[id] = 1; }
     }
     for (let n = 0; n < 6; n++) {
       const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id));
@@ -962,13 +994,13 @@ class Game {
   }
 
   // Abilities (see ABILITIES): 1 / 2 arm Double Shot / Overcharge for the next shot (press again
-  // to disarm), 3 switches the Deflector on. None of them takes the turn.
+  // to disarm; they only recharge once fired), 3 switches the Deflector on. None takes the turn.
   useAbility(t, id) {
-    if (this.phase !== 'aim' || t !== this.active || !(t.abilities[id] > 0)) { this.sfx.deny(); return false; }
-    const ab = ABILITIES.find((a) => a.id === id);
+    if (this.phase !== 'aim' || t !== this.active || !(t.abilities[id] > 0) || (t.cooldown[id] > 0 && !t.armed[id])) { this.sfx.deny(); return false; }
+    const ab = ABILITY_BY_ID[id];
     if (id === 'shield') {
       if (t.shield) { this.sfx.deny(); return false; }
-      t.abilities.shield--;
+      t.cooldown.shield = ab.cd;
       t.shield = true;
       this.events.push(`${t.name} raises a Deflector.`);
     } else {
@@ -1063,7 +1095,7 @@ class Game {
       const ws = (s.weapons || []).filter((id) => WEAPON_BY_ID[id]).slice(0, MAX_WEAPONS);
       t.weapons = ws.length ? ws : [t.vehicle.weapon.id];
       t.kits = clamp(s.kits | 0, 0, REPAIR_MAX);
-      for (const a of ABILITIES) t.abilities[a.id] = clamp(s.abilities?.[a.id] | 0, 0, ABILITY_MAX);
+      for (const a of ABILITIES) t.abilities[a.id] = clamp(s.abilities?.[a.id] | 0, 0, 1);
       t.stats = { dealt: s.stats?.dealt || 0, kills: s.stats?.kills | 0 };
       t.resetRound(WORLD_W / 2, this.terrain);
       return t;
@@ -1130,6 +1162,7 @@ class Game {
     if (aiming && !this.cpu) this.drawAimGuide(ctx, aiming);
     for (const d of this.drops) d.draw(ctx);
     for (const c of this.crates) c.draw(ctx);
+    this.drawTraces(ctx);
     for (const p of this.projectiles) p.draw(ctx);
     for (const l of this.lasers) l.draw(ctx);
     this.particles.draw(ctx);
