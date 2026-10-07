@@ -219,7 +219,7 @@ class Game {
     const m = t.muzzle();
     const u = t.aimVec();
     const tg = t.mark;
-    const wind = AIM_GUIDE_WIND ? this.wind : { x: 0, y: 0 };
+    const wind = AIM_GUIDE_WIND || t.upgrades.computer ? this.wind : { x: 0, y: 0 };
     const dir = Math.sign(tg.x - m.x) || 1;
     if (dir !== t.facing) return { frac: null, behind: true };
     const reach = (v) => { // signed overshoot past the marker for speed v (null: never comes down to it)
@@ -363,8 +363,13 @@ class Game {
     }
     this.satellite.newTurn();
     if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
-    t.fuel = TANK_FUEL;
+    t.fuel = t.maxFuel;
     t.shield = false; // a Deflector lasts until its owner's next turn
+    if (t.upgrades.workshop && t.armour < t.maxArmour) { // field workshop: patch some armour each turn
+      const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.05 * t.upgrades.workshop));
+      t.armour += ar;
+      this.particles.text(t.x, t.y - 40, `+${ar}`, '#8fe0a0');
+    }
     this.fogDamage(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
@@ -552,7 +557,7 @@ class Game {
     if (t.fuel <= 0) return;
     const nx = t.x + dir * TANK_SPEED;
     if (nx < 20 || nx > WORLD_W - 20) return;
-    if ((this.terrain.hAt(t.x) - this.terrain.hAt(nx)) / TANK_SPEED > 1.6) return;
+    if ((this.terrain.hAt(t.x) - this.terrain.hAt(nx)) / TANK_SPEED > t.climb) return;
     for (const o of this.tanks) {
       if (o !== t && o.alive && Math.abs(o.x - nx) < TANK_W + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
     }
@@ -1027,6 +1032,12 @@ class Game {
       if (!ab || tank.abilities[id] > 0 || tank.money < ab.cost) { this.sfx.deny(); return false; }
       tank.money -= ab.cost;
       tank.abilities[id] = 1;
+    } else if (kind === 'vupg') {
+      const u = VEHICLE_UPGRADES.find((x) => x.id === id);
+      const lvl = tank.upgrades[id] | 0;
+      if (!u || lvl >= u.costs.length || tank.money < u.costs[lvl]) { this.sfx.deny(); return false; }
+      tank.money -= u.costs[lvl];
+      tank.upgrades[id] = lvl + 1;
     } else if (kind === 'kit') {
       if (tank.kits >= REPAIR_MAX || tank.money < REPAIR_COST) { this.sfx.deny(); return false; }
       tank.money -= REPAIR_COST;
@@ -1090,6 +1101,13 @@ class Game {
     for (const id of wants) {
       const ab = ABILITIES.find((a) => a.id === id);
       if (t.abilities[id] < 1 && t.money - reserve >= ab.cost * 1.5) { t.money -= ab.cost; t.abilities[id] = 1; }
+    }
+    // vehicle upgrades: everyone wants an engine level; Normal and Hard a workshop; Hard the computer
+    const vwants = t.type === 'hard' ? ['engine', 'workshop', 'computer'] : t.type === 'normal' ? ['engine', 'workshop'] : ['engine'];
+    for (const id of vwants) {
+      const u = VEHICLE_UPGRADES.find((x) => x.id === id);
+      const lvl = t.upgrades[id] | 0;
+      if (lvl < 1 && t.money - reserve >= u.costs[lvl] * 1.5) { t.money -= u.costs[lvl]; t.upgrades[id] = lvl + 1; }
     }
     for (let n = 0; n < 6; n++) {
       const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour';
@@ -1201,6 +1219,7 @@ class Game {
       t.money = s.money | 0;
       t.wins = s.wins | 0;
       t.upgrades = { hp: s.upgrades?.hp | 0, armour: s.upgrades?.armour | 0 };
+      for (const u of VEHICLE_UPGRADES) t.upgrades[u.id] = clamp(s.upgrades?.[u.id] | 0, 0, u.costs.length);
       const ws = (s.weapons || []).filter((id) => WEAPON_BY_ID[id]).slice(0, MAX_WEAPONS);
       t.weapons = ws.length ? ws : [t.vehicle.weapon.id];
       t.kits = clamp(s.kits | 0, 0, REPAIR_MAX);
@@ -1310,17 +1329,18 @@ class Game {
     }
     // predicted arc for the current charge (gravity, terrain and trees; no dispersion)
     const p = { x: m.x, y: m.y, vx: v.x * t.charge, vy: v.y * t.charge, age: 0 };
-    const wind = AIM_GUIDE_WIND ? this.wind : { x: 0, y: 0 };
+    const wind = AIM_GUIDE_WIND || t.upgrades.computer ? this.wind : { x: 0, y: 0 };
     let travelled = 0;
     let next = 8;
     let px = p.x;
     let py = p.y;
-    for (let i = 0; i < 600 && next < AIM_ARC_LEN; i++) {
+    const arcLen = AIM_ARC_LEN * (t.upgrades.computer ? 1.6 : 1);
+    for (let i = 0; i < 600 && next < arcLen; i++) {
       const r = stepBallistic(p, this.terrain, wind, this.targets(), t);
       const seg = dist(px, py, p.x, p.y);
-      while (seg > 0 && next <= travelled + seg && next < AIM_ARC_LEN) {
+      while (seg > 0 && next <= travelled + seg && next < arcLen) {
         const f = (next - travelled) / seg;
-        dot(lerp(px, p.x, f), lerp(py, p.y, f), next, AIM_ARC_LEN);
+        dot(lerp(px, p.x, f), lerp(py, p.y, f), next, arcLen);
         next += 14;
       }
       travelled += seg;
@@ -1477,6 +1497,6 @@ class Game {
     ctx.fillRect(x0 - 2, 828, 4, 20);
     ctx.fillRect(x0 + w - 2, 828, 4, 20);
     ctx.fillStyle = 'steelblue';
-    ctx.fillRect(x0 + 2, 834, Math.round((w - 4) * (t.fuel / TANK_FUEL)), 8);
+    ctx.fillRect(x0 + 2, 834, Math.round((w - 4) * clamp(t.fuel / t.maxFuel, 0, 1)), 8);
   }
 }
