@@ -6,7 +6,7 @@
 
 ### Update: web rewrite
 
-The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step or dependencies (sound is synthesised; the only asset is the original Maven Pro font).
+The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step or dependencies. The only assets are the original's: the Maven Pro font and its sounds and music (`web/sounds`, transcoded to MP3 from `Resources/sounds`; firing, hits and the charge hum are synthesised, as A3 had no samples for them).
 Open `web/index.html` in a browser, or serve the folder (e.g. `python3 -m http.server -d web`).
 
 It lifts as much as it can from A3s, in the original's world units (2400-wide terrain, 1600x900 camera, gravity 0.6, muzzle speed = charge):
@@ -42,7 +42,7 @@ Everything in the world is drawn as plain axis-aligned boxes that never rotate: 
 | Abilities | `1` double shot · `2` overcharge · `3` deflector |
 | End turn | `Enter` |
 | Look around | drag (either mouse button) |
-| Mute / pause | `M` / `Esc` |
+| Mute / music / pause | `M` / `N` / `Esc` |
 
 **CPU players** come in Easy / Normal / Hard (the default match is you against Ace (Normal), Rookie (Easy) and Sarge (Hard)). They hold grudges: a CPU goes after whoever last damaged it (a square in that player's colour by its label), even for a somewhat worse shot (`RETALIATE` in `web/js/ai.js`). The solver is a brute-force ballistic one that tries shots against the real physics and weighs the altitude / kinetic bonuses, so among shots that land it prefers high plunging lobs (Hard most, Easy least; `arc` in `DIFFICULTY`). It then adds aim error that grows with range (deadly up close, shaky across the map; tune `RANGE_ERR_BASE` / `RANGE_ERR_SCALE` in `web/js/ai.js`). Weapon dispersion adds more.
 Each CPU has a fixed personality picked by name (Ace: cocky, Major: polite, Rookie: nervous, Sarge: deadpan, Byron: poet, Unit 7: robot; custom names get one at random) and reacts to what actually happened, e.g. "that was close" after a near miss or "missed me!" when someone fires wide of them. The ~450 pre-written lines live in `web/js/taunts.js`; tune how often CPUs speak with `CHATTINESS` in `web/js/game.js`.

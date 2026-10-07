@@ -111,6 +111,7 @@ class Input {
       }
       case 'Enter': if (down && !e.repeat && this.g.phase === 'aim') this.queue.push({ endTurn: true }); else handled = false; break;
       case 'KeyM': if (down && !e.repeat) this.g.toggleMute(); break;
+      case 'KeyN': if (down && !e.repeat) this.g.toggleMusic(); break;
       case 'Escape': if (down && !e.repeat) this.g.togglePause(); break;
       default: handled = false;
     }
@@ -154,6 +155,7 @@ class Game {
     this.charging = false;
     this.k = 1;
     this.input = new Input(this);
+    this.sfx.music('shop'); // A3 MainMenuGameState: menuDrones (starts on the first click)
     this.initDrag();
     this.newEnvironment();
     this.cam.follow({ x: WORLD_W / 2, y: 0.6 * WORLD_BOTTOM });
@@ -239,6 +241,7 @@ class Game {
     }
     this.satellite.setTier(tier);
     this.events.push(`Round ${this.round} begins.`);
+    this.sfx.roundStart();
     this.nextTurn();
     this.cam.snap();
   }
@@ -271,6 +274,7 @@ class Game {
     do { this.turnPtr = (this.turnPtr + 1) % this.order.length; } while (!this.tanks[this.order[this.turnPtr]].alive);
     const t = this.tanks[this.order[this.turnPtr]];
     this.active = t;
+    this.sfx.newTurn();
     this.turnSerial++;
     this.turnCount++;
     if (this.turnCount > 1 && this.turnCount % 12 === 0) {
@@ -728,6 +732,7 @@ class Game {
     if (this.report) this.report.kills.push({ victim: t, killer: owner && owner !== t ? owner : null });
     this.particles.explosion(t.x, t.y - 8, 160, 'shell');
     this.sfx.explosion(55);
+    this.sfx.die();
     this.shake = Math.max(this.shake, 12);
     if (owner && owner !== t) {
       owner.stats.kills++;
@@ -866,6 +871,7 @@ class Game {
     this.phase = 'shop';
     for (const t of this.tanks.filter((x) => x.isCpu)) this.autoBuy(t);
     this.shopQueue = this.tanks.filter((t) => !t.isCpu);
+    if (this.shopQueue.length) this.sfx.shopOpen();
     this.nextShop();
   }
 
@@ -885,6 +891,8 @@ class Game {
       if (tank.weapons.includes(id) || tank.weapons.length >= MAX_WEAPONS || tank.money < w.cost) { this.sfx.deny(); return false; }
       tank.money -= w.cost;
       tank.weapons.push(id);
+      this.sfx.buyWeapon();
+      return true;
     } else if (kind === 'ability') {
       const ab = ABILITIES.find((a) => a.id === id);
       if (!ab || tank.abilities[id] >= ABILITY_MAX || tank.money < ab.cost) { this.sfx.deny(); return false; }
@@ -909,7 +917,7 @@ class Game {
     tank.weapons = tank.weapons.filter((x) => x !== id);
     tank.weaponIdx = 0;
     tank.money += this.sellValue(WEAPON_BY_ID[id]);
-    this.sfx.buy();
+    this.sfx.sell();
     return true;
   }
 
@@ -1073,6 +1081,12 @@ class Game {
   toggleMute() {
     this.sfx.unlock();
     this.sfx.setMuted(!this.sfx.muted);
+    this.ui.syncMute();
+  }
+
+  toggleMusic() {
+    this.sfx.unlock();
+    this.sfx.setMusic(!this.sfx.musicOn);
     this.ui.syncMute();
   }
 
