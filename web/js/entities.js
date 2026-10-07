@@ -4,7 +4,7 @@
 // a laser is a line of squares. Tanks hold per-player state (money, wins, weapons, upgrades).
 
 const TANK_W = 34; // hitbox / footprint (world units)
-const TANK_H = 34; // a turret girl stands about 44 tall; the hitbox covers her body and rigging
+const TANK_H = 52; // a chibi turret girl stands about 66 tall (hair and hat included); the hitbox covers her body and rigging
 const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
 const TANK_SPEED = 1.5; // A3 Constants.PlayerSpeed
 const TANK_CLIMB = 2.2; // steepest slope (dy/dx) a vehicle can drive up
@@ -174,7 +174,7 @@ class Tank {
       for (let i = -6; i <= 6; i++) {
         const a = base + (i / 6) * Math.PI * 0.3;
         ctx.fillStyle = i % 2 ? `rgba(120,230,210,${pulse})` : `rgba(255,214,120,${pulse})`;
-        sq(ctx, x + Math.cos(a) * 40, y - 20 + Math.sin(a) * 40, 6);
+        sq(ctx, x + Math.cos(a) * 48, y - 28 + Math.sin(a) * 48, 6);
       }
     }
     if (this.shield) {
@@ -183,7 +183,7 @@ class Tank {
       ctx.fillStyle = `rgba(150,210,255,${a})`;
       for (let i = 0; i < 20; i++) {
         const t = (i / 20) * TAU;
-        sq(ctx, x + Math.cos(t) * 32, y - 22 + Math.sin(t) * 30, 4);
+        sq(ctx, x + Math.cos(t) * 40, y - 30 + Math.sin(t) * 38, 4);
       }
     }
     if (active) {
@@ -205,40 +205,40 @@ class Tank {
     const title = `${this.name} | ${this.vehicle.name}`;
     const tw = ctx.measureText(title).width + 24;
     ctx.fillStyle = 'rgba(232,230,244,0.88)';
-    ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 100), Math.round(tw), 20);
+    ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 118), Math.round(tw), 20);
     if (active) {
       ctx.fillStyle = this.color;
-      ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 100), 5, 20);
+      ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 118), 5, 20);
     }
     ctx.fillStyle = active ? '#20204a' : '#4a4a72';
-    ctx.fillText(title, Math.round(sx), Math.round(sy - 85));
+    ctx.fillText(title, Math.round(sx), Math.round(sy - 103));
     // a CPU's grudge: a square in the colour of whoever it is out for
     if (this.isCpu && this.lastAttacker && this.lastAttacker.alive) {
       ctx.fillStyle = this.lastAttacker.color;
-      ctx.fillRect(Math.round(sx + tw / 2 + 4), Math.round(sy - 96), 12, 12);
+      ctx.fillRect(Math.round(sx + tw / 2 + 4), Math.round(sy - 114), 12, 12);
     }
     // bounty on the match leader
     if (this.bounty > 0) {
       ctx.fillStyle = '#ffd84a';
-      ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 100), 48, 20);
+      ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 118), 48, 20);
       ctx.fillStyle = '#20204a';
       ctx.font = '13px "Maven Pro", Verdana, sans-serif';
-      ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 85));
+      ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 103));
       ctx.font = '15px "Maven Pro", Verdana, sans-serif';
     }
     // armour | health bar | health  (A3 layout)
     const bw = 100;
     ctx.fillStyle = 'rgba(232,230,244,0.88)';
-    ctx.fillRect(Math.round(sx - bw / 2), Math.round(sy - 76), bw, 16);
+    ctx.fillRect(Math.round(sx - bw / 2), Math.round(sy - 94), bw, 16);
     ctx.fillStyle = 'rgb(87,128,109)';
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 72), Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 8);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 90), Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 8);
     ctx.font = '15px "Maven Pro", Verdana, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(Math.ceil(this.armour), Math.round(sx - bw / 2 - 6), Math.round(sy - 62));
+    ctx.fillText(Math.ceil(this.armour), Math.round(sx - bw / 2 - 6), Math.round(sy - 80));
     ctx.textAlign = 'left';
     ctx.fillStyle = '#5a5a7a';
-    ctx.fillText(Math.ceil(this.hp), Math.round(sx + bw / 2 + 6), Math.round(sy - 62));
+    ctx.fillText(Math.ceil(this.hp), Math.round(sx + bw / 2 + 6), Math.round(sy - 80));
     if (active) {
       const w = this.weapon;
       ctx.font = '15px "Maven Pro", Verdana, sans-serif';
@@ -313,7 +313,7 @@ class Tank {
     const bw = Math.round(Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20);
     const bh = lines.length * lh + 10;
     const bx = Math.round(clamp(sx - bw / 2, 8, VIEW_W - bw - 8));
-    const by = Math.round(sy - 116 - bh);
+    const by = Math.round(sy - 134 - bh);
     ctx.globalAlpha = clamp((s.dur - s.age) * 3, 0, 1);
     ctx.fillStyle = 'rgba(250,250,255,0.95)';
     ctx.fillRect(bx, by, bw, bh);

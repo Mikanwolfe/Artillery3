@@ -116,7 +116,7 @@ const UI = {
       $("veh-player").textContent = `${c.name}:`;
       $('veh-grid').innerHTML = VEHICLES.map((v) => {
         const w = v.weapon;
-        return `<div class="veh${v.id === 'nxi' ? ' nxi' : ''}" data-v="${v.id}"><canvas class="girl" width="160" height="150" data-g="${v.id}"></canvas><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
+        return `<div class="veh${v.id === 'nxi' ? ' nxi' : ''}" data-v="${v.id}"><canvas class="girl" width="160" height="190" data-g="${v.id}"></canvas><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
           <div class="stats"><span>Health</span><span>${v.hp}</span><span>Armour</span><span>${v.armour}</span></div>
           <div class="veh-wpn">${this.badge(w, true)}<h3 style="font-size:1em;color:${RARITY[w.rarity].color}">${esc(w.name)}</h3></div><p>${esc(w.short)}</p>
           <div class="stats">${this.weaponStats(w)}</div></div>`;
@@ -128,7 +128,7 @@ const UI = {
         g.imageSmoothingEnabled = false;
         g.scale(2.5, 2.5);
         const v = VEHICLES.find((x) => x.id === cv.dataset.g);
-        const o = { id: v.id, x: 32, y: 56, facing: 1, color: col, state: 'ok', t: 0, walking: false, flash: 0 };
+        const o = { id: v.id, x: 44, y: 74, facing: 1, color: col, state: 'ok', t: 0, walking: false, flash: 0 };
         drawGirl(g, o);
         const a = GIRL_ART[v.id] || GIRL_ART.gwt;
         drawGun(g, v.weapon, { x: o.x + a.pivot[0], y: o.y + a.pivot[1] }, { x: Math.cos(rad(30)), y: -Math.sin(rad(30)) }, 1, 0, shade(col, -0.5), 0);

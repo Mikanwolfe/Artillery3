@@ -1,9 +1,10 @@
 'use strict';
-// Turret girls: the playable vehicles drawn as chibi shipgirl-style "turret girls" wearing
-// their vehicle's rigging. Pure pixel art: every pixel is an axis-aligned fillRect on a 2-unit
-// grid (one sprite "pixel" = GIRL_P world units). Sprites are string grids, one char per pixel,
-// mapped to palette keys; each frame is composed once, outlined, turned into horizontal runs and
-// cached, so drawing a girl is ~100-200 fillRects.
+// Turret girls: the playable vehicles drawn as chibi (MapleStory / KanColle SD style) "turret
+// girls" wearing their vehicle's rigging. Pure pixel art: every pixel is an axis-aligned fillRect
+// on a 2-unit grid (one sprite "pixel" = GIRL_P world units). Sprites are built from string-grid
+// layers (one char per pixel, mapped to palette keys): rigging, hair, body, face, bangs, hat.
+// Each distinct frame is composed once, given a soft "selective" outline (every edge pixel is
+// outlined in a darker shade of its own colour), turned into horizontal runs and cached.
 //
 // API
 //   GIRL_ART[id]            id in 'gwt' | 'obj' | 'int' | 'nxi'
@@ -11,6 +12,8 @@
 //     .barrel { size, twin, triple, n, step, start }  suggested barrel: n squares of `size`,
 //                           `step` apart starting `start` from the pivot (twin: two parallel lines,
 //                           triple: three)
+//     .height, .headTop     overall height (world units, standing) and the y of the top of her
+//                           head/hat (negative, relative to the ground point), for name labels
 //   drawGirl(ctx, o)        girl + rigging, without the barrel
 //   drawGirlMount(ctx, o)   small mount cap over the barrel root (call after the barrel)
 //   girlPivotOffset(o)      [dx, dy] world units to add to the pivot this frame (non-zero only
@@ -18,372 +21,518 @@
 //   o = { id, x, y, facing, color, state: 'ok'|'damaged'|'wreck', t, walking, flash,
 //         pose: 'idle'|'fire'|'hit'|'win', poseT: seconds since the pose started }
 //   Poses: 'fire' (0.35 s) recoil lean, braced legs, hair flicks back, > < eyes;
-//          'hit' (0.5 s) flinch backwards, eyes shut, shock sparks and sweat;
+//          'hit' (0.5 s) flinch backwards, eyes squeezed shut, shock sparks and sweat;
 //          'win' (loops) V-sign, ^ ^ eyes, a hop every 0.8 s. 'fire'/'hit' fall back to idle
 //          after their length. Wrecks ignore poses.
 
 const GIRL_P = 2; // world units per sprite pixel
-const GIRL_GW = 26; // grid width (pixels)
-const GIRL_GH = 26; // grid height; the bottom row stands on the ground point
-const GIRL_AX = 13; // grid column whose left edge is the ground point x
+const GIRL_GW = 34; // grid width (pixels)
+const GIRL_GH = 36; // grid height; the bottom row stands on the ground point
+const GIRL_AX = 20; // grid column whose left edge is the ground point x (between her feet)
+const GIRL_SIT = 6; // wrecks: how far the upper body drops when she sits down
 
-// Palette keys:
-//   .  transparent        o  outline (added automatically)    _  erase (damage overlays)
-//   s/S skin/shade        e  eye/dark    i iris    b blush    m mouth    d sweat drop
-//   h/H hair/shade        c/C cap or hat / its shade         y gold (badge, buckle, bow)
-//   u/U uniform/shade     w/W white/shade   x boots           t/T tread/road wheel
-//   p/P/q player colour / dark / light                          r/R/g rigging / dark / light
-//   k/K scorch / soot     B beacon (blinks MAIA pink)  a/n/v aurora teal / blue / violet
+// Palette keys (per girl overrides in GIRL_DEFS[id].pal):
+//   .  transparent        _  erase                         o<k> outline of k (automatic)
+//   s/S skin/shade        e  lash/dark   I/i iris dark/light   w/W white/shade  b blush  m mouth
+//   d  sweat/tear         h/H/L hair/shade/highlight       c/C/j hat/shade/light  y/Y gold
+//   u/U/z uniform / shade / light       x boots         t/T tread/wheel
+//   p/P/q player colour / dark / light  r/R/g rigging / dark / light   k/K scorch / soot
+//   B  beacon (blinks MAIA pink)       a/n/v aurora teal / blue / violet
 const GIRL_BASE_PAL = {
-  o: '#2a2433', s: '#ffe2cf', S: '#eeb49c', e: '#2a2433', b: '#ff9aa8', m: '#b04858', d: '#8fd0ff',
-  w: '#f7f7fb', W: '#c6c8de', x: '#2e2a33', y: '#f2c84b', t: '#2b2d33', T: '#7a7f8a',
-  k: '#2c2a2e', K: '#5a5452', B: '#7a3a62',
+  s: '#ffe8d8', S: '#f6c4ae', e: '#3a2440', w: '#ffffff', W: '#d6d8ee', b: '#ff9db4', m: '#e0607a',
+  d: '#a8e6ff', y: '#ffd65a', Y: '#d99a2a', x: '#3e3550', t: '#3c3f4c', T: '#9aa0b0',
+  k: '#3a3436', K: '#6e6466', B: '#8a4a72',
 };
+const GIRL_OUTLINE = { s: '#cf8a7e', S: '#cf8a7e', b: '#cf8a7e', m: '#cf8a7e', e: '#2a1c30', x: '#221c2e', w: '#a9abcc', W: '#a9abcc', y: '#b57a1e', Y: '#9a6418', d: '#6ab4e0' };
 
-// Layers are { at: firstRow, rows: [...] }; rows shorter than GIRL_GW are padded with '.'.
+// ---- shared parts ----
+// round head of hair (back layer; the face is drawn over cols 14-24)
+const GIRL_HEAD_BACK = [
+  '.....hhhhhh',
+  '...hhhhhhhhhh',
+  '..hhhhhhhhhhhh',
+  '.hhhhhhhhhhhhhh',
+  '.hhhhhhhhhhhhhhH',
+  'hhhhhhhhhhhhhhhH',
+  'hhhhhhhhhhhhhhhH',
+  'hhhhhhhhhhhhhhhH',
+  'hhhhhhhhhhhhhhhH',
+  'HhhhhhhhhhhhhhhH',
+  'Hhhh...........H',
+  'Hhhh...........H',
+  '.HhH...........H',
+  '..H',
+];
+// face: big eyes (lash, highlight, two-tone iris) set low, blush and a tiny mouth
+const GIRL_FACE = { at: 13, x0: 14, rows: [
+  'sssssssssss',
+  'sssssssssss',
+  'seeessseees',
+  'swIIssswIIs',
+  'sIIIsssIIIs',
+  'siiisssiiis',
+  'sbbssmssbbs',
+  '.SsssssssS',
+  '...SSSSS',
+] };
+const GIRL_EYE_CELLS = [];
+for (let r = 15; r <= 18; r++) for (const c of [15, 16, 17, 21, 22, 23]) GIRL_EYE_CELLS.push(['s', c, r]);
+const GIRL_FACES = {
+  blink: [...GIRL_EYE_CELLS, ['e', 15, 17], ['e', 16, 18], ['e', 17, 17], ['e', 21, 17], ['e', 22, 18], ['e', 23, 17]],
+  squint: [...GIRL_EYE_CELLS, ['e', 15, 15], ['e', 16, 16], ['e', 17, 17], ['e', 16, 18], ['e', 15, 19],
+    ['e', 23, 15], ['e', 22, 16], ['e', 21, 17], ['e', 22, 18], ['e', 23, 19], ['s', 15, 19], ['s', 23, 19],
+    ['m', 18, 19], ['m', 19, 19], ['m', 20, 19]],
+  hit: [...GIRL_EYE_CELLS, ['e', 15, 15], ['e', 16, 16], ['e', 17, 17], ['e', 16, 18], ['e', 15, 19],
+    ['e', 23, 15], ['e', 22, 16], ['e', 21, 17], ['e', 22, 18], ['e', 23, 19],
+    ['m', 19, 19], ['m', 19, 20], ['m', 18, 20], ['m', 20, 20], ['d', 25, 13], ['d', 25, 14], ['d', 26, 14]],
+  happy: [...GIRL_EYE_CELLS, ['e', 15, 17], ['e', 16, 16], ['e', 17, 17], ['e', 21, 17], ['e', 22, 16], ['e', 23, 17],
+    ['m', 18, 19], ['m', 19, 20], ['m', 20, 19], ['s', 19, 19]],
+  worried: [['m', 19, 20], ['s', 19, 19], ['d', 25, 13], ['d', 25, 14]],
+  dizzy: [...GIRL_EYE_CELLS, ['e', 15, 15], ['e', 17, 15], ['e', 16, 16], ['e', 15, 17], ['e', 17, 17],
+    ['e', 21, 15], ['e', 23, 15], ['e', 22, 16], ['e', 21, 17], ['e', 23, 17], ['m', 19, 19], ['m', 18, 20], ['m', 20, 20], ['d', 24, 18], ['d', 24, 19]],
+};
+// shock sparks above her head (hit)
+const GIRL_SPARKS = [['w', 22, 2], ['w', 25, 1], ['w', 27, 3], ['w', 19, 1]];
+
+// victory arm (V-sign) on the front side; '*' = sleeve, '+' = sleeve shade, '#' = armband
+const GIRL_ARM_UP = { at: 12, x0: 24, rows: [
+  '..s..s',
+  '..s.s',
+  '..sss',
+  '..sSs',
+  '..*+',
+  '..*+',
+  '..#+',
+  '..*+',
+  '..*+',
+  '.**+',
+  '**+',
+] };
+
+// Layers: { at: first row, x0: first column, rows: [...] }.
 const GIRL_DEFS = {
-  // G.W. Tiger: blonde twin-tails with player-colour ribbons, field-grey peaked cap and uniform,
-  // a heavy rigging block on her back with the gun ring on its rear top, and a little tread
-  // unit for boots.
+  // G.W. Tiger: blonde twin-tails tied with player-colour bows, a field-grey peaked cap with a
+  // gold badge, field-grey jacket, player-colour neckerchief and pleated skirt, blue eyes, a steel
+  // rigging block on her lower back with a round turret raised behind her head, tread-unit boots.
   gwt: {
-    pivot: [5, 6], // grid cell of the trunnion
+    pivot: [6, 9],
     barrel: { size: 4, twin: false, n: 6, step: 4.5, start: 5 },
     pal: {
-      h: '#f4d27a', H: '#c79c45', c: '#7b8473', C: '#535a4e', u: '#848c78', U: '#5f6656', i: '#3f7fd6',
-      r: '#7c8290', R: '#4f5361', g: '#acb2c0',
+      h: '#ffd96e', H: '#e0a53c', L: '#fff4be', I: '#2f6fd0', i: '#6fb4ff',
+      c: '#8a9480', C: '#646d5c', j: '#aab39f', u: '#8e977f', U: '#6b735f', z: '#adb59c',
+      r: '#9aa3b4', R: '#6c7488', g: '#cfd5e2',
     },
-    rig: { at: 6, rows: [
-      '....RRRR',
-      '...gggggg',
-      '..rrrrrrrr',
-      '.RrpppppRr',
-      '.RrpqqqpRr',
-      '.RrpppppRr',
-      '..rPPPPPRr',
-      '..rrrrrrRr',
-      '..RRRRRRRR',
-      '...RR..RR',
+    order: ['rig', 'tail', 'back', 'legs', 'body', 'arm', 'face', 'front', 'hat'],
+    rig: { at: 7, x0: 1, rows: [
+      '..gggg',
+      '.gggrrrR',
+      'ggrrrrrrR',
+      'grppppprR',
+      'RrrrrrrRR',
+      '.RRRRRRR',
+      '....rR',
+      '....rR',
+      '....rR',
+      '....rR',
+      '....rR',
+      '....rR',
+      '....rR',
+      '...gggggggg',
+      '..grrrrrrrrR',
+      '.grqqqqqqrrR',
+      '.grpppppprrR',
+      '.grPPPPPPrrR',
+      '.grrrrrrrrrR',
+      '.gRrRrRrRrRR',
+      '..RRRRRRRRR',
     ] },
-    body: { at: 4, rows: [
-      '...........ccccccc',
-      '..........cccccyccc',
-      '.........CCCCCCCCCCCC',
-      '......pphhhhhhhhhhhh',
-      '......PhhHhhhhsshssh',
-      '......hHhHhhhssesses',
-      '......hHhHhhhssissis',
-      '......hHhHhhhsbssssb',
-      '......hHhHhhhssssmsS',
-      '......hH.HhhhSsssss',
-      '......hHh...uwssw',
-      '.......hH.uuupppuuu',
-      '.......h..uUuuPuuUu',
-      '..........RRRRyRRss',
-      '..........pppppppp',
-      '.........PPPPPPPPPP',
+    tail: { at: 10, x0: 3, sway: [16, 19], rows: [
+      '....pp.pp',
+      '....pqPqp',
+      '....pp.pp',
+      '...hhhhh',
+      '..hLLhhhH',
+      '.hLhhhhhH',
+      'hLhhhhhHH',
+      'hhhhhhHH',
+      'hhhhhHH',
+      '.hhhhH',
+      '..hhH',
+      '...H',
     ] },
+    back: { at: 7, x0: 10, rows: GIRL_HEAD_BACK },
+    front: { at: 11, x0: 10, rows: [
+      '.hLLhhhLLLLhhhhH',
+      'hhhhhhhhhhhhhhhH',
+      'hhhhLLhhhhhLLhhH',
+      'hhhhh..hhh..hh.H',
+      '...hH....h',
+      '...hH',
+      '...hH',
+      '....H',
+    ] },
+    hat: { at: 4, x0: 11, rows: [
+      '....jjjjjjj',
+      '..jjjjccccccc',
+      '.jjcccccccccccc',
+      '.jcccccccyycccc',
+      'cccccccccYYccccC',
+      'CCCCCCCCCCCCCCCC',
+      '........UUUUUUUUU',
+    ] },
+    body: { at: 22, x0: 14, rows: [
+      '.zzwpppwuu',
+      '.zuuuPuuuU',
+      '.zuuuyuuuU',
+      '.UUUUyUUUU',
+      '.qqpqqpqqp',
+      'qpppqpppqpP',
+      'ppppPpppPpP',
+      'PPPPPPPPPPP',
+    ] },
+    arm: { at: 22, x0: 24, rows: ['uU', 'uU', 'uU', 'sS'] },
+    sleeve: 'uUu',
     legs: [
-      { at: 20, rows: [
-        '...........ss..ss',
-        '...........UU..UU',
-        '..........xxx..xxx',
-        '.........gggggggggg',
-        '........tTttTttTttTt',
-        '.........tttttttttt',
+      { at: 30, x0: 14, rows: [
+        '...ss..ss',
+        '...UU..UU',
+        '.ggggggggg',
+        'grrrrrrrrrrR',
+        'tTttTttTttTt',
+        '.tttttttttt',
       ] },
-      { at: 20, rows: [
-        '..........ss....ss',
-        '..........UU....UU',
-        '.........xxx....xxx',
-        '.........gggggggggg',
-        '........ttTttTttTttT',
-        '.........tttttttttt',
+      { at: 30, x0: 14, rows: [
+        '..ss....ss',
+        '..UU....UU',
+        '.ggggggggg',
+        'grrrrrrrrrrR',
+        'ttTttTttTttT',
+        '.tttttttttt',
       ] },
     ],
-    dmgRig: [['k', 4, 9], ['K', 5, 9], ['K', 5, 10], ['k', 7, 12], ['K', 3, 13], ['k', 8, 8], ['_', 9, 14]],
-    dmgBody: [['s', 18, 16], ['s', 12, 16], ['_', 11, 19], ['_', 15, 19], ['s', 16, 18], ['d', 20, 9], ['d', 20, 10], ['m', 16, 12], ['K', 17, 4]],
-    dmgLegs: [['k', 12, 23], ['_', 18, 24]],
-    wreck: { at: 10, rows: [
-      '...........hhhhhhh',
-      '.........hhhhhhhhhhh',
-      '......PhhHhhhhsshssh',
-      '......hHhHhhhsessses',
-      '......hHhHhhhssesess',
-      '......hHhHhhhsessses',
-      '......hHhHhhhsssmsssd',
-      '......hH.HhhhSsssss',
-      '......hHh...uwssw',
-      '.gR....hH.uuupppuuu',
-      '.rrRk.....uUusPuuUu',
-      'rrkrrR....RRRRyRRss',
-      'rKrrkrRR.ppppppppppp',
-      'rrrkrrrRppppppppppppp',
-      'RRRRRRRRPPPPPPPPPPPsssUxx',
-      '.tTt.tT.PPPPPPPPPPPUUUUxx',
-    ] },
-    mount: [['R', -1, -1, 3, 3], ['g', -1, -1, 3, 1], ['p', 0, 0, 1, 1]],
+    wreckLegs: { at: 33, x0: 22, rows: ['sssUU', 'ssUUUgrrR', '.SSUUtTtT'] },
+    mount: [['R', -1, -1, 4, 3], ['g', -1, -1, 4, 1], ['p', 0, 1, 2, 1]],
   },
 
-  // Object 15X: short silver hair, ushanka with a gold badge, long olive greatcoat with a
-  // player-colour scarf, and a tall armoured gun housing (player-colour plates) towering
-  // behind her with the recoil spade stowed on its tail.
+  // Object 15X: short silver bob, an ushanka (olive crown, fur flaps, gold star), long olive
+  // greatcoat with gold buttons, player-colour scarf, ruby eyes, a tall armoured gun housing on
+  // her back with player-colour plates, a stowed recoil spade, and a round turret on top.
   obj: {
-    pivot: [7, 5],
+    pivot: [7, 8],
     barrel: { size: 6, twin: false, n: 5, step: 4.5, start: 6 },
     pal: {
-      h: '#e9edf3', H: '#a6afc2', c: '#a8977f', C: '#5d5144', u: '#5f684f', U: '#434a38', i: '#c8463f',
-      r: '#6f7a68', R: '#454d40', g: '#9ba78f',
+      h: '#eef2f8', H: '#b4bdd0', L: '#ffffff', I: '#b8283c', i: '#ff6f84',
+      c: '#d8c8ae', C: '#a8957a', j: '#6e7a55', u: '#6f7b55', U: '#525c3e', z: '#8d9a6e',
+      r: '#93a57c', R: '#65744f', g: '#c0d0a4',
     },
-    rig: { at: 5, rows: [
-      '..gggggggg',
-      '.grrrrrrrrR',
-      '.rpqqqqqprR',
-      'RrppppppprR',
-      'grppppppprR',
-      'grPPPPPPPrR',
-      'grrrrrrrrrR',
-      'grRgRgRgRrR',
-      'grrrrrrrrrR',
-      'grppppppprR',
-      'grPPPPPPPrR',
-      'RgrrrrrrrrR',
-      '..RRRRRRRR',
+    order: ['rig', 'back', 'tail', 'legs', 'body', 'arm', 'face', 'front', 'hat'],
+    rig: { at: 6, x0: 1, rows: [
+      '....gggg',
+      '...ggrrrrR',
+      '..ggrrrrrrR',
+      '..grppppprRR',
+      '..RRRRRRRRRR',
+      '...gggggggggg',
+      '..grrrrrrrrrrR',
+      '..grqqqqqqqqrR',
+      '.Rgrpppppppprr',
+      'gRgrpppppppprR',
+      'gRgrPPPPPPPPrR',
+      'gRgrrrrrrrrrrR',
+      'gRgRgRgRgRgRrR',
+      'gRgrrrrrrrrrrR',
+      'gRgrqqqqqqqqrR',
+      'gRgrpppppppprR',
+      'gRgrPPPPPPPPrR',
+      '.Rgrrrrrrrrrr',
+      '..gRRRRRRRRRRR',
+      '...RRRRRRRRRR',
     ] },
-    body: { at: 4, rows: [
-      '...........CCCCCCC',
-      '..........CCCCCCCCC',
-      '.........ccccccyccc',
-      '.........cccccccccccc',
-      '.........cChhhhhhhhh',
-      '.........cChhssesses',
-      '.........cChhssissis',
-      '.........cChHsbssssb',
-      '.........cCHhssssmsS',
-      '..........HHhSsssss',
-      '...........pppppppp',
-      '..........PpuuyuuyuU',
-      '..........PuuuuuuuUu',
-      '..........PuuuyuuyUs',
-      '...........RRRRyRRR',
-      '..........uuuuyuuyuu',
-      '..........uuuuuuuuuu',
-      '..........UuuuUuuuuU',
-      '..........UUUUUUUUUU',
+    tail: { at: 22, x0: 10, sway: [23, 24], rows: [
+      '.pppp',
+      'Pppp',
+      'PPp',
+      '.P',
     ] },
+    back: { at: 7, x0: 10, rows: GIRL_HEAD_BACK },
+    front: { at: 10, x0: 10, rows: [
+      '...hLLhhhLLLhhh',
+      'hhhLLhhhhhLLhhhH',
+      'hhhhhhhhhhhhhhhH',
+      'hhhhhhhhhhhhhhhH',
+      'hhhhhHhhhhhHhhhH',
+      '...hH',
+      '...hH',
+      '...hH',
+    ] },
+    hat: { at: 4, x0: 10, rows: [
+      '.....jjjjjjj',
+      '...jjjjjjjjjjj',
+      '..cccccccyccccccC',
+      '.cccccccyyycccccC',
+      '.ccccccccccccccccC',
+      'ccCCCCCCCCCCCCCCC',
+      'ccC............Cc',
+      'ccC............Cc',
+      'ccC............Cc',
+      'ccC............Cc',
+      'ccC............Cc',
+      'ccC.............C',
+      'ccC',
+      '.cC',
+      '..C',
+    ] },
+    body: { at: 21, x0: 13, rows: [
+      '...ppppppp',
+      '..qqqqqqqqp',
+      '..zuyuuyuuU',
+      '..zuuuuuuuU',
+      '..zuyuuyuuU',
+      '..UUUUUUUUU',
+      '..zuyuuyuuU',
+      '.zuuuuuuuuuU',
+      '.zuuuuuuuuuU',
+      '.UUUUUUUUUUU',
+    ] },
+    arm: { at: 23, x0: 24, rows: ['uU', 'uU', 'uU', 'sS'] },
+    sleeve: 'uUp',
     legs: [
-      { at: 23, rows: [
-        '............xx.xx',
-        '............xx.xx',
-        '...........xxx.xxx',
+      { at: 31, x0: 14, rows: [
+        '...xx..xx',
+        '...xx..xx',
+        '...xx..xx',
+        '...xxx.xxx',
+        '...xxx.xxx',
       ] },
-      { at: 23, rows: [
-        '...........xx...xx',
-        '..........xx.....xx',
-        '.........xxx.....xxx',
+      { at: 31, x0: 14, rows: [
+        '..xx....xx',
+        '..xx....xx',
+        '.xx......xx',
+        '.xxx.....xxx',
+        '.xxx.....xxx',
       ] },
     ],
-    dmgRig: [['k', 3, 8], ['K', 4, 8], ['K', 4, 9], ['k', 6, 14], ['K', 7, 15], ['k', 2, 12], ['K', 8, 5], ['_', 9, 5], ['k', 9, 6]],
-    dmgBody: [['s', 12, 20], ['s', 17, 21], ['s', 19, 16], ['_', 10, 22], ['_', 16, 22], ['d', 20, 10], ['d', 20, 11], ['m', 16, 12], ['K', 13, 5]],
-    dmgLegs: [],
-    wreck: { at: 10, rows: [
-      '...........CCCCCCC',
-      '..........CCCCCCCCC',
-      '.........ccccccccccc',
-      '.........cChhhhhhhhh',
-      '.........cChhsessses',
-      '.........cChhssesess',
-      '..gg.....cChHsessses',
-      '.grrR....cCHhsssmsss',
-      '.rKrrR....HHhSsssss',
-      'grrrkrR....pppppppp',
-      'grrkrrR...PuuuyuusuU',
-      'rKrrrKrR...RRRRRRRRs',
-      'rrkrrrrRRuuuuuuuuuuuu',
-      'rRRrKrrRRuuuuUuuuuUuu',
-      'RRRRRRRRRUUUUUUUUUUxxxxx',
-      'RgR.RRRR.UUUUUUUUUUxxxxxx',
-    ] },
-    mount: [['R', -2, -1, 4, 3], ['g', -2, -1, 4, 1], ['p', -1, 1, 2, 1]],
+    wreckLegs: { at: 33, x0: 23, rows: ['uuxxx', 'Uuxxxx', 'UUxxxx'] },
+    mount: [['R', -2, -1, 5, 3], ['g', -2, -1, 5, 1], ['p', -1, 1, 3, 1]],
   },
 
-  // Innocentia: long pink-lavender hair, sailor uniform with a player-colour collar and skirt,
-  // a white backpack rig with twin guns on a turret behind her head and an uplink mast with a
-  // dish and a blinking MAIA-pink beacon.
+  // Innocentia: long pink-lavender hair with an ahoge and a player-colour bow, sailor uniform
+  // (white blouse, player-colour collar and pleated skirt, yellow bow), white socks, violet eyes,
+  // a white backpack with a raised twin-gun turret and an uplink mast with a dish and a blinking
+  // MAIA-pink beacon.
   int: {
-    pivot: [4, 7],
+    pivot: [5, 9],
     barrel: { size: 3, twin: true, n: 7, step: 3, start: 5 },
     pal: {
-      h: '#f1b2e2', H: '#c77fc4', u: '#f7f7fb', U: '#c6c8de', i: '#a24fc6',
-      r: '#c9cdda', R: '#8a8fa3', g: '#eceff6',
+      h: '#f7b9e8', H: '#d98bd0', L: '#fff0fb', I: '#8a3ab8', i: '#d58cf0',
+      r: '#dfe3ee', R: '#a4aac0', g: '#ffffff',
     },
-    rig: { at: 0, rows: [
-      '..BB',
-      'g.R.g',
-      '.ggg',
-      '..R',
-      '..R',
-      '..R',
-      '..R',
-      '..Rgggggg',
-      '..RrrrrrrR',
-      '..RRRRRRRR',
-      '.gggggggg',
-      '.rrrrrrrrR',
-      '.rpppppprR',
-      '.rPPPPPPrR',
-      '.rrrrrrrrR',
-      '.rBrRrRrrR',
-      '..RRRRRRR',
+    order: ['rig', 'tail', 'back', 'legs', 'body', 'arm', 'face', 'front'],
+    rig: { at: 0, x0: 0, rows: [
+      '...BB',
+      'g..rR..g',
+      'gg.rR.gg',
+      '.gggggg',
+      '...rR',
+      '...rR',
+      '...rR',
+      '..gggggg',
+      '.ggrrrrrR',
+      '.grrrrrrR',
+      '.grppppRR',
+      '.RRRRRRRR',
+      '....rR',
+      '....rR',
+      '....rR',
+      '....rR',
+      '....rR',
+      '....rR',
+      '....ggggggg',
+      '...grrrrrrrR',
+      '...grqqqqqrR',
+      '...grpppppRR',
+      '...grPPPPPrR',
+      '...grrrrrrrR',
+      '...gBrRrRrrR',
+      '....RRRRRRR',
     ] },
-    body: { at: 3, rows: [
-      '...............h',
-      '...........hhhhhh',
-      '.........pphhhhhhhh',
-      '........pPhhhhhhhhhh',
-      '.......hhhhhhhhhhhhh',
-      '.......hhhHhhhsshssh',
-      '.......hhHhhhssesses',
-      '.......hhHhhhssissis',
-      '.......hhHhhhsbssssb',
-      '.......hhHhhhssssmsS',
-      '.......hhHhhhSsssss',
-      '.......hhppppwssw',
-      '.......hhPpppwyywww',
-      '.......hHPPPwwwywWw',
-      '.......hH.WwwwwwwWs',
-      '.......hhppppppppp',
-      '.......hpPpPpPpPpPp',
+    tail: { at: 18, x0: 7, sway: [22, 25], rows: [
+      '...hhhh',
+      '..hLhhhH',
+      '..hhhhhH',
+      '.hhhhhhH',
+      '.hLhhhHH',
+      '.hhhhhH',
+      'hhhhhHH',
+      'hhhhhH',
+      '.hhhH',
+      '.hhH',
+      '..hH',
+      '..H',
     ] },
+    back: { at: 7, x0: 10, rows: GIRL_HEAD_BACK.slice(0, 10).concat([
+      'hhhh...........hH',
+      'hhhh...........hH',
+      'hhhh...........hH',
+      'hhhh...........hH',
+      'Hhhh...........hH',
+      'Hhh............hH',
+      '...............H',
+    ]) },
+    front: { at: 4, x0: 9, rows: [
+      '...........hh',
+      '..........h',
+      '..........h',
+      '',
+      '',
+      'pp.pp.LLLL..LLL',
+      'pqPqp.....LL',
+      'pp.pp',
+      '',
+      '.hhhhhLhhhhhLhhhH',
+      '.hhhhh..hhh..hh.H',
+      '....hH....h',
+      '....hH',
+      '....hH',
+      '....hH',
+      '.....H',
+    ] },
+    body: { at: 22, x0: 13, rows: [
+      'pppwyyywwwW',
+      'PppwwywwwwW',
+      '.PpwwwwwwwW',
+      '..WwwwwwwwW',
+      '..qqpqqpqqp',
+      '.qpppqpppqpP',
+      '.ppppPpppPpP',
+      '.PPPPPPPPPPP',
+    ] },
+    arm: { at: 22, x0: 24, rows: ['wW', 'wW', 'wW', 'sS'] },
+    sleeve: 'wWw',
     legs: [
-      { at: 20, rows: [
-        '...........ss..ss',
-        '...........ss..ss',
-        '...........ww..ww',
-        '...........ww..ww',
-        '...........ww..ww',
-        '..........xxx..xxx',
+      { at: 30, x0: 14, rows: [
+        '...ss..ss',
+        '...ww..ww',
+        '...ww..ww',
+        '...WW..WW',
+        '...xxx.xxx',
+        '...xxx.xxx',
       ] },
-      { at: 20, rows: [
-        '..........ss....ss',
-        '..........ss....ss',
-        '..........ww....ww',
-        '..........ww....ww',
-        '.........ww......ww',
-        '.........xxx.....xxx',
+      { at: 30, x0: 14, rows: [
+        '..ss....ss',
+        '..ww....ww',
+        '..ww....ww',
+        '..WW....WW',
+        '..xxx...xxx',
+        '..xxx...xxx',
       ] },
     ],
-    dmgRig: [['k', 4, 12], ['K', 5, 12], ['K', 6, 13], ['k', 3, 14], ['_', 0, 1], ['K', 7, 8], ['k', 1, 15]],
-    dmgBody: [['s', 18, 16], ['s', 12, 17], ['_', 10, 19], ['_', 16, 19], ['s', 14, 17], ['d', 20, 9], ['d', 20, 10], ['m', 16, 12], ['K', 11, 5]],
-    dmgLegs: [['s', 11, 23], ['_', 16, 24]],
-    wreck: { at: 9, rows: [
-      '...............h',
-      '...........hhhhhh',
-      '.........hhhhhhhhhh',
-      '........hhhhhhhhhhhh',
-      '..R....hhhhhhhhhhhhh',
-      '..R....hhhHhhhsshssh',
-      '..R....hhHhhhsessses',
-      '..R....hhHhhhssesess',
-      '.gR....hhHhhhsessses',
-      'grrR...hhHhhhsssmsssd',
-      'rkrrR..hhHhhhSsssss',
-      'rrKrR.hhhppppwssw',
-      'rPkrR.hhhPpppwyywws',
-      'RRRRRhhhhPPPwwwywWs',
-      'RkgRhhhh.ppppppppppp',
-      'gggghhhhpPpPpPpPpPpPwwwxx',
-      'g..ghhhhPPPPPPPPPPPPwwwxx',
-    ] },
-    mount: [['R', -1, -1, 4, 3], ['g', -1, -1, 4, 1], ['B', 1, 0, 1, 1]],
+    wreckLegs: { at: 33, x0: 23, rows: ['sswww', 'swwwxx', 'SWWWxx'] },
+    mount: [['R', -1, -1, 4, 3], ['g', -1, -1, 4, 1], ['B', 1, 1, 1, 1]],
   },
-  // November (NXi, November Division of the United Aurora Federation): a stern naval officer in
-  // void-navy with royal gold trim, white peaked cap with the Queen's little gold crown, long
-  // deep-teal hair with a violet streak and an aurora tip, a player-colour sash and armband, and
-  // an overbuilt battlecruiser rigging block (bulkhead lines, player-colour armour plates, a
-  // glowing teal-to-violet aurora seam) with a sturdy triple-turret base on top.
+
+  // November (NXi, November Division of the United Aurora Federation): a composed naval officer
+  // in void-navy with royal gold trim, a white peaked cap with the Queen's gold crown, long teal
+  // hair with a violet streak and an aurora tip, player-colour sash and armband, teal eyes, and an
+  // overbuilt battlecruiser rigging block (bulkheads, player-colour plates, aurora seam) with a
+  // wide triple-turret base.
   nxi: {
-    pivot: [5, 5],
+    pivot: [6, 9],
     barrel: { size: 4, twin: false, triple: true, n: 5, step: 4.5, start: 6 },
     pal: {
-      h: '#1f8f8a', H: '#14615f', v: '#8e63e8', a: '#5ef0d0', n: '#6aa8ff',
-      c: '#eef0f6', C: '#b9bfd0', u: '#1d2242', U: '#11142a', i: '#2fc4b4', m: '#b86a74',
-      r: '#4a5170', R: '#2c3150', g: '#7c84a8', x: '#151829',
+      h: '#27ae9f', H: '#187b73', L: '#86f2e0', v: '#9a6cf0', a: '#5ef0d0', n: '#6aa8ff',
+      c: '#f6f8fc', C: '#c8cde0', U: '#171b36', u: '#262e5a', z: '#3d4986', I: '#0f8f84', i: '#5ef0d0',
+      r: '#55669c', R: '#323d6c', g: '#93a3dc', x: '#1d2140',
     },
-    rig: { at: 3, rows: [
+    order: ['rig', 'tail', 'back', 'legs', 'body', 'arm', 'face', 'front', 'hat'],
+    rig: { at: 7, x0: 0, rows: [
       '...gggggg',
-      '..RrrrrrrR',
-      '..RRRRRRRR',
-      '.RrgggggrR',
-      '.gggggggggg',
-      'grrrrrrrrrR',
-      'rqqqqRqqqqR',
-      'rppppRppppR',
-      'rPPPPRPPPPR',
-      'RaaannnvvvR',
-      'rrrRrrrrRrR',
-      'rppppRppppR',
-      'rPPPPRPPPPR',
-      'RRRRRRRRRRR',
-      '.RgR..RgR',
+      '..gggrrrrrR',
+      '.ggrrrrrrrRR',
+      '.grppppppprR',
+      '.RaaannnvvvR',
+      '..RRRRRRRRR',
+      '.gggggggggggg',
+      'grrrrrrrrrrrR',
+      'grqqqqRqqqqrR',
+      'grppppRpppprR',
+      'grPPPPRPPPPrR',
+      'RaaaannnnvvvR',
+      'grrrRrrrrRrrR',
+      'grppppRpppprR',
+      'grPPPPRPPPPrR',
+      'grrrrrrrrrrrR',
+      'gRrRrRrRrRrRR',
+      '.RRRRRRRRRRR',
     ] },
-    body: { at: 4, rows: [
-      '...........ccccycc',
-      '..........ccccyyycc',
-      '.........yyyyyyyyyyy',
-      '........hhhhhhhUUUUUU',
-      '........hhvhhhsshssh',
-      '.......hhvhhhssesses',
-      '.......hhvhhhssissis',
-      '.......hhvhhhsssssss',
-      '.......hhvhhhsssmmsS',
-      '.......hhvhhhSsssss',
-      '.......hhvh.uuyyuu',
-      '.......hhvh.uppuuuyy',
-      '.......hhvh.uuppuupp',
-      '.......hhvh.uuuuppUs',
-      '.......hvh.UUUUyUUU',
-      '.......aav.uuuuyuuuu',
-      '........vvyyyyyyyyy',
+    tail: { at: 15, x0: 7, sway: [20, 24], rows: [
+      '...hhhh',
+      '..hhvhhH',
+      '..hhvhhH',
+      '.hhhvhhH',
+      '.hLhvhhH',
+      '.hhhvhH',
+      '.hhhvhH',
+      'hhhvhhH',
+      'hhhvhH',
+      'ahhvha',
+      'aanvna',
+      '.nnvv',
+      '..vv',
     ] },
+    back: { at: 7, x0: 10, rows: GIRL_HEAD_BACK.slice(0, 13).concat(['.HhH...........H', '...............H']) },
+    front: { at: 10, x0: 10, rows: [
+      '.hLLhhhLLL',
+      '.hLLhhvLLLLhhhhH',
+      'hhhhhhvhhhhhhhhH',
+      'hhhhhhvhhhhLLhhH',
+      'hhhhhhv.hhh..h.H',
+      '...hHv...h',
+      '...hHv',
+      '...hH',
+      '....H',
+    ] },
+    hat: { at: 3, x0: 10, rows: [
+      '........y.y.y',
+      '.....cccyyyyy',
+      '...ccccccyyyccc',
+      '..cccccccccccccC',
+      '.ccccccccccccccC',
+      '.CCCCCCCCCCCCCCC',
+      '.yyyyyyyyyyyyyyy',
+      '.........UUUUUUUUU',
+    ] },
+    body: { at: 22, x0: 14, rows: [
+      '.zuyyyyypU',
+      '.zuuuuypPU',
+      '.zuuuppuuU',
+      '.yyyppyyyy',
+      '.zupPuuuuU',
+      'zuuuuuuuuuU',
+      'zuuuuuuuuuU',
+      'yyyyyyyyyyy',
+    ] },
+    arm: { at: 22, x0: 24, rows: ['uU', 'pP', 'uU', 'sS'] },
+    sleeve: 'uUp',
     legs: [
-      { at: 21, rows: [
-        '...........xx..xx',
-        '...........xx..xx',
-        '...........xx..xx',
-        '...........yy..yy',
-        '..........xxx..xxx',
+      { at: 30, x0: 14, rows: [
+        '...xx..xx',
+        '...xx..xx',
+        '...yy..yy',
+        '...xx..xx',
+        '...xxx.xxx',
+        '...xxx.xxx',
       ] },
-      { at: 21, rows: [
-        '..........xx....xx',
-        '..........xx....xx',
-        '..........xx....xx',
-        '.........yy......yy',
-        '.........xxx.....xxx',
+      { at: 30, x0: 14, rows: [
+        '..xx....xx',
+        '..xx....xx',
+        '..yy....yy',
+        '..xx....xx',
+        '..xxx...xxx',
+        '..xxx...xxx',
       ] },
     ],
-    dmgRig: [['k', 2, 10], ['K', 3, 10], ['K', 3, 11], ['k', 7, 15], ['K', 8, 16], ['k', 1, 14], ['_', 10, 13], ['K', 6, 8]],
-    dmgBody: [['s', 13, 17], ['s', 16, 19], ['_', 11, 20], ['_', 15, 20], ['s', 19, 16], ['d', 20, 9], ['d', 20, 10], ['m', 15, 12], ['K', 12, 5]],
-    dmgLegs: [['s', 12, 22], ['_', 17, 23]],
-    wreck: { at: 9, rows: [
-      '..........ccccccc',
-      '.........cccccyyycc',
-      '........yyyyyyyyyyy',
-      '.......hhhhhhhUUUUUUU',
-      '.......hhvhhhhsshssh',
-      '.......hhvhhhsessses',
-      '.......hhvhhhssesess',
-      '.......hhvhhhsessses',
-      '.gg....hhvhhhsssmsssd',
-      'grrR...hhvhhhSsssss',
-      'raKrR..hhvh.uuyyuu',
-      'rrkvrR.hvh.uuppuuuy',
-      'RRRRRRRaav.uuuppusu',
-      'rKrprkR.vv.UUUUyUUUs',
-      'rrkrrrR..uuuuuyuuuuu',
-      'RRRRRRRRuuuuuuyuuuuuu',
-      'rKrrkrrRyyyyyyyyyyyyxxxx',
-      'RRgRRRRR.UUUUUUUUUUUxxxxx',
-    ] },
+    wreckLegs: { at: 33, x0: 23, rows: ['uuxx', 'uuxyxx', 'UUxyxx'] },
     mount: [['R', -2, -1, 5, 3], ['g', -2, -1, 5, 1], ['a', -1, 1, 3, 1]],
   },
 };
@@ -391,40 +540,18 @@ const GIRL_DEFS = {
 const GIRL_ART = {};
 for (const id in GIRL_DEFS) {
   const d = GIRL_DEFS[id];
+  let top = GIRL_GH;
+  for (const k of ['hat', 'front', 'back']) if (d[k]) top = Math.min(top, d[k].at + d[k].rows.findIndex((r) => /[^.]/.test(r)));
   GIRL_ART[id] = {
     pivot: [(d.pivot[0] + 0.5 - GIRL_AX) * GIRL_P, (d.pivot[1] + 0.5 - GIRL_GH) * GIRL_P],
     barrel: d.barrel,
+    headTop: (top - 1 - GIRL_GH) * GIRL_P, // including the 1-px outline
+    height: (GIRL_GH - top + 1) * GIRL_P,
   };
 }
 
-// Per-girl pose data. hair: [c0, c1, r0, r1, chars]: the loose hair / tails / ribbons (body
-// pixels of those chars in columns c0..c1, rows >= r0) that sway and flick backwards; rows >= r1
-// move twice as far. sleeve: colour of the raised arm in the victory pose; handOff: marks that
-// remove the lowered hand when the arm goes up.
-const GIRL_POSE = {
-  gwt: { hair: [5, 8, 9, 12, 'hHpP'], sleeve: 'u', handOff: [['R', 17, 17], ['_', 18, 17]] },
-  obj: { hair: [9, 10, 15, 16, 'P'], sleeve: 'u', handOff: [['_', 19, 17]] },
-  int: { hair: [6, 8, 12, 16, 'hH'], sleeve: 'w', handOff: [['_', 18, 17]] },
-  nxi: { hair: [6, 10, 15, 18, 'hHvan'], sleeve: 'u', handOff: [['_', 19, 17], ['u', 18, 17]] },
-};
 const GIRL_PHASE = { gwt: 0, obj: 0.37, int: 0.71, nxi: 0.53 };
 const GIRL_POSE_LEN = { fire: 0.35, hit: 0.5 };
-
-// Expressions, shared: all four faces are aligned (eyes at columns 15 and 18, rows 9-10).
-const GIRL_EYES_OFF = [['s', 15, 9], ['s', 15, 10], ['s', 18, 9], ['s', 18, 10]];
-const GIRL_SQUINT = [...GIRL_EYES_OFF, ['e', 14, 9], ['e', 15, 10], ['e', 14, 11], ['e', 19, 9], ['e', 18, 10], ['e', 19, 11]];
-const GIRL_FACES = {
-  blink: [['s', 15, 9], ['s', 18, 9], ['e', 15, 10], ['e', 18, 10]],
-  squint: [...GIRL_SQUINT, ['m', 16, 12], ['m', 17, 12]],
-  hit: [...GIRL_SQUINT, ['m', 17, 12], ['m', 17, 13], ['d', 20, 8], ['d', 20, 9],
-    ['w', 17, 1], ['w', 20, 0], ['w', 22, 2], ['w', 15, 2]],
-  happy: [...GIRL_EYES_OFF, ['e', 13, 10], ['e', 14, 9], ['e', 15, 10], ['e', 17, 10], ['e', 18, 9], ['e', 19, 10],
-    ['m', 16, 12], ['m', 17, 12]],
-};
-// victory arm (V-sign) on the front side; '*' = her sleeve colour
-const GIRL_WIN_ARM = [['*', 19, 15], ['*', 19, 14], ['*', 20, 14], ['*', 20, 13], ['*', 20, 12],
-  ['s', 20, 11], ['s', 21, 11], ['s', 20, 10], ['s', 22, 10], ['s', 20, 9], ['s', 23, 9]];
-
 
 // ---- composition (cached) ----
 function girlGrid() {
@@ -433,39 +560,82 @@ function girlGrid() {
   return g;
 }
 
-function girlStamp(g, layer, dy = 0, map = null) {
-  layer.rows.forEach((row, i) => {
-    const r = layer.at + i + dy;
-    if (r < 0 || r >= GIRL_GH) return;
-    for (let c = 0; c < row.length && c < GIRL_GW; c++) {
-      let ch = row[c];
+// a layer as a full-width grid fragment: { at, rows: [[chars]] }
+function girlLayer(l) {
+  return { at: l.at, rows: l.rows.map((s) => {
+    const a = new Array(GIRL_GW).fill('.');
+    for (let c = 0; c < s.length; c++) if (c + (l.x0 || 0) < GIRL_GW) a[c + (l.x0 || 0)] = s[c];
+    return a;
+  }) };
+}
+
+function girlMark(L, marks, sub) {
+  for (let [ch, c, r] of marks) {
+    const i = r - L.at;
+    if (i < 0 || i >= L.rows.length || c < 0 || c >= GIRL_GW) continue;
+    if (sub && sub[ch]) ch = sub[ch];
+    L.rows[i][c] = ch;
+  }
+}
+
+// grow a layer upwards / downwards so marks outside it have somewhere to land
+function girlSpan(L, r0, r1) {
+  while (L.at > r0) { L.rows.unshift(new Array(GIRL_GW).fill('.')); L.at--; }
+  while (L.at + L.rows.length <= r1) L.rows.push(new Array(GIRL_GW).fill('.'));
+  return L;
+}
+
+// move hair back: `s1` pixels for rows >= sway[0], `s2` for rows >= sway[1]
+function girlSway(L, sway, s1, s2) {
+  if (!sway || (!s1 && !s2)) return;
+  L.rows.forEach((row, i) => {
+    const r = L.at + i;
+    const sh = r >= sway[1] ? s2 : r >= sway[0] ? s1 : 0;
+    if (!sh) return;
+    const out = new Array(GIRL_GW).fill('.');
+    for (let c = 0; c < GIRL_GW; c++) if (row[c] !== '.' && c - sh >= 0) out[c - sh] = row[c];
+    L.rows[i] = out;
+  });
+}
+
+// battle damage, picked deterministically from the layer's own pixels
+function girlDamage(L, salt, which) {
+  L.rows.forEach((row, i) => {
+    const r = L.at + i;
+    for (let c = 0; c < GIRL_GW; c++) {
+      const ch = row[c];
       if (ch === '.') continue;
-      if (map && map[ch]) ch = map[ch];
-      g[r][c] = ch;
+      const h = hash2(c * 7 + salt, r * 13 + salt);
+      if (which === 'rig') { if (h < 0.07) row[c] = 'k'; else if (h < 0.17) row[c] = 'K'; }
+      else if (which === 'cloth') { if ('uUzpPqwWcj'.includes(ch) && h < 0.07) row[c] = 's'; }
+      else if (which === 'hem') { if (h < 0.3) row[c] = '_'; }
     }
   });
 }
 
-function girlOverlay(layer, marks, open) {
-  if (!marks || !marks.length) return layer;
-  const rows = layer.rows.map((s) => s.padEnd(GIRL_GW, '.').split(''));
-  for (const [ch, c, r] of marks) {
-    const i = r - layer.at;
-    if (i < 0 || i >= rows.length) continue;
-    // marks only land on the layer's own pixels (except sweat drops / scorch in the open air)
-    if (rows[i][c] === '.' && !open.includes(ch)) continue;
-    rows[i][c] = ch;
-  }
-  return { at: layer.at, rows: rows.map((a) => a.join('')) };
+function girlPut(g, L, dx, dy) {
+  L.rows.forEach((row, i) => {
+    const r = L.at + i + dy;
+    if (r < 0 || r >= GIRL_GH) return;
+    for (let c = 0; c < GIRL_GW; c++) {
+      if (row[c] === '.' || c + dx < 0 || c + dx >= GIRL_GW) continue;
+      g[r][c + dx] = row[c];
+    }
+  });
 }
 
+// soft selective outline: every empty pixel touching the sprite takes the darker shade of the
+// colour it touches (below first, so heads are outlined in their hair colour)
 function girlOutline(g) {
   const out = g.map((row) => row.slice());
+  const at = (r, c) => (r >= 0 && r < GIRL_GH && c >= 0 && c < GIRL_GW ? g[r][c] : '.');
   for (let r = 0; r < GIRL_GH; r++) {
     for (let c = 0; c < GIRL_GW; c++) {
       if (g[r][c] !== '.') continue;
-      const n = (rr, cc) => rr >= 0 && rr < GIRL_GH && cc >= 0 && cc < GIRL_GW && g[rr][cc] !== '.' && g[rr][cc] !== 'd';
-      if (n(r - 1, c) || n(r + 1, c) || n(r, c - 1) || n(r, c + 1)) out[r][c] = 'o';
+      for (const [dr, dc] of [[1, 0], [0, 1], [0, -1], [-1, 0]]) {
+        const n = at(r + dr, c + dc);
+        if (n !== '.' && n !== 'd') { out[r][c] = 'o' + n; break; }
+      }
     }
   }
   return out;
@@ -493,47 +663,25 @@ function girlRuns(g) {
       c = e;
     }
   }
-  return { keys: Object.keys(byKey).map((k) => [k, byKey[k]]), mask };
-}
-
-function girlRows(layer) { return layer.rows.map((r) => r.padEnd(GIRL_GW, '.').split('')); }
-
-function girlMark(rows, at, marks, sub) {
-  for (let [ch, c, r] of marks) {
-    const i = r - at;
-    if (i < 0 || i >= rows.length || c < 0 || c >= GIRL_GW) continue;
-    if (ch === '*') ch = sub;
-    rows[i][c] = ch;
-  }
-}
-
-// move the loose hair `s1` pixels back (rows >= r0), `s2` for rows >= r1
-function girlHair(rows, at, hair, s1, s2) {
-  if (!hair || (!s1 && !s2)) return;
-  const [c0, c1, r0, r1, chars] = hair;
-  rows.forEach((row, i) => {
-    const r = at + i;
-    const sh = r >= r1 ? s2 : r >= r0 ? s1 : 0;
-    if (!sh) return;
-    const moved = [];
-    for (let c = c0; c <= c1; c++) if (chars.includes(row[c])) { moved.push(c, row[c]); row[c] = '.'; }
-    for (let k = 0; k < moved.length; k += 2) if (moved[k] - sh >= 0) row[moved[k] - sh] = moved[k + 1];
-  });
-}
-
-function girlPut(g, rows, at, dx, dy) {
-  rows.forEach((row, i) => {
-    const r = at + i + dy;
-    if (r < 0 || r >= GIRL_GH) return;
-    for (let c = 0; c < row.length; c++) {
-      if (row[c] === '.' || c + dx < 0 || c + dx >= GIRL_GW) continue;
-      g[r][c + dx] = row[c];
+  // merge identical runs in consecutive rows into taller boxes: [c, r, w, h, ...]
+  const tall = (runs) => {
+    const out = [];
+    const open = new Map(); // `${c},${w}` -> index in out of a box ending on the previous row
+    let row = -1, next = new Map();
+    for (let i = 0; i < runs.length; i += 3) {
+      const [c, r, w] = [runs[i], runs[i + 1], runs[i + 2]];
+      if (r !== row) { if (r === row + 1) { open.clear(); next.forEach((v, k) => open.set(k, v)); } else open.clear(); next = new Map(); row = r; }
+      const k = c * 64 + w;
+      const j = open.get(k);
+      if (j !== undefined) { out[j + 3]++; next.set(k, j); } else { next.set(k, out.length); out.push(c, r, w, 1); }
     }
-  });
+    return out;
+  };
+  return { keys: Object.keys(byKey).map((k) => [k, tall(byKey[k])]), mask: tall(mask) };
 }
 
-// f = { bob, face, step, bdx, ldx, h1, h2, arm }: body bob / x shift, leg frame / x shift,
-// hair shifts, raised arm. Each distinct frame is composed once and cached.
+// f = { bob, face, step, bdx, ldx, h1, h2, arm }: upper-body bob / x shift, leg frame / x shift,
+// hair sway shifts, raised arm. Each distinct frame is composed once and cached.
 const _girlFrames = new Map();
 function girlFrame(id, state, f) {
   const key = state === 'wreck' ? `${id}|wreck` :
@@ -541,37 +689,55 @@ function girlFrame(id, state, f) {
   let fr = _girlFrames.get(key);
   if (fr) return fr;
   const d = GIRL_DEFS[id];
-  const pd = GIRL_POSE[id];
   const g = girlGrid();
-  if (state === 'wreck') {
-    girlStamp(g, d.wreck);
-  } else {
-    const dmg = state === 'damaged';
-    const rig = dmg ? girlOverlay(d.rig, d.dmgRig, '') : d.rig;
-    const bodyL = dmg ? girlOverlay(d.body, d.dmgBody, 'd') : d.body;
-    const legs = dmg ? girlOverlay(d.legs[f.step], d.dmgLegs, '') : d.legs[f.step];
-    const body = girlRows(bodyL);
-    girlHair(body, bodyL.at, pd.hair, f.h1, f.h2);
-    if (f.face) girlMark(body, bodyL.at, GIRL_FACES[f.face]);
-    if (f.arm) {
-      girlMark(body, bodyL.at, pd.handOff);
-      girlMark(body, bodyL.at, GIRL_WIN_ARM, pd.sleeve);
-    }
-    // the body layer starts at row 3-4; marks above it (shock sparks) need room
-    const pad = bodyL.at;
-    const full = [];
-    for (let r = 0; r < pad; r++) full.push(new Array(GIRL_GW).fill('.'));
-    if (f.face === 'hit') girlMark(full, 0, GIRL_FACES.hit.filter((m) => m[2] < pad));
-    girlStamp(g, rig);
-    girlPut(g, girlRows(legs), legs.at, f.ldx, 0);
-    girlPut(g, full.concat(body), 0, f.bdx, f.bob);
-    for (let r = 0; r < GIRL_GH; r++) for (let c = 0; c < GIRL_GW; c++) if (g[r][c] === '_') g[r][c] = '.';
+  const wreck = state === 'wreck';
+  const dmg = state === 'damaged' || wreck;
+  const sleeveSub = { '*': d.sleeve[0], '+': d.sleeve[1], '#': d.sleeve[2] };
+  const L = {};
+  for (const k of d.order) {
+    if (k === 'face') L.face = girlLayer(GIRL_FACE);
+    else if (k === 'arm') L.arm = girlLayer(f && f.arm ? GIRL_ARM_UP : d.arm);
+    else if (k === 'legs') L.legs = girlLayer(wreck ? d.wreckLegs : d.legs[f.step]);
+    else L[k] = girlLayer(d[k]);
   }
+  if (L.arm && f && f.arm) L.arm.rows = L.arm.rows.map((row) => row.map((ch) => sleeveSub[ch] || ch));
+  if (dmg) {
+    girlDamage(L.rig, id.charCodeAt(0), 'rig');
+    girlDamage(L.body, 3, 'cloth');
+    const hem = { at: L.body.at + L.body.rows.length - 1, rows: [L.body.rows[L.body.rows.length - 1]] };
+    girlDamage(hem, 5, 'hem');
+    if (L.hat) girlDamage(L.hat, 9, 'rig');
+  }
+  if (wreck) {
+    // the rig has toppled behind her: dropped, holed and charred
+    L.rig.rows.forEach((row, i) => {
+      for (let c = 0; c < GIRL_GW; c++) if (row[c] !== '.' && hash2(c + 3, i + L.rig.at) < 0.1) row[c] = '_';
+    });
+    L.rig.at += 10;
+  }
+  // expressions and sparks live on the face layer, which moves with her head
+  const face = girlSpan(L.face, 0, 21);
+  if (wreck) girlMark(face, GIRL_FACES.dizzy);
+  else {
+    if (state === 'damaged' && !f.face) girlMark(face, GIRL_FACES.worried);
+    if (f.face) girlMark(face, GIRL_FACES[f.face]);
+    if (f.face === 'hit') girlMark(face, GIRL_SPARKS);
+  }
+  if (L.tail && !wreck) girlSway(L.tail, d.tail.sway, f.h1, f.h2);
+  const upDx = wreck ? 0 : f.bdx;
+  const upDy = wreck ? GIRL_SIT : f.bob;
+  for (const k of d.order) {
+    if (k === 'rig') girlPut(g, L.rig, 0, 0);
+    else if (k === 'legs') girlPut(g, L.legs, wreck ? 0 : f.ldx, 0);
+    else girlPut(g, L[k], upDx, upDy);
+  }
+  // a raised arm goes in front of everything
+  if (f && f.arm && !wreck) girlPut(g, L.arm, upDx, upDy);
+  for (let r = 0; r < GIRL_GH; r++) for (let c = 0; c < GIRL_GW; c++) if (g[r][c] === '_') g[r][c] = '.';
   fr = girlRuns(girlOutline(g));
   _girlFrames.set(key, fr);
   return fr;
 }
-
 
 // ---- palettes (cached per girl, colour and state) ----
 function girlHex(c) { return '#' + c.map((v) => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, '0')).join(''); }
@@ -588,25 +754,30 @@ function girlPalette(id, color, state) {
   const d = GIRL_DEFS[id];
   pal = Object.assign({}, GIRL_BASE_PAL, d.pal);
   pal.p = color;
-  pal.P = girlShade(color, -0.3);
+  pal.P = girlShade(color, -0.28);
   pal.q = girlShade(color, 0.35);
   if (state === 'damaged') {
-    // rigging a little sooty
     for (const k of ['r', 'g']) pal[k] = girlHex(mixRgb(hexToRgb(pal[k]), [70, 66, 70], 0.18));
   } else if (state === 'wreck') {
     const ash = [58, 56, 62];
     for (const k in pal) {
-      if (k === 'o' || k === 'e') continue;
+      if (k === 'e') continue;
       const c = hexToRgb(pal[k]);
       const lum = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
-      let t = 0.25; // everything a little darker / greyer
-      let rgbv = mixRgb(c, ash, t);
-      if ('pPq'.includes(k)) rgbv = mixRgb([lum, lum, lum], ash, 0.45); // player colour: desaturated
-      else if ('rRgBTtanv'.includes(k)) rgbv = mixRgb([lum, lum, lum], ash, 0.55); // rigging: charred greys
-      else if ('sSb'.includes(k)) rgbv = mixRgb(c, ash, 0.12);
-      pal[k] = girlHex(rgbv);
+      let v = mixRgb(c, ash, 0.25);
+      if ('pPq'.includes(k)) v = mixRgb([lum, lum, lum], ash, 0.45); // player colour: desaturated
+      else if ('rRgBTtanv'.includes(k)) v = mixRgb([lum, lum, lum], ash, 0.55); // charred rigging
+      else if ('sSbmw'.includes(k)) v = mixRgb(c, ash, 0.12);
+      pal[k] = girlHex(v);
     }
   }
+  // outline shades
+  for (const k of Object.keys(pal)) {
+    let o = GIRL_OUTLINE[k] || girlHex(mixRgb(hexToRgb(pal[k]), [46, 24, 58], 0.52));
+    if (state === 'wreck' && GIRL_OUTLINE[k]) o = girlHex(mixRgb(hexToRgb(o), [58, 56, 62], 0.3));
+    pal['o' + k] = o;
+  }
+  pal.oB = '#5a2a4a';
   _girlPals.set(key, pal);
   return pal;
 }
@@ -673,12 +844,12 @@ function drawGirl(ctx, o) {
   const beaconOn = state !== 'wreck' && Math.floor(t * 2) % 2 === 0;
   for (const [k, runs] of frame.keys) {
     ctx.fillStyle = k === 'B' && beaconOn ? GIRL_BEACON : pal[k];
-    for (let i = 0; i < runs.length; i += 3) girlFill(ctx, p, runs[i], runs[i + 1], runs[i + 2], 1);
+    for (let i = 0; i < runs.length; i += 4) girlFill(ctx, p, runs[i], runs[i + 1], runs[i + 2], runs[i + 3]);
   }
   if (o.flash > 0) {
     ctx.fillStyle = `rgba(255,255,255,${clamp(o.flash, 0, 1) * 0.85})`;
     const m = frame.mask;
-    for (let i = 0; i < m.length; i += 3) girlFill(ctx, p, m[i], m[i + 1], m[i + 2], 1);
+    for (let i = 0; i < m.length; i += 4) girlFill(ctx, p, m[i], m[i + 1], m[i + 2], m[i + 3]);
   }
 }
 
@@ -690,12 +861,12 @@ function drawGirlMount(ctx, o) {
   const p = { x: Math.round(o.x), y: Math.round(o.y) - girlLift(o) * GIRL_P, facing: o.facing < 0 ? -1 : 1 };
   const beaconOn = Math.floor((o.t || 0) * 2) % 2 === 0;
   const [pc, pr] = d.pivot;
-  // dark outline box first, then the parts
+  // a little rounded cap: soft outline in the rig's dark shade, then the parts
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const [, dx, dy, w, h] of d.mount) {
     x0 = Math.min(x0, dx); y0 = Math.min(y0, dy); x1 = Math.max(x1, dx + w); y1 = Math.max(y1, dy + h);
   }
-  ctx.fillStyle = GIRL_BASE_PAL.o;
+  ctx.fillStyle = pal.oR;
   girlFill(ctx, p, pc + x0 - 1, pr + y0, x1 - x0 + 2, y1 - y0);
   girlFill(ctx, p, pc + x0, pr + y0 - 1, x1 - x0, y1 - y0 + 2);
   for (const [k, dx, dy, w, h] of d.mount) {
@@ -707,4 +878,3 @@ function drawGirlMount(ctx, o) {
     girlFill(ctx, p, pc + x0 - 1, pr + y0 - 1, x1 - x0 + 2, y1 - y0 + 2);
   }
 }
-
