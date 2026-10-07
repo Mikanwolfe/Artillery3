@@ -13,7 +13,7 @@ It lifts as much as it can from A3s, in the original's world units (2400-wide te
 
 - **Snowy Day** environment: midpoint-displacement terrain (reduction 0.45), lavender sky, three parallax ridges, snow.
 - **Characters**: G.W. Tiger, Object 15X and Innocentia, each with health + armour (armour soaks hits first) and their original starting gun.
-- **The MAIA satellite** ("Maia-Class Low Orbit Ion Cannon") sits above the map, gains damage every turn, and fires on wherever a satellite-enabled shell lands.
+- **The MAIA satellite** ("Maia-Class Low Orbit Ion Cannon": a round box-built body with arms curling round to the emitter and a wing of antennas on one side, turning as a whole to aim) sits above the map, gains damage every turn, and fires on wherever a satellite-enabled shell lands.
 - **Weapons and shop**: the full A3RData roster with its names, flavour text, rarity colours, autoloader clips, multi-round salvos, aim dispersion, lasers and acid; four equip slots; Health++ / Armour++ on the original cost curve; everyone is paid 500 + half the round's damage (scaled up each round).
 - **Camera**: proportional control (closes 1/10 of the distance per frame) following the tank, the shell and the satellite; drag to look around.
 - **Aim guide** (human players): a dotted line along the barrel that fades out; hold Space and it bends into the predicted arc for the current charge (gravity only, no wind), still fading before the landing point. Tune with `AIM_LINE_LEN`, `AIM_ARC_LEN` and `AIM_GUIDE_WIND` in `web/js/game.js`.
@@ -33,7 +33,7 @@ Everything in the world is drawn as plain axis-aligned boxes that never rotate: 
 | Look around | drag (either mouse button) |
 | Mute / pause | `M` / `Esc` |
 
-**CPU players** come in Easy / Normal / Hard: a brute-force ballistic solver that tries shots against the real physics, then adds aim error (weapon dispersion adds more).
+**CPU players** come in Easy / Normal / Hard: a brute-force ballistic solver that tries shots against the real physics, then adds aim error that grows with range (deadly up close, shaky across the map; tune `RANGE_ERR_BASE` / `RANGE_ERR_SCALE` in `web/js/ai.js`). Weapon dispersion adds more.
 Each CPU has a fixed personality picked by name (Ace: cocky, Major: polite, Rookie: nervous, Sarge: deadpan, Byron: poet, Unit 7: robot; custom names get one at random) and reacts to what actually happened, e.g. "that was close" after a near miss or "missed me!" when someone fires wide of them. The ~450 pre-written lines live in `web/js/taunts.js`; tune how often CPUs speak with `CHATTINESS` in `web/js/game.js`.
 
 Layout: `web/js/` — `terrain.js` (midpoint displacement + craters), `weapons.js` (vehicles, weapon table, shared ballistic stepper), `entities.js` (tank, projectile, acid, laser, satellite), `ai.js` (solver, CPU controller), `taunts.js` (banter), `game.js` (camera, rules, turn flow, rendering, HUD), `ui.js` (menu, character select, shop), plus `background.js`, `particles.js`, `audio.js`.

@@ -445,8 +445,10 @@ class Laser {
 }
 
 // MAIA-class Low Orbit Ion Cannon. Sits above the map, gains damage every turn, and fires at
-// wherever a satellite-enabled weapon's shell lands. Drawn as boxes: solar wings, a body in the
-// original's plum/navy, an antenna dish and an emitter barrel that swings toward the target.
+// wherever a satellite-enabled weapon's shell lands. Box-art but round: a stepped-disc body (the
+// original's nested plum/navy circles), two arms that curl around it to claws by the emitter, and a
+// fan of antenna spars flaring out on one side like a wing. Every part is placed in the satellite's
+// own frame, so the whole thing turns to face its target; the squares themselves never rotate.
 class Satellite {
   constructor() {
     this.name = 'Maia';
@@ -459,6 +461,7 @@ class Satellite {
     this.angleDest = Math.PI / 2;
     this.charge = 0; // 0..1 while powering up for a strike
     this.t = 0;
+    this.bob = 0;
   }
 
   get level() { return Math.floor(this.damage / 60); }
@@ -466,73 +469,92 @@ class Satellite {
   lookAt(pt) { this.angleDest = Math.atan2(pt.y - this.y, pt.x - this.x); }
   update() {
     this.t++;
-    this.angle += (this.angleDest - this.angle) / 20;
+    this.bob = Math.sin(this.t / 50) * 5;
+    // turns toward its target, with a slow idle sway so it never sits perfectly still
+    this.angle += (this.angleDest + 0.07 * Math.sin(this.t / 80) - this.angle) / 20;
+  }
+
+  // local frame -> world: +x is the emitter direction
+  toWorld(lx, ly) {
+    const c = Math.cos(this.angle);
+    const s = Math.sin(this.angle);
+    return { x: this.x + lx * c - ly * s, y: this.y + this.bob + lx * s + ly * c };
   }
 
   // emitter tip, where the beam leaves
-  lens() {
-    return { x: this.x + Math.cos(this.angle) * 100, y: this.y + Math.sin(this.angle) * 100 };
-  }
+  lens() { return this.toWorld(104, 0); }
 
   draw(ctx) {
-    const x = Math.round(this.x);
-    const y = Math.round(this.y + Math.sin(this.t / 50) * 4);
     const main = 'rgb(120,32,78)';
     const accent = 'rgb(23,23,47)';
-    // solar wings: navy frame, blue cells, a strut to the body
-    for (const s of [-1, 1]) {
-      const wx = s < 0 ? x - 168 : x + 58;
-      ctx.fillStyle = '#8a8fa0';
-      ctx.fillRect(s < 0 ? x - 60 : x + 35, y - 3, 25, 6);
-      ctx.fillStyle = accent;
-      ctx.fillRect(wx, y - 26, 110, 52);
-      ctx.fillStyle = 'rgb(62,78,150)';
-      for (let i = 0; i < 5; i++) for (let j = 0; j < 2; j++) ctx.fillRect(wx + 4 + i * 21, y - 22 + j * 23, 18, 20);
-      ctx.fillStyle = 'rgba(190,205,255,0.35)';
-      for (let i = 0; i < 5; i++) ctx.fillRect(wx + 4 + i * 21, y - 22, 6, 4);
-      // blinking navigation light at the wingtip
-      if ((this.t >> 5) % 2 === (s < 0 ? 0 : 1)) {
-        ctx.fillStyle = s < 0 ? '#ff4040' : '#40ff80';
-        sq(ctx, s < 0 ? wx - 4 : wx + 114, y, 6);
+    const light = 'rgb(176,74,128)';
+    const metal = '#9aa0b4';
+    const dot = (lx, ly, size, col) => {
+      const p = this.toWorld(lx, ly);
+      ctx.fillStyle = col;
+      sq(ctx, p.x, p.y, size);
+    };
+    const polar = (r, deg) => [Math.cos(rad(deg)) * r, Math.sin(rad(deg)) * r];
+
+    // wing: five antenna spars fanning out from a hub at the back, on one side only
+    const hub = [-34, 18];
+    [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]].forEach(([deg, len], k) => {
+      const [ux, uy] = polar(1, deg);
+      for (let d = 10; d <= len; d += 6) {
+        dot(hub[0] + ux * d, hub[1] + uy * d, 4, metal);
+        // panel "feathers" along the inner half of each spar
+        if (d > 24 && d < len * 0.75 && (d / 6) % 2 < 1) dot(hub[0] + ux * d - uy * 6, hub[1] + uy * d + ux * 6, 7, 'rgba(62,78,150,0.9)');
       }
+      const tipOn = ((this.t >> 4) + k) % 5 === 0;
+      dot(hub[0] + ux * (len + 6), hub[1] + uy * (len + 6), 7, tipOn ? '#ff8fd0' : light);
+    });
+    dot(hub[0], hub[1], 12, accent);
+
+    // two arms curling around the body from the back to claws beside the emitter
+    for (const side of [-1, 1]) {
+      for (let deg = 160; deg >= 38; deg -= 7.5) {
+        const [ox, oy] = polar(64, deg * side);
+        const [ix, iy] = polar(54, deg * side);
+        dot(ix, iy, 5, accent);
+        dot(ox, oy, 10, main);
+      }
+      const [cx, cy] = polar(66, 32 * side);
+      dot(cx, cy, 14, light);
+      dot(cx + 8, cy + side * -4, 6, light);
+      if ((this.t >> 5) % 2 === (side < 0 ? 0 : 1)) dot(cx, cy, 5, side < 0 ? '#ff4040' : '#40ff80');
     }
-    // antenna mast and stepped dish
-    ctx.fillStyle = '#8a8fa0';
-    ctx.fillRect(x - 2, y - 66, 4, 30);
-    ctx.fillStyle = '#c8ccd8';
-    ctx.fillRect(x - 14, y - 72, 28, 6);
-    ctx.fillRect(x - 9, y - 78, 18, 6);
-    ctx.fillStyle = main;
-    sq(ctx, x, y - 82, 5);
-    // body (the original's nested circles, as nested boxes)
-    ctx.fillStyle = main;
-    sq(ctx, x, y, 76);
-    ctx.fillStyle = accent;
-    sq(ctx, x, y, 62);
-    ctx.fillStyle = main;
-    sq(ctx, x, y, 44);
+
+    // round body as stepped discs (unrotated rows of boxes)
+    const c = this.toWorld(0, 0);
+    const disc = (r, col) => {
+      ctx.fillStyle = col;
+      for (let y = -r; y < r; y += 6) {
+        const yy = y + 3;
+        const w = 2 * Math.sqrt(Math.max(0, r * r - yy * yy));
+        ctx.fillRect(Math.round(c.x - w / 2), Math.round(c.y + y), Math.round(w), 6);
+      }
+    };
+    disc(44, main);
+    disc(37, accent);
+    disc(28, main);
     const pulse = 0.5 + 0.5 * Math.sin(this.t / 12);
-    ctx.fillStyle = `rgba(255,190,230,${0.4 + 0.4 * pulse + this.charge * 0.2})`;
-    sq(ctx, x, y, 14 + this.charge * 14);
-    // emitter barrel
-    const ca = Math.cos(this.angle);
-    const sa = Math.sin(this.angle);
-    ctx.fillStyle = accent;
-    for (let i = 0; i < 6; i++) sq(ctx, x + ca * (40 + i * 11), y + sa * (40 + i * 11), 16 - i);
-    ctx.fillStyle = main;
-    sq(ctx, x + ca * 100, y + sa * 100, 12);
+    ctx.fillStyle = `rgba(255,190,230,${0.45 + 0.35 * pulse + this.charge * 0.2})`;
+    sq(ctx, c.x, c.y, 14 + this.charge * 16);
+
+    // emitter barrel and lens
+    for (let i = 0; i < 6; i++) dot(40 + i * 11, 0, 16 - i, accent);
+    dot(104, 0, 12, main);
     // charging: sparks spiral into the lens and the tip whitens
     if (this.charge > 0) {
-      const lx = x + ca * 100;
-      const ly = y + sa * 100;
+      const l = this.lens();
       for (let i = 0; i < 10; i++) {
-        const a = i * 0.63 + this.t * 0.15;
+        const an = i * 0.63 + this.t * 0.15;
         const r = 70 * (1 - ((this.charge * 3 + i / 10) % 1));
         ctx.fillStyle = `rgba(255,240,250,${0.4 + this.charge * 0.6})`;
-        sq(ctx, lx + Math.cos(a) * r, ly + Math.sin(a) * r, 5);
+        sq(ctx, l.x + Math.cos(an) * r, l.y + Math.sin(an) * r, 5);
       }
       ctx.fillStyle = `rgba(255,255,255,${this.charge})`;
-      sq(ctx, lx, ly, 6 + this.charge * 16);
+      sq(ctx, l.x, l.y, 6 + this.charge * 16);
     }
   }
 }

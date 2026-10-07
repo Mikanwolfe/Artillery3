@@ -13,6 +13,11 @@ class Ctl {
   reset() { this.left = this.right = this.up = this.down = this.charge = this.fine = false; }
 }
 
+// Aim error multiplier by range: RANGE_ERR_BASE at point blank, +1 every RANGE_ERR_SCALE world units
+// (capped at 3x), so CPUs are deadly close up and shaky at long range.
+const RANGE_ERR_BASE = 0.35;
+const RANGE_ERR_SCALE = 650;
+
 // aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge
 const DIFFICULTY = {
   easy: { se: 4, sc: 0.07 },
@@ -92,8 +97,11 @@ class CpuController {
     }
     const k = DIFFICULTY[t.type] || DIFFICULTY.normal;
     const w = best.weapon;
-    best.elev = clamp(best.elev + rng.gauss() * k.se, w.elevMin, w.elevMax);
-    best.v = clamp(best.v * (1 + rng.gauss() * k.sc), w.maxCharge * 0.05, w.maxCharge);
+    // aim error grows with range: sharp up close, increasingly loose across the map
+    const range = Math.abs(best.target.x - t.x);
+    const f = clamp(RANGE_ERR_BASE + range / RANGE_ERR_SCALE, RANGE_ERR_BASE, 3);
+    best.elev = clamp(best.elev + rng.gauss() * k.se * f, w.elevMin, w.elevMax);
+    best.v = clamp(best.v * (1 + rng.gauss() * k.sc * f), w.maxCharge * 0.05, w.maxCharge);
     return best;
   }
 
