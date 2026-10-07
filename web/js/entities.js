@@ -7,6 +7,15 @@ const TANK_W = 34; // hitbox / footprint (world units)
 const TANK_H = 20;
 const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
 const TANK_SPEED = 1.5; // A3 Constants.PlayerSpeed
+const TANK_CLIMB = 1.6; // steepest slope (dy/dx) a vehicle can drive up
+
+// Vehicle upgrades beyond A3's Health++ / Armour++ (which use Game.upgradeCost's curve). Each level
+// is bought in turn from `costs`.
+const VEHICLE_UPGRADES = [
+  { id: 'engine', name: 'Engine & tracks', costs: [900, 1800, 3200], desc: '+40% fuel and steeper climbs per level.' },
+  { id: 'computer', name: 'Ballistic computer', costs: [2800], desc: 'The aim guide and target marker account for wind, and the guide arc runs further.' },
+  { id: 'workshop', name: 'Field workshop', costs: [1200, 2400, 4200], desc: 'Repairs 5% of max armour per level at the start of each of your turns.' },
+];
 const PLAYER_COLORS = ['#3d6fa8', '#b8433a', '#3e8a5a', '#7a4d9a'];
 
 // Self-propelled guns, one box-art design per vehicle. `body` draws the chassis, `mount` the gun
@@ -104,7 +113,7 @@ class Tank {
     this.color = PLAYER_COLORS[idx % PLAYER_COLORS.length];
     this.money = 0;
     this.wins = 0;
-    this.upgrades = { hp: 0, armour: 0 };
+    this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0 };
     this.weapons = [this.vehicle.weapon.id];
     this.kits = 0; // repair kits carried (consumable)
     this.abilities = { double: 0, over: 0, shield: 0 }; // 1 = owned (see ABILITIES)
@@ -121,6 +130,8 @@ class Tank {
   // A3 shop: Health++ / Armour++ multiply by 1.3 per level
   get maxHp() { return Math.round(this.vehicle.hp * Math.pow(1.3, this.upgrades.hp)); }
   get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)); }
+  get maxFuel() { return Math.round(TANK_FUEL * (1 + 0.4 * this.upgrades.engine)); }
+  get climb() { return TANK_CLIMB + 0.5 * this.upgrades.engine; }
   get weapon() { return WEAPON_BY_ID[this.weapons[this.weaponIdx]] || WEAPON_BY_ID[this.weapons[0]]; }
   // full-charge muzzle speed for the next shot (Overcharge raises it)
   // owned and recharged
@@ -134,7 +145,7 @@ class Tank {
     this.alive = true;
     this.hp = this.maxHp;
     this.armour = this.maxArmour;
-    this.fuel = TANK_FUEL;
+    this.fuel = this.maxFuel;
     this.facing = x < WORLD_W / 2 ? 1 : -1;
     this.weaponIdx = Math.min(this.weaponIdx, this.weapons.length - 1);
     this.elev = (this.weapon.elevMin + this.weapon.elevMax) / 2;

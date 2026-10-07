@@ -277,10 +277,17 @@ const UI = {
           <button data-s="${id}" ${tank.weapons.length > 1 ? '' : 'disabled'}>sell ${money(g.sellValue(w))}</button></div>`;
       }).join('');
       $('shop-upg').innerHTML = [['hp', 'Health++', tank.maxHp], ['armour', 'Armour++', tank.maxArmour]].map(([id, label, cur]) => {
-        const cost = g.upgradeCost(tank.upgrades[id]);
+        const cost = g.upgradeCost(tank, id);
         return `<div class="upg"><span>${label}<br><small>${cur} &gt;&gt; ${Math.round(cur * 1.3)}</small></span>
           <button data-u="${id}" ${tank.money >= cost ? '' : 'disabled'}>${money(cost)}</button></div>`;
+      }).join('') + VEHICLE_UPGRADES.map((u) => {
+        const lvl = tank.upgrades[u.id] | 0;
+        const maxed = lvl >= u.costs.length;
+        const cost = u.costs[lvl];
+        return `<div class="upg"><span>${esc(u.name)} <small>(${lvl}/${u.costs.length})</small><br><small>${esc(u.desc)}</small></span>
+          <button data-v="${u.id}" ${!maxed && tank.money >= cost ? '' : 'disabled'}>${maxed ? 'max' : money(cost)}</button></div>`;
       }).join('');
+      $('shop-upg').querySelectorAll('[data-v]').forEach((b) => { b.onclick = () => { g.buy(tank, 'vupg', b.dataset.v); render(); }; });
       $('shop-grid').querySelectorAll('[data-w]').forEach((b) => { b.onclick = () => { g.buy(tank, 'weapon', b.dataset.w); render(); }; });
       $('shop-owned').querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { g.sell(tank, b.dataset.s); render(); }; });
       $('shop-upg').querySelectorAll('[data-u]').forEach((b) => { b.onclick = () => { g.buy(tank, 'upgrade', b.dataset.u); render(); }; });

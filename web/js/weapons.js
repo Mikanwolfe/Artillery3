@@ -86,26 +86,34 @@ const WEAPONS = [
     short: 'A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.', long: 'Holding two rounds, it was salvaged from KTNS Hatsuyuki.' }),
 ];
 
-// Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every shop gun's
-// damage is fitted so its per-turn worth (weaponValue without the rarity bonus) follows one curve:
-// (1 + 0.1 per rarity tier) * cost^0.75, divided by 1 + 0.15 per extra autoloader shot, because with
-// the aim guide every follow-up shot in a clip is an aimed shot. The worst autoloaders also lose
-// rounds from their clip (B.C. 155 5->3; Type-11, Kotona Rifle, Terminus Est 3->2; Natsuki 4->3).
-// Starting guns are unchanged.
+// Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above).
+//  - Prices follow a tiered curve instead of A3's exponential one ($1.2k Common to $52k Godly, not
+//    $195k), so a long match can reach the top.
+//  - Each gun's damage is then fitted so its per-turn worth (weaponValue without the rarity bonus)
+//    is proportional to its price: 0.165 * price * (1 + 0.1 per rarity tier), divided by 1 + 0.15
+//    per extra autoloader shot, because with the aim guide every follow-up shot is an aimed one.
+//  - The worst autoloaders lose rounds from their clip (B.C. 155 5->3; Type-11, Kotona Rifle,
+//    Terminus Est 3->2; Natsuki 4->3).
+//  - Starting guns sit just under the cheapest Commons (worth ~150 a turn each).
 const REBALANCE = {
-  howitzer: { dmg: 250 }, claymore: { dmg: 90 }, lensx2: { dmg: 225 }, lance: { dmg: 200 }, coil: { dmg: 65 },
-  obj261: { dmg: 420 }, type11: { dmg: 170, clip: 2 }, lensae: { dmg: 385, clip: 2 }, type91: { dmg: 125 },
-  bc155: { dmg: 205, clip: 3 }, typ67: { dmg: 370 }, gwt290: { dmg: 390 }, cls220: { dmg: 155 }, lfs75: { dmg: 415 },
-  triple: { dmg: 355 }, laser88: { dmg: 485 }, laser15x: { dmg: 1680 }, acid220: { dmg: 485 }, cls770: { dmg: 610, clip: 3 },
-  horizon: { dmg: 680 }, terminus: { dmg: 820, clip: 2 }, massdriver: { dmg: 3000 },
+  morser: { dmg: 130 }, d76: { dmg: 170 }, katis: { dmg: 30 },
+  howitzer: { dmg: 260, cost: 1200 }, claymore: { dmg: 85, cost: 1500 }, lensx2: { dmg: 225, cost: 1800 },
+  lance: { dmg: 220, cost: 2500 }, coil: { dmg: 80, cost: 2900 }, obj261: { dmg: 515, cost: 3400 },
+  type11: { dmg: 305, cost: 4400, clip: 2 }, lensae: { dmg: 565, cost: 4900, clip: 2 }, bc155: { dmg: 305, cost: 5400, clip: 3 },
+  type91: { dmg: 570, cost: 5800 }, typ67: { dmg: 595, cost: 6500 },
+  gwt290: { dmg: 625, cost: 9000 }, cls220: { dmg: 205, cost: 12000 }, lfs75: { dmg: 550, cost: 14000 },
+  triple: { dmg: 510, cost: 18000 }, laser88: { dmg: 720, cost: 20000 },
+  laser15x: { dmg: 2505, cost: 25000 }, acid220: { dmg: 790, cost: 28000 }, cls770: { dmg: 750, cost: 33000, clip: 3 },
+  horizon: { dmg: 820, cost: 40000 }, terminus: { dmg: 940, cost: 45000, clip: 2 }, massdriver: { dmg: 2620, cost: 52000 },
 };
-const CLASSIC = Object.fromEntries(WEAPONS.map((w) => [w.id, { dmg: w.dmg, clip: w.clip }]));
+const ALL_WEAPONS = [...WEAPONS, ...VEHICLES.map((v) => v.weapon)];
+const CLASSIC = Object.fromEntries(ALL_WEAPONS.map((w) => [w.id, { dmg: w.dmg, clip: w.clip, cost: w.cost }]));
 let BALANCE = 'rebalanced';
 
 // switch the shared weapon objects between the classic and rebalanced numbers
 function applyBalance(mode) {
   BALANCE = mode === 'classic' ? 'classic' : 'rebalanced';
-  for (const w of WEAPONS) Object.assign(w, CLASSIC[w.id], BALANCE === 'rebalanced' ? REBALANCE[w.id] : {});
+  for (const w of ALL_WEAPONS) Object.assign(w, CLASSIC[w.id], BALANCE === 'rebalanced' ? REBALANCE[w.id] : {});
 }
 applyBalance(BALANCE);
 

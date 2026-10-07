@@ -118,7 +118,7 @@ class CpuController {
     const w = best.weapon;
     // aim error grows with range: sharp up close, increasingly loose across the map
     const range = Math.abs(best.target.x - t.x);
-    const f = clamp(RANGE_ERR_BASE + range / RANGE_ERR_SCALE, RANGE_ERR_BASE, 3);
+    const f = clamp(RANGE_ERR_BASE + range / RANGE_ERR_SCALE, RANGE_ERR_BASE, 3) * (t.upgrades.computer ? 0.7 : 1);
     best.elev = clamp(best.elev + rng.gauss() * k.se * f, w.elevMin, w.elevMax);
     best.v = clamp(best.v * (1 + rng.gauss() * k.sc * f), w.maxCharge * 0.05, w.maxCharge);
     best.revenge = best.target === grudge;
