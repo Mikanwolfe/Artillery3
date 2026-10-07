@@ -76,8 +76,9 @@ class Tank {
     this.clampElev();
   }
 
-  say(text, secs) {
-    this.speech = { text, age: 0, dur: secs || Math.max(3.2, 1.6 + text.length * 0.055) };
+  // `delay` (seconds) holds the bubble back so several CPUs don't all talk at once
+  say(text, secs, delay = 0) {
+    this.speech = { text, age: -delay, dur: secs || Math.max(3.2, 1.6 + text.length * 0.055) };
   }
 
   center() { return { x: this.x, y: this.y - 7 }; }

@@ -3,7 +3,7 @@
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const TYPE_LABELS = { human: 'Human', easy: 'CPU · Easy', normal: 'CPU · Normal', hard: 'CPU · Hard', llm: 'CPU · LLM' };
+const TYPE_LABELS = { human: 'Human', easy: 'CPU · Easy', normal: 'CPU · Normal', hard: 'CPU · Hard' };
 
 const UI = {
   game: null,
@@ -37,7 +37,6 @@ const UI = {
     $('btn-pause').onclick = () => game.togglePause();
     $('btn-mute').onclick = () => game.toggleMute();
     this.syncMute();
-    this.initLlmBox();
     this.initTouch();
     window.addEventListener('keydown', (e) => {
       if (e.code !== 'Enter' || /^(INPUT|SELECT|TEXTAREA|SUMMARY)$/.test(e.target.tagName)) return;
@@ -63,11 +62,9 @@ const UI = {
       row.querySelector('select').onchange = (e) => {
         p.type = e.target.value;
         if (p.type !== 'human' && /^Player \d$/.test(p.name)) { p.name = AI_NAMES[i % AI_NAMES.length]; this.renderPlayers(); }
-        this.llmStatus();
       };
       box.appendChild(row);
     });
-    this.llmStatus();
   },
 
   startMatch() {
@@ -81,54 +78,12 @@ const UI = {
     this.game.startMatch(cfgs, +$('rounds').value);
   },
 
-  initLlmBox() {
-    const cfg = LlmBrain.load();
-    $('llm-key').value = cfg.key;
-    $('llm-model').value = cfg.model;
-    $('llm-base').value = cfg.base;
-    $('llm-taunts').checked = cfg.taunts;
-    const read = () => ({ key: $('llm-key').value.trim(), model: $('llm-model').value.trim() || 'gpt-5-mini', base: $('llm-base').value.trim() || 'https://api.openai.com/v1', taunts: $('llm-taunts').checked });
-    const msg = (t, cls = '') => { $('llm-msg').textContent = t; $('llm-msg').className = 'note ' + cls; };
-    $('llm-save').onclick = () => { LlmBrain.save(read()); msg('Saved to this browser.', 'ok'); this.llmStatus(); };
-    $('llm-forget').onclick = () => {
-      LlmBrain.save({ ...read(), key: '' });
-      $('llm-key').value = '';
-      msg('Key removed from this browser.', 'ok');
-      this.llmStatus();
-    };
-    $('llm-test').onclick = async () => {
-      LlmBrain.save(read());
-      msg('Asking…');
-      try {
-        const d = await LlmBrain.chat([{ role: 'user', content: 'Reply with {"reply":"ready"} as JSON.' }],
-          { type: 'object', additionalProperties: false, required: ['reply'], properties: { reply: { type: 'string' } } }, 20000);
-        msg('Connected: ' + JSON.stringify(d), 'ok');
-      } catch (e) {
-        const hint = /Failed to fetch|NetworkError|Load failed/i.test(e.message) ? ' (network or CORS: browsers may block direct calls; point Base URL at a proxy)' : '';
-        msg('Failed: ' + e.message + hint, 'err');
-      }
-      this.llmStatus();
-    };
-  },
-
-  llmStatus() {
-    const anyLlm = this.players.some((p) => p.type === 'llm');
-    const on = LlmBrain.enabled();
-    $('llm-badge').textContent = on ? '· key saved' : anyLlm ? '· no key: LLM players will play as hard CPUs' : '';
-    const el = $('llmstat');
-    if (LlmBrain.lastError && this.game && this.game.tanks.some((t) => t.type === 'llm')) {
-      el.hidden = false;
-      el.textContent = 'LLM uplink: ' + LlmBrain.lastError;
-    } else el.hidden = true;
-  },
-
   // ------------------------------------------------------------ HUD
   showHud(on) {
     $('hud').hidden = !on;
     if (on) $('menu').hidden = true;
     this.hudKey = this.weaponKey = '';
     $('chat').innerHTML = '';
-    this.llmStatus();
   },
 
   syncMute() { $('btn-mute').textContent = this.game.sfx.muted ? '✕' : '♪'; },
@@ -228,14 +183,16 @@ const UI = {
     $('roundend').hidden = false;
   },
 
-  addQuip(tank, line) {
-    if ($('roundend').hidden) return;
+  addQuip(tank, line, boxId = 're-quips') {
+    if (!line) return;
     const d = document.createElement('div');
     d.className = 'quip';
     d.style.borderColor = tank.color;
     d.innerHTML = `<b style="color:${tank.color}">${esc(tank.name)}:</b> “${esc(line)}”`;
-    $('re-quips').appendChild(d);
+    $(boxId).appendChild(d);
   },
+
+  addEndQuip(tank, line) { this.addQuip(tank, line, 'ge-quips'); },
 
   showShop(tank, done) {
     const g = this.game;
@@ -270,6 +227,7 @@ const UI = {
     const champ = st[0];
     const tie = st[1] && st[1].wins === champ.wins && st[1].cash === champ.cash;
     $('ge-title').innerHTML = tie ? 'A draw' : `<span style="color:${champ.color}">${esc(champ.name)}</span> takes the match`;
+    $('ge-quips').innerHTML = '';
     $('ge-table').className = 'data';
     $('ge-table').innerHTML = `<tr><th>#</th><th>Tank</th><th>Rounds</th><th>Kills</th><th>Damage</th><th>Cash</th></tr>` + st.map((t, i) =>
       `<tr class="${i === 0 ? 'win' : ''}"><td>${i + 1}</td><td><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</td>

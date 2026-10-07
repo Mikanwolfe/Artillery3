@@ -23,7 +23,6 @@
       <button class="icon" id="btn-pause" title="Pause (Esc)">Ⅱ</button>
     </div>
     <div id="chat"></div>
-    <div id="llmstat" hidden></div>
     <div id="aimbox">
       <div class="row"><span>ELEV</span><b id="a-elev">45°</b></div>
       <div class="row"><span>POWER</span><div class="bar"><i id="a-power"></i><u id="a-last"></u></div></div>
@@ -58,22 +57,6 @@
           <select id="rounds"><option>3</option><option selected>5</option><option>7</option></select>
         </label>
       </div>
-      <details id="llm-box">
-        <summary>CPU brains: connect an LLM <small id="llm-badge"></small></summary>
-        <p class="note">Players set to <b>CPU · LLM</b> ask an OpenAI-compatible model to pick targets and weapons, and to trash-talk you.
-        The aiming maths stays local. Without a key (or if a call fails) they play as a hard CPU. Your key is kept only in this browser's
-        localStorage and is sent only to the base URL below. Use a throwaway key with a spend limit.</p>
-        <label>API key <input id="llm-key" type="password" autocomplete="off" placeholder="sk-…" spellcheck="false"></label>
-        <label>Model <input id="llm-model" type="text" spellcheck="false"></label>
-        <label>Base URL <input id="llm-base" type="text" spellcheck="false"></label>
-        <label class="check"><input id="llm-taunts" type="checkbox" checked> Taunts</label>
-        <div class="row-btns">
-          <button id="llm-save" class="ghost">Save</button>
-          <button id="llm-forget" class="ghost">Forget key</button>
-          <button id="llm-test" class="ghost">Test</button>
-        </div>
-        <div id="llm-msg" class="note"></div>
-      </details>
       <button id="start" class="primary">Start match</button>
       <details class="how"><summary>How to play</summary>
         <p>Take turns to move, aim and fire across the mountains. Wind pushes shells and changes every turn.
@@ -112,6 +95,7 @@
     <div class="panel">
       <h2 id="ge-title"></h2>
       <table id="ge-table"></table>
+      <div id="ge-quips"></div>
       <button id="ge-again" class="primary">Back to menu</button>
     </div>
   </section>
@@ -129,6 +113,7 @@
 <script src="js/weapons.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/ai.js"></script>
+<script src="js/taunts.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/game.js"></script>
 <script src="js/main.js"></script>

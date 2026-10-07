@@ -39,6 +39,9 @@ class Input {
   }
 }
 
+// scales every reaction probability in Game.react(); lower = quieter CPUs
+const CHATTINESS = 0.7;
+
 class Game {
   constructor(canvas, ui) {
     this.canvas = canvas;
@@ -85,8 +88,8 @@ class Game {
 
   startMatch(configs, rounds) {
     this.sfx.unlock();
-    LlmBrain.failures = 0;
-    LlmBrain.lastError = '';
+    this.turnSerial = 0;
+    this.report = null;
     this.tanks = configs.map((c, i) => new Tank(i, c));
     this.rounds = rounds;
     this.round = 0;
@@ -128,6 +131,7 @@ class Game {
     do { this.turnPtr = (this.turnPtr + 1) % this.order.length; } while (!this.tanks[this.order[this.turnPtr]].alive);
     const t = this.tanks[this.order[this.turnPtr]];
     this.active = t;
+    this.turnSerial++;
     if (this.turnCount++ > 0) this.wind = clamp(this.wind + rng.range(-0.005, 0.005), -0.012, 0.012);
     t.fuel = t.maxFuel;
     t.power = 0;
@@ -248,6 +252,8 @@ class Game {
     t.lastPower = t.power;
     t.power = 0;
     this.events.push(`${t.name} fired the ${w.name}.`);
+    this.report = { shooter: t, blasts: [], dmg: new Map(), fall: new Map(), kills: [] };
+    if (t.isCpu && TAUNTS.any['fire_' + w.id] && Math.random() < 0.25) this.banter(t, 'fire_' + w.id);
     this.phase = 'resolve';
     this.resolveSteps = 0;
     this.quiet = 0;
@@ -282,6 +288,8 @@ class Game {
     const t = this.active;
     if (t && t.ammo[t.weaponId] <= 0) t.weaponId = 'howitzer';
     if (this.events.length > 40) this.events.splice(0, this.events.length - 40);
+    this.react(this.report);
+    this.report = null;
     this.nextTurn();
   }
 
@@ -323,6 +331,7 @@ class Game {
   }
 
   explode(x, y, def, owner) {
+    if (this.report) this.report.blasts.push({ x, y });
     this.terrain.crater(x, y, def.blast);
     for (const t of this.tanks) {
       if (!t.alive) continue;
@@ -348,6 +357,7 @@ class Game {
       if (amt >= 1) this.damage(t, amt, b.owner);
     }
     const gy = this.terrain.hAt(b.x);
+    if (this.report) this.report.blasts.push({ x: b.x, y: gy });
     this.terrain.shaft(b.x, half - 1, 85);
     this.particles.explosion(b.x, gy, 30, [255, 150, 225]);
     for (let i = 0; i < 40; i++) {
@@ -363,6 +373,10 @@ class Game {
     if (!t.alive || amt <= 0) return;
     t.hp -= amt;
     t.flash = 1;
+    if (this.report) {
+      const m = owner ? this.report.dmg : this.report.fall;
+      m.set(t, (m.get(t) || 0) + amt);
+    }
     if (owner && owner !== t) {
       owner.stats.dealt += amt;
       owner.roundDealt += amt;
@@ -388,6 +402,7 @@ class Game {
     t.hp = 0;
     t.alive = false;
     t.speech = null;
+    if (this.report) this.report.kills.push({ victim: t, killer: owner && owner !== t ? owner : null });
     this.particles.explosion(t.x, t.y - 6, 36, [255, 170, 70]);
     this.particles.explosion(t.x, t.y - 14, 20, [255, 120, 60]);
     this.sfx.explosion(45);
@@ -403,10 +418,89 @@ class Game {
     }
   }
 
-  say(tank, text) {
-    tank.say(text);
+  say(tank, text, delay = 0) {
+    tank.say(text, 0, delay);
     this.events.push(`${tank.name}: "${text}"`);
     this.ui.chat(tank, text);
+  }
+
+  // CPU tank says a canned line for `situation` (no-op if it has none)
+  banter(tank, situation, foe, delay = 0) {
+    const line = pickTaunt(tank, situation, foe && foe.name);
+    if (line) this.say(tank, line, delay);
+  }
+
+  // Decide who (if anyone) comments on the shot that just resolved. Roughly 0-2 CPUs speak per
+  // turn, with a per-tank cooldown, so it reads as banter rather than a chat log.
+  react(rep) {
+    if (!rep) return;
+    const s = rep.shooter;
+    const cands = []; // {tank, sit, foe, p, force}
+    let dealt = 0;
+    for (const [t, a] of rep.dmg) if (t !== s) dealt += a;
+    const self = rep.dmg.get(s) || 0;
+    const enemies = this.tanks.filter((t) => t !== s);
+    const nearest = (pt) => Math.min(...enemies.map((e) => { const c = e.center(); return dist(pt.x, pt.y, c.x, c.y); }));
+    const killedBy = rep.kills.filter((k) => k.killer === s);
+
+    if (s.isCpu && s.alive) {
+      if (killedBy.length) cands.push({ tank: s, sit: 'kill', foe: killedBy[0].victim, p: 0.9 });
+      else if (dealt >= 40) cands.push({ tank: s, sit: 'hit_big', foe: this.firstVictim(rep, s), p: 0.7 });
+      else if (dealt >= 3) cands.push({ tank: s, sit: 'hit', foe: this.firstVictim(rep, s), p: 0.45 });
+      else if (self >= 5) cands.push({ tank: s, sit: 'self_hit', p: 0.8 });
+      else if (!rep.blasts.length) { /* shot flew off the map: say nothing */ }
+      else {
+        const closest = Math.min(...rep.blasts.map(nearest));
+        if (closest <= 85) cands.push({ tank: s, sit: 'miss_close', foe: this.nearestEnemy(rep, s), p: 0.6 });
+        else cands.push({ tank: s, sit: 'miss_far', p: 0.28 });
+      }
+    }
+    for (const c of this.tanks) {
+      if (c === s || !c.isCpu) continue;
+      const took = rep.dmg.get(c) || 0;
+      if (c.alive) {
+        if (took >= 40) cands.push({ tank: c, sit: 'got_hit_big', foe: s, p: 0.65 });
+        else if (took >= 3) cands.push({ tank: c, sit: c.hp < c.maxHp * 0.3 ? 'low_hp' : 'got_hit', foe: s, p: 0.6 });
+        else if (rep.blasts.some((b) => dist(b.x, b.y, c.x, c.y - 7) <= 95)) cands.push({ tank: c, sit: 'enemy_missed_me', foe: s, p: 0.75 });
+        else if ((rep.fall.get(c) || 0) >= 5) cands.push({ tank: c, sit: 'fall', p: 0.5 });
+      }
+    }
+    if (s.isCpu && s.alive && (rep.fall.get(s) || 0) >= 5) cands.push({ tank: s, sit: 'fall', p: 0.5 });
+    for (const k of rep.kills) {
+      if (k.victim.isCpu) cands.push({ tank: k.victim, sit: 'death', foe: k.killer || undefined, p: 1, force: true });
+      for (const c of this.tanks) {
+        if (c.isCpu && c.alive && c !== k.victim && c !== k.killer) cands.push({ tank: c, sit: 'rival_down', foe: k.victim, p: 0.3 });
+      }
+    }
+    // dead tanks have the last word (chat log only); the rest are limited to two live speakers
+    let speakers = 0;
+    const used = new Set();
+    for (const c of rng.shuffle(cands.slice()).sort((a, b) => (b.force ? 1 : 0) - (a.force ? 1 : 0))) {
+      if (used.has(c.tank)) continue;
+      if (!c.force && (speakers >= 2 || this.turnSerial - (c.tank.lastSpoke || -9) < 3)) continue;
+      if (!c.force && Math.random() > c.p * CHATTINESS) continue;
+      used.add(c.tank);
+      c.tank.lastSpoke = this.turnSerial;
+      this.banter(c.tank, c.sit, c.foe, c.force ? 0 : 0.5 + speakers * 1.1);
+      if (!c.force) speakers++;
+    }
+  }
+
+  firstVictim(rep, shooter) {
+    for (const [t] of rep.dmg) if (t !== shooter) return t;
+    return undefined;
+  }
+
+  nearestEnemy(rep, shooter) {
+    const b = rep.blasts[rep.blasts.length - 1];
+    let best;
+    let bd = Infinity;
+    for (const e of this.tanks) {
+      if (e === shooter) continue;
+      const d = dist(b.x, b.y, e.x, e.y);
+      if (d < bd) { bd = d; best = e; }
+    }
+    return best;
   }
 
   // ------------------------------------------------------------ round / shop flow
@@ -429,9 +523,13 @@ class Game {
     for (const t of this.tanks) t.cash = Math.round(t.cash);
     const last = this.round >= this.rounds;
     this.ui.showRoundEnd({ round: this.round, winner, tanks: this.tanks }, last);
-    for (const t of this.tanks.filter((x) => x.type === 'llm')) {
-      const situation = t === winner ? 'you just won the round' : winner ? `${winner.name} just won the round` : 'everyone died at once';
-      LlmBrain.quip(this, t, situation).then((line) => line && this.ui.addQuip(t, line));
+    // round-end banter from CPUs (the dead can still talk)
+    const cpus = this.tanks.filter((t) => t.isCpu);
+    if (winner) {
+      if (winner.isCpu) this.ui.addQuip(winner, pickTaunt(winner, 'round_win'));
+      for (const t of rng.shuffle(cpus.filter((c) => c !== winner)).slice(0, 2)) this.ui.addQuip(t, pickTaunt(t, 'round_lose', winner.name));
+    } else if (cpus.length) {
+      this.ui.addQuip(cpus[0], pickTaunt(cpus[0], 'round_draw'));
     }
   }
 
@@ -441,6 +539,7 @@ class Game {
       this.phase = 'gameEnd';
       this.ui.showHud(false);
       this.ui.showGameEnd(st);
+      if (st[0].isCpu && st[0].wins > (st[1] ? st[1].wins : -1)) this.ui.addEndQuip(st[0], pickTaunt(st[0], 'match_win'));
       return;
     }
     this.phase = 'shop';
