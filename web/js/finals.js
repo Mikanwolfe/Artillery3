@@ -1265,26 +1265,25 @@ Object.assign(Game.prototype, {
 
 // ------------------------------------------------------------------------------ sky tears
 // Alban's Morrighan: the flare lands and the sky over it tears. Each tear unzips: a black hairline
-// a few pixels tall lengthens out from its centre and widens, then hard-edged bars split open above
-// and below it, stacked flush, each a little offset, shorter and thinner toward the top and bottom,
-// so the whole reads as a wound in the sky. Black rockets rain out of the tears on long, very dark trails,
+// a few pixels wide lengthens up and down from its centre and widens, then more columns of the same
+// width split open either side of it, flush, each a little offset and shorter than the last, down
+// to slivers at the edges, so the sky reads as split open vertically, like a wound. Black rockets rain out of the tears on long, very dark trails,
 // seeking whatever is beneath; then the tears zip shut. The sky darkens while they're open.
 const RIFT = { RISE: 30, OPEN: 34, STAGGER: 16, GROW: 56, RAIN: 96, RAIN_LEN: 130, CLOSE: 250, END: 300 };
-// one tear's shape: a centre bar and the scars that split off it (seeded, so a replay matches)
+// one tear's shape: bars all the same thickness, flush, the centre one longest; going out from it
+// each is shorter (with a little jitter in length and offset) down to slivers, so the tear thins
+// toward its edges by length alone. Drawn upright (dy runs across, len up and down). Seeded, so a replay matches.
+const TEAR_BAR = 12; // every bar's height
 function makeTear(x, y, len, seed) {
   const h = (k) => hash2(seed * 17 + 5, k * 29 + 3);
-  const T0 = 64 + h(1) * 40; // the centre's full height
-  const bars = [{ dy: 0, len: 1, th: T0, jit: 0, delay: 0, slant: 0 }];
-  const n = 4 + Math.floor(h(2) * 3);
-  let up = -T0 / 2, down = T0 / 2;
+  const bars = [{ dy: 0, len: 1, th: TEAR_BAR, jit: 0, delay: 0 }];
+  const n = 9 + Math.floor(h(2) * 6); // bars each side
   for (let j = 1; j <= n; j++) {
     for (const s of [-1, 1]) {
       const k = j * 2 + (s > 0 ? 1 : 0);
-      const th = T0 * (0.6 - 0.07 * j) * (0.6 + 0.5 * h(k + 10)); // thinner the further out
-      const gap = 0; // flush: each scar opens right against the last
-      const dy = s < 0 ? (up -= gap + th / 2) : (down += gap + th / 2);
-      if (s < 0) up -= th / 2; else down += th / 2;
-      bars.push({ dy, len: Math.max(0.12, (1 - Math.pow(j / (n + 1), 1.2)) * (0.55 + 0.5 * h(k + 30))), th: Math.max(2, th), jit: (h(k + 40) - 0.5) * len * 0.12, delay: 0.32 + j * 0.09 + h(k + 50) * 0.05, slant: 0 });
+      const fall = 1 - Math.pow(j / (n + 1), 1.4); // shorter the further out, to a sliver
+      bars.push({ dy: s * j * TEAR_BAR, len: Math.max(0.04, fall * (0.75 + 0.35 * h(k + 30))), th: TEAR_BAR,
+        jit: (h(k + 40) - 0.5) * len * 0.1 * (1 + j / n), delay: 0.28 + (j / n) * 0.5 + h(k + 50) * 0.06 });
     }
   }
   return { x, y, len, bars, open: 0, close: 0 };
@@ -1300,8 +1299,8 @@ class SkyTear {
     this.zoom0 = game.cam.zoom;
     this.dark = 0;
     this.tears = [];
-    const spots = [[0, 0], [-700, 150], [690, 110], [-330, -260], [360, -230]].slice(0, cfg.tears);
-    spots.forEach(([dx, dy], i) => this.tears.push(makeTear(clamp(this.tx + dx, 250, WORLD_W - 250), this.ground - 1000 + dy, 560 + hash2(i, 9) * 380, i + 1)));
+    const spots = [[0, 0], [-760, 60], [740, 40], [-380, -80], [390, -60]].slice(0, cfg.tears);
+    spots.forEach(([dx, dy], i) => this.tears.push(makeTear(clamp(this.tx + dx, 250, WORLD_W - 250), this.ground - 1050 + dy, 620 + hash2(i, 9) * 380, i + 1)));
     this.rocket = { id: 'morrighan_rocket', name: 'Rift Rocket', kind: 'rocket', dmg: cfg.dmg, dmgR: cfg.r, explR: 10, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
       rarity: 7, maxCharge: 10, drift: 0.15, dark: true, guide: { arm: 2, burn: 0, seek: 0, turn: 5, range: cfg.reach, cone: 180, lift: 0, brake: false } };
     this.focus = { x: this.tx, y: this.ground - 200 };
@@ -1330,7 +1329,7 @@ class SkyTear {
       const live = this.tears.filter((tr) => tr.open > 0.7 && tr.close === 0);
       if (live.length) {
         const tr = live[(k * 7) % live.length];
-        const x = tr.x + (rng.next() - 0.5) * tr.len * 0.8, y = tr.y + 6;
+        const x = tr.x + (rng.next() - 0.5) * TEAR_BAR * 8, y = tr.y + (rng.next() - 0.3) * tr.len * 0.6; // out along the split
         const a = Math.PI / 2 + (rng.next() - 0.5) * 0.9, sp = 10 + rng.next() * 6;
         const p = new Projectile(g, this.rocket, this.owner, x, y, Math.cos(a) * sp, Math.sin(a) * sp, false);
         p.age = 2;
@@ -1356,14 +1355,14 @@ class SkyTear {
         const u = clamp((tr.open - b.delay) / (1 - b.delay * 0.6), 0, 1);
         if (u <= 0) continue;
         const L = tr.len * b.len * Math.min(1, u * 1.8) * (1 - tr.close);
-        const th = Math.max(1.5, b.th * clamp((u - 0.35) / 0.65, 0, 1) * (1 - tr.close)); // a 1-5 px line first
-        const cx = tr.x + b.jit, cy = tr.y + b.dy * (b.dy ? clamp((u - 0.2) / 0.8, 0, 1) * 0.6 + 0.4 : 0);
-        rects.push([cx - L / 2, cy - th / 2, L, th]);
+        const th = b.dy ? b.th : Math.max(1.5, b.th * clamp((u - 0.12) / 0.2, 0, 1)); // the centre starts as a 1-5 px line; the rest open at full width, flush
+        const cx = tr.x + b.dy, cy = tr.y + b.jit; // bars stand side by side, each a little offset up or down
+        rects.push([cx - th / 2, cy - L / 2, th, L]); // turned upright: the sky splits vertically
       }
       ctx.fillStyle = 'rgba(110,30,140,0.35)';
       for (const [x, y, w, h] of rects) ctx.fillRect(Math.round(x - 3), Math.round(y - 2), Math.round(w + 6), Math.round(h + 4));
       ctx.fillStyle = '#040206';
-      for (const [x, y, w, h] of rects) ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.max(1, Math.round(h)));
+      for (const [x, y, w, h] of rects) ctx.fillRect(Math.round(x), Math.round(y), Math.max(1, Math.round(w)) + (w >= TEAR_BAR - 0.5 ? 1 : 0), Math.round(h)); // full columns overlap a unit: no seams
       // a few motes drifting out of the dark
       if (tr.open > 0.6) {
         ctx.fillStyle = 'rgba(190,120,230,0.6)';
