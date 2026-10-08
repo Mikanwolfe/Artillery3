@@ -17,8 +17,9 @@ const WIND_FULL = 0.5 * WIND_SCALE; // game.wind's magnitude at A3's strongest w
 const UPGRADE_PER_POINT = 6; // rebalanced Health++ / Armour++: $ per point of health or armour
 // Repair kits: bought in the shop, used with R instead of firing that turn
 const REPAIR_COST = 450;
-const REPAIR_MAX = 3;
-const REPAIR_FRAC = 0.4; // of max health and of max armour
+const WINGS_GLIDE = 3; // Seraphine's fall speed cap (world units a frame)
+const REPAIR_MAX = 2;
+const REPAIR_FRAC = 0.7; // of max health and of max armour
 // Prize money counts only damage that actually came off a target (no overkill, no damage past
 // armour), and acid drip at a reduced rate: acid's many small hits used to flood the payout.
 const ACID_PAY_RATE = 0.5;
@@ -487,6 +488,7 @@ class Game {
         else if (this.groundAt(nx, t.y) >= t.y - 4) t.x = nx; // clear of it: carry on along
         else if (t.vy >= 0) t.jvx = 0; // coming down into a wall: drop straight
         t.vy += GRAV;
+        if (hasTrait(t, 'wings')) t.vy = Math.min(t.vy, WINGS_GLIDE); // she glides down
         t.y += t.vy;
         const gy = this.groundAt(t.x, t.y - t.vy);
         if (t.y >= gy) {
@@ -504,6 +506,7 @@ class Game {
         if (!t.falling) t.fallFrom = t.y;
         t.falling = true;
         t.vy += GRAV;
+        if (hasTrait(t, 'wings')) t.vy = Math.min(t.vy, WINGS_GLIDE);
         t.y += t.vy;
         if (t.y >= gy) {
           t.y = gy;
@@ -525,7 +528,7 @@ class Game {
 
   // fall damage, credited to whoever's shot knocked the ground away
   landed(t, drop) {
-    if (drop <= FALL_SAFE || hasTrait(t, 'geschutz')) return;
+    if (drop <= FALL_SAFE || hasTrait(t, 'geschutz') || hasTrait(t, 'wings')) return;
     const sh = this.report && this.report.shooter;
     const owner = sh && sh !== t ? sh : null;
     if (this.report) this.report.fallen = (this.report.fallen || new Set()).add(t);
@@ -678,7 +681,7 @@ class Game {
 
   // W: hop in the facing direction for JUMP_FUEL of a full tank
   jump(t) {
-    const cost = Math.ceil(t.maxFuel * JUMP_FUEL);
+    const cost = Math.ceil(t.maxFuel * JUMP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)); // Seraphine's wings: half
     if (this.phase !== 'aim' || t !== this.active || t.falling || t.fuel < cost) { this.sfx.deny(); return false; }
     t.fuel -= cost;
     t.vy = JUMP_VY;
@@ -1159,6 +1162,13 @@ class Game {
       this.sfx.hit();
       if (owner && owner !== t) this.events.push(`${owner.name} hit ${t.name} for ${Math.round(amt)}.`);
     }
+    if (t.hp <= 0 && hasTrait(t, 'grace') && !t.graceUsed) { // Seraphine: once a round she won't fall
+      t.hp = 1;
+      t.graceUsed = true;
+      this.particles.text(t.x, t.y - 80, 'GRACE', '#ffe8a0', true);
+      for (let i = 0; i < 16; i++) this.particles.add({ x: t.x + (Math.random() - 0.5) * 30, y: t.y - 20 - Math.random() * 30, vx: (Math.random() - 0.5) * 2, vy: -1 - Math.random() * 2, g: -0.02, drag: 0.97, life: 1.2, size: 3 + Math.random() * 3, color: i % 2 ? [255, 236, 160] : [255, 255, 255] });
+      this.events.push(`${t.name} is saved by grace.`);
+    }
     if (t.hp <= 0) this.kill(t, owner);
   }
 
@@ -1312,6 +1322,7 @@ class Game {
     this.phase = 'gameEnd';
     this.ui.showHud(false);
     this.ui.showGameEnd(st);
+    if (this.tanks.some((t) => !t.isCpu) && !this.range) this.ui.unlockSecret(); // a first game played: Seraphine comes through
     if (st[0].isCpu && st[0].wins > (st[1] ? st[1].wins : -1)) this.ui.addEndQuip(st[0], pickTaunt(st[0], 'match_win'));
   }
 
@@ -1393,7 +1404,7 @@ class Game {
   // settle when something much stronger is within one more round's pay (Easy doesn't plan ahead and
   // sometimes buys at random); then abilities, then Health++ / Armour++ with what's left.
   autoBuy(t) {
-    const kitsWanted = t.type === 'hard' ? 3 : 2;
+    const kitsWanted = REPAIR_MAX;
     while (t.kits < kitsWanted && t.money >= REPAIR_COST * 2) { t.money -= REPAIR_COST; t.kits++; }
     const horizon = (this.lastAward || 500) * (t.type === 'hard' ? 2 : 1); // how far ahead it saves
     let reserve = 0;

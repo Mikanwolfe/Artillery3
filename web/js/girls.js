@@ -8,7 +8,7 @@
 // colour it touches), merged into boxes and cached.
 //
 // API
-//   GIRL_ART[id]            id in 'gwt' | 'obj' | 'int' | 'nxi' | 'alb'
+//   GIRL_ART[id]            id in 'gwt' | 'obj' | 'int' | 'nxi' | 'alb' | 'ang'
 //     .pivot  [lx, ly]      gun trunnion (world units, facing right, relative to the ground point)
 //     .barrel { size, twin, triple, n, step, start }  suggested barrel: n squares of `size`,
 //                           `step` apart starting `start` from the pivot (twin: two parallel lines,
@@ -514,6 +514,79 @@ const GIRL_DEFS = {
     sleeve: 'uUc',
     mount: [['R', -1, -1, 4, 3], ['g', -1, -1, 4, 1], ['p', 0, 1, 2, 1]],
   },
+
+  // Seraphine (secret, from beyond the gate): an angel. Pale gold hair to her waist, sky-blue
+  // eyes, a floating gold halo, white feathered wings folded behind her (the laser pointer sits
+  // in the wing joint), a white dress with gold trim and a player-colour sash, white boots.
+  ang: {
+    pivot: [7, 11],
+    barrel: { size: 3, n: 4, step: 3, start: 4 },
+    pal: {
+      h: '#f6e2a4', H: '#cfae68', L: '#fff6d4', I: '#2f6cc0', i: '#8ec8ff',
+      u: '#ffffff', U: '#d2d6ea', z: '#fffaf0', x: '#f2f0f8', X: '#c8c6d8',
+      r: '#ffffff', R: '#cfd2e6', g: '#fffef8',
+    },
+    legs: 'step', legMap: { A: 's', T: 's', B: 'x', F: 'y' },
+    order: ['rig', 'tail', 'back', 'legs', 'body', 'arm', 'face', 'front', 'hat'],
+    // folded wings: long feathers sweeping down behind her back
+    rig: { at: 6, x0: 0, rows: [
+      '.......gg',
+      '.....ggrR',
+      '...ggrrrR',
+      '..grrrrRR',
+      '.grrrRrrR',
+      'grrRrrRrR',
+      'grRrrRrrR',
+      'gRrrRrRrR',
+      'grrRrRrR',
+      '.gRrRrRR',
+      '..gRrRR',
+      '...gRR',
+      '....gR',
+      '.....R',
+    ] },
+    tail: { at: 15, x0: 9, sway: [19, 23], rows: [
+      '...hhh',
+      '..hhLh',
+      '..hhhH',
+      '..hLhH',
+      '..hhH',
+      '..hLhH',
+      '..hhH',
+      '..hhH',
+      '...H',
+    ] },
+    back: { at: 5, x0: 11, rows: GIRL_HEAD_BACK.slice(0, 11).concat(['.Hhh.........H', '.hhH.........H', '..hH', '..H']) },
+    // the halo floats a pixel above her hair
+    hat: { at: 1, x0: 14, rows: [
+      '..yyyyyy',
+      '.y......Y',
+      '..YYYYYY',
+    ] },
+    front: { at: 5, x0: 11, rows: [
+      '....LLLLLL',
+      '..LhhhhhhhhL',
+      '.hhhhhhhhhhhh',
+      '.hhhhhhhhhhhhH',
+      'hhhhLhhhhhLhhH',
+      'hhhh.hhh.hh.hH',
+      '..hH', '..hH', '..hH', '..hH', '..hH', '..hH',
+      '...H',
+    ] },
+    body: { at: 17, x0: 14, rows: [
+      '...yuuy',
+      '..zuuuuU',
+      '.szppppU',
+      '.szuuuuU',
+      '..zuyuuU',
+      '.zuuyuuuU',
+      'zuuuyuuuuU',
+      '.yyyyyyyyY',
+    ] },
+    arm: { at: 19, x0: 21, rows: ['.u', '..s', '.s', 's'] },
+    sleeve: 'uUz',
+    mount: [['g', -1, -1, 3, 3], ['y', 0, 0, 1, 1]],
+  },
 };
 
 const GIRL_ART = {};
@@ -529,7 +602,7 @@ for (const id in GIRL_DEFS) {
   };
 }
 
-const GIRL_PHASE = { gwt: 0, obj: 0.37, int: 0.71, nxi: 0.53, alb: 0.19 };
+const GIRL_PHASE = { gwt: 0, obj: 0.37, int: 0.71, nxi: 0.53, alb: 0.19, ang: 0.88 };
 const GIRL_POSE_LEN = { fire: 0.35, hit: 0.5 };
 
 // ---- composition (cached) ----

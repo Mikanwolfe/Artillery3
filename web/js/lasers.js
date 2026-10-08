@@ -36,6 +36,7 @@ function beamTrace(terrain, targets, owner, x0, y0, x1, y1, solid = false) {
     if (y >= terrain.hAt(x)) return { x, y, hit: 'terrain' };
     if (terrain.forts.length && terrain.fortAt(x, y)) return { x, y, hit: 'fort' };
     if (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(x, y)) return { x, y, hit: 'bridge' };
+    if (terrain.towers && terrain.towers.length && terrain.towerAt(x, y)) return { x, y, hit: 'tower' };
     if (solid) continue;
     for (const t of targets) {
       if (!t.alive || t === owner) continue;
@@ -268,6 +269,11 @@ const DRONE_ART = {
     [-8, -8, 16, 16, '#14102a'], [-6, -6, 12, 12, '#2a2050'], [-2, -2, 4, 4, '#bfe8ff'],
     [-1, -15, 2, 7, '#8a8aa8'], [-1, 8, 2, 7, '#8a8aa8'], [-15, -1, 7, 2, '#8a8aa8'], [8, -1, 7, 2, '#8a8aa8'],
     [-2, -17, 4, 3, 'L'], [-2, 14, 4, 3, 'L'], [-17, -2, 3, 4, 'L'], [14, -2, 3, 4, 'L']] },
+  // Seraphine's Gloria: a gold halo with two little white wings
+  gloria: { beam: '#fff2b0', parts: [
+    [-7, -6, 14, 2, '#ffd65a'], [-9, -4, 2, 6, '#ffd65a'], [7, -4, 2, 6, '#ffd65a'], [-7, 2, 14, 2, '#d99a2a'],
+    [-17, -6, 8, 3, '#ffffff'], [-15, -3, 6, 3, '#e4e6f4'], [9, -6, 8, 3, '#ffffff'], [9, -3, 6, 3, '#e4e6f4'],
+    [-2, 4, 4, 3, 'L']] },
   // Kotona Umbress mass driver: a long twin rail with a white band
   massdriver: { beam: '#c8f0ff', parts: [
     [-20, -6, 40, 3, '#8a90a0'], [-20, 3, 40, 3, '#8a90a0'], [-14, -3, 22, 6, '#4a505e'], [-4, -6, 4, 12, '#ffffff'],
