@@ -688,6 +688,8 @@ class Satellite {
     this.angle = Math.PI / 2;
     this.angleDest = Math.PI / 2;
     this.charge = 0; // 0..1 while powering up for a strike
+    this.unfold = 0; // 0..1: wings and antenna opened for a Hatsuyuki barrage
+    this.barrage = false;
     this.t = 0;
     this.bob = 0;
     // MAIA can be shot down: its strike damage scales with its health; it heals SAT_HEAL of its max
@@ -733,6 +735,7 @@ class Satellite {
     this.t++;
     this.flash = Math.max(0, this.flash - 0.08);
     this.bob = Math.sin(this.t / 50) * 5;
+    this.unfold = this.barrage ? Math.min(1, this.unfold + 0.025) : Math.max(0, this.unfold - 0.02);
     // turns toward its target, with a slow idle sway so it never sits perfectly still
     this.angle += (this.angleDest + 0.07 * Math.sin(this.t / 80) - this.angle) / 20;
   }
@@ -788,9 +791,21 @@ class Satellite {
       });
       dot(hub[0], hub[1], 12, accent);
     };
-    if (tier >= 3) fan([-46, 30], [[122, 120], [137, 150], [152, 170], [167, 150], [182, 116]], 1, true, gold);
-    if (tier === 1) fan([-34, 18], [[131, 90], [146, 110], [161, 90]], 1, false, light);
-    else fan([-34, 18], [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]], 1, true, light);
+    // a Hatsuyuki barrage opens everything: the wings spread wider, a mirrored wing unfolds on the
+    // other side and two antenna masts extend from the back
+    const u = this.unfold, grow = 1 + 0.35 * u;
+    const mirror = (spars) => spars.map(([deg, len]) => [-deg, len]);
+    if (tier >= 3) fan([-46, 30], [[122, 120], [137, 150], [152, 170], [167, 150], [182, 116]], grow, true, gold);
+    if (tier === 1) fan([-34, 18], [[131, 90], [146, 110], [161, 90]], grow, u > 0.5, light);
+    else fan([-34, 18], [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]], grow, true, light);
+    if (u > 0.02) {
+      fan([-34, -18], mirror([[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]]), u * grow, u > 0.4, gold);
+      for (const side of [-1, 1]) {
+        const L = 110 * u;
+        for (let d = 0; d <= L; d += 7) dot(-40 - d * 0.94, side * (12 + d * 0.34), 4, metal);
+        dot(-40 - L * 0.94, side * (12 + L * 0.34), 9, (this.t >> 3) % 2 ? '#bfe8ff' : '#ffffff');
+      }
+    }
 
     // arms curling around the body (tier I: short stubs; II: full to claws; III: doubled, gold claws)
     for (const side of [-1, 1]) {

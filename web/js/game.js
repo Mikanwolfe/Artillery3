@@ -450,6 +450,7 @@ class Game {
       this.cam.update();
       return;
     }
+    this.satellite.barrage = !!(this.satSeq && this.satSeq.barrage);
     this.satellite.update();
     for (const t of this.tanks) {
       t.update(DT);
@@ -870,7 +871,7 @@ class Game {
       this.satTarget = null;
       return;
     }
-    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner };
+    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null };
     this.retarget(this.satSeq);
     this.satTarget = null;
     this.satellite.lookAt(this.satSeq.target);
@@ -900,6 +901,7 @@ class Game {
     const s = this.satSeq;
     const sat = this.satellite;
     s.t++;
+    if (s.barrage) { this.updateBarrage(s, sat); return; }
     sat.charge = s.t < 75 ? clamp((s.t - 25) / 50, 0, 1) : 0;
     if (s.t === 75) {
       const tg = s.target;
@@ -911,6 +913,27 @@ class Game {
       this.cam.follow({ x: tg.x, y: tg.y });
     }
     if (s.t > 75 + 70) this.satSeq = null;
+  }
+
+  // Yukikaze's Hatsuyuki barrage: MAIA opens its wings and antenna (about 40 frames), then fires
+  // b.pulses strikes b.gap frames apart around the mark. Each does b.dmg, scaled by MAIA's health and
+  // only a little by its tier, so the call is worth making from round one.
+  updateBarrage(s, sat) {
+    const b = s.barrage;
+    const start = 80;
+    sat.charge = s.t < start ? clamp((s.t - 30) / 50, 0, 1) : 0.6;
+    const k = (s.t - start) / b.gap;
+    if (s.t >= start && k % 1 === 0 && k < b.pulses) {
+      const tg = { x: s.target.x + (k ? (rng.next() - 0.5) * 50 : 0), y: s.target.y };
+      const lens = sat.lens();
+      this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, k % 2 ? '#bfe8ff' : '#fffff0', 14, 40));
+      this.sfx.satFire();
+      const r = b.r * (hasTrait(s.owner, 'uplink') ? 1.3 : 1);
+      const dmg = b.dmg * sat.health * (1 + 0.15 * (sat.tier - 1));
+      this.explode(tg.x, tg.y, { maia: true, dmg, dmgR: r, explR: 8, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
+      this.cam.follow({ x: s.target.x, y: s.target.y });
+    }
+    if (s.t > start + b.gap * b.pulses + 50) this.satSeq = null;
   }
 
   // ------------------------------------------------------------ combat rules
@@ -936,7 +959,7 @@ class Game {
       }
     }
     if (p.storm) this.lightning(p, w);
-    if ((w.sat || p.uplink) && p.main && w.kind !== 'laser') this.satTarget = { x: p.x, y: p.y, owner: p.owner }; // a laser's MAIA call follows its beam
+    if ((w.sat || p.uplink) && p.main && w.kind !== 'laser') this.satTarget = { x: p.x, y: p.y, owner: p.owner, barrage: w.maia || null }; // a laser's MAIA call follows its beam
   }
 
   // kinetic and altitude bonuses for a shell's impact (see KINETIC_* / ALTITUDE_*)

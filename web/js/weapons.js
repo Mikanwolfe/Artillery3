@@ -153,9 +153,10 @@ const WEAPONS = [
     short: 'Incendiary shrapnel shells for the 46cm guns. Lights up the whole sky.', long: 'Enormous airbursts and a rain of burning fragments.' }),
   // Hybrids: two makers' ideas in one gun (w.maker names both; the shop has a Hybrid filter)
   weapon('yukikaze', "Hatsuyuki 'Yukikaze' Uplink Seeker", 'rocket', 10, 80, { salvo: 2, maxCharge: 70, disp: 0.8, dmg: 40, dmgR: 45, explR: 5, rarity: 4, cost: 13000, sat: true,
+    maia: { pulses: 5, dmg: 120, r: 120, gap: 14 }, // the Hatsuyuki barrage (Game.updateSatellite)
     hybrid: true, maker: 'Hatsuyuki × Lymilark',
     guide: { arm: 6, burn: 230, seek: 150, turn: 9, range: 1200, cone: 140, lift: 0.5 },
-    short: 'A Hatsuyuki seeker that wakes up late: two and a half seconds out, it hunts hard. Every rocket calls MAIA.', long: 'The warheads barely scratch. Lob them high and long, and the satellite does the rest.' }),
+    short: 'A Hatsuyuki seeker that wakes up late: two and a half seconds out, it hunts hard. Its call opens MAIA all the way.', long: 'The warheads barely scratch. The Hatsuyuki barrage does the work: MAIA spreads its wings and antenna and strikes five times, at near full strength from round one.' }),
   weapon('feuerlilie', "G.W.–LFS 'Feuerlilie' Seeker Flak", 'rocket', 10, 85, { salvo: 2, clip: 2, maxCharge: 75, disp: 0.6, dmg: 90, dmgR: 90, explR: 4, rarity: 3, cost: 7000,
     hybrid: true, maker: 'G.W. × Lymilark', airburst: true,
     guide: { arm: 8, burn: 55, seek: 999, apex: true, turn: 4.5, range: 700, cone: 80, lift: 0.5 },
@@ -317,7 +318,7 @@ function weaponValue(w) {
   const radius = Math.sqrt(w.dmgR / 80);
   const spread = 1 / (1 + w.disp * (w.salvo > 1 ? 0.05 : 0.12));
   const acid = w.acid * 60 * shots;
-  const sat = w.sat ? 110 * Math.min(w.clip, 3) : 0;
+  const sat = w.maia ? w.maia.pulses * w.maia.dmg * 0.6 * Math.min(w.clip, 3) : w.sat ? 110 * Math.min(w.clip, 3) : 0;
   // rockets: a split multiplies the warheads, a carpet adds bomblets (about half of them land
   // close enough to count), and the seeker is worth some consistency on top
   const heads = w.split ? w.split.n * (w.split.boost || 1) : w.lance ? 1 + (w.lance.speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.lance.kin * 0.5 : 1;
