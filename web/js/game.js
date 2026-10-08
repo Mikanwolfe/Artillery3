@@ -1704,6 +1704,7 @@ class Game {
       ctx.transform(VIEW_SCALE * cam.zoom, 0, 0, VIEW_SCALE * cam.zoom, -(cam.x + sx) * VIEW_SCALE * cam.zoom, -(cam.y + sy) * VIEW_SCALE * cam.zoom);
     }
     this.satellite.draw(ctx);
+    for (const p of this.projectiles) if (p.drawBack) p.drawBack(ctx); // set pieces' backdrops, behind the hills
     this.bg.drawRidges(ctx, cam);
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);

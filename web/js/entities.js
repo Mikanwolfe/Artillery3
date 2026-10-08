@@ -684,6 +684,37 @@ function satelliteTier(round, rounds) {
   return clamp(1 + Math.floor(((round - 1) * 3) / Math.max(1, rounds)), 1, 3);
 }
 
+// MAIA's own look, and the variants a sky full of them is drawn from: blends of what the game
+// already has (MAIA's tiers, the CLS-T, Kotona, LFS and NXi drones, Ikaros' halo, the Void's spikes)
+// so a Constellation never reads as one satellite stamped out sixty times.
+const MAIA_BASE = { main: 'rgb(120,32,78)', accent: 'rgb(23,23,47)', light: 'rgb(176,74,128)', gold: 'rgb(232,190,90)', metal: '#9aa0b4',
+  ring: 'rgba(140,50,100,0.8)', feather: 'rgba(62,78,150,0.9)', tip: '#ff8fd0', core: '255,190,230' };
+const MAIA_PALETTES = [
+  MAIA_BASE, MAIA_BASE, MAIA_BASE, // she's still most of them
+  { ...MAIA_BASE, main: 'rgb(84,18,40)', light: 'rgb(200,60,90)', ring: 'rgba(160,40,70,0.8)' }, // crimson
+  { ...MAIA_BASE, main: '#8a6a3a', accent: '#3a2a1a', light: '#c8a058', ring: 'rgba(200,160,88,0.8)', feather: 'rgba(200,160,88,0.9)', tip: '#fff0b0', core: '255,240,176' }, // Kotona bronze
+  { ...MAIA_BASE, main: '#1e2a48', accent: '#0e1426', light: '#2a3a60', gold: '#d8b048', ring: 'rgba(216,176,72,0.8)', feather: 'rgba(80,110,180,0.9)', tip: '#8ad8ff', core: '138,216,255' }, // NXi navy and gold
+  { ...MAIA_BASE, main: '#6a7078', accent: '#2a2e34', light: '#8a9098', ring: 'rgba(138,144,152,0.8)', feather: 'rgba(216,200,160,0.9)', tip: '#9ae8ff', core: '154,232,255' }, // CLS-T grey and tape
+  { ...MAIA_BASE, main: '#2a2050', accent: '#14102a', light: '#5a4a90', ring: 'rgba(90,74,144,0.8)', feather: 'rgba(138,138,168,0.9)', tip: '#bfe8ff', core: '191,232,255' }, // the Void
+  { ...MAIA_BASE, main: '#d8d4e8', accent: '#8a86a0', light: '#ff8ad8', ring: 'rgba(255,138,216,0.7)', feather: 'rgba(255,184,216,0.9)', tip: '#ff6aa8', core: '255,176,240' }, // Neko white and pink
+];
+const MAIA_WINGS = [
+  [[131, 90], [146, 110], [161, 90]],
+  [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]],
+  [[110, 90], [122, 130], [134, 160], [146, 176], [158, 160], [170, 130], [182, 90]],
+  [[140, 150], [160, 150]],
+];
+function makeMaiaVariant(seed) {
+  const h = (k) => hash2(seed * 7 + 3, k * 13 + 1);
+  const pal = MAIA_PALETTES[Math.floor(h(1) * MAIA_PALETTES.length)];
+  return {
+    ...pal,
+    spars: h(2) < 0.25 ? null : MAIA_WINGS[Math.floor(h(3) * MAIA_WINGS.length)], span: 0.8 + h(4) * 0.5, twin: h(5) < 0.45,
+    arms: ['claw', 'stub', 'ring', 'claw'][Math.floor(h(6) * 4)], lenses: h(7) < 0.3 ? 3 : 1, masts: h(8) < 0.35,
+    spikes: h(9) < 0.15, halo: h(10) < 0.12, rotors: h(11) < 0.2, band: h(12) < 0.5,
+  };
+}
+
 class Satellite {
   constructor() {
     this.name = 'Maia';
@@ -758,11 +789,12 @@ class Satellite {
 
   draw(ctx) {
     const tier = this.tier;
-    const main = 'rgb(120,32,78)';
-    const accent = 'rgb(23,23,47)';
-    const light = 'rgb(176,74,128)';
-    const gold = 'rgb(232,190,90)';
-    const metal = '#9aa0b4';
+    const V = this.v || MAIA_BASE; // a variant (makeMaiaVariant): palette and parts; MAIA herself by default
+    const main = V.main;
+    const accent = V.accent;
+    const light = V.light;
+    const gold = V.gold;
+    const metal = V.metal;
     const dot = (lx, ly, size, col) => {
       const p = this.toWorld(lx, ly);
       ctx.fillStyle = col;
@@ -780,8 +812,9 @@ class Satellite {
         sq(ctx, c.x + Math.cos(a) * r, c.y + Math.sin(a) * r * 0.45, i % 3 === 0 ? size + 3 : size);
       }
     };
-    if (tier >= 2) ring(150, 26, 6, 0.004, 'rgba(140,50,100,0.8)');
+    if (tier >= 2) ring(150, 26, 6, 0.004, V.ring);
     if (tier >= 3) ring(185, 34, 5, -0.006, 'rgba(214,160,50,0.9)');
+    if (V.halo) ring(110, 22, 7, 0.01, 'rgba(255,214,90,0.95)'); // a gold halo (after Ikaros' Gloria)
 
     // wing: antenna spars fanning out from a hub at the back, on one side only
     const fan = (hub, spars, scale, feathers, tipCol) => {
@@ -790,10 +823,10 @@ class Satellite {
         const [ux, uy] = polar(1, deg);
         for (let d = 10; d <= L; d += 6) {
           dot(hub[0] + ux * d, hub[1] + uy * d, 4, metal);
-          if (feathers && d > 24 && d < L * 0.75 && (d / 6) % 2 < 1) dot(hub[0] + ux * d - uy * 6, hub[1] + uy * d + ux * 6, 7, 'rgba(62,78,150,0.9)');
+          if (feathers && d > 24 && d < L * 0.75 && (d / 6) % 2 < 1) dot(hub[0] + ux * d - uy * 6, hub[1] + uy * d + ux * 6, 7, V.feather);
         }
         const tipOn = ((this.t >> 4) + k) % spars.length === 0;
-        dot(hub[0] + ux * (L + 6), hub[1] + uy * (L + 6), 7, tipOn ? '#ff8fd0' : tipCol);
+        dot(hub[0] + ux * (L + 6), hub[1] + uy * (L + 6), 7, tipOn ? V.tip : tipCol);
       });
       dot(hub[0], hub[1], 12, accent);
     };
@@ -801,9 +834,23 @@ class Satellite {
     // other side and two antenna masts extend from the back
     const u = this.unfold, grow = 1 + 0.35 * u;
     const mirror = (spars) => spars.map(([deg, len]) => [-deg, len]);
-    if (tier >= 3) fan([-46, 30], [[122, 120], [137, 150], [152, 170], [167, 150], [182, 116]], grow, true, gold);
-    if (tier === 1) fan([-34, 18], [[131, 90], [146, 110], [161, 90]], grow, u > 0.5, light);
-    else fan([-34, 18], [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]], grow, true, light);
+    if (V.spars) { // a variant's own wing, mirrored on some
+      fan([-34, 18], V.spars, grow * V.span, true, light);
+      if (V.twin) fan([-34, -18], V.spars.map(([deg, len]) => [-deg, len]), grow * V.span, true, gold);
+    } else {
+      if (tier >= 3) fan([-46, 30], [[122, 120], [137, 150], [152, 170], [167, 150], [182, 116]], grow, true, gold);
+      if (tier === 1) fan([-34, 18], [[131, 90], [146, 110], [161, 90]], grow, u > 0.5, light);
+      else fan([-34, 18], [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]], grow, true, light);
+    }
+    if (V.masts) for (const side of [-1, 1]) { // antenna masts off the back
+      for (let d = 0; d <= 70; d += 7) dot(-50 - d, side * (30 + d * 0.6), 3, metal);
+      dot(-120, side * 72, 7, (this.t >> 4) % 2 ? V.tip : light);
+    }
+    if (V.spikes) for (const a of [0, 90, 180, 270]) { // tesla spikes (after the NXi Void Between Stars)
+      const [sx, sy] = polar(1, a + 45);
+      for (let d = 50; d <= 92; d += 7) dot(sx * d, sy * d, 4, '#8a8aa8');
+      dot(sx * 98, sy * 98, 8, (this.t >> 2) % 3 ? '#bfe8ff' : '#ffffff');
+    }
     if (u > 0.02) {
       fan([-34, -18], mirror([[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]]), u * grow, u > 0.4, gold);
       for (const side of [-1, 1]) {
@@ -815,7 +862,7 @@ class Satellite {
 
     // arms curling around the body (tier I: short stubs; II: full to claws; III: doubled, gold claws)
     for (const side of [-1, 1]) {
-      const end = tier === 1 ? 95 : 38;
+      const end = V.arms === 'stub' ? 95 : V.arms === 'ring' ? 10 : tier === 1 ? 95 : 38;
       for (let deg = 160; deg >= end; deg -= 7.5) {
         const [ox, oy] = polar(64, deg * side);
         const [ix, iy] = polar(54, deg * side);
@@ -833,6 +880,12 @@ class Satellite {
         dot(cx + 8, cy + side * -4, 6, clawCol);
         if ((this.t >> 5) % 2 === (side < 0 ? 0 : 1)) dot(cx, cy, 5, side < 0 ? '#ff4040' : '#40ff80');
       }
+      if (V.rotors) { // rotor pods on the arms (after the CLS-T drones)
+        const [px, py] = polar(84, 70 * side);
+        dot(px, py, 12, accent);
+        const k = (this.t >> 1) % 2;
+        dot(px + (k ? 9 : -9), py, 6, '#2a2e34');
+      }
     }
 
     // round body as stepped discs (unrotated rows of boxes)
@@ -847,9 +900,9 @@ class Satellite {
     disc(44, main);
     disc(37, accent);
     disc(28, main);
-    if (tier >= 3) disc(18, light);
+    if (tier >= 3 || V.band) disc(18, light);
     const pulse = 0.5 + 0.5 * Math.sin(this.t / 12);
-    ctx.fillStyle = `rgba(255,190,230,${0.45 + 0.35 * pulse + this.charge * 0.2})`;
+    ctx.fillStyle = `rgba(${V.core},${0.45 + 0.35 * pulse + this.charge * 0.2})`;
     sq(ctx, c.x, c.y, 14 + this.charge * 16);
 
     // battle damage: smoke and sparks below half health, a white flash when hit, dark when down
@@ -864,6 +917,7 @@ class Satellite {
     for (let i = 0; i < 6; i++) dot(40 + i * 11, 0, 16 - i + (tier - 1) * 2, accent);
     if (tier >= 2) { dot(60, -10, 5, light); dot(60, 10, 5, light); }
     dot(104, 0, 12 + (tier - 1) * 3, tier >= 3 ? gold : main);
+    if (V.lenses === 3) for (const s of [-1, 1]) { for (let i = 0; i < 4; i++) dot(44 + i * 10, s * 22, 9 - i, accent); dot(86, s * 22, 9, light); } // a triple emitter
     // charging: sparks spiral into the lens and the tip whitens
     if (this.charge > 0) {
       const l = this.lens();

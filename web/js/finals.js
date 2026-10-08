@@ -455,14 +455,20 @@ class MaiaArray {
     this.fore = [];
     for (let i = 0; i < cfg.fore; i++) {
       const m = new Satellite();
-      m.tier = 1 + (i % 3); m.t = i * 37;
-      this.fore.push({ m, x: this.tx + (rng.next() * 2 - 1) * 1400, y: sky + 250 + rng.next() * 750, sc: 0.42 + rng.next() * 0.3, at: ARRAY_BURSTS[i % 4] });
+      m.tier = 1 + Math.floor(hash2(i, 77) * 3); m.t = i * 37; m.v = makeMaiaVariant(i + 1); // no two quite alike
+      this.fore.push({ m, x: this.tx + (rng.next() * 2 - 1) * 1400, y: sky + 250 + rng.next() * 750, sc: 0.55 + rng.next() * 0.35, at: ARRAY_BURSTS[i % 4] });
     }
-    this.far = [];
-    for (let i = 0; i < cfg.far; i++) this.far.push({ x: this.tx + (rng.next() * 2 - 1) * 2000, y: sky + rng.next() * 900, r: 14 + rng.next() * 16, at: ARRAY_BURSTS[i % 4] + 4 });
+    this.far = []; // further off, behind the hills, hazed
+    for (let i = 0; i < cfg.far; i++) {
+      const m = new Satellite();
+      m.tier = 1 + Math.floor(hash2(i, 91) * 3); m.t = i * 53; m.v = makeMaiaVariant(100 + i);
+      this.far.push({ m, x: this.tx + (rng.next() * 2 - 1) * 1900, y: sky - 100 + rng.next() * 900, sc: 0.2 + rng.next() * 0.16, at: ARRAY_BURSTS[i % 4] + 4 });
+    }
+    // the vast one: its body as big as a mountain, hanging low over the mark behind the hills
     this.giant = new Satellite();
     this.giant.tier = 3;
-    this.giantAt = { x: this.tx, y: sky + 80, sc: 3.4 }; // high over the mark, in frame for the last wave
+    this.giantAt = { x: this.tx, y: this.ground - 1150, sc: 8 };
+    this.bigEye = 0;
     game.cam.ceil = sky - 1600; // the camera may climb to see it all
     // (it pulls back to the whole width of the map, never past its edges: CAM_FULL)
     // the barrage: every shot's mark, from the seeded rng
@@ -505,7 +511,9 @@ class MaiaArray {
       q.m.lookAt({ x: (this.tx - q.x) / q.sc, y: (this.ground - q.y) / q.sc });
       q.m.charge = t >= ARRAY.FILL ? clamp((t - ARRAY.FILL) / (ARRAY.CHARGE - ARRAY.FILL), 0, 1) : 0;
     }
+    for (const q of this.far) { q.m.barrage = t >= ARRAY.FILL; q.m.update(); q.m.lookAt({ x: (this.tx - q.x) / q.sc, y: (this.ground - q.y) / q.sc }); q.m.charge = q.m.barrage ? 0.6 : 0; }
     this.giant.update();
+    if (t > ARRAY.BIG_CHARGE - 50) this.bigEye = ease((t - ARRAY.BIG_CHARGE + 50) / 50); // its eye opens before it charges
     this.giant.lookAt({ x: (this.tx - this.giantAt.x) / this.giantAt.sc, y: (this.ground - this.giantAt.y) / this.giantAt.sc });
     if (t > ARRAY.CHARGE && t <= ARRAY.WAVES) { // down to the mark, the array still overhead
       const u = ease((t - ARRAY.CHARGE) / (ARRAY.WAVES - ARRAY.CHARGE));
@@ -527,14 +535,14 @@ class MaiaArray {
       this.big = (t - ARRAY.BIG_CHARGE) / (ARRAY.BIG_FIRE - ARRAY.BIG_CHARGE);
       this.giant.charge = this.big;
       cam.setZoom(lerp(0.48, CAM_FULL, ease(this.big)));
-      f.y = lerp(this.ground - 650, this.ground - 900, ease(this.big));
+      f.y = lerp(this.ground - 650, this.ground - 950, ease(this.big));
       if (t === ARRAY.BIG_CHARGE + 1) g.sfx.satPrep();
     }
     if (t === ARRAY.BIG_FIRE) {
       const l = this.giant.lens(), G = this.giantAt;
       this.beam = { x: G.x + l.x * G.sc, y: G.y + l.y * G.sc };
       const y = g.terrain.hAt(this.tx);
-      g.lasers.push(new Laser(this.beam.x, this.beam.y, this.tx, y, '#ffe8f6', 150, 90));
+      g.lasers.push(new Laser(this.beam.x, this.beam.y, this.tx, y, '#ffe8f6', 280, 100));
       const B = this.cfg.final;
       g.explode(this.tx, y, { maia: true, dmg: B.dmg, dmgR: B.r, explR: B.explR, visR: 460, from: { x: this.beam.x - this.tx, y: this.beam.y - y } }, this.owner, 'laser');
       g.shake = Math.max(g.shake, 34);
@@ -552,28 +560,29 @@ class MaiaArray {
   // the array fades out at the end, everything in the order it arrived
   fade() { return 1 - clamp((this.t - ARRAY.BIG_FIRE - 50) / 80, 0, 1); }
 
-  draw(ctx) {
+  // behind the hills: the vast MAIA, its eye, and the far array
+  drawBack(ctx) {
     const t = this.t, time = this.game.time, fade = this.fade();
-    // the vast MAIA, hazy, behind everything
     if (t >= ARRAY_BURSTS[3]) {
-      const G = this.giantAt, a = Math.min(1, (t - ARRAY_BURSTS[3]) / 20) * fade;
-      drawScaled(ctx, G.x, G.y, G.sc, 0.38 * a, () => { this.giant.x = 0; this.giant.y = 0; this.giant.draw(ctx); });
+      const G = this.giantAt, a = Math.min(1, (t - ARRAY_BURSTS[3]) / 30) * fade;
+      drawScaled(ctx, G.x, G.y, G.sc, 0.7 * a, () => { this.giant.x = 0; this.giant.y = 0; this.giant.draw(ctx); });
+      if (this.bigEye > 0) { ctx.globalAlpha = 0.9 * a; drawMaiaEye(ctx, G.x, G.y, this.bigEye, G.sc * 0.9); ctx.globalAlpha = 1; }
       if (this.big > 0 && t < ARRAY.BIG_FIRE) { // gathering light at its emitter
         const l = this.giant.lens();
         ctx.fillStyle = `rgba(255,220,240,${0.3 + 0.6 * this.big})`;
-        sq(ctx, G.x + l.x * G.sc, G.y + l.y * G.sc, 40 + 160 * this.big + Math.sin(time * 30) * 10);
+        sq(ctx, G.x + l.x * G.sc, G.y + l.y * G.sc, 80 + 300 * this.big + Math.sin(time * 30) * 16);
       }
     }
-    // far MAIAs: silhouettes with a glowing core
     for (const q of this.far) {
       if (t < q.at) continue;
       const a = Math.min(1, (t - q.at) / 6) * fade;
-      ctx.fillStyle = `rgba(90,34,70,${0.6 * a})`;
-      for (let y = -q.r; y < q.r; y += 4) { const w = 2 * Math.sqrt(q.r * q.r - (y + 2) * (y + 2)); ctx.fillRect(Math.round(q.x - w / 2), Math.round(q.y + y), Math.round(w), 4); }
-      ctx.fillStyle = `rgba(255,190,230,${(0.4 + 0.5 * (t >= ARRAY.FILL ? 1 : 0)) * a})`;
-      sq(ctx, q.x, q.y, q.r * 0.6);
-      if (t - q.at < 6) { ctx.fillStyle = `rgba(255,255,255,${1 - (t - q.at) / 6})`; sq(ctx, q.x, q.y, q.r * 4); }
+      drawScaled(ctx, q.x, q.y, q.sc, 0.55 * a, () => { q.m.x = 0; q.m.y = 0; q.m.draw(ctx); });
+      if (t - q.at < 6) { ctx.fillStyle = `rgba(255,255,255,${1 - (t - q.at) / 6})`; sq(ctx, q.x, q.y, 200 * q.sc); }
     }
+  }
+
+  draw(ctx) {
+    const t = this.t, fade = this.fade();
     // the foreground array
     for (const q of this.fore) {
       if (t < q.at) continue;
@@ -583,29 +592,34 @@ class MaiaArray {
     }
     // the eye at MAIA's core
     if (this.eye > 0 && fade > 0) {
-      const c = this.game.satellite.center(), o = this.eye;
+      const c = this.game.satellite.center();
       ctx.globalAlpha = fade;
-      ctx.fillStyle = '#17172f'; ctx.fillRect(Math.round(c.x - 30), Math.round(c.y - 1), 60, 2); // the closed lid line
-      for (let y = -16; y < 16; y += 2) {
-        const v = (y + 1) / 16, half = 28 * Math.sqrt(Math.max(0, 1 - v * v));
-        if (Math.abs(y + 1) > 16 * o) continue;
-        ctx.fillStyle = '#fff6fb'; ctx.fillRect(Math.round(c.x - half), Math.round(c.y + y), Math.round(half * 2), 2);
-      }
-      const ir = 11 * Math.min(1, o * 1.4);
-      for (let y = -ir; y < ir; y += 2) {
-        if (Math.abs(y + 1) > 16 * o) continue;
-        const w = Math.sqrt(Math.max(0, ir * ir - (y + 1) * (y + 1)));
-        ctx.fillStyle = Math.abs(y) < ir * 0.5 ? '#e0409a' : '#a01e6a';
-        ctx.fillRect(Math.round(c.x - w), Math.round(c.y + y), Math.round(w * 2), 2);
-      }
-      ctx.fillStyle = '#12020c'; ctx.fillRect(Math.round(c.x - 1.5), Math.round(c.y - Math.min(9, 16 * o)), 3, Math.round(Math.min(18, 32 * o))); // slit pupil
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(c.x + 3), Math.round(c.y - 6 * o), 3, 3);
-      ctx.fillStyle = '#17172f'; // lashes on the lids as they part
-      ctx.fillRect(Math.round(c.x - 30), Math.round(c.y - 16 * o - 2), 60, 3);
-      ctx.fillRect(Math.round(c.x - 26), Math.round(c.y + 16 * o - 1), 52, 2);
+      drawMaiaEye(ctx, c.x, c.y, this.eye, 1);
       ctx.globalAlpha = 1;
     }
   }
+}
+
+// an eye at a MAIA's core, open by o (0..1), k times MAIA's own size: lids parting on a white eye,
+// a magenta iris and a slit pupil
+function drawMaiaEye(ctx, cx, cy, o, k) {
+  const R = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(cx + x * k), Math.round(cy + y * k), Math.ceil(w * k), Math.ceil(h * k)); };
+  R(-30, -1, 60, 2, '#17172f'); // the closed lid line
+  for (let y = -16; y < 16; y += 2) {
+    const v = (y + 1) / 16, half = 28 * Math.sqrt(Math.max(0, 1 - v * v));
+    if (Math.abs(y + 1) > 16 * o) continue;
+    R(-half, y, half * 2, 2, '#fff6fb');
+  }
+  const ir = 11 * Math.min(1, o * 1.4);
+  for (let y = -ir; y < ir; y += 2) {
+    if (Math.abs(y + 1) > 16 * o) continue;
+    const w = Math.sqrt(Math.max(0, ir * ir - (y + 1) * (y + 1)));
+    R(-w, y, w * 2, 2, Math.abs(y) < ir * 0.5 ? '#e0409a' : '#a01e6a');
+  }
+  R(-1.5, -Math.min(9, 16 * o), 3, Math.min(18, 32 * o), '#12020c'); // slit pupil
+  R(3, -6 * o, 3, 3, '#ffffff');
+  R(-30, -16 * o - 2, 60, 3, '#17172f'); // lashes on the lids as they part
+  R(-26, 16 * o - 1, 52, 2, '#17172f');
 }
 
 // ------------------------------------------------------------------------ the Naito MAIA
