@@ -47,6 +47,7 @@ const SLIDE_RATE = 0.25;
 const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
 const KILL_BOUNTY = 250;
+const SAT_HEAL = 0.25; // share of its max health MAIA repairs every turn
 // damage popup tiers by accuracy (share of the blast radius from dead centre)
 const HIT_TIERS = [
   { tag: 'GRAZE', color: '#c8c4d4' },
@@ -332,6 +333,7 @@ class Game {
       this.ui.notice(`MAIA has been upgraded to Level ${tier}.`);
     }
     this.satellite.setTier(tier);
+    this.satTurn(true); // MAIA starts each round repaired, as tough as the average vehicle
     this.events.push(`Round ${this.round} begins.`);
     this.ui.dispatch(`Dispatch · round ${this.round}`, storyDispatch(this));
     this.sfx.roundStart();
@@ -386,6 +388,7 @@ class Game {
     }
     this.updateFrontsTurn(windChanged);
     this.satellite.newTurn();
+    this.satTurn();
     if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
     t.fuel = t.maxFuel;
     t.shield = false; // a Deflector lasts until its owner's next turn
@@ -738,7 +741,8 @@ class Game {
       p.rec = [];
       this.cam.follow(p);
     }
-    this.particles.muzzle(m.x, m.y, t.aimVec());
+    this.particles.muzzle(m.x, m.y, t.aimVec(), s.w);
+    t.recoil = 1; // every round kicks the barrel back
     if (!s.first) this.sfx.shot(s.w);
     s.first = false;
     s.left--;
@@ -796,6 +800,11 @@ class Game {
 
   // ------------------------------------------------------------ satellite
   startSatellite() {
+    if (!this.satellite.alive) { // shot down: the uplink finds nobody home
+      this.particles.text(this.satTarget.x, this.satTarget.y - 50, 'MAIA offline', '#9a90b0');
+      this.satTarget = null;
+      return;
+    }
     this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner };
     this.retarget(this.satSeq);
     this.satTarget = null;
@@ -850,6 +859,13 @@ class Game {
       this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
       this.sfx.laser();
       this.explode(p.x, p.y, { ...w, front: this.frontMult(p), trait: this.traitDmg(p), dmg: w.dmg * this.frontMult(p) * this.traitDmg(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
+      if (w.acid) { // an acid laser (the Ichor): the beam leaves a boiling pool
+        for (let i = 0; i < 18; i++) {
+          const a = -Math.PI * (0.15 + 0.7 * Math.random());
+          const sp = 1.5 + Math.random() * 4;
+          this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 4, Math.cos(a) * sp, Math.sin(a) * sp, w.acid));
+        }
+      }
     } else {
       this.explode(p.x, p.y, { ...this.shotBonus(p), from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
@@ -860,13 +876,49 @@ class Game {
         }
         this.sfx.acid();
       }
-      if (w.kind === 'flak') this.shrapnel(p);
+      if (w.kind === 'flak' || w.airburst) this.shrapnel(p);
+      if (w.incendiary && w.frag) { // a burning fragment: a small patch of fire that sticks and scorches
+        for (let i = 0; i < 2; i++) this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 2, (Math.random() - 0.5) * 3, -1 - Math.random() * 2, w.incendiary, true));
+      }
     }
     if (p.storm) this.lightning(p, w);
     if ((w.sat || p.uplink) && p.main) this.satTarget = { x: p.x, y: p.y, owner: p.owner };
   }
 
   // kinetic and altitude bonuses for a shell's impact (see KINETIC_* / ALTITUDE_*)
+  // ------------------------------------------------------------ MAIA as a target
+  // damage scaled by where it was caught (Satellite.region); down at 0 until it heals
+  damageSat(sat, amt, owner, hit) {
+    if (!sat.alive || (owner && owner.isMob)) return;
+    const reg = hit ? sat.region(hit.px, hit.py) : { mult: 1, tag: 'HIT' };
+    amt *= reg.mult;
+    sat.hp = Math.max(0, sat.hp - amt);
+    sat.flash = 1;
+    const c = sat.center();
+    if (hit) { hit.region = reg.tag; this.hitPopup(c.x, c.y - 70, amt, hit); }
+    if (owner) { owner.stats.dealt += amt * 0.25; }
+    this.sfx.hit();
+    if (!sat.alive) {
+      this.particles.explosion(c.x, c.y, 160, 'laser');
+      this.shake = Math.max(this.shake, 8);
+      this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline. It will come back as it repairs.`);
+      this.events.push('MAIA is offline.');
+    } else this.events.push(`${owner ? owner.name : 'Something'} hit MAIA (${reg.tag.toLowerCase()}): ${Math.round(sat.health * 100)}%.`);
+  }
+
+  // every turn: MAIA's max health follows the average toughness of the vehicles still standing,
+  // and it repairs SAT_HEAL of that
+  satTurn(fresh = false) {
+    const sat = this.satellite;
+    const alive = this.tanks.filter((t) => t.alive);
+    if (!alive.length) return;
+    const max = alive.reduce((a, t) => a + t.maxHp + t.maxArmour, 0) / alive.length;
+    const was = sat.alive;
+    sat.hp = fresh ? max : clamp(sat.hp * (max / sat.maxHp) + max * SAT_HEAL, 0, max);
+    sat.maxHp = max;
+    if (!was && sat.alive) this.ui.notice('MAIA is back online.');
+  }
+
   // A damage popup that reads the hit: the number grows and heats up the closer to dead centre it
   // landed (and with the size of the hit), with a quality tag and a chip per modifier underneath
   hitPopup(x, y, amt, h) {
@@ -880,6 +932,7 @@ class Game {
     if (h.front < 0.99) chips.push([`RAIN ×${h.front.toFixed(2)}`, '#8ab4ff']);
     if (h.trait > 1) chips.push(['DISCIPLINE +25%', '#f2c45a']);
     if (h.sat) chips.push(['MAIA', '#ff78c8']);
+    if (h.region) chips.push([`MAIA ${h.region}`, '#ff78c8']);
     if (h.sloped) chips.push(['SLOPED −20%', '#9ab0c8']);
     if (h.blocked) chips.push(['BARRIER −80%', '#78e6d2']);
     if (h.shield) chips.push(['DEFLECTOR ½', '#96d2ff']);
@@ -890,6 +943,9 @@ class Game {
     if (tier === 3) this.shake = Math.max(this.shake, 5);
   }
 
+  // a rocket that transforms in flight but hits before it does: half damage (the payload is the point)
+  bodyFactor(p) { const w = p.w; return (w.carpet || w.split || w.lance) && !p.charging ? 0.5 : 1; }
+
   // Object 15X's single-shot discipline: +25% from guns without an autoloader
   traitDmg(p) { return p.w && p.w.clip === 1 && !p.w.frag && hasTrait(p.owner, 'discipline') ? 1.25 : 1; }
 
@@ -897,15 +953,16 @@ class Game {
     const w = p.w;
     const alt = altitudeBonus(p.y - p.peak, p.launch || 0);
     const speed = Math.hypot(p.vx, p.vy);
-    const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg;
+    const body = this.bodyFactor(p);
+    const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg * body * (p.charging ? w.lance.kin : 1);
     const front = this.frontMult(p), trait = this.traitDmg(p);
-    return { ...w, alt, front, trait, dmg: w.dmg * (1 + alt) * front * trait, kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
+    return { ...w, alt, front, trait, dmg: w.dmg * body * (1 + alt) * front * trait, kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
   }
 
   // flak burst: fragments rain down from the airburst
   shrapnel(p) {
-    const frag = { id: 'frag', name: 'Shrapnel', kind: 'shell', dmg: p.w.dmg * 0.2, dmgR: 24, explR: 2, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 10, frag: true };
-    const n = 6 + Math.min(6, Math.round(p.w.dmgR / 40));
+    const frag = { id: 'frag', name: 'Shrapnel', kind: 'shell', dmg: p.w.dmg * 0.2, dmgR: 24, explR: 2, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 10, frag: true, incendiary: p.w.incendiary || 0 };
+    const n = p.w.incendiary ? 3 : 6 + Math.min(6, Math.round(p.w.dmgR / 40)); // incendiary: fewer, burning
     for (let i = 0; i < n; i++) {
       const a = Math.PI / 2 + (Math.random() - 0.5) * 1.6; // a downward cone
       const sp = 3 + Math.random() * 5;
@@ -936,7 +993,7 @@ class Game {
       const d = dist(c.x, c.y, x, y);
       let amt = d < def.dmgR ? def.dmg * (1 - d / def.dmgR) : 0;
       // what went into the hit, for the damage popup: accuracy (1 = dead centre) and each modifier
-      const hit = { q: def.dmgR ? clamp(1 - d / def.dmgR, 0, 1) : 0, alt: def.alt || 0, front: def.front || 1, trait: def.trait || 1, kin: 0, sat: !!def.maia };
+      const hit = { px: x, py: y, q: def.dmgR ? clamp(1 - d / def.dmgR, 0, 1) : 0, alt: def.alt || 0, front: def.front || 1, trait: def.trait || 1, kin: 0, sat: !!def.maia };
       if (def.kin && d < def.kin.r) { hit.kin = def.kin.dmg * (1 - d / def.kin.r); amt += hit.kin; }
       if (amt > 0 && t.armour > 0 && hasTrait(t, 'sloped')) { // Object 15X: blasts from the side she faces
         const fx = Math.abs(x - c.x) < 12 && def.from ? def.from.x : x - c.x;
@@ -967,9 +1024,12 @@ class Game {
     if (!t.alive || amt <= 0) return;
     if (owner && owner.isMob) owner = null; // mob attacks count as the environment
     if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
+    if (t.isSat) { this.damageSat(t, amt, owner, hit); return; }
     if (t.shield) { amt *= SHIELD_FACTOR; if (hit) hit.shield = true; }
     if (owner && owner !== t) t.lastAttacker = owner; // CPUs retaliate against this tank
     if (hit && owner && owner !== t && this.report) this.report.bestQ = Math.max(this.report.bestQ || 0, hit.q); // best hit on a rival this shot
+    // armour is a second bar on top of health that absorbs a whole hit, however big (by design):
+    // only once it's gone does health take damage
     let taken;
     if (t.armour > 0) {
       taken = Math.min(amt, t.armour);
@@ -1566,7 +1626,13 @@ class Game {
       ctx.textAlign = 'left';
       ctx.fillStyle = '#ffffff';
       ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 4));
-      ctx.fillText(`Level: ${sat.level}`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 26));
+      ctx.fillText(`Level: ${sat.level} · ${sat.alive ? Math.round(sat.health * 100) + '% power' : 'OFFLINE'}`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 26));
+      // MAIA's health bar (its strike damage scales with it)
+      const bx = Math.round(sat.x - cam.x + 120), by = Math.round(sat.y - cam.y + 34);
+      ctx.fillStyle = HUD.plate;
+      ctx.fillRect(bx, by, 204, 10);
+      ctx.fillStyle = sat.health > 0.5 ? '#ff78c8' : sat.alive ? HUD.gold : HUD.ash;
+      ctx.fillRect(bx + 2, by + 2, Math.round(200 * sat.health), 6);
     }
     const live = this.phase === 'aim' ? this.active : null;
     for (const t of this.tanks) t.drawLabel(ctx, t.x - cam.x, t.y - cam.y, t === live);

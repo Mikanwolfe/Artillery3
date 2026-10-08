@@ -247,7 +247,7 @@ Object.assign(Game.prototype, {
 
   damageMob(m, amt, owner, def, hit) {
     if (!m.alive) return;
-    if (def && def.kind === 'flak') { amt *= FLAK_MOB_MULT; if (hit) hit.flak = true; }
+    if (def && (def.kind === 'flak' || def.airburst)) { amt *= FLAK_MOB_MULT; if (hit) hit.flak = true; }
     m.hp -= amt;
     m.flash = 1;
     if (hit) this.hitPopup(m.x, m.y - m.hh - 20, amt, hit);

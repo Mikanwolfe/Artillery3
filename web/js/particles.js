@@ -24,6 +24,7 @@ class Particles {
 
   explosion(x, y, size, palette = 'shell') {
     const cols = PALETTES[palette];
+    if (size >= 140) this.mushroom(x, y, size);
     this.add({ x, y, vx: 0, vy: 0, g: 0, drag: 1, life: 0.12, size: 20 + size * 0.5, color: [255, 252, 235] });
     const n = Math.min(90, 24 + size * 0.35);
     for (let i = 0; i < n; i++) {
@@ -36,10 +37,44 @@ class Particles {
     }
   }
 
-  muzzle(x, y, v) {
-    for (let i = 0; i < 8; i++) {
-      const s = 2 + Math.random() * 4;
-      this.add({ x, y, vx: v.x * s + (Math.random() - 0.5), vy: v.y * s + (Math.random() - 0.5), g: 0, drag: 0.85, life: 0.25, size: 5, color: [120, 120, 130] });
+  // a little mushroom cloud for big blasts: a rising stem of smoke and a cap that billows out and
+  // drifts with the wind (boxes, as everything)
+  mushroom(x, y, size) {
+    const k = Math.min(1.6, size / 200);
+    const n = Math.round(16 * k);
+    for (let i = 0; i < n; i++) { // stem
+      this.add({ x: x + (Math.random() - 0.5) * 14 * k, y: y - i * 4 * k, vx: (Math.random() - 0.5) * 0.3, vy: -1.6 * k - Math.random() * 0.4, g: 0, drag: 0.975,
+        life: 1.6 + Math.random() * 0.6, size: 8 + Math.random() * 6 * k, color: i % 3 ? [110, 96, 92] : [150, 128, 116] });
+    }
+    for (let i = 0; i < n * 1.6; i++) { // cap: a ring that rises with the stem and spreads sideways
+      const a = (i / (n * 1.6)) * TAU;
+      this.add({ x: x + Math.cos(a) * 10 * k, y: y - 20 * k + Math.sin(a) * 6 * k, vx: Math.cos(a) * (0.9 + Math.random() * 0.5) * k, vy: -1.9 * k + Math.sin(a) * 0.35, g: 0.006, drag: 0.972,
+        life: 1.8 + Math.random() * 0.8, size: 11 + Math.random() * 9 * k, color: i % 4 === 0 ? [255, 170, 90] : i % 2 ? [128, 112, 106] : [170, 150, 140] });
+    }
+  }
+
+  // a shot leaving the barrel: a flash, a burst of smoke blown forward that billows and drifts, and,
+  // for guns with a muzzle brake, gas vented sideways (up and down across the barrel). Scales with
+  // the gun (k ~ 0.6 for small guns, up to 2 for the heaviest)
+  muzzle(x, y, v, w = null) {
+    const k = w ? clamp(0.6 + w.dmg / 500, 0.6, 2) : 1;
+    this.add({ x: x + v.x * 4, y: y + v.y * 4, vx: 0, vy: 0, g: 0, drag: 1, life: 0.07, size: 10 + 8 * k, color: [255, 236, 180] });
+    const n = Math.round(8 + 8 * k);
+    for (let i = 0; i < n; i++) {
+      const s = (1.5 + Math.random() * 4.5) * k;
+      const spread = (Math.random() - 0.5) * 0.9;
+      const dx = v.x - v.y * spread, dy = v.y + v.x * spread;
+      this.add({ x, y, vx: dx * s, vy: dy * s - 0.2, g: -0.01, drag: 0.88, life: 0.5 + Math.random() * 0.7, size: (4 + Math.random() * 5) * k,
+        color: i % 4 === 0 ? [200, 190, 176] : i % 2 ? [128, 124, 132] : [160, 156, 162] });
+    }
+    if (w && w.dmgR >= 120) { // muzzle brake: two side jets, perpendicular to the barrel
+      for (const side of [-1, 1]) {
+        for (let i = 0; i < 6; i++) {
+          const s = (2 + Math.random() * 3) * k;
+          this.add({ x: x - v.x * 3, y: y - v.y * 3, vx: -v.y * side * s + v.x * 0.6, vy: v.x * side * s + v.y * 0.6, g: -0.01, drag: 0.86,
+            life: 0.4 + Math.random() * 0.4, size: (4 + Math.random() * 4) * k, color: i % 2 ? [150, 146, 150] : [190, 182, 170] });
+        }
+      }
     }
   }
 

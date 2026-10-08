@@ -392,7 +392,7 @@ const UI = {
       const f = this.shopFilter;
       $('shop-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === f));
       const list = WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) =>
-        f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= w.cost : f === 'NXi' ? makerOf(w) === 'NXi' : w.kind === f);
+        f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= w.cost : f === 'NXi' ? makerOf(w) === 'NXi' : f === 'hybrid' ? w.hybrid : w.kind === f);
       $('shop-grid').innerHTML = list.map((w) => {
         const r = RARITY[w.rarity];
         const owned = tank.weapons.includes(w.id);

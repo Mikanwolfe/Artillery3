@@ -36,7 +36,11 @@ Object.assign(Game.prototype, {
   },
 
   // everything a shell can hit
-  targets() { return this.mobs.length ? this.tanks.concat(this.mobs) : this.tanks; },
+  targets() {
+    const list = this.mobs.length ? this.tanks.concat(this.mobs) : this.tanks.slice();
+    if (this.satellite && this.satellite.alive) list.push(this.satellite); // MAIA can be shot
+    return list;
+  },
   // what a rocket's seeker can lock onto: vehicles, mobs and supply crates
   seekables() { return this.targets().concat(this.crates.filter((c) => c.alive)); },
 

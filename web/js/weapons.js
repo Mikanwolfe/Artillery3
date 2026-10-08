@@ -59,9 +59,9 @@ const VEHICLES = [
   {
     id: 'alb', name: 'Alban Eiler', hp: 120, armour: 140, blurb: 'The Lymilark rocketeer: her pod of seeker rockets finds whatever is nearest.',
     traits: ['firecontrol', 'telemetry'],
-    weapon: weapon('lfs0', "LFS 'Eiler' 60mm Seeker Pod", 'rocket', 0, 35, {
+    weapon: weapon('lfs0', "LFS 'Eiler' 60mm Seeker Pod", 'rocket', 0, 60, {
       salvo: 2, disp: 0.6, maxCharge: 50, dmg: 50, dmgR: 45, explR: 6,
-      guide: { arm: 6, burn: 55, turn: 4, range: 380, cone: 70, lift: 0.6 },
+      guide: { arm: 6, burn: 50, seek: 40, apex: true, turn: 4, range: 600, cone: 75, lift: 0.5 },
       short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the pod, in very small letters.", long: 'Starting weapon for Alban Eiler.' }),
   },
 ];
@@ -148,6 +148,22 @@ const WEAPONS = [
     short: 'Bakayaro! Refitted with more anti-air guns than common sense.', long: 'A barrage of airbursts; drones fall like rain.' }),
   weapon('sanshiki', "46cm 'Sanshikidan' Type 3 Shell", 'flak', 0, 80, { clip: 2, maxCharge: 110, disp: 1.5, dmg: 900, dmgR: 260, explR: 12, rarity: 6, cost: 52000,
     short: 'Incendiary shrapnel shells for the 46cm guns. Lights up the whole sky.', long: 'Enormous airbursts and a rain of burning fragments.' }),
+  // Hybrids: two makers' ideas in one gun (w.maker names both; the shop has a Hybrid filter)
+  weapon('yukikaze', "Hatsuyuki 'Yukikaze' Uplink Seeker", 'rocket', 10, 80, { salvo: 2, maxCharge: 70, disp: 0.8, dmg: 40, dmgR: 45, explR: 5, rarity: 4, cost: 13000, sat: true,
+    hybrid: true, maker: 'Hatsuyuki × Lymilark',
+    guide: { arm: 6, burn: 230, seek: 150, turn: 9, range: 1200, cone: 140, lift: 0.5 },
+    short: 'A Hatsuyuki seeker that wakes up late: two and a half seconds out, it hunts hard. Every rocket calls MAIA.', long: 'The warheads barely scratch. Lob them high and long, and the satellite does the rest.' }),
+  weapon('feuerlilie', "G.W.–LFS 'Feuerlilie' Seeker Flak", 'rocket', 10, 85, { salvo: 2, clip: 2, maxCharge: 75, disp: 0.6, dmg: 90, dmgR: 90, explR: 4, rarity: 3, cost: 7000,
+    hybrid: true, maker: 'G.W. × Lymilark', airburst: true,
+    guide: { arm: 8, burn: 55, seek: 30, apex: true, turn: 4.5, range: 700, cone: 80, lift: 0.5 },
+    short: 'A G.W. anti-air rocket with a Lymilark seeker: it homes, then bursts like flak.', long: 'Proximity-fused airbursts with shrapnel, double damage to drones. Feuerlilie: fire lily.' }),
+  weapon('ichor', "KTS-T × CLS-T 'Ichor' Acid Lance", 'laser', -25, 30, { clip: 2, maxCharge: 95, disp: 0.6, dmg: 520, dmgR: 70, explR: 6, acid: 1.2, rarity: 5, cost: 25000,
+    hybrid: true, maker: 'Kotona × CLS-T',
+    short: 'A Kotona lens bolted to a CLS-T acid tank. The beam leaves the ground boiling.', long: 'A laser that lands an acid pool where it strikes, twice a turn.' }),
+  // CLS-T's napalm: an autocannon that hoses incendiary flak; every fragment lands burning
+  weapon('kagutsuchi', "CLS-T 'Kagutsuchi' 40mm Incendiary Autocannon", 'flak', 5, 85, { salvo: 10, clip: 4, maxCharge: 85, disp: 7, dmg: 60, dmgR: 50, explR: 3, rarity: 7, cost: 135000,
+    incendiary: 2.5,
+    short: 'Named for the fire god whose birth burned his mother. Forty incendiary shells a turn.', long: 'Wide spread, small bursts, and every fragment lands burning. CLS-T’s napalm.' }),
   // NXi, November Division: the rival to CLS-T. Overbuilt and triple-verified; accurate, a little slow
   weapon('nxi105', "NXi Mk.I 'Bulkhead' 105mm", 'shell', -5, 60, { salvo: 3, disp: 0.6, maxCharge: 55, dmg: 60, dmgR: 55, explR: 7, rarity: 1, cost: 1500,
     short: 'Overbuilt, over-tested, over-documented, and proud of it.', long: 'Three shells in close formation. Every one of them inspected.' }),
@@ -172,23 +188,26 @@ const WEAPONS = [
   // consistency. Long-tube launchers can barely elevate, so they skim terrain and rely on the
   // seeker. Later models transform in flight: `carpet` drops a line of bomblets over the target,
   // `split` breaks into seekers that each take a different target.
-  weapon('wren', "LFS 'Wren' 70mm Seeker", 'rocket', 0, 40, { salvo: 2, maxCharge: 55, disp: 0.5, dmg: 75, dmgR: 50, explR: 6, rarity: 1, cost: 1700,
-    guide: { arm: 6, burn: 60, turn: 4.5, range: 420, cone: 70, lift: 0.6 },
+  weapon('wren', "LFS 'Wren' 70mm Seeker", 'rocket', 0, 65, { salvo: 2, maxCharge: 55, disp: 0.5, dmg: 75, dmgR: 50, explR: 6, rarity: 1, cost: 1700,
+    guide: { arm: 6, burn: 55, seek: 40, apex: true, turn: 4.5, range: 650, cone: 75, lift: 0.5 },
     short: 'A pair of little seekers. They go for whatever is closest, which is usually what you wanted.', long: 'Lymilark Future Sciences, Tir Chonaill works.' }),
-  weapon('kestrel', "LFS 'Kestrel' Twin Launcher", 'rocket', 0, 30, { salvo: 2, clip: 2, maxCharge: 60, disp: 0.5, dmg: 80, dmgR: 55, explR: 7, rarity: 2, cost: 3300,
-    guide: { arm: 6, burn: 65, turn: 4.5, range: 450, cone: 70, lift: 0.6 },
+  weapon('kestrel', "LFS 'Kestrel' Twin Launcher", 'rocket', 0, 55, { salvo: 2, clip: 2, maxCharge: 60, disp: 0.5, dmg: 80, dmgR: 55, explR: 7, rarity: 2, cost: 3300,
+    guide: { arm: 6, burn: 60, seek: 40, apex: true, turn: 4.5, range: 700, cone: 75, lift: 0.5 },
     short: 'Two pairs a turn. The Dunbarton militia swear by it.', long: 'Seekers lock on ten frames out of the tube.' }),
   weapon('dunbarton', "LFS 'Dunbarton' Long-Tube Rocket", 'rocket', -3, 12, { clip: 2, maxCharge: 95, disp: 0.2, dmg: 230, dmgR: 70, explR: 10, rarity: 3, cost: 6200,
-    guide: { arm: 6, burn: 90, turn: 5, range: 600, cone: 60, lift: 1 },
+    guide: { arm: 6, burn: 90, seek: 22, apex: true, turn: 5, range: 800, cone: 60, lift: 1 },
     short: 'A tube so long it can hardly elevate. It skims the ground and climbs at the last moment.', long: 'Flat-flying cruise rocket: find a gap in the terrain and let the seeker do the rest.' }),
   weapon('tirchonaill', "LFS 'Tir Chonaill' Carpet Rocket", 'rocket', 5, 60, { maxCharge: 70, disp: 0.4, dmg: 150, dmgR: 70, explR: 8, rarity: 4, cost: 12500,
-    guide: { arm: 4, burn: 70, turn: 4, range: 480, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 0.8, r: 60 },
-    short: 'Over the target it opens like a flower and lays a carpet of bomblets.', long: 'Seven bomblets in a line. Cover will not save you.' }),
+    guide: { arm: 4, burn: 70, seek: 26, turn: 4, range: 480, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 1.1, r: 60, at: 40 },
+    short: 'Two-thirds of a second out it opens like a flower and lays a carpet of bomblets.', long: 'Seven bomblets in a line, on a timer: lob it so it opens over them.' }),
   weapon('emain', "LFS 'Emain Macha' Split Rocket", 'rocket', 0, 50, { clip: 2, maxCharge: 75, disp: 0.4, dmg: 300, dmgR: 80, explR: 10, rarity: 5, cost: 22000,
-    guide: { arm: 4, burn: 75, turn: 4.5, range: 520, cone: 80, lift: 0.6 }, split: { n: 3, at: 40, near: 320, spread: 14 },
-    short: 'Breaks into three seekers mid-flight, and each picks a different target.', long: 'Good against crowds, drones and anyone hiding behind a friend.' }),
+    guide: { arm: 4, burn: 75, seek: 999, turn: 4.5, range: 520, cone: 80, lift: 0.6 }, split: { n: 3, at: 32, spread: 14, boost: 1.15 },
+    short: 'Breaks into three seekers half a second out, and each picks a different target.', long: 'Good against crowds, drones and anyone hiding behind a friend.' }),
+  weapon('demigod', "LFS 'Demigod' Lance Rocket", 'rocket', 5, 70, { maxCharge: 80, disp: 0.3, dmg: 900, dmgR: 70, explR: 14, rarity: 7, cost: 160000,
+    guide: { arm: 4, burn: 40, seek: 999, turn: 2, range: 600, cone: 80, lift: 0.5 }, lance: { at: 45, hover: 20, speed: 75, range: 1800, kin: 2.5 },
+    short: 'It arcs like any rocket. Then it stops dead in the air, becomes a lance of light, and charges.', long: 'Three-quarters of a second out it picks the nearest target in any direction and runs it through. Kinetic damage ×2.5.' }),
   weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 0.3, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
-    guide: { arm: 4, burn: 85, turn: 5, range: 600, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 0.7, r: 75 },
+    guide: { arm: 4, burn: 85, seek: 34, turn: 5, range: 600, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 1.0, r: 75, at: 50 },
     short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Lay it across a ridge and nothing on it survives.' }),
 ];
 
@@ -202,22 +221,27 @@ const WEAPONS = [
 //    extra autoloader shot (with the aim guide every follow-up shot is an aimed one).
 //  - Acid guns lose a further 10%, since the acid drip comes on top.
 //  - Starting guns sit just under the cheapest Commons (worth 140-165 a turn).
+// Commons are priced as cheap sidegrades (about 40% under the curve), Uncommons a little under
 const REBALANCE = {
   morser: { dmg: 110 }, d76: { dmg: 170 }, katis: { dmg: 30 }, nxi0: { dmg: 60 },
-  howitzer: { dmg: 260, cost: 1200 }, claymore: { dmg: 85, cost: 1500 }, lensx2: { dmg: 225, cost: 1800 },
-  lance: { dmg: 220, cost: 2500 }, coil: { dmg: 80, cost: 2900 }, obj261: { dmg: 515, cost: 3400 },
+  howitzer: { dmg: 260, cost: 700 }, claymore: { dmg: 85, cost: 900 }, lensx2: { dmg: 225, cost: 1100 },
+  lance: { dmg: 220, cost: 2100 }, coil: { dmg: 80, cost: 2450 }, obj261: { dmg: 515, cost: 2900 },
   type11: { dmg: 130, cost: 4400 }, lensae: { dmg: 335, cost: 4900 }, type91: { dmg: 515, cost: 5800 },
   bc155: { dmg: 205, cost: 5400 }, typ67: { dmg: 595, cost: 6500 }, gwt290: { dmg: 625, cost: 9000 },
   cls220: { dmg: 205, cost: 12000 }, lfs75: { dmg: 550, cost: 14000 }, triple: { dmg: 510, cost: 18000 },
   laser88: { dmg: 720, cost: 20000 }, laser15x: { dmg: 2505, cost: 25000 }, acid220: { dmg: 710, cost: 28000 },
   cls770: { dmg: 505, cost: 33000 }, horizon: { dmg: 740, cost: 40000 }, terminus: { dmg: 555, cost: 45000 },
-  flak40: { dmg: 40, cost: 1600 }, akizuki: { dmg: 195, cost: 5000 }, maya: { dmg: 305, cost: 11000 },
-  sanshiki: { dmg: 2115, cost: 30000 }, nxi105: { dmg: 110, cost: 1600 }, nxitv: { dmg: 105, cost: 3100 },
+  flak40: { dmg: 40, cost: 950 }, akizuki: { dmg: 195, cost: 5000 }, maya: { dmg: 305, cost: 11000 },
+  sanshiki: { dmg: 2115, cost: 30000 }, nxi105: { dmg: 110, cost: 950 }, nxitv: { dmg: 105, cost: 2650 },
   nxisec9: { dmg: 135, cost: 5100 }, nxiarch7: { dmg: 740, cost: 10000 }, nxiintel3: { dmg: 1040, cost: 19000 },
   nxiaeria: { dmg: 510, cost: 30000 }, nxivoid: { dmg: 3000, cost: 48000 }, massdriver: { dmg: 2620, cost: 52000 },
   // rockets: about 75% of a shell gun's worth for the price (the seeker makes up the rest)
-  lfs0: { dmg: 70 }, wren: { dmg: 85, cost: 1400 }, kestrel: { dmg: 90, cost: 2800 }, dunbarton: { dmg: 285, cost: 5200 },
+  lfs0: { dmg: 70 }, wren: { dmg: 85, cost: 850 }, kestrel: { dmg: 90, cost: 2400 }, dunbarton: { dmg: 285, cost: 5200 },
   tirchonaill: { dmg: 390, cost: 10500 }, emain: { dmg: 415, cost: 19000 }, avalon: { dmg: 440, cost: 32000 },
+  // the Demigod's lance is overkill on any vehicle (×2.5 kinetic on top); it is rated by whether it lands
+  demigod: { dmg: 1600, cost: 50000 }, kagutsuchi: { dmg: 110, cost: 47000 },
+  // the Yukikaze's warheads are weak on purpose: MAIA does the damage
+  yukikaze: { dmg: 40, cost: 11000 }, feuerlilie: { dmg: 155, cost: 6000 }, ichor: { dmg: 1800, cost: 21000 },
 };
 const ALL_WEAPONS = [...WEAPONS, ...VEHICLES.map((v) => v.weapon)];
 const CLASSIC = Object.fromEntries(ALL_WEAPONS.map((w) => [w.id, { dmg: w.dmg, clip: w.clip, cost: w.cost }]));
@@ -247,6 +271,7 @@ applyBalance(BALANCE);
 const KIND_LETTER = { shell: 's', gun: 'g', laser: 'l', acid: 'a', flak: 'f', rocket: 'r' };
 // manufacturer, from the weapon's name: NXi (November Division) vs CLS-T and the rest
 function makerOf(w) {
+  if (w.maker) return w.maker;
   if (w.id.startsWith('nxi')) return 'NXi';
   const n = w.name;
   if (n.includes('CLS-T')) return 'CLS-T';
@@ -291,10 +316,11 @@ function weaponValue(w) {
   const sat = w.sat ? 110 * Math.min(w.clip, 3) : 0;
   // rockets: a split multiplies the warheads, a carpet adds bomblets (about half of them land
   // close enough to count), and the seeker is worth some consistency on top
-  const heads = w.split ? w.split.n : 1;
+  const heads = w.split ? w.split.n * (w.split.boost || 1) : w.lance ? 1 + (w.lance.speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.lance.kin * 0.5 : 1;
   const carpet = w.carpet ? w.carpet.n * w.carpet.frac * 0.45 : 0;
+  const fire = w.incendiary ? w.incendiary * 60 * w.salvo * Math.min(w.clip, 4) : 0;
   const guided = w.guide ? 1.2 : 1;
-  return (w.dmg * shots * (heads + carpet) * radius * spread * guided + acid + sat) * (1 + 0.12 * (w.rarity - 1));
+  return (w.dmg * shots * (heads + carpet) * radius * spread * guided + acid + sat + fire) * (1 + 0.12 * (w.rarity - 1));
 }
 
 // Wind on a shell, scaled by its drift (p.drift, 1 by default). Two parts: a steady push (A3's wind,
@@ -340,9 +366,15 @@ function findLock(p, seek, owner) {
 }
 function guideStep(p, seek, owner) {
   const G = p.guide;
-  if (!G || p.age < G.arm || p.age > G.arm + G.burn) return 0;
+  if (!G || p.age < G.arm) return 0;
+  // the motor lifts while it burns; the fins steer for the whole flight once the seeker is awake
+  const lift = p.age <= G.arm + G.burn ? G.lift : 0;
   if (p.lock && !p.lock.alive) p.lock = null;
-  if (!p.lock && (p.age - G.arm) % 6 === 0) {
+  // the seeker wakes late (G.seek frames), or, javelin-style (G.apex), as soon as the rocket tips
+  // over the top of its climb, so a tall shot comes down onto its target
+  const from = G.seek === undefined ? G.arm : G.seek;
+  const awake = p.age >= from || (G.apex && p.vy > 0 && p.age > G.arm + 4);
+  if (!p.lock && awake && p.age % 3 === 0) {
     p.lock = findLock(p, seek, owner);
     if (p.lock && p.taken) p.taken.push(p.lock);
   }
@@ -351,25 +383,30 @@ function guideStep(p, seek, owner) {
     // aim above the target by the drop it will see on the way (remaining gravity, flight time)
     const sp = Math.hypot(p.vx, p.vy) || 1;
     const T = Math.hypot(q.x - p.x, q.y - p.y) / sp;
-    const want = Math.atan2(q.y - p.y - 0.5 * GRAV * (1 - G.lift) * T * T, q.x - p.x);
+    const want = Math.atan2(q.y - p.y - 0.5 * GRAV * (1 - lift) * T * T, q.x - p.x);
     const cur = Math.atan2(p.vy, p.vx);
     let diff = want - cur;
     while (diff > Math.PI) diff -= TAU;
     while (diff < -Math.PI) diff += TAU;
+    // airbrake: shed speed when it's coming in too fast to make the turn (arrive in about ten
+    // frames), so medium-range shots land instead of overshooting
+    const d = Math.hypot(q.x - p.x, q.y - p.y);
+    const vmax = Math.max(9, d / 10);
+    if (sp > vmax) { const k = Math.max(0.93, vmax / sp); p.vx *= k; p.vy *= k; }
     const turn = clamp(diff, -rad(G.turn), rad(G.turn));
     const c = Math.cos(turn), sn = Math.sin(turn);
     const vx = p.vx * c - p.vy * sn;
     p.vy = p.vx * sn + p.vy * c;
     p.vx = vx;
   }
-  return G.lift;
+  return lift;
 }
 
 function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
   const lift = p.guide ? guideStep(p, seek, owner) : 0;
   const a = windAccel(p, wind);
   p.vx += a.x;
-  p.vy += GRAV * (1 - lift) + a.y;
+  p.vy += (p.noGrav ? 0 : GRAV * (1 - lift)) + a.y;
   const speed = Math.hypot(p.vx, p.vy);
   const sub = Math.max(1, Math.ceil(speed / 6));
   const sx = p.vx / sub;
@@ -391,7 +428,8 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;
       const hw = t.hw || TANK_W / 2 + 2; // mobs carry their own hitbox
       const hh = t.hh || TANK_H + 2;
-      if (Math.abs(p.x - t.x) < hw && p.y > t.y - hh && p.y < t.y + 2) return { hit: 'tank', tank: t };
+      const by = t.hitY === undefined ? t.y : t.hitY; // the satellite's box hangs around its centre
+      if (Math.abs(p.x - t.x) < hw && p.y > by - hh && p.y < by + 2) return { hit: 'tank', tank: t };
     }
   }
   p.age++;
