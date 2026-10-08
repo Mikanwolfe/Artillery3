@@ -235,7 +235,7 @@ const WEAPONS = [
   // of their own above Godly (Ascendant). Each has a
   // set piece of its own (finals.js).
   weapon('ragnarok', "G.W. 'Ragnarök' Battery Fire", 'shell', 5, 75, { sig: 'gwt', maxCharge: 120, disp: 0.3, drift: 0.5, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
-    battery: { dmg: 520, r: 190, spread: 300, karl: { dmg: 3400, r: 230, explR: 70, quake: { r: 900, dmg: 320 } } },
+    battery: { dmg: 520, r: 190, spread: 300, karl: { dmg: 3400, r: 300, explR: 120, quake: { r: 1000, dmg: 360 } } },
     short: 'A marker round for her platoon off the map: four G.W. Tiger SPGs and a Karl-Gerät 60cm siege mortar.', long: 'Eight 290mm rounds across 300 either side of the mark, then the Karl\'s: a giant crater, and an earthquake that hits everyone on the ground within 900. G.W. Tiger only.' }),
   weapon('zeropoint', "KTS-T 'Zero Point' Probe", 'gun', -5, 30, { sig: 'obj', drift: 0.05, pierce: 240, maxCharge: 170, disp: 0, dmg: 400, dmgR: 60, explR: 8, rarity: 8, cost: 75000,
     naito: { r: 520 },

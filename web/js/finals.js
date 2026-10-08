@@ -809,51 +809,171 @@ class NaitoStrike {
 }
 
 // ------------------------------------------------------------------------- G.W. battery
-// G.W. Tiger's Ragnarök: the shell is a marker. The camera whips sideways off the edge of the map
-// to her platoon (four G.W. Tiger SPGs in the original Artillery box art, and a Karl-Gerät 60cm
-// siege mortar), which ripple-fires two rounds a gun, then the mortar; it whips back to the mark as
-// the shells rain in across the area, and the Karl's round lands last with an earthquake.
-const BATTERY = { OUT: 34, FIRE: 44, KARL: 112, BACK: 128, BACK_END: 160, LAND: 166, KARL_LAND: 250, END: 324 };
-const BATTERY_OFF = 1100; // how far past the edge of the map the guns sit
-const BATTERY_SCALE = 4.2; // tanks are a lot bigger than the girls
-const BATTERY_GUNS = [-1060, -820, -580, -340]; // the G.W.s, from the Karl outward (x, before facing)
-const BATTERY_MID = 560; // the middle of the platoon, from the Karl
-// more batteries dug in along the background ridges (layer index, parallax scale, count): the
-// whole line is firing. Each of their rounds lands too, at half a G.W. round's damage.
-const BATTERY_BACK = [[2, 0.55, 7], [2, 0.36, 9]]; // the nearest ridge hides the rest; two depths along it
+// G.W. Tiger's Ragnarök: the shell is a marker. The camera whips sideways a long way off the edge
+// of the map to her platoon, dug in far behind the line: four G.W. Tiger SPGs (the Artillery II
+// sprite) and a Karl-Gerät 60cm siege mortar on its rail siding. They raise their guns and ripple-
+// fire, two rounds a gun, with batteries all along the ridge behind; the camera whips back as the
+// rounds come screaming in at an angle across the area, and the Karl's lands last: an enormous
+// blast and an earthquake.
+const BATTERY = { OUT: 46, RAISE: 26, FIRE: 78, KARL: 140, BACK: 156, BACK_END: 190, LAND: 198, KARL_LAND: 284, END: 360 };
+const BATTERY_OFF = 2600; // how far past the edge of the map the guns sit
+const BATTERY_KM = 22; // what the caption calls that
+const GW_P = 1.9; // world units per pixel of the G.W. sprite (tanks are a lot bigger than the girls)
+const KARL_S = 1.9; // and per unit of the Karl's box art
+const BATTERY_GUNS = [-1240, -1000, -760, -520]; // the G.W.s, from the Karl outward (x, before facing)
+const BATTERY_MID = 640; // the middle of the platoon, from the Karl
+// more batteries dug in along the background ridge (layer index, scale, count): the whole line is
+// firing. Each of their rounds lands too, at half a G.W. round's damage.
+const BATTERY_BACK = [[2, 0.5, 7], [2, 0.32, 9]];
 
-// the original G.W. Tiger SPG (Geschützwagen): a long, low six-wheel chassis, a small cab up front,
-// an open raised fighting platform at the rear with a gun shield, a long barrel with a muzzle brake.
-// Local coords facing right around the ground point; `fill(colour, lx, ty, w, h)`.
-function drawGWSPG(fill, pal) {
-  fill(pal.track, -17, -7, 34, 7);
-  fill(pal.track, -19, -5, 38, 3);
-  for (let i = 0; i < 6; i++) fill(pal.wheel, -16 + (i * 29) / 5, -5, 3, 3);
-  fill(pal.hull, -17, -11, 33, 4);
-  fill(pal.light, -17, -11, 33, 1);
-  fill(pal.dark, 9, -14, 6, 3);
-  fill(pal.deep, 12, -13, 2, 1);
-  fill(pal.hull, -18, -16, 16, 5);
-  fill(pal.deep, -1, -10, 8, 2);
-  fill(pal.lamp, 15, -10, 2, 2);
+// G.W. Tiger as Artillery II drew her (GW_Main.png, scaled down to pixel art): a tall casemate aft
+// with a sloped front, a low glacis, interleaved road wheels and the folded recoil spade at the tail.
+// Facing right; the bottom row stands on the ground point, centred.
+const GW_SPRITE = [
+  '..............oorro.....................................................................................',
+  '............ooreeo......................................................................................',
+  '...........oerdco.......................................................................................',
+  '..........oddbbo........oooooooooooooooooooooooooo......................................................',
+  '........ooccbao......ooorrrdeeeeeeeedddddddcccbbbboooooooo..............................................',
+  '.......obcbaaao.....oerrreeedddeedddddddddddddeeeeeeeeeeeeo.............................................',
+  '......obbbaaaoo....orrredddddddddddddddddddddddddeeeeeeeeeeo............................................',
+  '.....ocbbaaaoaao..orredddddddddddddddddddddddddddddddddddeedo...........................................',
+  '....ocbbaaaabco..oreedddddddddddddddddddddddddddddddddddddddco..........................................',
+  '...odcbaaaaaco..oeeddddddddddddddddddddddddddddddddddddddddddo..........................................',
+  '..orecaaaaaoo..oeeddddddddddddddddddddddddddddddddddddddddddddo.........................................',
+  'o.ordooaaooro.oeeddddddddddddddddddddddddddddddddddddddddddddedo........................................',
+  'rordo..oodroooeedddddddddddddddddddddddddddddddddddddddddddddeeco.......................................',
+  'oroo....oeroeeedddddddddddddddddddddddddddddddddddddddddddddddddo.......................................',
+  '.odooooo.orodddddddddddddddddddddddddddddddddddddddddddddddddddddo......................................',
+  '..odcaaaoodddddddddddddddddddddddddddddddddddddddddddddddddddddddco.....................................',
+  '...ooooo.oddddddddddddddddddddddddddddddddddddddddddddddddddddddddo.....................................',
+  '........oedddddddddddddddddddddddddddddddddddddddddddddddddddddddddooooooooooooooooooo..................',
+  '......ooddccccccccccccccccccccccccccccccccccdddddddddddddddddddccccccccccccccccddddccbooooooo...........',
+  '.....oaoodcccccccccccccccccccccccccbbbbcbbbbbbbbbbbbbbbbccccbbbbbbbbbcccccccccccccccddddddccbooo........',
+  '......ocedccccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccbccccccccddddddco.......',
+  '.......oddccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccboooo...',
+  '........odccccccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaoo.',
+  '........odcccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaao',
+  '.........oobbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaao',
+  '..........oabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbcbaaaaa',
+  '...........oaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbccaaaoo',
+  '............oaaaaaaaaaabccbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcccbaaaabbcdcbaaao',
+  '.............oaaaaaaaabdddcbabbbbcbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbaabbbaaabbbcdddcbaaabbbccaaaao',
+  '..............oooaaaaacdddcaaabcdcccbaaabcdcbabccbbcddbabccbbcddcbbcdbbcdcbbcddbbcdddddddbbbbbbbbaaaaao.',
+  '.................oaaaaccccbaaabddcccbaaacdddbbbccccdddcbbcccccdddccccccdddcccddcccdddccddbbbbbaoaaaaao..',
+  '..................oooabccbaaoobddcccbaabcdccbabbccddddcaacccccccdccccccdddcccccbccddcbbccbbaoooooaaao...',
+  '.....................oaabaao.obdcccbbaobcdccaabcccdcdcbaabccccccdcbbbccddccbbbbbcccccbbbbbaoooaaaaoo....',
+  '......................oaaaooooocccbaaoobcdccaabcccccccbaabccbcccccbbccccccbbbbbbbbbbbbaaaaaaaaaooo......',
+  '.......................oooaaaaoabbaao..obccbaabcbbbccbaaabcbabbbbabbcbbcbbaabbbbabbbbaoaaaaaooo.........',
+  '..........................oooooaaaaaaooooaaaaoaaaaaaaaaoaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaoooo............',
+  '...............................ooooooaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaoooooooooooooooooooo................'
+];
+const GW_PAL = { o: '#18181c', a: '#222228', b: '#383a40', c: '#4e5056', d: '#64666c', e: '#808288', f: '#a6a6ac', r: '#b0927c' };
+const GW_PIVOT = [61, 9]; // sprite pixel the barrel leaves the casemate at
+const GW_BARREL = 60; // its length, in sprite pixels
+const _gwRuns = (() => {
+  const out = [];
+  GW_SPRITE.forEach((row, y) => {
+    let x = 0;
+    while (x < row.length) {
+      const k = row[x];
+      if (k === '.') { x++; continue; }
+      let e = x + 1;
+      while (e < row.length && row[e] === k) e++;
+      out.push([k, x, y, e - x]);
+      x = e;
+    }
+  });
+  return out;
+})();
+// one G.W.: hull from the sprite (in its own greys, or toned for the background), then the barrel at
+// elevation `elev`, recoiling, with a muzzle flash
+function drawGWSPG(ctx, gx, gy, P, face, gun, tone) {
+  const W = GW_SPRITE[0].length, H = GW_SPRITE.length;
+  const x0 = gx - (W / 2) * P, y0 = gy - H * P;
+  // the barrel first, so the casemate front covers its root
+  const px = face > 0 ? x0 + GW_PIVOT[0] * P : x0 + (W - GW_PIVOT[0]) * P, py = y0 + GW_PIVOT[1] * P;
+  const v = { x: Math.cos(gun.elev) * face, y: -Math.sin(gun.elev) };
+  ctx.fillStyle = tone ? tone.c : '#3a3c42';
+  for (let d = 0; d <= GW_BARREL; d += 1.2) {
+    const s = d < 8 ? 4.4 : d > GW_BARREL - 5 ? 4.6 : 3; // collar, tube, the bulb of the muzzle brake
+    const k = d - gun.recoil * 6;
+    sq(ctx, px + v.x * k * P, py + v.y * k * P, s * P);
+  }
+  for (const [k, x, y, n] of _gwRuns) {
+    ctx.fillStyle = tone ? (k === 'o' || k === 'a' ? tone.a : k === 'f' || k === 'r' || k === 'e' ? tone.e : tone.c) : GW_PAL[k];
+    const lx = face > 0 ? x : W - x - n;
+    ctx.fillRect(Math.round(x0 + lx * P), Math.round(y0 + y * P), Math.ceil(n * P), Math.ceil(P));
+  }
+  if (gun.flash > 0) {
+    const m = { x: px + v.x * (GW_BARREL + 6) * P, y: py + v.y * (GW_BARREL + 6) * P };
+    ctx.fillStyle = `rgba(255,236,170,${gun.flash})`; sq(ctx, m.x, m.y, 26 * P * gun.flash);
+    ctx.fillStyle = `rgba(255,160,60,${gun.flash * 0.8})`; sq(ctx, m.x + v.x * 10 * P, m.y + v.y * 10 * P, 16 * P * gun.flash);
+  }
 }
-function drawGWMount(fill, pal) {
-  fill(pal.dark, -6, -22, 4, 9);
-  fill(pal.deep, -18, -18, 2, 2);
-  fill(pal.deep, -12, -18, 2, 2);
+function gwMuzzle(gx, gy, P, face, gun) {
+  const W = GW_SPRITE[0].length, H = GW_SPRITE.length;
+  const x0 = gx - (W / 2) * P, y0 = gy - H * P;
+  const px = face > 0 ? x0 + GW_PIVOT[0] * P : x0 + (W - GW_PIVOT[0]) * P, py = y0 + GW_PIVOT[1] * P;
+  return { x: px + Math.cos(gun.elev) * face * GW_BARREL * P, y: py - Math.sin(gun.elev) * GW_BARREL * P };
 }
-// the Karl-Gerät: a long tracked carriage with eleven road wheels, a deep cradle amidships and the
-// stubby 60cm mortar raised steeply out of it
-function drawKarl(fill, pal) {
-  fill(pal.track, -34, -8, 68, 8);
-  fill(pal.track, -36, -6, 72, 4);
-  for (let i = 0; i < 11; i++) fill(pal.wheel, -33 + i * 6.3, -6, 4, 4);
-  fill(pal.hull, -33, -14, 66, 6);
-  fill(pal.light, -33, -14, 66, 1);
-  fill(pal.dark, -14, -24, 28, 10); // the cradle
-  fill(pal.light, -14, -24, 28, 1);
-  fill(pal.deep, 24, -18, 8, 4); // driver's hood
-  fill(pal.dark, -32, -18, 10, 4); // engine deck
+
+// the Karl-Gerät on its siding: a long tracked carriage on two rails with sleepers, a buffer stop
+// behind it, eleven road wheels and return rollers, a low hull with the driver's cab forward and
+// the engine deck aft, and amidships the cradle: two great side plates on a trunnion holding the
+// stubby 60cm mortar, its breech block, recoil cylinders and banded muzzle. Units: local, facing
+// right, ground at 0; S per unit.
+const KARL_PIVOT = [-10, -84];
+function drawKarl(ctx, gx, gy, S, face, gun, pal) {
+  const R = (lx, ty, w, h, c) => {
+    ctx.fillStyle = c;
+    const left = face > 0 ? gx + lx * S : gx - (lx + w) * S;
+    ctx.fillRect(Math.round(left), Math.round(gy + ty * S), Math.ceil(w * S), Math.ceil(h * S));
+  };
+  // the siding: sleepers, two rails seen as one, a buffer stop with its striped beam at the end
+  for (let x = -230; x <= 230; x += 16) R(x, 2, 10, 5, '#5a4632');
+  R(-236, -2, 472, 4, '#8a8c94'); R(-236, -2, 472, 1, '#c4c6ce');
+  R(-246, -24, 8, 22, '#4a4038'); R(-238, -24, 4, 22, '#3a322c');
+  for (let i = 0; i < 4; i++) R(-252, -30 + 0, 20, 6, i % 2 ? '#e8e2d8' : '#c8322a');
+  R(-252, -30, 5, 6, '#c8322a'); R(-247, -30, 5, 6, '#e8e2d8'); R(-242, -30, 5, 6, '#c8322a'); R(-237, -30, 5, 6, '#e8e2d8');
+  R(-232, -26, 6, 4, '#2a2a2e'); R(-232, -18, 6, 4, '#2a2a2e'); // buffers
+  // tracks, wheels and rollers
+  R(-130, -28, 260, 24, pal.track); R(-134, -22, 268, 14, pal.track);
+  for (let i = 0; i < 11; i++) { const x = -122 + i * 23.4; R(x, -22, 14, 14, pal.wheel); R(x + 4, -18, 6, 6, pal.deep); }
+  for (let i = 0; i < 5; i++) R(-100 + i * 50, -30, 8, 4, pal.wheel);
+  R(118, -24, 18, 18, pal.dark); R(123, -19, 8, 8, pal.wheel); // drive sprocket
+  // hull
+  R(-128, -52, 250, 22, pal.hull); R(-128, -52, 250, 3, pal.light);
+  R(122, -48, 6, 16, pal.hull); R(128, -42, 4, 8, pal.dark);
+  R(64, -66, 56, 14, pal.hull); R(64, -66, 56, 2, pal.light); // driver's cab
+  for (let i = 0; i < 3; i++) R(72 + i * 14, -61, 8, 3, pal.deep);
+  R(-128, -60, 58, 8, pal.dark); R(-122, -64, 10, 4, pal.deep); R(-104, -64, 10, 4, pal.deep); // engine deck, exhausts
+  for (let i = 0; i < 6; i++) R(-60 + i * 22, -40, 12, 6, pal.dark); // stowage along the side
+  // the cradle: side plates, the trunnion
+  R(-52, -100, 70, 48, pal.dark); R(-52, -100, 70, 3, pal.light); R(-46, -94, 58, 4, pal.deep);
+  R(-20, -92, 20, 20, pal.deep); R(-14, -86, 8, 8, pal.light);
+  // the mortar, raised: breech block, recoil cylinders, the fat tube with bands, the muzzle
+  const e = gun.elev, ux = Math.cos(e), uy = -Math.sin(e);
+  const at = (d, side) => ({ x: KARL_PIVOT[0] + ux * d - uy * side, y: KARL_PIVOT[1] + uy * d + ux * side });
+  const seg = (d0, d1, half, c) => {
+    for (let d = d0; d <= d1; d += 3) for (let s = -half; s <= half; s += 3) { const p = at(d - gun.recoil * 10, s); R(p.x - 2, p.y - 2, 4, 4, c); }
+  };
+  seg(-30, -6, 20, pal.dark); // breech block
+  seg(-26, 30, 22, pal.deep); // recoil cylinders either side
+  seg(-6, 70, 15, pal.hull); // the tube
+  seg(-6, 70, 4, pal.light);
+  for (const d of [12, 36]) seg(d, d + 3, 17, pal.dark); // bands
+  seg(68, 76, 19, pal.dark); // the muzzle
+  if (gun.flash > 0) {
+    const m = at(90, 0);
+    const wx = face > 0 ? gx + m.x * S : gx - m.x * S, wy = gy + m.y * S;
+    ctx.fillStyle = `rgba(255,236,170,${gun.flash})`; sq(ctx, wx, wy, 90 * S * gun.flash);
+    ctx.fillStyle = `rgba(255,150,60,${gun.flash * 0.8})`; sq(ctx, wx + ux * face * 30 * S, wy + uy * 30 * S, 60 * S * gun.flash);
+  }
+}
+function karlMuzzle(gx, gy, S, face, gun) {
+  const e = gun.elev, d = 80;
+  return { x: gx + face * (KARL_PIVOT[0] + Math.cos(e) * d) * S, y: gy + (KARL_PIVOT[1] - Math.sin(e) * d) * S };
 }
 
 class BatteryStrike {
@@ -863,7 +983,7 @@ class BatteryStrike {
     this.cfg = cfg;
     this.tx = at.x;
     this.ground = Math.min(game.terrain.hAt(at.x), at.y);
-    // the guns sit off the edge behind her (the side she fired from), facing the mark
+    // the guns sit far off the edge behind her (the side she fired from), facing the mark
     this.side = owner.x <= at.x ? -1 : 1;
     this.edge = this.side < 0 ? 0 : WORLD_W;
     this.bx = this.edge + this.side * BATTERY_OFF; // the Karl
@@ -873,26 +993,31 @@ class BatteryStrike {
     this.zoom0 = game.cam.zoom;
     this.focus = { x: this.tx, y: this.ground - 160 };
     this.whip = 0; // pan speed, for the speed lines
-    this.guns = BATTERY_GUNS.map((dx) => ({ x: this.bx - this.face * dx, recoil: 0, flash: 0 }));
-    this.karl = { x: this.bx, recoil: 0, flash: 0 };
+    this.view = { x: this.bx + this.face * BATTERY_MID, y: this.by - 300 };
+    const LOW = 0.06; // barrels lie low until the camera arrives
+    this.guns = BATTERY_GUNS.map((dx) => ({ x: this.bx - this.face * dx, recoil: 0, flash: 0, elev: LOW, to: 0.95 }));
+    this.karl = { x: this.bx, recoil: 0, flash: 0, elev: 0.3, to: 1.1 };
     // where each round comes down (deterministic: rng)
     this.rounds = [];
     const land = (dmg, r, spread) => this.rounds.push({
-      x: clamp(this.tx + (rng.next() * 2 - 1) * spread, 4, WORLD_W - 4), at: BATTERY.LAND + Math.round(rng.next() * (BATTERY.KARL_LAND - BATTERY.LAND - 16)), dmg, r, done: false });
+      x: clamp(this.tx + (rng.next() * 2 - 1) * spread, 4, WORLD_W - 4), at: BATTERY.LAND + Math.round(rng.next() * (BATTERY.KARL_LAND - BATTERY.LAND - 20)), dmg, r, done: false });
     for (let i = 0; i < BATTERY_GUNS.length * 2; i++) land(cfg.dmg, cfg.r, cfg.spread);
-    // the guns on the background ridges: positions in each layer's own coordinates, past its edge
+    // the guns along the background ridge, placed (in that layer's own coordinates) to stand
+    // either side of the platoon as the camera will see it
     this.back = [];
     const layers = game.bg.layers || [];
+    const camX = this.view.x - VIEW_W / 0.6 / 2;
     for (const [li, sc, n] of BATTERY_BACK) {
       const l = layers[li];
       if (!l) continue;
       for (let i = 0; i < n; i++) {
         const fire = BATTERY.FIRE + Math.round(rng.next() * (BATTERY.KARL - BATTERY.FIRE));
-        this.back.push({ li, sc, x: this.edge + this.side * (180 + i * (1500 / n) + sc * 200 + rng.next() * 60), fire: [fire, fire + 26], recoil: 0, flash: 0 });
+        const drawn = this.view.x + ((i + 0.5) / n - 0.5) * 2600 + sc * 300 + (rng.next() - 0.5) * 80;
+        this.back.push({ li, sc, x: drawn - camX * (1 - l.parallax), fire: [fire, fire + 24], recoil: 0, flash: 0, elev: LOW, to: 0.95 });
         land(cfg.dmg * 0.5, cfg.r * 0.8, cfg.spread * 1.5);
       }
     }
-    game.cam.wide = BATTERY_OFF + 2200;
+    game.cam.wide = BATTERY_OFF + 2600;
     game.cam.follow(this.focus);
     game.ui.notice('G.W. battery, fire for effect.');
   }
@@ -900,13 +1025,16 @@ class BatteryStrike {
   update() {
     const g = this.game, cam = g.cam, t = ++this.t;
     const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
-    const f = this.focus, px = f.x;
-    const view = { x: this.bx + this.face * BATTERY_MID, y: this.by - 260 }; // the middle of the platoon
-    if (t <= BATTERY.OUT) { // whip out to the guns
+    const f = this.focus, px = f.x, view = this.view;
+    if (t <= BATTERY.OUT) { // the long whip out to the guns
       const u = ease(t / BATTERY.OUT);
       f.x = lerp(this.tx, view.x, u); f.y = lerp(this.ground - 160, view.y, u);
-      cam.setZoom(lerp(this.zoom0, 0.6, u));
+      cam.setZoom(lerp(this.zoom0, 0.6, Math.min(1, u * 1.5)));
     }
+    // there: the guns come up to their firing elevation
+    const r = ease((t - BATTERY.OUT - 4) / BATTERY.RAISE);
+    for (const gun of [...this.guns, this.karl, ...this.back]) gun.elev = lerp(gun.elev0 === undefined ? (gun.elev0 = gun.elev) : gun.elev0, gun.to, r);
+    if (t === BATTERY.OUT + 6) g.sfx.click();
     // ripple fire: two rounds a gun, the autoloader's second close behind, then the mortar
     this.guns.forEach((gun, i) => {
       if (t === BATTERY.FIRE + i * 6 || t === BATTERY.FIRE + 30 + i * 6) this.fire(gun, false);
@@ -918,23 +1046,27 @@ class BatteryStrike {
       f.x = lerp(view.x, this.tx, u); f.y = lerp(view.y, this.ground - 200, u);
       cam.setZoom(lerp(0.6, Math.min(this.zoom0, 0.6), u));
     }
-    for (const r of this.rounds) {
-      if (r.done || t < r.at) continue;
-      r.done = true;
-      const y = g.terrain.hAt(r.x);
-      g.explode(r.x, y, { dmg: r.dmg, dmgR: r.r, explR: 30, from: { x: this.face, y: -2 } }, this.owner, 'shell');
+    for (const rd of this.rounds) {
+      if (rd.done || t < rd.at) continue;
+      rd.done = true;
+      const y = g.terrain.hAt(rd.x);
+      g.explode(rd.x, y, { dmg: rd.dmg, dmgR: rd.r, explR: 30, from: { x: -this.face, y: -1.3 } }, this.owner, 'shell');
       g.shake = Math.max(g.shake, 14);
     }
-    if (t === BATTERY.KARL_LAND) {
+    if (t === BATTERY.KARL_LAND) { // the Karl's round: far the biggest blast of the lot
       const k = this.cfg.karl, y = g.terrain.hAt(this.tx); // the floor of whatever craters are there by now
-      g.explode(this.tx, y, { dmg: k.dmg, dmgR: k.r, explR: k.explR, visR: 320, from: { x: this.face, y: -3 } }, this.owner, 'shell');
+      g.explode(this.tx, y, { dmg: k.dmg, dmgR: k.r, explR: k.explR, visR: 760, from: { x: -this.face, y: -2 } }, this.owner, 'shell');
       g.quake(this.tx, y, k.quake, this.owner);
-      g.shake = Math.max(g.shake, 36);
-      g.screenFlash = Math.max(g.screenFlash || 0, 0.6);
-      g.sfx.explosion(70);
+      for (let i = 0; i < 120; i++) { // the shockwave, out along the ground and up
+        const a = -Math.PI * Math.random(), sp = 7 + Math.random() * 14;
+        g.particles.add({ x: this.tx, y: y - 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.45, g: 0.03, drag: 0.93, life: 1 + Math.random() * 0.8, size: 10 + Math.random() * 18, color: i % 3 ? [196, 180, 160] : [255, 220, 170] });
+      }
+      g.shake = Math.max(g.shake, 60);
+      g.screenFlash = Math.max(g.screenFlash || 0, 1);
+      g.sfx.explosion(90);
     }
-    for (const gun of [...this.guns, this.karl, ...this.back]) { gun.recoil = Math.max(0, gun.recoil - 0.06); gun.flash = Math.max(0, gun.flash - 0.15); }
-    if (t > BATTERY.KARL_LAND && t <= BATTERY.KARL_LAND + 30) cam.setZoom(lerp(Math.min(this.zoom0, 0.6), this.zoom0, (t - BATTERY.KARL_LAND) / 30));
+    for (const gun of [...this.guns, this.karl, ...this.back]) { gun.recoil = Math.max(0, gun.recoil - 0.05); gun.flash = Math.max(0, gun.flash - 0.12); }
+    if (t > BATTERY.KARL_LAND + 10 && t <= BATTERY.KARL_LAND + 40) cam.setZoom(lerp(Math.min(this.zoom0, 0.6), this.zoom0, (t - BATTERY.KARL_LAND - 10) / 30));
     cam.follow(f);
     if (t <= BATTERY.BACK_END) cam.snap(); // the set piece drives the camera itself
     this.whip = Math.abs(f.x - px);
@@ -944,55 +1076,21 @@ class BatteryStrike {
 
   // one gun going off: recoil, a muzzle flash, smoke, dust kicked up off the ground
   fire(gun, karl) {
-    const g = this.game, m = this.muzzle(gun, karl);
+    const g = this.game, m = karl ? karlMuzzle(gun.x, this.by, KARL_S, this.face, gun) : gwMuzzle(gun.x, this.by, GW_P, this.face, gun);
     gun.recoil = 1; gun.flash = 1;
-    for (let i = 0; i < (karl ? 60 : 22); i++) {
-      const a = -Math.PI / 2 + this.face * (karl ? 0.35 : 0.7) + (Math.random() - 0.5) * 1.4, sp = 2 + Math.random() * (karl ? 10 : 7);
-      g.particles.add({ x: m.x, y: m.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: -0.01, drag: 0.9, life: 0.8 + Math.random() * 0.9, size: (karl ? 12 : 7) + Math.random() * 12, color: i % 4 ? [150, 146, 150] : [255, 200, 120] });
+    for (let i = 0; i < (karl ? 90 : 26); i++) {
+      const a = -gun.elev * (this.face > 0 ? 1 : -1) + (this.face > 0 ? 0 : Math.PI) + (Math.random() - 0.5) * 1.4, sp = 2 + Math.random() * (karl ? 12 : 8);
+      g.particles.add({ x: m.x, y: m.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: -0.01, drag: 0.9, life: 0.8 + Math.random() * 1, size: (karl ? 18 : 8) + Math.random() * (karl ? 24 : 12), color: i % 4 ? [150, 146, 150] : [255, 200, 120] });
     }
-    for (let i = 0; i < 10; i++) g.particles.add({ x: gun.x + (Math.random() - 0.5) * 120, y: this.by - 2, vx: (Math.random() - 0.5) * 5, vy: -Math.random() * 1.5, g: 0.02, drag: 0.93, life: 0.9, size: 6 + Math.random() * 8, color: [170, 160, 150] });
-    g.shake = Math.max(g.shake, karl ? 26 : 10);
-    if (karl) g.screenFlash = Math.max(g.screenFlash || 0, 0.35);
-    g.sfx.explosion(karl ? 55 : 30);
-  }
-
-  aim(karl) { const e = karl ? 1.2 : 0.95; return { x: Math.cos(e) * this.face, y: -Math.sin(e) }; } // raised steeply
-  muzzle(gun, karl, gx = gun.x, gy = this.by, S = BATTERY_SCALE) {
-    const v = this.aim(karl), piv = karl ? [0, -24] : [-9, -18];
-    const d = (karl ? 50 : 34) - gun.recoil * 6;
-    return { x: gx + this.face * piv[0] * S + v.x * d * S, y: gy + piv[1] * S + v.y * d * S };
-  }
-
-  // one gun (a G.W. or the Karl) at ground point gx, gy and scale S, in the palette pal
-  drawGun(ctx, gun, karl, gx, gy, S, pal) {
-    const face = this.face;
-    const box = (c, lx, ty, w, h) => {
-      ctx.fillStyle = c;
-      const left = face > 0 ? gx + lx * S : gx - (lx + w) * S;
-      ctx.fillRect(Math.round(left), Math.round(gy + ty * S), Math.ceil(w * S), Math.ceil(h * S));
-    };
-    if (karl) drawKarl(box, pal); else drawGWSPG(box, pal);
-    const v = this.aim(karl), piv = karl ? [0, -24] : [-9, -18];
-    const px = gx + face * piv[0] * S, py = gy + piv[1] * S;
-    const n = karl ? 6 : 8, step = karl ? 7 : 4.5, size = karl ? 13 : 4;
-    ctx.fillStyle = pal.deep;
-    for (let i = 0; i < n; i++) {
-      const d = 6 + i * step - gun.recoil * 6;
-      sq(ctx, px + v.x * d * S, py + v.y * d * S, (i === n - 1 ? (karl ? 16 : 6.5) : size) * S);
-    }
-    if (!karl) drawGWMount(box, pal);
-    if (gun.flash > 0) {
-      const m = this.muzzle(gun, karl, gx, gy, S);
-      ctx.fillStyle = `rgba(255,236,170,${gun.flash})`;
-      sq(ctx, m.x + v.x * 10 * S, m.y + v.y * 10 * S, (karl ? 30 : 16) * S * gun.flash);
-      ctx.fillStyle = `rgba(255,160,60,${gun.flash * 0.8})`;
-      sq(ctx, m.x + v.x * 18 * S, m.y + v.y * 18 * S, (karl ? 20 : 10) * S * gun.flash);
-    }
+    for (let i = 0; i < (karl ? 30 : 10); i++) g.particles.add({ x: gun.x + (Math.random() - 0.5) * (karl ? 400 : 160), y: this.by - 2, vx: (Math.random() - 0.5) * 6, vy: -Math.random() * 1.5, g: 0.02, drag: 0.93, life: 0.9, size: 6 + Math.random() * 10, color: [170, 160, 150] });
+    g.shake = Math.max(g.shake, karl ? 32 : 10);
+    if (karl) g.screenFlash = Math.max(g.screenFlash || 0, 0.4);
+    g.sfx.explosion(karl ? 60 : 30);
   }
 
   draw(ctx) {
-    const g = this.game, t = this.t, S = BATTERY_SCALE, face = this.face, time = g.time;
-    // the background ridges run on past the edge of the map, with more batteries dug in along them
+    const g = this.game, t = this.t, face = this.face, time = g.time;
+    // the background ridge runs on past the edge of the map, with more batteries along it
     const layers = g.bg.layers || [];
     for (const li of [...new Set(BATTERY_BACK.map((b) => b[0]))]) {
       const l = layers[li];
@@ -1000,49 +1098,69 @@ class BatteryStrike {
       const ox = g.cam.x * (1 - l.parallax), ly = l.height[this.side < 0 ? 0 : WORLD_W - 1];
       const e0 = this.edge + ox; // where that layer's own ridge line ends on screen
       ctx.fillStyle = l.color;
-      ctx.fillRect(this.side < 0 ? e0 - 4000 : e0, ly, 4000, WORLD_BOTTOM - ly + 400);
+      ctx.fillRect(this.side < 0 ? e0 - 8000 : e0, ly, 8000, WORLD_BOTTOM - ly + 400);
       const [r0, g0, b0] = (l.color.match(/\d+/g) || [60, 60, 60]).map(Number);
-      const tone = (k) => `rgb(${Math.round(r0 * k)},${Math.round(g0 * k)},${Math.round(b0 * k)})`;
-      const bpal = { hull: tone(0.8), light: tone(0.95), dark: tone(0.65), deep: tone(0.5), track: tone(0.45), wheel: tone(0.7), metal: tone(0.7), lamp: tone(1.1) };
-      for (const b of this.back.filter((q) => q.li === li).sort((p, q) => p.sc - q.sc)) this.drawGun(ctx, b, false, b.x + ox, ly + 2, S * b.sc, bpal);
+      const tn = (k) => `rgb(${Math.round(r0 * k)},${Math.round(g0 * k)},${Math.round(b0 * k)})`;
+      const tone = { a: tn(0.55), c: tn(0.78), e: tn(0.95) };
+      for (const b of this.back.filter((q) => q.li === li).sort((p, q) => p.sc - q.sc)) drawGWSPG(ctx, b.x + ox, ly + 2, GW_P * b.sc, face, b, tone);
     }
     // the ground out past the edge of the map, where the guns are dug in
-    const x0 = this.side < 0 ? this.edge - 3200 : this.edge, x1 = this.side < 0 ? this.edge : this.edge + 3200;
+    const span = BATTERY_OFF + 3000;
+    const x0 = this.side < 0 ? this.edge - span : this.edge, x1 = this.side < 0 ? this.edge : this.edge + span;
     const T = g.terrain;
     ctx.fillStyle = T.color; ctx.fillRect(x0, this.by, x1 - x0, WORLD_BOTTOM - this.by + 400);
     if (T.cap) { ctx.fillStyle = T.cap; ctx.fillRect(x0, this.by, x1 - x0, 8); }
     const pal = {
-      hull: this.owner.color, light: shade(this.owner.color, 0.3), dark: shade(this.owner.color, -0.25), deep: shade(this.owner.color, -0.5),
-      track: '#2b2d33', wheel: '#6b6f78', metal: '#8a8fa0', lamp: '#fff3c0',
+      hull: '#5c5e58', light: '#7c7e76', dark: '#44463f', deep: '#2e302b', track: '#2b2d33', wheel: '#6b6f78',
     };
-    this.drawGun(ctx, this.karl, true, this.karl.x, this.by, S, pal);
-    for (const gun of this.guns) this.drawGun(ctx, gun, false, gun.x, this.by, S, pal);
-    // rounds on the way down: a shell and its streak over the mark
-    for (const r of this.rounds) {
-      const k = r.at - t;
-      if (k <= 0 || k > 22) continue;
-      const y = this.ground - k * 46;
-      ctx.fillStyle = 'rgba(255,240,200,0.45)'; ctx.fillRect(Math.round(r.x - face * k * 3 - 2), Math.round(y - 70), 4, 70);
-      ctx.fillStyle = '#2a2a2e'; sq(ctx, r.x - face * k * 3, y, 8);
+    drawKarl(ctx, this.karl.x, this.by, KARL_S, face, this.karl, pal);
+    for (const gun of this.guns) drawGWSPG(ctx, gun.x, this.by, GW_P, face, gun, null);
+    // rounds coming in: fast, at a slant from the battery's side, each with a long streak
+    const dir = { x: face * 0.62, y: 1 }, dl = Math.hypot(dir.x, dir.y);
+    dir.x /= dl; dir.y /= dl;
+    for (const rd of this.rounds) {
+      const k = rd.at - t;
+      if (k <= 0 || k > 9) continue;
+      const y = g.terrain.hAt(rd.x), sp = 150;
+      const sx = rd.x - dir.x * k * sp, sy = y - dir.y * k * sp;
+      ctx.fillStyle = 'rgba(255,240,210,0.5)';
+      for (let i = 0; i < 16; i++) sq(ctx, sx - dir.x * i * 20, sy - dir.y * i * 20, 6 - i * 0.3);
+      ctx.fillStyle = '#26262a'; sq(ctx, sx, sy, 10);
     }
     const kk = BATTERY.KARL_LAND - t;
-    if (kk > 0 && kk <= 34) { // the 60cm round, a lot bigger, a lot slower
-      const y = this.ground - kk * 40, x = this.tx - face * kk * 2;
-      ctx.fillStyle = 'rgba(255,220,160,0.5)'; ctx.fillRect(Math.round(x - 6), Math.round(y - 140), 12, 140);
-      ctx.fillStyle = '#26262a'; ctx.fillRect(Math.round(x - 12), Math.round(y - 34), 24, 34);
-      ctx.fillStyle = '#3c3c42'; ctx.fillRect(Math.round(x - 12), Math.round(y - 34), 24, 6);
+    if (kk > 0 && kk <= 14) { // the 60cm round: bigger, and just as fast
+      const y = g.terrain.hAt(this.tx), sp = 130;
+      const sx = this.tx - dir.x * kk * sp, sy = y - dir.y * kk * sp;
+      ctx.fillStyle = 'rgba(255,220,160,0.55)';
+      for (let i = 0; i < 20; i++) sq(ctx, sx - dir.x * i * 26, sy - dir.y * i * 26, 18 - i * 0.6);
+      ctx.fillStyle = '#26262a'; sq(ctx, sx, sy, 34);
+      ctx.fillStyle = '#3c3c42'; sq(ctx, sx - dir.x * 8, sy - dir.y * 8, 22);
     }
     // speed lines while the camera whips across
     if (this.whip > 30) {
-      const cam = g.cam, a = clamp((this.whip - 30) / 90, 0, 0.7);
+      const cam = g.cam, a = clamp((this.whip - 30) / 90, 0, 0.75);
       ctx.fillStyle = `rgba(255,255,255,${a})`;
-      for (let i = 0; i < 26; i++) {
+      for (let i = 0; i < 30; i++) {
         const u = ((i * 0.618034) % 1), v = ((i * 0.381966 + 0.17) % 1);
-        const len = cam.w * (0.15 + 0.25 * v);
+        const len = cam.w * (0.2 + 0.3 * v);
         const x = cam.x + ((u * 1.4 + time * 3.1 * (0.6 + v)) % 1.4 - 0.2) * cam.w;
         ctx.fillRect(Math.round(x), Math.round(cam.y + v * cam.h), Math.round(len), Math.max(2, Math.round(3 / cam.zoom)));
       }
     }
+  }
+
+  // in screen units: where the battery is, so it reads as far behind the line
+  drawScreen(ctx) {
+    const t = this.t;
+    if (t < BATTERY.OUT - 6 || t > BATTERY.BACK + 6) return;
+    const a = Math.min(1, (t - BATTERY.OUT + 6) / 10, (BATTERY.BACK + 6 - t) / 8);
+    const y = Math.round(H * 0.17); // clear of the turn banner and the notices
+    ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
+    ctx.fillStyle = `rgba(20,20,26,${0.6 * a})`; ctx.fillRect(W / 2 - 200, y - 22, 400, 46);
+    ctx.fillStyle = `rgba(255,230,180,${a})`;
+    ctx.fillText(`G.W. BATTERY  ·  ${BATTERY_KM} KM BEHIND THE LINE`, W / 2, y - 2);
+    ctx.fillStyle = `rgba(220,220,230,${a})`; ctx.font = '11px monospace';
+    ctx.fillText('4 × G.W. TIGER  ·  KARL-GERÄT 040  ·  FIRE FOR EFFECT', W / 2, y + 15);
   }
 }
 
