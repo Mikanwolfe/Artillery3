@@ -294,7 +294,7 @@ class Tank {
       ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 124 + LABEL_LIFT), 48, 20);
       ctx.fillStyle = HUD.plateInk;
       ctx.font = `12px ${HUD_FONT}`;
-      ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 109 + LABEL_LIFT));
+      ctx.fillText(`¢${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 109 + LABEL_LIFT));
       ctx.font = `13px ${HUD_FONT}`;
     }
     // A3 layout: an armour bar stacked on the health bar, armour number left, health right
@@ -416,36 +416,36 @@ class Projectile {
       if (this.trail.length > 24) this.trail.splice(0, 2);
     }
     if (!r) return true;
+    // a carpet rocket that hits something mid-drop throws out the rest of its bomblets
+    if (this.dropped && this.dropped < this.w.carpet.n) for (let i = this.dropped; i < this.w.carpet.n; i++) this.dropBomblet(g, i, 4);
     if (r.hit !== 'out') g.impact(this, r);
     return false;
   }
 
   // rockets that change in flight: a carpet rocket opens over its target (or once its motor is out
   // and it starts to fall) into a line of bomblets; a split rocket breaks into seekers that each
-  // take a different target. Returns true when this projectile has been replaced.
+  // go for the nearest target. Returns true when this projectile has been replaced.
   transform(g) {
     const w = this.w;
     // timed: so a rocket has to be lobbed long or high enough to open over its target; one that
     // hits first does only half damage (see Game.bodyFactor)
-    if (w.carpet && this.age === w.carpet.at) {
+    // a carpet rocket starts dropping its bomblets at carpet.at, one every carpet.every frames as it
+    // flies on, and is spent with the last. Each bomblet steers for the nearest target in reach: let
+    // go high, they have time to all bend onto one; let go low, they land along the rocket's path.
+    if (w.carpet && this.age >= w.carpet.at) {
       const c = w.carpet;
-      const bomb = { id: w.id + '_b', name: 'Bomblet', kind: 'shell', dmg: w.dmg * c.frac, dmgR: c.r, explR: 4, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
-        rarity: w.rarity, maxCharge: 10, bomblet: true, drift: 1.1 };
-      for (let i = 0; i < c.n; i++) {
-        const k = i - (c.n - 1) / 2;
-        const b = new Projectile(g, bomb, this.owner, this.x + k * 3, this.y, this.vx * 0.25 + k * 0.9, Math.max(this.vy, 0) * 0.3 + 1 + Math.abs(k) * 0.08, this.main && i === 0);
-        b.peak = this.peak;
-        b.launch = this.launch;
-        g.projectiles.push(b);
-      }
-      g.particles.explosion(this.x, this.y, 30, 'shell');
+      const i = (this.age - c.at) / c.every;
+      if (i % 1) return false;
+      this.dropBomblet(g, i, 0);
+      g.particles.puff(this.x, this.y + 4, [200, 200, 205]);
       g.sfx.click();
+      if (i < c.n - 1) return false;
+      g.particles.explosion(this.x, this.y, 20, 'shell'); // spent
       return true;
     }
     if (w.split && this.age === w.split.at) {
       const sp = w.split;
-      const child = { ...w, split: null, dmg: w.dmg * (sp.boost || 1), guide: { ...w.guide, seek: 0, apex: false } }; // the children seek at once
-      const taken = [];
+      const child = { ...w, split: null, dmg: w.dmg * (sp.boost || 1), guide: { ...w.guide, seek: 0 } }; // the children seek at once, and still dive on the nearest past their apex
       const speed = Math.hypot(this.vx, this.vy);
       const a0 = Math.atan2(this.vy, this.vx);
       for (let i = 0; i < sp.n; i++) {
@@ -454,13 +454,25 @@ class Projectile {
         c.age = this.age;
         c.peak = this.peak;
         c.launch = this.launch;
-        c.taken = taken; // siblings lock onto different targets
         g.projectiles.push(c);
       }
       g.particles.explosion(this.x, this.y, 24, 'shell');
       return true;
     }
     return false;
+  }
+
+  dropBomblet(g, i, scatter) {
+    const w = this.w, c = w.carpet;
+    const bomb = { id: w.id + '_b', name: 'Bomblet', kind: 'shell', dmg: w.dmg * c.frac, dmgR: c.r, explR: 4, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
+      rarity: w.rarity, maxCharge: 10, bomblet: true, drift: 1.1, guide: BOMBLET_GUIDE };
+    const b = new Projectile(g, bomb, this.owner, this.x - this.vx, this.y - this.vy - 4,
+      this.vx * 0.5 + (Math.random() - 0.5) * (1 + scatter), Math.min(Math.max(this.vy, 0) * 0.5 + 1, 6) - scatter * Math.random(), this.main && i === 0);
+    b.peak = this.peak;
+    b.launch = this.launch;
+    b.prefer = this.prefer;
+    g.projectiles.push(b);
+    this.dropped = i + 1;
   }
 
   // the Demigod: at lance.at it stops dead and hovers, picks the nearest target in any direction

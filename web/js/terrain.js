@@ -41,6 +41,8 @@ class Terrain {
     this.treeDensity = 1;
     this.trees = [];
     this.forts = [];
+    this.bridges = [];
+    this.lines = [];
   }
 
   // Mountainous: rougher, deeper midpoint displacement than A3's (reduction 0.45, displacement 200),
@@ -56,6 +58,8 @@ class Terrain {
     this.height = generateHeights(0.62 * WORLD_BOTTOM, g.rough, g.disp);
     this.trees = [];
     this.forts = [];
+    this.bridges = [];
+    this.lines = [];
     this.soot = new Float32Array(WORLD_W); // 0..1 scorch per column, drawn along the surface
     const peaks = Math.round(rng.int(g.peaks[0], g.peaks[1]) * WORLD_W / 2400); // the biome's count is per 2400 units
     for (let k = 0; k < peaks; k++) {

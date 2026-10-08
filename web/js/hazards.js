@@ -250,7 +250,7 @@ Object.assign(Game.prototype, {
     this.reinforce(cycles);
     if (this.shipAt && cycles >= this.shipAt && !this.mobs.some((m) => m.kind === 'mothership')) {
       const m = this.addMob('mothership', rng.chance(0.5) ? 160 : WORLD_W - 160);
-      this.ui.notice(`The ${m.name} has arrived! $${m.bounty} to whoever brings it down.`);
+      this.ui.notice(`The ${m.name} has arrived! ¢${m.bounty} to whoever brings it down.`);
       this.ui.dispatch('Priority transmission', STORY.boss);
       this.events.push(`The ${m.name} arrives.`);
       this.sfx.satPrep();

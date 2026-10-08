@@ -152,10 +152,15 @@ Object.assign(Game.prototype, {
     }
   },
 
-  // where a vehicle stands at x: the terrain, or a fort's top if one is in the way
-  groundAt(x) {
+  // where a vehicle stands at x: the terrain, a fort's top if one is in the way, or a bridge deck
+  // if the vehicle (at fromY) is up on it rather than underneath
+  groundAt(x, fromY = -Infinity) {
     let g = this.terrain.hAt(x);
     for (const f of this.terrain.forts) g = Math.min(g, f.topAt(x));
+    for (const b of this.terrain.bridges || []) {
+      const top = deckTopAt(b, x);
+      if (fromY <= top + 6) g = Math.min(g, top);
+    }
     return g;
   },
 
