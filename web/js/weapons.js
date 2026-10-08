@@ -89,9 +89,13 @@ const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.t
 const GATEKEEPER_DISCOUNT = 0.5;
 // a shooter's seeker settings: Alban Eiler's fire control extends and sharpens them, her telemetry
 // prefers rivals over drones and crates
+// rocket fuel: frames of motor by rarity (a rocket's own burn is a ceiling); better rockets fly further
+const ROCKET_BURN = [30, 30, 36, 42, 50, 58, 66, 74];
 function guideFor(w, owner) {
   if (!w.guide) return null;
-  return hasTrait(owner, 'firecontrol') ? { ...w.guide, range: w.guide.range * 1.4, turn: w.guide.turn * 1.3 } : w.guide;
+  const G = { ...w.guide, burn: Math.min(w.guide.burn, ROCKET_BURN[w.rarity] || 30) };
+  if (hasTrait(owner, 'firecontrol')) { G.range *= 1.4; G.turn *= 1.3; }
+  return G;
 }
 function preferFor(owner) { return hasTrait(owner, 'telemetry') ? 'rival' : null; }
 const DRILL_QUALITY = 0.6; // a 'solid' hit or better (see HIT_TIERS) earns the drill's round back
@@ -382,6 +386,15 @@ function findLock(p, seek, owner) {
 // carpet bomblets: unpowered, steering from the moment they drop, for whatever is in reach
 const BOMBLET_GUIDE = { arm: 2, burn: 0, seek: 0, turn: 2.5, range: 420, cone: 180, lift: 0, brake: false };
 const BOMBLET_FAN = 16; // each later bomblet aims this much further out from the target, alternating sides
+const FIN_GAIN = 0.05; // turn-rate change per frame per radian off the line
+const FIN_DAMP = 0.1; // how much of its turn rate it sheds a frame (low: it overshoots)
+const FIN_WOBBLE = 6.5; // buffeting in degrees a frame, at full strength (the same for every rocket)
+const FIN_WOBBLE_FULL = 150; // frames of flight before buffeting is at full strength
+function finFor(p) {
+  if (p.wseed === undefined) return { w: 0, n: 0, gain: 1, damp: 1, rand: () => 0 };
+  const r = mulberry32(p.wseed);
+  return { w: 0, n: 0, gain: 0.7 + 0.6 * r(), damp: 0.5 + 0.8 * r(), rand: () => r() * 2 - 1 };
+}
 function guideStep(p, seek, owner) {
   const G = p.guide;
   if (!G || p.age < G.arm) return 0;
@@ -444,8 +457,16 @@ function guideStep(p, seek, owner) {
     const d = Math.hypot(q.x - p.x, q.y - p.y);
     const vmax = Math.max(9, d / 10);
     if (G.brake !== false && sp > vmax) { const k = Math.max(0.93, vmax / sp); p.vx *= k; p.vy *= k; }
-    const rate = G.turn * (p.dive ? 2 : 1); // diving, the fins bite harder
-    const turn = clamp(diff, -rad(rate), rad(rate));
+    const rate = rad(G.turn * (p.dive ? 2 : 1)); // diving, the fins bite harder
+    // the fins are a crude P controller on the turn rate (no I or D term): under-damped, so the
+    // rocket swings past its line and fishtails back. Each rocket's gain, damping and buffeting are
+    // its own (seeded per rocket), and the buffeting grows the longer it has flown, so long lobs
+    // wander most. The CPU's simulated rockets (no seed) fly the steady average.
+    const f = p.fin || (p.fin = finFor(p));
+    f.n = f.n * 0.9 + 0.1 * f.rand();
+    f.w += clamp(diff * FIN_GAIN * f.gain - f.w * FIN_DAMP * f.damp, -rate * 0.4, rate * 0.4);
+    f.w = clamp(f.w + f.n * rad(FIN_WOBBLE) * Math.min(1, p.age / FIN_WOBBLE_FULL), -rate, rate);
+    const turn = f.w;
     const c = Math.cos(turn), sn = Math.sin(turn);
     const vx = p.vx * c - p.vy * sn;
     p.vy = p.vx * sn + p.vy * c;
