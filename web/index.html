@@ -7,6 +7,12 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="rotate">
+  <div class="phone"></div>
+  <p>Turn your phone sideways</p>
+  <button id="rotate-full" hidden>Play fullscreen, landscape</button>
+  <button id="rotate-skip" class="ghost">Play in portrait anyway</button>
+</div>
 <div id="stage">
   <canvas id="view" width="1024" height="576"></canvas>
 
@@ -19,6 +25,7 @@
       <button class="icon" id="btn-music" title="Music on/off (N)">♫</button>
       <button class="icon" id="btn-keys" title="Controls (H)">?</button>
       <button class="icon" id="btn-pause" title="Pause (Esc)">Ⅱ</button>
+      <button class="icon" id="btn-full" title="Fullscreen" hidden>⛶</button>
     </div>
     <div id="chat"></div>
     <div id="dock">
@@ -27,8 +34,8 @@
     </div>
     <div id="touch">
       <div class="pad">
-        <button data-k="left">◀</button><button data-k="right">▶</button>
-        <button data-k="up">▲</button><button data-k="down">▼</button>
+        <button data-k="up" class="up">▲</button>
+        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
       </div>
       <div class="pad r">
         <button data-end="1" class="wide">END TURN</button>

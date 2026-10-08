@@ -6,7 +6,9 @@
 const CHATTINESS = 0.7; // scales every reaction probability in react(); lower = quieter CPUs
 const CAM_ZOOM_MIN = 0.5; // mouse-wheel zoom range (1: the standard 1600 x 900 view)
 const CAM_ZOOM_MAX = 1.8;
-const CAM_FULL = VIEW_W / WORLD_W; // the furthest a set piece pulls back: the map's whole width, edge to edge
+let CAM_FULL = VIEW_W / WORLD_W; // the furthest a set piece pulls back: the map's whole width, edge to edge (setAspect)
+// the wheel's floor: never so far out that the view is wider than the map (a wide screen hits it first)
+const camZoomMin = () => Math.max(CAM_ZOOM_MIN, CAM_FULL);
 const CAM_ZOOM_EASE = 6; // the wheel zoom closes 1/6 of the way to its target each frame
 const LABEL_ANCHOR = 60; // HUD labels hang this far (world units at zoom 1) above a vehicle's feet
 const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
@@ -95,7 +97,7 @@ class Camera {
 
   // zoom about the centre of the view
   setZoom(z, ease = false) {
-    z = clamp(z, this.zmin || CAM_ZOOM_MIN, CAM_ZOOM_MAX);
+    z = clamp(z, this.zmin || camZoomMin(), CAM_ZOOM_MAX);
     if (!ease) this.zoomTo = z; // set pieces jump straight there; the wheel eases (update)
     const cx = this.x + this.w / 2, cy = this.y + this.h * 0.55;
     this.zoom = z;
@@ -233,12 +235,15 @@ class Game {
     c.addEventListener('wheel', (e) => {
       if (this.phase === 'menu') return;
       e.preventDefault();
-      this.cam.zoomTo = clamp((this.cam.zoomTo || this.cam.zoom) * Math.exp(-e.deltaY * 0.0015), CAM_ZOOM_MIN, CAM_ZOOM_MAX); // eased in by Camera.update
+      this.cam.zoomTo = clamp((this.cam.zoomTo || this.cam.zoom) * Math.exp(-e.deltaY * 0.0015), camZoomMin(), CAM_ZOOM_MAX); // eased in by Camera.update
     }, { passive: false });
     c.addEventListener('pointerdown', (e) => {
       if (this.phase === 'menu') return;
       this.sfx.unlock();
-      this.drag = { x: e.clientX, y: e.clientY, cx: this.cam.x, cy: this.cam.y, moved: false };
+      // pressing on (or close to) your own vehicle and dragging aims her gun at the finger instead
+      const t = this.active, p = this.worldAt(e);
+      const near = this.phase === 'aim' && t && !t.isCpu && dist(p.x, p.y, t.x, t.y - TANK_H / 2) < Math.max(70, 56 * p.sc);
+      this.drag = { x: e.clientX, y: e.clientY, cx: this.cam.x, cy: this.cam.y, moved: false, aim: near };
       c.setPointerCapture(e.pointerId);
     });
     c.addEventListener('pointerup', (e) => {
@@ -248,6 +253,7 @@ class Game {
       if (!this.drag) return;
       if (!this.drag.moved && Math.hypot(e.clientX - this.drag.x, e.clientY - this.drag.y) < 6) return;
       this.drag.moved = true;
+      if (this.drag.aim) { const p = this.worldAt(e); this.input.queue.push({ aimAt: { x: p.x, y: p.y } }); return; }
       const sc = VIEW_W / c.clientWidth / this.cam.zoom;
       this.cam.manual = {
         x: this.drag.cx - (e.clientX - this.drag.x) * sc + this.cam.w / 2,
@@ -257,6 +263,13 @@ class Game {
     const end = () => { this.drag = null; };
     c.addEventListener('pointerup', end);
     c.addEventListener('pointercancel', end);
+  }
+
+  // a pointer event's world position (and world units per CSS pixel)
+  worldAt(e) {
+    const r = this.canvas.getBoundingClientRect();
+    const sc = VIEW_W / r.width / this.cam.zoom;
+    return { x: this.cam.x + (e.clientX - r.left) * sc, y: this.cam.y + (e.clientY - r.top) * sc, sc };
   }
 
   placeMark(e) {
@@ -326,6 +339,17 @@ class Game {
     this.biome = BIOMES[id] || BIOMES.snow;
     this.terrain.generate(this.biome);
     this.bg = new Background(this.biome);
+  }
+
+  // the screen's shape: the width stretches to fit (ASPECT_MIN..ASPECT_MAX) at the same height and
+  // scale, so a wider screen just sees more of the map. Returns the aspect actually used.
+  setAspect(ar) {
+    ar = clamp(ar || 16 / 9, ASPECT_MIN, ASPECT_MAX);
+    W = Math.round((H * ar) / 16) * 16; // (a multiple of 16 keeps VIEW_W whole)
+    VIEW_W = W / VIEW_SCALE;
+    CAM_FULL = VIEW_W / WORLD_W;
+    this.cam.setZoom(this.cam.zoomTo || this.cam.zoom); // re-clamped to the new width
+    return W / H;
   }
 
   resize(cssWidth) {
@@ -755,6 +779,11 @@ class Game {
           if (t.cycleWeapon(a.cycle)) this.sfx.click(); else this.sfx.deny();
         } else if (a.select !== undefined) {
           if (!t.firedThisTurn && t.selectWeapon(a.select)) this.sfx.click(); else this.sfx.deny();
+        } else if (a.aimAt) { // dragged from her: face the finger and point the gun at it
+          const p = t.pivot(), dx = a.aimAt.x - p.x, dy = a.aimAt.y - p.y;
+          if (Math.hypot(dx, dy) < 12) continue;
+          t.facing = dx < 0 ? -1 : 1;
+          t.elev = deg(Math.atan2(-dy, Math.abs(dx))) - t.hullAngle(t.facing);
         } else if (a.jump) {
           this.jump(t);
         } else if (a.repair) {
@@ -1847,7 +1876,7 @@ class Game {
       ctx.font = `13px ${HUD_FONT}`;
       ctx.textAlign = 'center';
       const w = ctx.measureText(txt).width + 16;
-      const bx = Math.round(1120 + 400 - w), by = 752;
+      const bx = Math.round(VIEW_W - 80 - w), by = 752;
       ctx.globalAlpha = 0.75 + 0.25 * Math.sin(this.time * 3);
       ctx.fillStyle = HUD.plate;
       ctx.fillRect(bx, by, Math.round(w), 22);
@@ -1862,7 +1891,7 @@ class Game {
 
   // A3 UI_Minimap: a track at the top right with a dot per tank, on a dark plate
   drawMinimap(ctx) {
-    const x0 = 1190, y0 = 80, w = 360, h = 20;
+    const x0 = VIEW_W - 410, y0 = 80, w = 360, h = 20;
     const mx = (x) => x0 + (w * clamp(x, 0, WORLD_W)) / WORLD_W;
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(x0 - 10, y0 - 12, w + 20, h + 24);
@@ -1901,7 +1930,7 @@ class Game {
   // A3 UI_WindMarker, reinterpreted as a windsock: a mast with a striped sock of squares that
   // points downwind, gets longer with strength and droops when the wind is light
   drawWindMarker(ctx) {
-    const mx = 790, top = 38;
+    const mx = VIEW_W / 2 - 10, top = 38;
     ctx.fillStyle = '#4a4a5c';
     ctx.fillRect(mx - 2, top, 4, 54);
     ctx.fillRect(mx - 8, top + 52, 16, 4);
@@ -1931,7 +1960,7 @@ class Game {
     const w = ctx.measureText(txt).width + 16;
     // by the marker while it's on screen, otherwise above the charge bar
     const on = sx > 0 && sx < VIEW_W && sy > 60 && sy < VIEW_H - 120;
-    const bx = Math.round(on ? clamp(sx - w / 2, 8, VIEW_W - w - 8) : 1120 + 400 - w);
+    const bx = Math.round(on ? clamp(sx - w / 2, 8, VIEW_W - w - 8) : VIEW_W - 80 - w);
     const by = Math.round(on ? sy - 52 : 752);
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(bx, by, Math.round(w), 22);
@@ -1943,7 +1972,7 @@ class Game {
 
   // A3 UI_Combat: charge bar (with last-charge tick) and fuel bar, bottom right, as hatched meters
   drawBars(ctx, t) {
-    const x0 = 1120, w = 400;
+    const x0 = VIEW_W - 480, w = 400;
     const hatch = (x, y, ww, hh) => { ctx.fillStyle = 'rgba(0,0,0,0.3)'; for (let i = x + 2; i < x + ww; i += 6) ctx.fillRect(i, y, 2, hh); };
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(x0 - 70, 784, w + 82, 70);
