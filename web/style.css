@@ -123,7 +123,48 @@ option { background: var(--bg); color: var(--fg); }
 .opts .seg button { flex: 1 1 auto; }
 .go { display: flex; gap: 0.6em; margin-top: 2em; }
 .go .primary { flex: 1; font-size: 1em; padding: 0.8em 1em; }
-#how { align-self: flex-start; margin-top: 0.8em; }
+#how { align-self: flex-start; }
+.go2 { display: flex; align-items: center; gap: 1em; margin-top: 0.8em; }
+
+/* ---------------------------------------------------------------- codex */
+#codex.left { justify-content: flex-start; background: none; pointer-events: none; }
+.codex-side { pointer-events: auto; height: 100%; width: 34%; min-width: 22em; background: var(--panel); border-right: 1px solid var(--ash); padding: 1.4em 1.6em 1.6em; overflow: auto; display: flex; flex-direction: column; }
+.codex-side .sec { margin: 1.1em 0 0.5em; }
+#cx-chars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.3em; }
+.cx-girl { display: flex; flex-direction: column; align-items: center; gap: 0.2em; padding: 0.3em 0.1em; text-transform: none; letter-spacing: 0; font-size: 0.7em; }
+.cx-girl canvas { width: 4.2em; height: 5em; image-rendering: pixelated; }
+.cx-girl.on { border-color: var(--accent); background: var(--bg3); color: var(--bright); }
+.cx-card { background: var(--bg2); border: 1px solid var(--line); padding: 0.7em 0.8em; margin-top: 0.5em; display: grid; gap: 0.45em; font-size: 0.86em; }
+.cx-card h3 { color: var(--bright); font-size: 1.15em; }
+.cx-card p { margin: 0; color: var(--dim); line-height: 1.5; }
+.cx-card .maker { font-size: 0.72em; }
+.cx-card .cost { color: var(--gold); font-size: 0.85em; }
+.cx-card ul.traits { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.3em; color: var(--dim); }
+.cx-card ul.traits b { color: var(--gold); font-weight: 400; margin-right: 0.4em; }
+.cx-stats { display: grid; grid-template-columns: repeat(3, auto auto); gap: 0.2em 0.6em; justify-content: start; align-items: baseline; }
+.cx-stats b { font-weight: 400; color: var(--fg); }
+.cx-meta { border-left: 2px solid var(--accent); padding-left: 0.6em; color: var(--fg) !important; }
+.cx-meta .chip { font-size: 0.75em; letter-spacing: 0.12em; text-transform: uppercase; padding: 0 0.4em; border: 1px solid var(--cool); color: var(--cool); margin-right: 0.3em; }
+.cx-meta .chip.Oversells { border-color: var(--hot); color: var(--hot); }
+.cx-meta .chip.Undersells { border-color: var(--gold); color: var(--gold); }
+.cx-whead { display: flex; gap: 0.7em; align-items: center; }
+.cx-dl { display: grid; grid-template-columns: auto 1fr; gap: 0.2em 0.8em; margin: 0; font-size: 0.92em; }
+.cx-dl dt { color: var(--ash); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.85em; padding-top: 0.1em; }
+.cx-dl dd { margin: 0; color: var(--fg); }
+#cx-filter { margin-bottom: 0.4em; }
+#cx-filter button { font-size: 0.7em; padding: 0.3em 0.55em; }
+.codex-side > * { flex: none; }
+#cx-list { height: 9.5em; overflow: auto; display: grid; gap: 0.2em; border: 1px solid var(--line); padding: 0.25em; background: var(--bg); }
+.cx-w { display: grid; grid-template-columns: auto 1fr auto; gap: 0.5em; align-items: center; text-align: left; text-transform: none; letter-spacing: 0; font-size: 0.78em; padding: 0.2em 0.4em; }
+.cx-w small { color: var(--gold); }
+.cx-w.on { border-color: var(--accent); background: var(--bg3); color: var(--bright); }
+#cx-readout { display: grid; grid-template-columns: repeat(4, auto auto); gap: 0.2em 0.6em; justify-content: start; align-items: baseline; margin: 0.6em 0 0.4em; }
+#cx-readout b { color: var(--gold); font-size: 1.15em; font-variant-numeric: tabular-nums; font-weight: 400; }
+.cx-hint { line-height: 1.6; }
+/* the range runs behind the Codex panel: move the HUD clear of it */
+#stage.ranging #dock { left: 36%; }
+#stage.ranging #topleft, #stage.ranging #chat { left: 36%; }
+#stage.ranging #hints { display: none; }
 .help { max-width: 62%; }
 .help p { color: var(--dim); line-height: 1.7; margin: 0 0 1.2em; font-size: 0.95em; }
 .keys { width: 100%; border-collapse: collapse; font-size: 0.92em; }
@@ -216,7 +257,7 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 #hud { position: absolute; inset: 0; pointer-events: none; }
 #hud > * { position: absolute; }
 #hud button { pointer-events: auto; }
-#stage:has(.screen:not([hidden])) #hud > :not(#banner) { visibility: hidden; }
+#stage:has(.screen:not([hidden]):not(#codex)) #hud > :not(#banner) { visibility: hidden; }
 #topleft { top: 1.2%; left: 1%; display: flex; gap: 0.3em; align-items: stretch; }
 .chip, #topleft .icon { background: var(--plate); border: 1px solid var(--line); }
 .chip { padding: 0.35em 0.8em; font-size: 0.82em; letter-spacing: 0.12em; text-transform: uppercase; display: flex; align-items: center; color: var(--fg); }
