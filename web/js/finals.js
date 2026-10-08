@@ -517,7 +517,7 @@ class MaiaArray {
       if (s.at !== t) continue;
       const src = this.fore.length && s.src % 3 ? this.lensOf(this.fore[s.src % this.fore.length]) : (() => { const q = this.far[s.src % this.far.length]; return { x: q.x, y: q.y }; })();
       const y = g.terrain.hAt(s.x);
-      g.lasers.push(new Laser(src.x, src.y, s.x, y, s.src % 2 ? '#bfe8ff' : '#dce8ff', 10, 26));
+      g.lasers.push(new Laser(src.x, src.y, s.x, y, s.src % 2 ? '#bfe8ff' : '#ffc0e8', 10, 26));
       g.explode(s.x, y, { maia: true, dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 8, from: { x: src.x - s.x, y: src.y - y } }, this.owner, 'laser');
       if (t % 4 === 0) g.sfx.satFire();
       g.shake = Math.max(g.shake, 8);
@@ -534,7 +534,7 @@ class MaiaArray {
       const l = this.giant.lens(), G = this.giantAt;
       this.beam = { x: G.x + l.x * G.sc, y: G.y + l.y * G.sc };
       const y = g.terrain.hAt(this.tx);
-      g.lasers.push(new Laser(this.beam.x, this.beam.y, this.tx, y, '#e8f2ff', 150, 90));
+      g.lasers.push(new Laser(this.beam.x, this.beam.y, this.tx, y, '#ffe8f6', 150, 90));
       const B = this.cfg.final;
       g.explode(this.tx, y, { maia: true, dmg: B.dmg, dmgR: B.r, explR: B.explR, visR: 460, from: { x: this.beam.x - this.tx, y: this.beam.y - y } }, this.owner, 'laser');
       g.shake = Math.max(g.shake, 34);
@@ -560,7 +560,7 @@ class MaiaArray {
       drawScaled(ctx, G.x, G.y, G.sc, 0.38 * a, () => { this.giant.x = 0; this.giant.y = 0; this.giant.draw(ctx); });
       if (this.big > 0 && t < ARRAY.BIG_FIRE) { // gathering light at its emitter
         const l = this.giant.lens();
-        ctx.fillStyle = `rgba(220,235,255,${0.3 + 0.6 * this.big})`;
+        ctx.fillStyle = `rgba(255,220,240,${0.3 + 0.6 * this.big})`;
         sq(ctx, G.x + l.x * G.sc, G.y + l.y * G.sc, 40 + 160 * this.big + Math.sin(time * 30) * 10);
       }
     }
@@ -568,9 +568,9 @@ class MaiaArray {
     for (const q of this.far) {
       if (t < q.at) continue;
       const a = Math.min(1, (t - q.at) / 6) * fade;
-      ctx.fillStyle = `rgba(28,40,86,${0.6 * a})`;
+      ctx.fillStyle = `rgba(90,34,70,${0.6 * a})`;
       for (let y = -q.r; y < q.r; y += 4) { const w = 2 * Math.sqrt(q.r * q.r - (y + 2) * (y + 2)); ctx.fillRect(Math.round(q.x - w / 2), Math.round(q.y + y), Math.round(w), 4); }
-      ctx.fillStyle = `rgba(190,222,255,${(0.4 + 0.5 * (t >= ARRAY.FILL ? 1 : 0)) * a})`;
+      ctx.fillStyle = `rgba(255,190,230,${(0.4 + 0.5 * (t >= ARRAY.FILL ? 1 : 0)) * a})`;
       sq(ctx, q.x, q.y, q.r * 0.6);
       if (t - q.at < 6) { ctx.fillStyle = `rgba(255,255,255,${1 - (t - q.at) / 6})`; sq(ctx, q.x, q.y, q.r * 4); }
     }
@@ -595,7 +595,7 @@ class MaiaArray {
       for (let y = -ir; y < ir; y += 2) {
         if (Math.abs(y + 1) > 16 * o) continue;
         const w = Math.sqrt(Math.max(0, ir * ir - (y + 1) * (y + 1)));
-        ctx.fillStyle = Math.abs(y) < ir * 0.5 ? '#4a90e8' : '#1e4aa0';
+        ctx.fillStyle = Math.abs(y) < ir * 0.5 ? '#e0409a' : '#a01e6a';
         ctx.fillRect(Math.round(c.x - w), Math.round(c.y + y), Math.round(w * 2), 2);
       }
       ctx.fillStyle = '#12020c'; ctx.fillRect(Math.round(c.x - 1.5), Math.round(c.y - Math.min(9, 16 * o)), 3, Math.round(Math.min(18, 32 * o))); // slit pupil

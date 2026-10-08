@@ -758,9 +758,9 @@ class Satellite {
 
   draw(ctx) {
     const tier = this.tier;
-    const main = 'rgb(30,46,104)'; // navy
+    const main = 'rgb(120,32,78)';
     const accent = 'rgb(23,23,47)';
-    const light = 'rgb(86,128,200)';
+    const light = 'rgb(176,74,128)';
     const gold = 'rgb(232,190,90)';
     const metal = '#9aa0b4';
     const dot = (lx, ly, size, col) => {
@@ -780,7 +780,7 @@ class Satellite {
         sq(ctx, c.x + Math.cos(a) * r, c.y + Math.sin(a) * r * 0.45, i % 3 === 0 ? size + 3 : size);
       }
     };
-    if (tier >= 2) ring(150, 26, 6, 0.004, 'rgba(44,70,140,0.8)');
+    if (tier >= 2) ring(150, 26, 6, 0.004, 'rgba(140,50,100,0.8)');
     if (tier >= 3) ring(185, 34, 5, -0.006, 'rgba(214,160,50,0.9)');
 
     // wing: antenna spars fanning out from a hub at the back, on one side only
@@ -790,10 +790,10 @@ class Satellite {
         const [ux, uy] = polar(1, deg);
         for (let d = 10; d <= L; d += 6) {
           dot(hub[0] + ux * d, hub[1] + uy * d, 4, metal);
-          if (feathers && d > 24 && d < L * 0.75 && (d / 6) % 2 < 1) dot(hub[0] + ux * d - uy * 6, hub[1] + uy * d + ux * 6, 7, 'rgba(120,160,226,0.9)');
+          if (feathers && d > 24 && d < L * 0.75 && (d / 6) % 2 < 1) dot(hub[0] + ux * d - uy * 6, hub[1] + uy * d + ux * 6, 7, 'rgba(62,78,150,0.9)');
         }
         const tipOn = ((this.t >> 4) + k) % spars.length === 0;
-        dot(hub[0] + ux * (L + 6), hub[1] + uy * (L + 6), 7, tipOn ? '#8fd0ff' : tipCol);
+        dot(hub[0] + ux * (L + 6), hub[1] + uy * (L + 6), 7, tipOn ? '#ff8fd0' : tipCol);
       });
       dot(hub[0], hub[1], 12, accent);
     };
@@ -849,7 +849,7 @@ class Satellite {
     disc(28, main);
     if (tier >= 3) disc(18, light);
     const pulse = 0.5 + 0.5 * Math.sin(this.t / 12);
-    ctx.fillStyle = `rgba(190,222,255,${0.45 + 0.35 * pulse + this.charge * 0.2})`;
+    ctx.fillStyle = `rgba(255,190,230,${0.45 + 0.35 * pulse + this.charge * 0.2})`;
     sq(ctx, c.x, c.y, 14 + this.charge * 16);
 
     // battle damage: smoke and sparks below half health, a white flash when hit, dark when down
