@@ -237,9 +237,19 @@ class Game {
       e.preventDefault();
       this.cam.zoomTo = clamp((this.cam.zoomTo || this.cam.zoom) * Math.exp(-e.deltaY * 0.0015), camZoomMin(), CAM_ZOOM_MAX); // eased in by Camera.update
     }, { passive: false });
+    // two fingers pinch-zoom (eased like the wheel); the gesture never pans, aims or marks
+    const pts = new Map();
+    const span = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
     c.addEventListener('pointerdown', (e) => {
       if (this.phase === 'menu') return;
       this.sfx.unlock();
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size >= 2) {
+        this.drag = null;
+        this.pinch = { d: span(), z: this.cam.zoomTo || this.cam.zoom };
+        c.setPointerCapture(e.pointerId);
+        return;
+      }
       // pressing on (or close to) your own vehicle and dragging aims her gun at the finger instead
       const t = this.active, p = this.worldAt(e);
       const near = this.phase === 'aim' && t && !t.isCpu && dist(p.x, p.y, t.x, t.y - TANK_H / 2) < Math.max(70, 56 * p.sc);
@@ -250,6 +260,11 @@ class Game {
       if (this.drag && !this.drag.moved) this.placeMark(e);
     });
     c.addEventListener('pointermove', (e) => {
+      if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.pinch && pts.size >= 2) {
+        this.cam.zoomTo = clamp(this.pinch.z * span() / this.pinch.d, camZoomMin(), CAM_ZOOM_MAX);
+        return;
+      }
       if (!this.drag) return;
       if (!this.drag.moved && Math.hypot(e.clientX - this.drag.x, e.clientY - this.drag.y) < 6) return;
       this.drag.moved = true;
@@ -260,7 +275,11 @@ class Game {
         y: this.drag.cy - (e.clientY - this.drag.y) * sc + this.cam.h * 0.55,
       };
     });
-    const end = () => { this.drag = null; };
+    const end = (e) => {
+      this.drag = null;
+      pts.delete(e.pointerId);
+      if (pts.size < 2) this.pinch = null; // (the finger left behind doesn't start a drag)
+    };
     c.addEventListener('pointerup', end);
     c.addEventListener('pointercancel', end);
   }
