@@ -871,7 +871,7 @@ class Game {
       this.satTarget = null;
       return;
     }
-    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null };
+    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, lock: this.satTarget.lock || null };
     this.retarget(this.satSeq);
     this.satTarget = null;
     this.satellite.lookAt(this.satSeq.target);
@@ -916,7 +916,7 @@ class Game {
   }
 
   // Yukikaze's Hatsuyuki barrage: MAIA opens its wings and antenna (about 40 frames), then fires
-  // b.pulses strikes b.gap frames apart around the mark. Each does b.dmg, scaled by MAIA's health and
+  // b.pulses strikes b.gap frames apart at the target its rocket locked onto (or where it landed). Each does b.dmg, scaled by MAIA's health and
   // only a little by its tier, so the call is worth making from round one.
   updateBarrage(s, sat) {
     const b = s.barrage;
@@ -924,7 +924,8 @@ class Game {
     sat.charge = s.t < start ? clamp((s.t - 30) / 50, 0, 1) : 0.6;
     const k = (s.t - start) / b.gap;
     if (s.t >= start && k % 1 === 0 && k < b.pulses) {
-      const tg = { x: s.target.x + (k ? (rng.next() - 0.5) * 50 : 0), y: s.target.y };
+      const c = s.lock && s.lock.alive ? seekCenter(s.lock) : s.target; // it tracks a locked target
+      const tg = { x: c.x + (k ? (rng.next() - 0.5) * 50 : 0), y: c.y };
       const lens = sat.lens();
       this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, k % 2 ? '#bfe8ff' : '#fffff0', 14, 40));
       this.sfx.satFire();
@@ -959,7 +960,12 @@ class Game {
       }
     }
     if (p.storm) this.lightning(p, w);
-    if ((w.sat || p.uplink) && p.main && w.kind !== 'laser') this.satTarget = { x: p.x, y: p.y, owner: p.owner, barrage: w.maia || null }; // a laser's MAIA call follows its beam
+    if ((w.sat || p.uplink) && p.main && w.kind !== 'laser') {
+      // Yukikaze's barrage goes for whatever its rocket was locked onto, wherever the rocket landed
+      const lock = w.maia && p.lastLock && p.lastLock.alive ? p.lastLock : null;
+      const at = lock ? seekCenter(lock) : p;
+      this.satTarget = { x: at.x, y: at.y, owner: p.owner, barrage: w.maia || null, lock };
+    } // a laser's MAIA call follows its beam
   }
 
   // kinetic and altitude bonuses for a shell's impact (see KINETIC_* / ALTITUDE_*)

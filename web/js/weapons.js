@@ -93,6 +93,7 @@ const GATEKEEPER_DISCOUNT = 0.5;
 const ROCKET_BURN = [30, 30, 36, 42, 50, 58, 66, 74];
 function guideFor(w, owner) {
   if (!w.guide) return null;
+  if (w.guide.tumble) return w.guide;
   const G = { ...w.guide, burn: Math.min(w.guide.burn, ROCKET_BURN[w.rarity] || 30) };
   if (hasTrait(owner, 'firecontrol')) { G.range *= 1.4; G.turn *= 1.3; }
   return G;
@@ -157,11 +158,11 @@ const WEAPONS = [
     short: 'Incendiary shrapnel shells for the 46cm guns. Lights up the whole sky.', long: 'Enormous airbursts and a rain of burning fragments.' }),
   // Hybrids: two makers' ideas in one gun (w.maker names both; the shop has a Hybrid filter)
   weapon('yukikaze', "Hatsuyuki 'Yukikaze' Uplink Seeker", 'rocket', 10, 80, { salvo: 2, maxCharge: 70, disp: 3.2, dmg: 40, dmgR: 45, explR: 5, rarity: 4, cost: 13000, sat: true,
-    maia: { pulses: 5, dmg: 120, r: 120, gap: 14 }, // the Hatsuyuki barrage (Game.updateSatellite)
+    maia: { pulses: 6, dmg: 140, r: 120, gap: 14 }, // the Hatsuyuki barrage (Game.updateSatellite)
     hybrid: true, maker: 'Hatsuyuki × Lymilark',
     kin: 6, // it comes in hot (no airbrake): six times the usual kinetic damage for a direct hit
     guide: { arm: 6, burn: 230, seek: 150, apex: true, brake: false, turn: 9, range: 1200, cone: 140, lift: 0.5 },
-    short: 'A Hatsuyuki seeker that dives on the nearest target past the top of its arc, without braking. Its call opens MAIA all the way.', long: 'The warheads barely scratch, but a fast direct hit does six times the usual kinetic damage. The Hatsuyuki barrage does the rest: MAIA spreads its wings and antenna and strikes five times, at near full strength from round one.' }),
+    short: 'A Hatsuyuki seeker that dives on the nearest target past the top of its arc, without braking. Its call opens MAIA all the way.', long: 'The warheads barely scratch, but a fast direct hit does six times the usual kinetic damage. The Hatsuyuki barrage does the rest: MAIA spreads its wings and antenna and strikes six times at whatever the rocket locked onto, at near full strength from round one.' }),
   weapon('feuerlilie', "G.W.–LFS 'Feuerlilie' Seeker Flak", 'rocket', 10, 85, { salvo: 2, clip: 2, maxCharge: 75, disp: 2.8, dmg: 90, dmgR: 90, explR: 4, rarity: 3, cost: 7000,
     hybrid: true, maker: 'G.W. × Lymilark', airburst: true,
     guide: { arm: 8, burn: 55, seek: 999, apex: true, turn: 4.5, range: 700, cone: 80, lift: 0.5 },
@@ -196,7 +197,7 @@ const WEAPONS = [
   // is closest. It steers at up to `turn` degrees a frame for `burn` frames, with `lift` of gravity
   // cancelled while the motor runs, then falls like a shell. Lighter damage, far better
   // consistency. Long-tube launchers can barely elevate, so they skim terrain and rely on the
-  // seeker. Later models transform in flight: `carpet` drops seeking bomblets one after another,
+  // seeker. Later models transform in flight: `carpet` drops tumbling, wind-blown bomblets one after another,
   // `split` breaks into seekers that each go for the nearest target.
   weapon('wren', "LFS 'Wren' 70mm Seeker", 'rocket', 0, 65, { salvo: 2, maxCharge: 55, disp: 2.6, dmg: 75, dmgR: 50, explR: 6, rarity: 1, cost: 1700,
     guide: { arm: 6, burn: 55, seek: 999, apex: true, turn: 4.5, range: 650, cone: 75, lift: 0.5 },
@@ -209,7 +210,7 @@ const WEAPONS = [
     short: 'A tube so long it can hardly elevate. It skims the ground, then pops up over its target and dives.', long: 'Flat-flying cruise rocket: find a gap in the terrain. Within about 240 of a target ahead it pulls up hard and comes down on top.' }),
   weapon('tirchonaill', "LFS 'Tir Chonaill' Carpet Rocket", 'rocket', 5, 60, { maxCharge: 70, disp: 2.0, dmg: 150, dmgR: 70, explR: 8, rarity: 4, cost: 12500,
     guide: { arm: 4, burn: 70, seek: 999, apex: true, turn: 4, range: 480, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 1.1, r: 60, at: 40, every: 3 },
-    short: 'Two-thirds of a second out it starts dropping seven seeking bomblets, one after another.', long: 'Let go high and they all bend onto one target; skim it low and they lay a line along its path.' }),
+    short: 'Two-thirds of a second out it starts dropping seven heavy bomblets, one after another.', long: 'They tumble and the wind takes them: skim it low over the target and it lays a strip.' }),
   weapon('emain', "LFS 'Emain Macha' Split Rocket", 'rocket', 0, 50, { clip: 2, maxCharge: 75, disp: 2.0, dmg: 300, dmgR: 80, explR: 10, rarity: 5, cost: 22000,
     guide: { arm: 4, burn: 75, seek: 999, apex: true, turn: 4.5, range: 520, cone: 80, lift: 0.6 }, split: { n: 3, at: 32, spread: 14, boost: 1.15 },
     short: 'Breaks into three seekers half a second out, each going for whatever is closest.', long: 'They can all pile onto one target, or spread over a crowd of drones.' }),
@@ -218,7 +219,7 @@ const WEAPONS = [
     short: 'It arcs like any rocket. Then it stops dead in the air, becomes a lance of light, and charges.', long: 'Three-quarters of a second out it picks the nearest target in any direction and runs it through. Kinetic damage ×2.5.' }),
   weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 1.6, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
     guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 5, range: 600, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 1.0, r: 75, at: 50, every: 2 },
-    short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten seeking bomblets in sequence: high for one target, low for a ridge.' }),
+    short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten heavy bomblets in sequence, unguided and wind-blown.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
@@ -384,9 +385,10 @@ function findLock(p, seek, owner) {
   }
   return p.prefer === 'rival' && bestRival ? bestRival : best;
 }
-// carpet bomblets: unpowered, steering from the moment they drop, for whatever is in reach
-const BOMBLET_GUIDE = { arm: 2, burn: 0, seek: 0, turn: 2.5, range: 420, cone: 180, lift: 0, brake: false };
-const BOMBLET_FAN = 16; // each later bomblet aims this much further out from the target, alternating sides
+// carpet bomblets don't seek: they tumble (their heading wanders up to `tumble` degrees a frame) and
+// the wind throws them about (BOMBLET_DRIFT), so a carpet is an area weapon, heavy in total
+const BOMBLET_GUIDE = { tumble: 3 };
+const BOMBLET_DRIFT = 2.5;
 const SEEKER_SPREAD = 20; // world units of seeker aim error per point of a rocket's spread
 const FIN_GAIN = 0.05; // turn-rate change per frame per radian off the line
 const FIN_DAMP = 0.1; // how much of its turn rate it sheds a frame (low: it overshoots)
@@ -399,6 +401,15 @@ function finFor(p) {
 }
 function guideStep(p, seek, owner) {
   const G = p.guide;
+  if (G.tumble) { // a bomblet: no seeker, just a wandering heading (none in a simulation)
+    const f = p.fin || (p.fin = finFor(p));
+    f.n = f.n * 0.85 + 0.15 * f.rand();
+    const a = f.n * rad(G.tumble), c = Math.cos(a), sn = Math.sin(a);
+    const vx = p.vx * c - p.vy * sn;
+    p.vy = p.vx * sn + p.vy * c;
+    p.vx = vx;
+    return 0;
+  }
   if (!G || p.age < G.arm) return 0;
   // the motor lifts while it burns; the fins steer for the whole flight once the seeker is awake
   const lift = p.age <= G.arm + G.burn ? G.lift : 0;
@@ -438,10 +449,10 @@ function guideStep(p, seek, owner) {
     p.lock = findLock(p, seek, owner);
     if (p.lock && p.taken) p.taken.push(p.lock);
   }
-  if (p.lock) p.locked = (p.locked || 0) + 1;
+  if (p.lock) { p.locked = (p.locked || 0) + 1; p.lastLock = p.lock; } // lastLock: what it was going for (Yukikaze's barrage)
   if (p.lock && p.locked < SEEK_FRAMES) { // steering lasts SEEK_FRAMES once locked, then it falls
     const q = seekCenter(p.lock);
-    if (p.aimOff) q.x += p.aimOff; // carpet bomblets fan out around the target
+    if (p.aimOff) q.x += p.aimOff; // its seeker's error (see Projectile)
     // aim above the target by the drop it will see on the way (remaining gravity, flight time)
     // (diving rockets aim straight at it: they steer every frame, and gravity is helping; the
     // allowance is capped so a slowed rocket doesn't aim high and hover over its target)
@@ -529,10 +540,13 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
 function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy, drift = 1, w = null, seek = tanks) {
   const p = { x: mx, y: my, vx, vy, age: 0, drift, guide: w && w.guide ? guideFor(w, owner) : null, prefer: w ? preferFor(owner) : null };
   let peak = my;
+  // a carpet rocket: follow its middle bomblet from the moment it would drop
+  const C = w && w.carpet, dropAt = C ? C.at + C.every * Math.floor(C.n / 2) : -1;
   for (let i = 0; i < 900; i++) {
     const r = stepBallistic(p, terrain, wind, tanks, owner, seek);
     if (p.y < peak) peak = p.y;
-    if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null, drop: p.y - peak, speed: Math.hypot(p.vx, p.vy) };
+    if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null, drop: p.y - peak, speed: Math.hypot(p.vx, p.vy), lock: p.lastLock || null };
+    if (p.age === dropAt) Object.assign(p, { y: p.y + 4, vx: p.vx * 0.5, vy: Math.min(Math.max(p.vy, 0) * 0.5 + 1, 6), drift: BOMBLET_DRIFT, guide: null });
   }
   return { x: p.x, y: p.y, hit: 'out', tank: null, drop: 0, speed: 0 };
 }

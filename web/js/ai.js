@@ -68,7 +68,7 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
       r = { ...r, x: b.x, y: b.y, hit: b.hit === 'spot' ? r.hit : b.hit, tank: b.hit === 'spot' ? r.tank : b.tank || null };
     }
     let err;
-    if (r.hit === 'tank' && r.tank === target) err = 0;
+    if ((r.hit === 'tank' && r.tank === target) || (w.maia && r.lock === target)) err = 0; // a barrage follows the lock
     else err = Math.max(0, dist(r.x, r.y, tc.x, tc.y) - w.dmgR * 0.25);
     if (r.hit === 'out') err += 1000;
     const selfD = dist(r.x, r.y, tank.x, tank.y - 8);

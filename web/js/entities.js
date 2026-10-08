@@ -471,13 +471,12 @@ class Projectile {
   dropBomblet(g, i, scatter) {
     const w = this.w, c = w.carpet;
     const bomb = { id: w.id + '_b', name: 'Bomblet', kind: 'shell', dmg: w.dmg * c.frac, dmgR: c.r, explR: 4, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
-      rarity: w.rarity, maxCharge: 10, bomblet: true, drift: 1.1, guide: BOMBLET_GUIDE };
+      rarity: w.rarity, maxCharge: 10, bomblet: true, drift: BOMBLET_DRIFT, guide: BOMBLET_GUIDE };
     const b = new Projectile(g, bomb, this.owner, this.x - this.vx, this.y - this.vy - 4,
       this.vx * 0.5 + (rng.next() - 0.5) * (1 + scatter), Math.min(Math.max(this.vy, 0) * 0.5 + 1, 6) - scatter * rng.next(), this.main && i === 0);
     b.peak = this.peak;
     b.launch = this.launch;
     b.prefer = this.prefer;
-    b.aimOff = (i % 2 ? 1 : -1) * Math.ceil(i / 2) * BOMBLET_FAN; // the first on target, the rest fanning slowly outward
     g.projectiles.push(b);
     this.dropped = i + 1;
   }
