@@ -7,7 +7,7 @@
 // how each gun actually plays (shared with the armoury page): [verdict, note]
 const GUN_NOTES = {
   morser: ['Matches', 'Two shots a turn and the widest elevation of any starter, −20° to 90°. A real all-rounder.'],
-  d76: ['Matches', 'One accurate shell. Range 40 and a 45° ceiling make it a flat-fire gun, so the altitude bonus is hard to earn.'],
+  d76: ['Matches', 'One accurate, long-reaching shell that shrugs off most of the wind. The 45° ceiling keeps it flat-firing, so the altitude bonus is hard to earn.'],
   nxi0: ['Matches', 'Three tight shells that land as one. Lowest worth of the starters on paper, but the tight group rarely wastes a shell.'],
   katis: ['Matches', 'The shells barely scratch; every one calls MAIA, which does the work. Still the strongest starter per turn.'],
   howitzer: ['Matches', 'Biggest blast of the Commons at the shortest range. The cheapest real step up from any starter.'],
@@ -15,7 +15,7 @@ const GUN_NOTES = {
   lensx2: ['Matches', 'High damage, low consistency, as promised. Lasers get no altitude bonus, and the ±25° arc limits where it can reach.'],
   lance: ['Matches', 'Spread 1 and two shots a turn. The most dependable Uncommon.'],
   coil: ['Matches', 'A machine gun as advertised: eight rounds a turn. Spread 3 means much of it misses at range.'],
-  obj261: ['Undersells', 'One shot, but it is a heavy shell with a 130 radius at range 90. The best value below $4,000.'],
+  obj261: ['Undersells', 'One shot, but it is a heavy shell with a 130 radius at range 90. The best value below ¢4,000.'],
   type11: ['Matches', 'Flexible but light, as described: three accurate shells, each calling MAIA, with the full 0–90° arc.'],
   lensae: ['Matches', 'Three accurate laser shots. A lot of damage for a Rare, if your target is inside ±30°.'],
   type91: ['Matches', 'Acid pools keep burning after the hit. Trimmed 10% because the acid used to double its real damage.'],
@@ -45,10 +45,10 @@ const GUN_NOTES = {
   lfs0: ['Matches', 'Two little seekers that find whatever is nearest. Weak, but forgiving, and her traits make them sharper.'],
   wren: ['Matches', 'The first shop rocket: two seekers a turn. Close is good enough; the seeker does the last bit.'],
   kestrel: ['Matches', 'Two pairs of seekers a turn. Consistent, light, and happy to pick off drones.'],
-  dunbarton: ['Matches', 'Barely elevates, as promised: a flat cruise rocket that needs a gap in the terrain, then rarely misses.'],
-  tirchonaill: ['Matches', 'Opens over its target into seven bomblets. Cover and barriers facing one way help less.'],
-  emain: ['Matches', 'Splits into three seekers that each take a different target, twice a turn.'],
-  avalon: ['Matches', 'Ten bomblets twice a turn. The best area denial in the game.'],
+  dunbarton: ['Matches', 'Barely elevates: a flat cruise rocket that needs a gap in the terrain, then pops up over its target and dives on it.'],
+  tirchonaill: ['Matches', 'Drops seven seeking bomblets in sequence. High, they converge on one target; low, they cover a strip.'],
+  emain: ['Matches', 'Splits into three seekers that each go for the nearest target, twice a turn: one target gets all three, a crowd gets spread.'],
+  avalon: ['Matches', 'Ten seeking bomblets twice a turn. Lob high to stack them on one target, skim low for area denial.'],
   demigod: ['Matches', 'Arcs like a rocket, stops, and charges the nearest target as a lance with ×2.5 kinetic. Armour still takes the whole hit, so it is a death sentence only once armour is gone.'],
   kagutsuchi: ['Matches', 'Forty incendiary shells a turn with a wide spread. Small blasts, but every fragment leaves fire burning on the ground.'],
   yukikaze: ['Matches', 'Weak warheads, as advertised: MAIA does the damage. The seeker wakes after two and a half seconds, so it wants a long, high lob.'],
@@ -57,8 +57,8 @@ const GUN_NOTES = {
   massdriver: ['Matches', 'Range 1000 and zero spread: point and click. The most expensive gun, and the best.'],
 };
 const GIRL_NOTES = {
-  gwt: { maker: 'CLS-T trials', plays: 'The all-rounder. Two shots a turn and a gun that can lob straight up, so she earns the altitude bonus easily. Drives anywhere: no fall or tree damage.' },
-  obj: { maker: 'CLS-T trials', plays: 'The glass sniper. Thin hull, thick armour, one accurate shot. Keep your face to the enemy and favour single-shot guns.' },
+  gwt: { maker: 'CLS-T trials', plays: 'A two round autoloader makes her forgiving and flexible. Paired with excellent damage and great flexibility, she is a solid all-rounder.' },
+  obj: { maker: 'CLS-T trials', plays: 'The glass cannon - thin hull, but thick, angled armour plating. Strongly suits single-shot weaponry but punishing when you miss.' },
   nxi: { maker: 'NXi · November Division', plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
   alb: { maker: 'Lymilark Future Sciences', plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },
   int: { maker: 'CLS-T trials', plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
@@ -85,7 +85,7 @@ function codexMeta(w) {
     const per = (x) => codexWorth(x) / x.cost;
     const par = peers.reduce((a, x) => a + per(x), 0) / peers.length;
     const rank = peers.slice().sort((a, b) => per(b) - per(a)).indexOf(w) + 1;
-    lines.push(['Value', `${(per(w) / par).toFixed(2)}× the ${RARITY[w.rarity].word} average per $ (#${rank} of ${peers.length})`]);
+    lines.push(['Value', `${(per(w) / par).toFixed(2)}× the ${RARITY[w.rarity].word} average per ¢ (#${rank} of ${peers.length})`]);
   } else lines.push(['Value', 'Free starter, never reloads, can’t be sold']);
   lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
   const R = reloadOf(w);
@@ -109,20 +109,20 @@ function codexChart(sel) {
   const X = (c) => L + ((lx(c) - x0) / (x1 - x0)) * (W - L - R);
   const Y = (v) => H - B - ((lx(v) - y0) / (y1 - y0)) * (H - T - B);
   let s = '';
-  for (const c of [1000, 3000, 10000, 30000]) s += `<line x1="${X(c)}" x2="${X(c)}" y1="${T}" y2="${H - B}" class="g"/><text x="${X(c)}" y="${H - 9}" text-anchor="middle">$${c / 1000}k</text>`;
+  for (const c of [1000, 3000, 10000, 30000]) s += `<line x1="${X(c)}" x2="${X(c)}" y1="${T}" y2="${H - B}" class="g"/><text x="${X(c)}" y="${H - 9}" text-anchor="middle">¢${c / 1000}k</text>`;
   for (const v of [100, 300, 1000, 3000, 10000]) if (lx(v) > y0 && lx(v) < y1) s += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="g"/><text x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v >= 1000 ? v / 1000 + 'k' : v}</text>`;
   const ks = guns.map((g) => g.v / Math.pow(g.c, 0.75)).sort((a, b) => a - b);
   const K = ks[ks.length >> 1];
   s += `<path d="M${X(500)} ${Y(K * Math.pow(500, 0.75))}L${X(60000)} ${Y(K * Math.pow(60000, 0.75))}" class="fit"/>`;
   for (const g of guns) {
     if (g.w === sel) continue;
-    s += `<rect data-w="${g.w.id}" x="${X(g.c) - 3.5}" y="${Y(g.v) - 3.5}" width="7" height="7" fill="${KIND_COL[g.w.kind]}"><title>${esc(g.w.name)}: $${g.c.toLocaleString('en-US')}, ${Math.round(g.v)} a firing turn</title></rect>`;
+    s += `<rect data-w="${g.w.id}" x="${X(g.c) - 3.5}" y="${Y(g.v) - 3.5}" width="7" height="7" fill="${KIND_COL[g.w.kind]}"><title>${esc(g.w.name)}: ¢${g.c.toLocaleString('en-US')}, ${Math.round(g.v)} a firing turn</title></rect>`;
   }
   const sw = sel.starter ? { c: 500, v: codexWorth(sel) } : { c: sel.cost, v: codexWorth(sel) };
   const sx = X(sw.c), sy = Y(sw.v);
   s += `<rect x="${sx - 7}" y="${sy - 7}" width="14" height="14" fill="none" stroke="#ffffff" stroke-width="2"/><rect x="${sx - 4}" y="${sy - 4}" width="8" height="8" fill="${KIND_COL[sel.kind]}"/>`;
   const right = sx > W - 130;
-  s += `<text x="${sx + (right ? -11 : 11)}" y="${sy - 8}" text-anchor="${right ? 'end' : 'start'}" class="sel">${esc(sel.name.length > 22 ? sel.name.slice(0, 21) + '…' : sel.name)}${sel.starter ? ' (starter, at $500)' : ''}</text>`;
+  s += `<text x="${sx + (right ? -11 : 11)}" y="${sy - 8}" text-anchor="${right ? 'end' : 'start'}" class="sel">${esc(sel.name.length > 22 ? sel.name.slice(0, 21) + '…' : sel.name)}${sel.starter ? ' (starter, at ¢500)' : ''}</text>`;
   return `<svg viewBox="0 0 ${W} ${H}" class="cx-chart" role="img" aria-label="Price against worth per firing turn for every gun">${s}</svg>
     <p class="cx-legend">${Object.entries(KIND_COL).map(([k, c]) => `<span><i style="background:${c}"></i>${k}</span>`).join('')}<span><i class="fit"></i>fit</span></p>`;
 }
@@ -153,6 +153,8 @@ Object.assign(Game.prototype, {
     this.particles.clear();
     this.setupHazards();
     this.terrain.forts = [];
+    this.terrain.bridges = [];
+    this.terrain.lines = [];
     this.placeRange();
     this.setWind();
     if (this.range.calm) this.wind = { x: 0, y: 0 };

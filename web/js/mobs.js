@@ -268,9 +268,9 @@ Object.assign(Game.prototype, {
     }
     if (owner && !owner.isMob) {
       owner.money += m.bounty;
-      this.particles.text(c.x, c.y - 40, `+$${m.bounty}`, '#ffd84a', true);
-      this.events.push(`${owner.name} destroyed the ${m.name} (+$${m.bounty}).`);
-      this.ui.notice(`${owner.name} destroyed the ${m.name}! +$${m.bounty}`);
+      this.particles.text(c.x, c.y - 40, `+¢${m.bounty}`, '#ffd84a', true);
+      this.events.push(`${owner.name} destroyed the ${m.name} (+¢${m.bounty}).`);
+      this.ui.notice(`${owner.name} destroyed the ${m.name}! +¢${m.bounty}`);
       if (owner.isCpu && Math.random() < 0.6) this.banter(owner, 'hit_big');
     } else this.events.push(`The ${m.name} was destroyed.`);
   },

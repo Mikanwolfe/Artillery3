@@ -35,7 +35,7 @@ const VEHICLES = [
     id: 'obj', name: 'Object 15X', hp: 65, armour: 175, blurb: 'A heavily armoured Soviet girl: thin hull, one huge accurate shot.',
     traits: ['sloped', 'discipline'],
     weapon: weapon('d76', '190mm D-76ST 15X', 'shell', 0, 45, {
-      dmg: 200, disp: 0.9, maxCharge: 40, dmgR: 75,
+      dmg: 200, disp: 0.9, maxCharge: 58, drift: 0.75, dmgR: 75,
       short: 'An experimental adaption from CLS-T developed during the last Neko Wars.', long: 'Starting weapon for Object 15X.' }),
   },
   // NXi (the user's canon): November Division of the United Aurora Federation, "Built Like A
@@ -186,8 +186,8 @@ const WEAPONS = [
   // is closest. It steers at up to `turn` degrees a frame for `burn` frames, with `lift` of gravity
   // cancelled while the motor runs, then falls like a shell. Lighter damage, far better
   // consistency. Long-tube launchers can barely elevate, so they skim terrain and rely on the
-  // seeker. Later models transform in flight: `carpet` drops a line of bomblets over the target,
-  // `split` breaks into seekers that each take a different target.
+  // seeker. Later models transform in flight: `carpet` drops seeking bomblets one after another,
+  // `split` breaks into seekers that each go for the nearest target.
   weapon('wren', "LFS 'Wren' 70mm Seeker", 'rocket', 0, 65, { salvo: 2, maxCharge: 55, disp: 0.5, dmg: 75, dmgR: 50, explR: 6, rarity: 1, cost: 1700,
     guide: { arm: 6, burn: 55, seek: 999, apex: true, turn: 4.5, range: 650, cone: 75, lift: 0.5 },
     short: 'A pair of little seekers. They go for whatever is closest, which is usually what you wanted.', long: 'Lymilark Future Sciences, Tir Chonaill works.' }),
@@ -195,20 +195,20 @@ const WEAPONS = [
     guide: { arm: 6, burn: 60, seek: 999, apex: true, turn: 4.5, range: 700, cone: 75, lift: 0.5 },
     short: 'Two pairs a turn. The Dunbarton militia swear by it.', long: 'Seekers lock on ten frames out of the tube.' }),
   weapon('dunbarton', "LFS 'Dunbarton' Long-Tube Rocket", 'rocket', -3, 12, { clip: 2, maxCharge: 95, disp: 0.2, dmg: 230, dmgR: 70, explR: 10, rarity: 3, cost: 6200,
-    guide: { arm: 6, burn: 90, seek: 999, apex: true, turn: 5, range: 800, cone: 60, lift: 0.85 },
-    short: 'A tube so long it can hardly elevate. It skims the ground and climbs at the last moment.', long: 'Flat-flying cruise rocket: find a gap in the terrain and let the seeker do the rest.' }),
+    guide: { arm: 6, burn: 90, seek: 999, apex: true, turn: 5, range: 800, cone: 60, lift: 0.85, popup: { range: 240, frames: 16, angle: 60, height: 160 } },
+    short: 'A tube so long it can hardly elevate. It skims the ground, then pops up over its target and dives.', long: 'Flat-flying cruise rocket: find a gap in the terrain. Within about 240 of a target ahead it pulls up hard and comes down on top.' }),
   weapon('tirchonaill', "LFS 'Tir Chonaill' Carpet Rocket", 'rocket', 5, 60, { maxCharge: 70, disp: 0.4, dmg: 150, dmgR: 70, explR: 8, rarity: 4, cost: 12500,
-    guide: { arm: 4, burn: 70, seek: 999, apex: true, turn: 4, range: 480, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 1.1, r: 60, at: 40 },
-    short: 'Two-thirds of a second out it opens like a flower and lays a carpet of bomblets.', long: 'Seven bomblets in a line, on a timer: lob it so it opens over them.' }),
+    guide: { arm: 4, burn: 70, seek: 999, apex: true, turn: 4, range: 480, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 1.1, r: 60, at: 40, every: 3 },
+    short: 'Two-thirds of a second out it starts dropping seven seeking bomblets, one after another.', long: 'Let go high and they all bend onto one target; skim it low and they lay a line along its path.' }),
   weapon('emain', "LFS 'Emain Macha' Split Rocket", 'rocket', 0, 50, { clip: 2, maxCharge: 75, disp: 0.4, dmg: 300, dmgR: 80, explR: 10, rarity: 5, cost: 22000,
     guide: { arm: 4, burn: 75, seek: 999, apex: true, turn: 4.5, range: 520, cone: 80, lift: 0.6 }, split: { n: 3, at: 32, spread: 14, boost: 1.15 },
-    short: 'Breaks into three seekers half a second out, and each picks a different target.', long: 'Good against crowds, drones and anyone hiding behind a friend.' }),
+    short: 'Breaks into three seekers half a second out, each going for whatever is closest.', long: 'They can all pile onto one target, or spread over a crowd of drones.' }),
   weapon('demigod', "LFS 'Demigod' Lance Rocket", 'rocket', 5, 70, { maxCharge: 80, disp: 0.3, dmg: 900, dmgR: 70, explR: 14, rarity: 7, cost: 160000,
     guide: { arm: 4, burn: 40, seek: 999, turn: 2, range: 600, cone: 80, lift: 0.5 }, lance: { at: 45, hover: 20, speed: 75, range: 1800, kin: 2.5 },
     short: 'It arcs like any rocket. Then it stops dead in the air, becomes a lance of light, and charges.', long: 'Three-quarters of a second out it picks the nearest target in any direction and runs it through. Kinetic damage ×2.5.' }),
   weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 0.3, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
-    guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 5, range: 600, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 1.0, r: 75, at: 50 },
-    short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Lay it across a ridge and nothing on it survives.' }),
+    guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 5, range: 600, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 1.0, r: 75, at: 50, every: 2 },
+    short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten seeking bomblets in sequence: high for one target, low for a ridge.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
@@ -368,11 +368,38 @@ function findLock(p, seek, owner) {
   }
   return p.prefer === 'rival' && bestRival ? bestRival : best;
 }
+// carpet bomblets: unpowered, steering from the moment they drop, for whatever is in reach
+const BOMBLET_GUIDE = { arm: 2, burn: 0, seek: 0, turn: 2.5, range: 420, cone: 180, lift: 0, brake: false };
 function guideStep(p, seek, owner) {
   const G = p.guide;
   if (!G || p.age < G.arm) return 0;
   // the motor lifts while it burns; the fins steer for the whole flight once the seeker is awake
   const lift = p.age <= G.arm + G.burn ? G.lift : 0;
+  // pop-up (Dunbarton): it skims along until a target is close ahead, then pulls up hard under
+  // full motor for popup.frames and dives onto it from above
+  if (G.popup && !p.dive) {
+    if (p.popUntil === undefined && p.age % 3 === 0) {
+      const c = findLock(p, seek, owner);
+      const sp = Math.hypot(p.vx, p.vy);
+      if (c && Math.abs(seekCenter(c).x - p.x) < Math.max(G.popup.range, sp * 7)) { p.lock = c; p.popUntil = p.age + G.popup.frames; }
+    }
+    if (p.popUntil !== undefined) {
+      if (p.age < p.popUntil && !(p.lock && p.y < seekCenter(p.lock).y - G.popup.height)) {
+        const dir = Math.sign(p.vx) || 1;
+        const want = Math.atan2(-Math.sin(rad(G.popup.angle)), dir * Math.cos(rad(G.popup.angle)));
+        let diff = want - Math.atan2(p.vy, p.vx);
+        while (diff > Math.PI) diff -= TAU;
+        while (diff < -Math.PI) diff += TAU;
+        const turn = clamp(diff, -rad(G.turn * 2), rad(G.turn * 2));
+        const c = Math.cos(turn), sn = Math.sin(turn);
+        const vx = p.vx * c - p.vy * sn;
+        p.vy = p.vx * sn + p.vy * c;
+        p.vx = vx;
+        return 1;
+      }
+      p.dive = true; // keeps its lock
+    }
+  }
   // javelin: tipping over the top of the climb starts the dive, which re-picks the nearest target
   if (G.apex && !p.dive && p.vy > 0 && p.age > G.arm + 4) { p.dive = true; p.lock = null; }
   if (p.lock && !p.lock.alive) p.lock = null;
@@ -403,7 +430,7 @@ function guideStep(p, seek, owner) {
     // frames), so medium-range shots land instead of overshooting
     const d = Math.hypot(q.x - p.x, q.y - p.y);
     const vmax = Math.max(9, d / 10);
-    if (sp > vmax) { const k = Math.max(0.93, vmax / sp); p.vx *= k; p.vy *= k; }
+    if (G.brake !== false && sp > vmax) { const k = Math.max(0.93, vmax / sp); p.vx *= k; p.vy *= k; }
     const rate = G.turn * (p.dive ? 2 : 1); // diving, the fins bite harder
     const turn = clamp(diff, -rad(rate), rad(rate));
     const c = Math.cos(turn), sn = Math.sin(turn);
@@ -435,6 +462,7 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
         if (tree) return { hit: 'tree', tree };
       }
       if (terrain.forts.length && terrain.fortAt(p.x, p.y)) return { hit: 'fort' };
+      if (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(p.x, p.y)) return { hit: 'bridge' };
     }
     for (const t of tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;

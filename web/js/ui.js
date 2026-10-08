@@ -5,7 +5,7 @@
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const TYPE_LABELS = { human: 'Human', easy: 'CPU · Easy', normal: 'CPU · Normal', hard: 'CPU · Hard' };
-const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
+const money = (n) => '¢' + Math.round(n).toLocaleString('en-US'); // credits
 // match options picked on the menu's segmented controls, remembered between visits
 const OPT_DEFAULTS = { rounds: '0', balance: 'rebalanced', events: 'on', map: 'random' };
 const store = {
@@ -295,13 +295,14 @@ const UI = {
       if (b.dataset.i !== undefined) g.input.queue.push({ select: +b.dataset.i });
       else if (b.dataset.ab) g.input.queue.push({ ability: b.dataset.ab });
       else if (b.dataset.rep) g.input.queue.push({ repair: true });
+      else if (b.dataset.jump) g.input.queue.push({ jump: true });
     };
   },
 
   renderRack(g) {
     const t = g.active;
     const show = t && t.alive && (g.phase === 'aim' || g.phase === 'resolve');
-    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, !!g.cpu, g.phase, BALANCE]) : '';
+    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, !!g.cpu, g.phase, BALANCE, t.fuel >= Math.ceil(t.maxFuel * JUMP_FUEL), !!t.falling]) : '';
     if (sig === this.last.rack) return;
     this.last.rack = sig;
     $('rack').hidden = !show;
@@ -330,6 +331,8 @@ const UI = {
       return `<button class="slot a${armed ? ' armed' : ''}${cd > 0 && !armed ? ' rl' : ''}" data-ab="${a.id}" title="${esc(a.name)}: ${esc(a.desc)}" ${cd > 0 && !armed ? 'disabled' : ''}>
         <span class="kb">${a.key}</span><span class="txt"><span class="nm">${esc(a.name)}</span><span class="st">${st}</span></span></button>`;
     });
+    const jumpCost = Math.ceil(t.maxFuel * JUMP_FUEL);
+    ab.push(`<button class="slot a" data-jump="1" title="Jump: hop the way you face, for ${Math.round(JUMP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= jumpCost && !t.falling ? '' : 'disabled'}><span class="kb">W</span><span class="txt"><span class="nm">Jump</span><span class="st">${Math.round(JUMP_FUEL * 100)}% fuel</span></span></button>`);
     if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% health and armour, takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
     if (t.uplink) ab.push(`<span class="slot a armed uplink" title="Satellite uplink: your next shot calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">next shot</span></span></span>`);
     $('rack-a').innerHTML = ab.join('');

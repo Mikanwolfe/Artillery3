@@ -53,6 +53,14 @@ class Fort {
     return false;
   }
 
+  // y of the top of the column at x (vehicles can stand on a fort), or Infinity if none there
+  topAt(x) {
+    const c = Math.floor((x - this.x0) / FORT_CELL);
+    if (c < 0 || c >= this.cols) return Infinity;
+    for (let r = this.cells.length - 1; r >= 0; r--) if (this.cells[r][c] > 0) return this.cellY(r);
+    return Infinity;
+  }
+
   get standing() { return this.cells.some((row) => row.some((h) => h > 0)); }
 
   // a blast: blocks within r take damage falling off with distance; returns the broken ones' centres
@@ -142,6 +150,18 @@ Object.assign(Game.prototype, {
         }
       }
     }
+  },
+
+  // where a vehicle stands at x: the terrain, a fort's top if one is in the way, or a bridge deck
+  // if the vehicle (at fromY) is up on it rather than underneath
+  groundAt(x, fromY = -Infinity) {
+    let g = this.terrain.hAt(x);
+    for (const f of this.terrain.forts) g = Math.min(g, f.topAt(x));
+    for (const b of this.terrain.bridges || []) {
+      const top = deckTopAt(b, x);
+      if (fromY <= top + 6) g = Math.min(g, top);
+    }
+    return g;
   },
 
   fortBlocks(x, y) {

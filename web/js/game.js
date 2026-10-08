@@ -14,7 +14,7 @@ const AIM_ARC_LEN = 650;
 const AIM_GUIDE_WIND = false; // true = the guide also bends with the wind (much easier)
 const WIND_SCALE = 0.06;
 const WIND_FULL = 0.5 * WIND_SCALE; // game.wind's magnitude at A3's strongest wind
-const UPGRADE_PER_POINT = 7.5; // rebalanced Health++ / Armour++: $ per point of health or armour
+const UPGRADE_PER_POINT = 6; // rebalanced Health++ / Armour++: $ per point of health or armour
 // Repair kits: bought in the shop, used with R instead of firing that turn
 const REPAIR_COST = 450;
 const REPAIR_MAX = 3;
@@ -120,6 +120,7 @@ class Input {
       case 'KeyS': case 'KeyE': case 'Tab': if (down && !e.repeat) this.queue.push({ cycle: 1 }); break;
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
+      case 'KeyW': case 'KeyJ': if (down && !e.repeat) this.queue.push({ jump: true }); break;
       case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': {
         const ab = ABILITIES.find((a) => a.key === e.code.slice(5));
         if (down && !e.repeat && ab) this.queue.push({ ability: ab.id });
@@ -361,6 +362,7 @@ class Game {
       t.resetRound(xs[i], this.terrain);
     });
     this.placeForts();
+    this.placeInfra(xs);
     this.terrain.plantTrees(xs);
   }
 
@@ -402,6 +404,7 @@ class Game {
       this.particles.text(t.x, t.y - 40, `+${ar}`, '#8fe0a0');
     }
     this.fogDamage(t);
+    this.infraTurn(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
     if (this.range) { t.reload = {}; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting
@@ -459,8 +462,26 @@ class Game {
     this.stepSlides();
     for (const t of this.tanks) {
       t.tilt += (groundSlope(this.terrain, t.x) - t.tilt) * 0.2;
-      if (!t.alive) { t.y = this.terrain.hAt(t.x); continue; } // wrecks settle into new craters
-      const gy = this.terrain.hAt(t.x);
+      if (!t.alive) { t.y = this.groundAt(t.x, t.y); continue; } // wrecks settle into new craters
+      if (t.jumping) { // a hop (W): its own arc, landing only on the way down
+        const nx = t.x + t.jvx;
+        if (nx < 20 || nx > WORLD_W - 20) t.jvx = 0;
+        else if (this.groundAt(nx, t.y) >= t.y - 4) t.x = nx; // clear of it: carry on along
+        else if (t.vy >= 0) t.jvx = 0; // coming down into a wall: drop straight
+        t.vy += GRAV;
+        t.y += t.vy;
+        const gy = this.groundAt(t.x, t.y - t.vy);
+        if (t.y >= gy) {
+          t.y = gy;
+          if (t.vy >= 0) {
+            t.vy = 0; t.jvx = 0; t.jumping = false; t.falling = false;
+            this.particles.puff(t.x, t.y);
+            this.landed(t, t.y - t.fallFrom);
+          }
+        }
+        continue;
+      }
+      const gy = this.groundAt(t.x, t.y);
       if (t.y < gy - 0.5) {
         if (!t.falling) t.fallFrom = t.y;
         t.falling = true;
@@ -598,7 +619,7 @@ class Game {
     } else if (c.kind === 'cash') {
       const amt = rng.int(3, 8) * 100;
       t.money += amt;
-      desc = `$${amt}`;
+      desc = `¢${amt}`;
     } else if (c.kind === 'armour') {
       const ar = Math.round(t.maxArmour * 0.35);
       t.armour = Math.min(Math.round(t.maxArmour * 1.5), t.armour + ar);
@@ -623,11 +644,11 @@ class Game {
     if (t.fuel <= 0) return;
     const nx = t.x + dir * TANK_SPEED;
     if (nx < 20 || nx > WORLD_W - 20) return;
-    if ((this.terrain.hAt(t.x) - this.terrain.hAt(nx)) / TANK_SPEED > t.climb) return;
+    if (t.falling) return; // no driving in mid-air
+    if ((this.groundAt(t.x, t.y) - this.groundAt(nx, t.y)) / TANK_SPEED > t.climb) return; // too steep (fort walls included)
     for (const o of this.tanks) {
-      if (o !== t && o.alive && Math.abs(o.x - nx) < TANK_W + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
+      if (o !== t && o.alive && Math.abs(o.y - t.y) < TANK_H && Math.abs(o.x - nx) < TANK_W + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
     }
-    if (this.terrain.forts.length && this.fortBlocks(nx, this.terrain.hAt(nx))) return;
     // driving into a tree knocks it down, at a cost
     for (const tr of this.terrain.trees) {
       if (tr.alive && Math.abs(tr.x - nx) < TANK_W / 2 + 3 && Math.abs(tr.x - nx) < Math.abs(tr.x - t.x)) this.ramTree(t, tr);
@@ -635,6 +656,21 @@ class Game {
     t.x = nx;
     t.fuel--;
     t.walking = 4;
+  }
+
+  // W: hop in the facing direction for JUMP_FUEL of a full tank
+  jump(t) {
+    const cost = Math.ceil(t.maxFuel * JUMP_FUEL);
+    if (this.phase !== 'aim' || t !== this.active || t.falling || t.fuel < cost) { this.sfx.deny(); return false; }
+    t.fuel -= cost;
+    t.vy = JUMP_VY;
+    t.jvx = t.facing * JUMP_VX;
+    t.fallFrom = t.y;
+    t.jumping = true;
+    t.falling = true; // (no driving mid-air, and the turn waits for her to land)
+    this.particles.puff(t.x, t.y);
+    this.sfx.click();
+    return true;
   }
 
   updateAim() {
@@ -650,6 +686,8 @@ class Game {
           if (t.cycleWeapon(a.cycle)) this.sfx.click(); else this.sfx.deny();
         } else if (a.select !== undefined) {
           if (!t.firedThisTurn && t.selectWeapon(a.select)) this.sfx.click(); else this.sfx.deny();
+        } else if (a.jump) {
+          this.jump(t);
         } else if (a.repair) {
           this.useRepair(t);
           return;
@@ -949,7 +987,7 @@ class Game {
   }
 
   // a rocket that transforms in flight but hits before it does: half damage (the payload is the point)
-  bodyFactor(p) { const w = p.w; return (w.carpet || w.split || w.lance) && !p.charging ? 0.5 : 1; }
+  bodyFactor(p) { const w = p.w; return (w.carpet || w.split || w.lance) && !p.charging && !p.dropped ? 0.5 : 1; }
 
   // Object 15X's single-shot discipline: +25% from guns without an autoloader
   traitDmg(p) { return p.w && p.w.clip === 1 && !p.w.frag && hasTrait(p.owner, 'discipline') ? 1.25 : 1; }
@@ -981,6 +1019,7 @@ class Game {
     if (this.report) this.report.blasts.push({ x, y });
     if (y > this.terrain.hAt(x) - (def.explR || 10) * 4 - 20) this.terrain.crater(x, def.explR || 10); // airbursts don't dig
     if (this.terrain.forts.length) this.blastForts(x, y, def);
+    this.blastInfra(x, y, def);
     if (y > this.terrain.hAt(x) - 30) this.terrain.scorch(x, Math.max(14, def.dmgR * 0.3), 0.2); // a faint scorch, ground hits only
     // a blast that catches a supply crate claims it for whoever fired
     for (const c of this.crates) {
@@ -1085,10 +1124,10 @@ class Game {
       this.events.push(`${owner.name} destroyed ${t.name}!`);
       const pay = KILL_BOUNTY + (t.bounty || 0);
       owner.money += pay;
-      this.particles.text(t.x, t.y - 90, `+$${pay}`, '#ffd84a', true);
+      this.particles.text(t.x, t.y - 90, `+¢${pay}`, '#ffd84a', true);
       if (t.bounty) {
-        this.events.push(`${owner.name} collects the $${t.bounty} bounty on ${t.name}.`);
-        this.ui.notice(`${owner.name} collects the $${t.bounty} bounty on ${t.name}!`);
+        this.events.push(`${owner.name} collects the ¢${t.bounty} bounty on ${t.name}.`);
+        this.ui.notice(`${owner.name} collects the ¢${t.bounty} bounty on ${t.name}!`);
       }
     } else this.events.push(owner === t ? `${t.name} destroyed themselves.` : `${t.name} was destroyed.`);
   }
@@ -1401,8 +1440,8 @@ class Game {
     const st = this.tanks.slice().sort((a, b) => b.wins - a.wins);
     if (st.length > 1 && st[0].wins > st[1].wins) {
       st[0].bounty = LEADER_BOUNTY * (st[0].wins - st[1].wins);
-      this.events.push(`There is a $${st[0].bounty} bounty on ${st[0].name}.`);
-      if (this.round > 1) this.ui.notice(`Bounty: $${st[0].bounty} on ${st[0].name}.`);
+      this.events.push(`There is a ¢${st[0].bounty} bounty on ${st[0].name}.`);
+      if (this.round > 1) this.ui.notice(`Bounty: ¢${st[0].bounty} on ${st[0].name}.`);
     }
   }
 
@@ -1542,6 +1581,7 @@ class Game {
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + VIEW_W);
     this.terrain.drawTrees(ctx, cam.x, cam.x + VIEW_W);
+    this.drawInfra(ctx);
     const aiming = this.phase === 'aim' ? this.active : null;
     if (aiming && !this.cpu) this.drawGhost(ctx, aiming);
     for (const t of this.tanks) t.draw(ctx, t === aiming);
