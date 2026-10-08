@@ -104,6 +104,7 @@ class AsteroidStrike {
       const c = this.cfg, y = g.terrain.hAt(this.tx);
       g.explode(this.tx, y, { dmg: c.dmg, dmgR: c.r, explR: c.explR, visR: 950, from: { x: 0, y: -1 } }, this.owner, 'shell');
       g.terrain.melt(this.tx, c.lava);
+      g.terrain.scorch(this.tx, c.lava * 1.45, 1); // and a scorched fringe beyond it, feathering the crater into the ground
       for (let i = 0; i < 260; i++) { // molten rock thrown out of the crater, high and wide
         const a = -Math.PI * (0.14 + 0.72 * rng.next()), sp = 7 + rng.next() * 26;
         const d = new AcidDrop(g, this.owner, this.tx + (rng.next() - 0.5) * 320, g.terrain.hAt(this.tx) - 6, Math.cos(a) * sp, Math.sin(a) * sp, c.splash, true);

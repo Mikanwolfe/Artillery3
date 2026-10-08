@@ -109,7 +109,7 @@ class Terrain {
     if (!this.lava) return;
     for (let x = Math.max(0, Math.floor(cx - r)); x < Math.min(WORLD_W, cx + r); x++) {
       const k = 1 - Math.abs(x - cx) / r;
-      this.lava[x] = Math.min(1, this.lava[x] + Math.min(1, k * 1.6) * (0.75 + 0.25 * hash2(x, 19)));
+      this.lava[x] = Math.min(1, this.lava[x] + Math.min(1, k * 1.4) * (0.85 + 0.15 * hash2(x, 19))); // fading out to the rim
     }
   }
   // the ground between x0 and x1 deleted outright, down through the bottom of the world: sheer
@@ -266,13 +266,13 @@ class Terrain {
       const l = this.lava[Math.min(WORLD_W - 1, x + (step >> 1))];
       if (l < 0.05) continue;
       const top = Math.round(this.height[Math.min(WORLD_W - 1, x + (step >> 1))]);
-      const th = Math.round(6 + 26 * l);
+      const th = Math.round(2 + 30 * l);
       // the ground under it, scorched: a deep char layer, blackest just beneath the lava and fading
       // brown down into the ground, deeper toward the middle, with burnt streaks reaching further
-      const char = Math.round(40 + 150 * l * (0.9 + 0.08 * Math.sin(x * 0.045) + 0.04 * Math.sin(x * 0.13)));
+      const char = Math.round(4 + 186 * Math.pow(l, 1.3) * (0.9 + 0.08 * Math.sin(x * 0.045) + 0.04 * Math.sin(x * 0.13))); // thinning to nothing at the edges
       for (let i = 0; i < 6; i++) {
         const u = i / 6;
-        ctx.fillStyle = `rgba(${Math.round(16 + 40 * u)},${Math.round(11 + 24 * u)},${Math.round(10 + 16 * u)},${(0.92 - 0.75 * u) * Math.min(1, 0.4 + l)})`;
+        ctx.fillStyle = `rgba(${Math.round(16 + 40 * u)},${Math.round(11 + 24 * u)},${Math.round(10 + 16 * u)},${(0.92 - 0.75 * u) * Math.min(1, l * 2.2)})`;
         ctx.fillRect(x, top + th - 2 + Math.round(char * u), step, Math.ceil(char / 6) + 1);
       }
       if (hash2(x, 47) < 0.1 * l) { // now and then a burnt crack further down
