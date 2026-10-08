@@ -155,6 +155,7 @@ Object.assign(Game.prototype, {
     this.terrain.forts = [];
     this.terrain.bridges = [];
     this.terrain.lines = [];
+    this.terrain.towers = [];
     this.placeRange();
     this.setWind();
     if (this.range.calm) this.wind = { x: 0, y: 0 };

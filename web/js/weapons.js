@@ -522,6 +522,7 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
       }
       if (terrain.forts.length && terrain.fortAt(p.x, p.y)) return { hit: 'fort' };
       if (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(p.x, p.y)) return { hit: 'bridge' };
+      if (terrain.towers && terrain.towers.length && terrain.towerAt(p.x, p.y)) return { hit: 'tower' };
     }
     for (const t of tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;
