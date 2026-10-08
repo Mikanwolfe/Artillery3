@@ -21,6 +21,7 @@ const STORY = {
   boss: 'The Hatsuyuki carrier Shirayuki is through the gate. Queen Aeria Charlotte\'s order to every gun on the field: bring it down.',
   ending(champ) {
     const maker = champ.vehicle.id === 'nxi' ? 'NXi' : champ.vehicle.id === 'alb' ? 'LFS' : champ.vehicle.id === 'obj' ? 'KTS-T' : 'CLS-T';
+    if (champ.vehicle.id === 'ang') return `${champ.name} takes the trials, and nobody signs anything. She folds her wings, says the gate is closed now, and is gone by morning. MAIA logs a feather.`;
     if (maker === 'KTS-T') return `${champ.name} takes the trials for KTS-T. Nobody is surprised; KTS-T has been a generation ahead of everyone since the last Neko War, and the gate is just one more thing to study.`;
     if (maker === 'LFS') return `${champ.name} takes the trials for Lymilark Future Sciences. The contract goes to Tir Chonaill, and the gate gets a guard of knights, as the old songs said it would.`;
     return maker === 'NXi'

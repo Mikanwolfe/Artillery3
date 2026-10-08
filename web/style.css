@@ -183,7 +183,8 @@ option { background: var(--bg); color: var(--fg); }
 
 /* ---------------------------------------------------------------- character select */
 .who { display: flex; align-items: center; color: var(--fg); letter-spacing: 0.1em; }
-#veh-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.7em; }
+#veh-grid { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0.7em; } /* one row, however many girls are unlocked */
+#veh-grid.many { font-size: 0.86em; } /* six girls: a touch smaller so the row still fits */
 .veh { background: var(--bg2); border: 1px solid var(--line); padding: 0 0 1em; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 0.55em; position: relative; transition: border-color .12s, background .12s; }
 .veh:hover, .veh:focus-visible { border-color: var(--accent); background: var(--bg3); outline: none; }
 .veh .key { position: absolute; top: 0.5em; left: 0.6em; color: var(--ash); font-size: 0.8em; }
@@ -216,6 +217,7 @@ option { background: var(--bg); color: var(--fg); }
 .maker { font-size: 0.68em; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ash); }
 .maker.nxi { color: var(--gold); }
 .maker.kts { color: #ff6a74; }
+.maker.ang { color: #ffe08a; }
 
 /* ---------------------------------------------------------------- tables, quips */
 table.data { width: 100%; border-collapse: collapse; margin: 0.6em 0 1em; font-size: 0.92em; }

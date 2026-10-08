@@ -24,8 +24,8 @@ function weapon(id, name, kind, elevMin, elevMax, o) {
 
 // starting vehicles: (hp, armour) and a signature gun
 // who built each girl: CLS-T runs the trials; KTS-T leads every other maker in tech
-const MAKERS = { gwt: 'CLS-T trials', obj: 'KTS-T', nxi: 'NXi · November Division', alb: 'Lymilark Future Sciences', int: 'CLS-T trials' };
-const MAKER_CLASS = { nxi: ' nxi', obj: ' kts' };
+const MAKERS = { gwt: 'CLS-T trials', obj: 'KTS-T', nxi: 'NXi · November Division', alb: 'Lymilark Future Sciences', int: 'CLS-T trials', ang: 'From beyond the gate' };
+const MAKER_CLASS = { nxi: ' nxi', obj: ' kts', ang: ' ang' };
 const VEHICLES = [
   {
     id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'A sturdy Geschützwagen girl with a two-round autoloader on her back.',
@@ -67,13 +67,23 @@ const VEHICLES = [
       guide: { arm: 6, burn: 50, seek: 999, apex: true, turn: 3, range: 200, cone: 75, lift: 0.5 },
       short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the pod, in very small letters.", long: 'Starting weapon for Alban Eiler.' }),
   },
+  // the secret girl (unlocked by finishing a first game): an angel who came through the gate
+  {
+    id: 'ang', name: 'Seraphine', hp: 130, armour: 110, secret: true, blurb: 'Something came through the gate on white wings. She says she is here to help, and means it.',
+    traits: ['wings', 'grace'],
+    weapon: weapon('gloria', "'Gloria' Halo Lance", 'laser', -20, 35, {
+      ceil: 110, clip: 2, maxCharge: 55, disp: 0.6, dmg: 200, explR: 4, dmgR: 40,
+      short: 'A little halo with wings that follows her about and answers when she points.', long: 'Starting weapon for Seraphine.' }),
+  },
 ];
 
 // Character traits: two passives per girl, so they play differently beyond stats and starter gun.
 // Hooks: Game.finishShot (drill), landed / ramTree (geschutz), explode (sloped), designation /
 // stepBallistic (designator), damage (redundancy), the shop and useAbility (gatekeeper), startSatellite /
-// updateSatellite (uplink, retarget).
+// updateSatellite (uplink, retarget), jump / stepTanks / landed (wings), damage (grace).
 const TRAITS = {
+  wings: { name: 'Wings', desc: 'Her jump costs half the fuel, and she glides down: no fall damage.' },
+  grace: { name: 'Grace', desc: 'Once a round, a hit that would bring her down leaves her at 1 health instead.' },
   drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn lands a solid hit on a rival, she gets that round back.' },
   geschutz: { name: 'Geschützwagen', desc: 'Never takes fall or tree damage.' },
   sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
@@ -234,7 +244,7 @@ const WEAPONS = [
 //  - Starting guns sit just under the cheapest Commons (worth 140-165 a turn).
 // Commons are priced as cheap sidegrades (about 40% under the curve), Uncommons a little under
 const REBALANCE = {
-  morser: { dmg: 110 }, d76: { dmg: 170 }, katis: { dmg: 30 }, nxi0: { dmg: 60 },
+  morser: { dmg: 110 }, d76: { dmg: 170 }, katis: { dmg: 30 }, nxi0: { dmg: 60 }, gloria: { dmg: 170 },
   howitzer: { dmg: 260, cost: 700 }, claymore: { dmg: 85, cost: 900 }, lensx2: { dmg: 225, cost: 1100 },
   lance: { dmg: 220, cost: 2100 }, coil: { dmg: 80, cost: 2450 }, obj261: { dmg: 515, cost: 2900 },
   type11: { dmg: 130, cost: 4400 }, lensae: { dmg: 335, cost: 4900 }, type91: { dmg: 515, cost: 5800 },

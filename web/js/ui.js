@@ -25,7 +25,7 @@ const UI = {
     this.game = game;
     game.ui = this;
     this.players = [
-      { name: 'Player 1', type: 'human' },
+      { name: 'P-Chan', type: 'human' },
       { name: 'Ace', type: 'normal' },
       { name: 'Rookie', type: 'easy' },
       { name: 'Sarge', type: 'hard' },
@@ -86,7 +86,7 @@ const UI = {
     this.initCodex();
     window.addEventListener('keydown', (e) => {
       // character select: 1-4 picks a card
-      if (this.pick && !$('vehicles').hidden && /^Digit[1-5]$/.test(e.code)) {
+      if (this.pick && !$('vehicles').hidden && /^Digit[1-6]$/.test(e.code)) {
         const el = $('veh-grid').children[+e.code.slice(5) - 1];
         if (el) { el.click(); e.preventDefault(); }
         return;
@@ -136,18 +136,28 @@ const UI = {
   configs() {
     const seen = new Set();
     return this.players.map((p, i) => {
-      let name = (p.name || '').trim() || `Player ${i + 1}`;
+      let name = (p.name || '').trim() || (i ? `Player ${i + 1}` : 'P-Chan');
       while (seen.has(name)) name += '′';
       seen.add(name);
       return { name, type: p.type, vehicle: null };
     });
   },
 
+  // the girls on offer: the secret one only once she's been unlocked (by finishing a first game)
+  roster() { return VEHICLES.filter((v) => !v.secret || store.get('unlocked.' + v.id)); },
+  unlockSecret() {
+    for (const v of VEHICLES) {
+      if (!v.secret || store.get('unlocked.' + v.id)) continue;
+      store.set('unlocked.' + v.id, true);
+      this.notice(`Something has come through the gate: ${v.name} is now playable.`);
+    }
+  },
+
   // A3 "Select a Character": each human picks a vehicle in turn; CPUs pick at random
   selectVehicles() {
     this.game.sfx.unlock();
     const cfgs = this.configs();
-    for (const c of cfgs) if (c.type !== 'human') c.vehicle = rng.pick(VEHICLES).id;
+    for (const c of cfgs) if (c.type !== 'human') c.vehicle = rng.pick(this.roster()).id;
     const queue = cfgs.filter((c) => c.type === 'human');
     const next = () => {
       const c = queue.shift();
@@ -164,7 +174,9 @@ const UI = {
       const col = PLAYER_COLORS[cfgs.indexOf(c) % PLAYER_COLORS.length];
       $('veh-player').innerHTML = `<span class="dot" style="background:${col}"></span>${esc(c.name)}`;
       const meter = (label, v, max, color) => `<span class="mgh">${label}</span><span class="meter"><i style="width:${Math.round(100 * Math.min(1, v / max))}%;--c:${color}"></i></span><span class="n">${v}</span>`;
-      $('veh-grid').innerHTML = VEHICLES.map((v, i) => {
+      $('veh-grid').classList.toggle('many', this.roster().length > 5);
+      $('veh-n').textContent = this.roster().length;
+      $('veh-grid').innerHTML = this.roster().map((v, i) => {
         const w = v.weapon;
         const fuel = Math.round(100 * (v.fuel || 1));
         return `<div class="veh" tabindex="0" data-v="${v.id}"><span class="key">${i + 1}</span>

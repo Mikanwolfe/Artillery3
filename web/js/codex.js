@@ -61,6 +61,7 @@ const GIRL_NOTES = {
   obj: { plays: 'The glass cannon: a thin hull behind thick, angled plating. Mark a target and her designator bends every shot a little onto it, so she rewards patient, deliberate sniping; but she can’t take many hits back when she misses.' },
   nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
   alb: { plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },
+  ang: { plays: 'The guardian angel. Light armour, but grace saves her from one killing blow a round, and her wings make her the most mobile girl: half-price jumps and no fall damage, so she can take high ground no one else can. Her halo lance needs a line of sight.' },
   int: { plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
 };
 
@@ -246,7 +247,7 @@ Object.assign(UI, {
     const c = this.codex;
     const v = VEHICLES.find((x) => x.id === c.vid);
     // characters: a row of portraits
-    $('cx-chars').innerHTML = VEHICLES.map((x) => `<button class="cx-girl${x.id === c.vid ? ' on' : ''}" data-v="${x.id}" title="${esc(x.name)}"><canvas width="84" height="100" data-g="${x.id}"></canvas><span>${esc(x.name)}</span></button>`).join('');
+    $('cx-chars').innerHTML = UI.roster().map((x) => `<button class="cx-girl${x.id === c.vid ? ' on' : ''}" data-v="${x.id}" title="${esc(x.name)}"><canvas width="84" height="100" data-g="${x.id}"></canvas><span>${esc(x.name)}</span></button>`).join('');
     $('cx-chars').querySelectorAll('canvas').forEach((cv) => {
       const g = cv.getContext('2d');
       g.imageSmoothingEnabled = false;
