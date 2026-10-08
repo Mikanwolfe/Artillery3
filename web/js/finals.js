@@ -4,11 +4,13 @@
 //   November's Verdict     a target dot; an NXi battlecruiser fleet drops in overhead, the camera
 //                          rolls to show it in formation, and the flagship's spinal lance fires down
 //   Innocentia's Array     five MAIAs over the target, firing one after another (Game.updateConstellation)
-//   G.W. Tiger's Ragnarök  she rides a mech while it's equipped (drawMech, Tank.pivot)
+//   G.W. Tiger's Ragnarök  she rides a siege mech while it's equipped (drawMech, Tank.pivot); it
+//                          braces and fires one 80cm shell; the impact sets off an earthquake
 //   Object 15X's Railgun   the slug goes through up to w.pierce of ground and cover (stepBallistic)
-//   Alban's Morrighan      a split rocket: ten strong seekers (no set piece needed)
+//   Alban's Morrighan      a flare that summons the war goddess over the mark; she looses a rain of
+//                          seeking arrows of light (DeitySummon)
 
-const MECH_LIFT = 22; // how far the mech raises G.W. Tiger (and her guns)
+const MECH_LIFT = 30; // how far the mech raises G.W. Tiger (and her guns)
 
 // ---------------------------------------------------------------------------------- meteor
 class Meteor {
@@ -144,13 +146,14 @@ function drawFrigate(ctx, x, y, time, down = true) {
 
 // ------------------------------------------------------------------------- orbital strike
 // A fleet shot. The November Division holds station far above the battlefield (ORB_ALT up). Frames:
-// 0-50 the camera climbs from the mark to the flagship, the sky giving way to space; 50-85 it rolls a
-// quarter turn and pulls back to show the fleet in formation (escorts and frigates around the
-// flagship, smaller, darker battlecruisers in two layers behind); 85-145 the flagship's spinal mount
-// charges, ring by ring; 145 the tachyon lance fires; 145-205 the camera rolls back and rides the
-// beam down to the mark, which it hits at 205.
-const ORB_ALT = 3200;
-const ORB = { CLIMB: 50, ROLL: 85, FIRE: 145, HIT: 205, END: 265 };
+// 0-80 the climb: the camera rushes up from the mark through streaks of light, the sky giving way
+// to space, rolling a quarter turn and pulling back on the way, so the fleet is revealed in
+// formation (escorts and frigates round the flagship, smaller, darker battlecruisers in layers
+// behind); 80-140 the flagship's spinal mount charges, ring by ring; 140 the tachyon lance fires;
+// 140-205 the camera rolls back and rides the beam down to the mark, which it hits at 205 with a
+// blast far bigger than its damage radius.
+const ORB_ALT = 9000;
+const ORB = { CLIMB: 80, FIRE: 140, HIT: 205, END: 280 };
 const FLEET = {
   escorts: [[-240, 90], [240, 60]],
   frigates: [[-130, 280], [140, 320], [-350, 360], [360, 270]],
@@ -176,6 +179,17 @@ function drawSpace(ctx, a, time) {
   }
 }
 
+// the climb: streaks of light rushing up the screen (screen pixels), thick in the middle of the climb
+const ASCENT_STREAKS = Array.from({ length: 90 }, (_, i) => [((i * 7919) % 997) / 997, ((i * 104729) % 991) / 991, 0.6 + ((i * 31) % 7) / 7]);
+function drawAscent(ctx, a, time) {
+  for (const [u, v, sp] of ASCENT_STREAKS) {
+    const y = (((v - time * 2.2 * sp) % 1) + 1) % 1; // moving up
+    const len = 30 + 90 * a * sp;
+    ctx.fillStyle = `rgba(${sp > 1.2 ? '200,225,255' : '255,255,255'},${0.15 + 0.55 * a})`;
+    ctx.fillRect(Math.round(u * W), Math.round(y * H), 2 + Math.round(sp), Math.round(len));
+  }
+}
+
 class OrbitalStrike {
   constructor(game, owner, at, cfg) {
     this.game = game;
@@ -190,7 +204,7 @@ class OrbitalStrike {
     this.beam = 0;
     this.zoom0 = game.cam.zoom;
     this.focus = { x: at.x, y: this.ground - 200 };
-    game.cam.ceil = this.y - 2000;
+    game.cam.ceil = this.y - 2500;
     game.cam.follow(this.focus);
     game.ui.notice('NXi November Division fleet on station.');
   }
@@ -201,13 +215,16 @@ class OrbitalStrike {
     const g = this.game, cam = g.cam, t = ++this.t;
     const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
     const f = this.focus;
-    if (t <= ORB.CLIMB) { f.x = this.tx; f.y = lerp(this.ground - 200, this.y + 60, ease(t / ORB.CLIMB)); }
-    if (t > ORB.CLIMB && t <= ORB.ROLL) {
-      const u = ease((t - ORB.CLIMB) / (ORB.ROLL - ORB.CLIMB));
-      cam.rot = -Math.PI / 2 * u;
-      cam.setZoom(lerp(this.zoom0, 0.5, u));
-    }
-    if (t > ORB.ROLL && t <= ORB.FIRE) this.charge = (t - ORB.ROLL) / (ORB.FIRE - ORB.ROLL);
+    if (t <= ORB.CLIMB) { // the climb, rolling and pulling back on the way up
+      const u = ease(t / ORB.CLIMB);
+      f.x = this.tx;
+      f.y = lerp(this.ground - 200, this.y + 60, u);
+      const r = ease((t - ORB.CLIMB * 0.35) / (ORB.CLIMB * 0.65));
+      cam.rot = -Math.PI / 2 * r;
+      cam.setZoom(lerp(this.zoom0, 0.5, r));
+      g.ascent = Math.sin(Math.PI * Math.min(1, t / ORB.CLIMB)); // streaks swell, then clear for the reveal
+    } else g.ascent = 0;
+    if (t > ORB.CLIMB && t <= ORB.FIRE) this.charge = (t - ORB.CLIMB) / (ORB.FIRE - ORB.CLIMB);
     if (t === ORB.FIRE) {
       this.hit = beamTrace(g.terrain, g.targets(), null, this.tx, this.muzzleY + 4, this.tx, WORLD_BOTTOM);
       this.hitY = this.hit.y;
@@ -218,20 +235,25 @@ class OrbitalStrike {
     if (t > ORB.FIRE && t <= ORB.HIT) { // roll back and ride the beam down
       const u = ease((t - ORB.FIRE) / (ORB.HIT - ORB.FIRE));
       cam.rot = -Math.PI / 2 * (1 - Math.min(1, u * 1.6));
-      cam.setZoom(lerp(0.5, this.zoom0, u));
-      f.y = lerp(this.muzzleY, this.hitY - 160, u);
+      cam.setZoom(lerp(0.5, Math.min(this.zoom0, 0.6), u));
+      f.y = lerp(this.muzzleY, this.hitY - 220, u);
     }
     if (t === ORB.HIT) {
       cam.rot = 0;
-      g.explode(this.tx, this.hitY, { dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 40, from: { x: 0, y: -1 } }, this.owner, 'laser');
-      g.shake = Math.max(g.shake, 18);
-      g.screenFlash = Math.max(g.screenFlash || 0, 0.6);
-      g.sfx.explosion(50);
+      g.explode(this.tx, this.hitY, { dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 60, visR: 520, from: { x: 0, y: -1 } }, this.owner, 'laser');
+      for (let i = 0; i < 90; i++) { // the shockwave, running out along the ground and up
+        const a = -Math.PI * Math.random(), sp = 6 + Math.random() * 10;
+        g.particles.add({ x: this.tx, y: this.hitY - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.5, g: 0.02, drag: 0.93, life: 0.9 + Math.random() * 0.6, size: 8 + Math.random() * 14, color: i % 3 ? [200, 230, 255] : [255, 255, 255] });
+      }
+      g.shake = Math.max(g.shake, 34);
+      g.screenFlash = Math.max(g.screenFlash || 0, 0.9);
+      g.sfx.explosion(70);
     }
     cam.follow(f);
     if (t < ORB.HIT) cam.snap(); // the set piece drives the camera itself
+    if (t > ORB.HIT && t <= ORB.HIT + 30) cam.setZoom(lerp(Math.min(this.zoom0, 0.6), this.zoom0, (t - ORB.HIT) / 30));
     if (t > ORB.HIT + 10) { this.beam = Math.max(0, this.beam - 1 / 40); this.charge = this.beam; }
-    if (t >= ORB.END) { cam.rot = 0; cam.ceil = -1000; return false; }
+    if (t >= ORB.END) { cam.rot = 0; cam.ceil = -1000; g.ascent = 0; return false; }
     return true;
   }
 
@@ -302,20 +324,196 @@ Object.assign(Game.prototype, {
 
 });
 
-// G.W. Tiger's mech (while the Ragnarök is equipped): two big legs and a hull she stands on
+// G.W. Tiger's siege mech (while the Ragnarök is equipped): two big jointed legs, a heavy hull she
+// stands on, stabiliser spades that dig in when she fires (t.recoil), an exhaust stack
 function drawMech(ctx, t) {
-    const x = Math.round(t.x), y = Math.round(t.y), f = t.facing, time = t.blink || 0;
-    const stride = t.walking > 0 ? Math.round(Math.sin(time * 14) * 3) : 0;
-    const dark = '#3e434e', mid = '#5e6472', light = '#848b9a';
-    for (const [lx, s] of [[-14, stride], [8, -stride]]) {
-      const X = x + f * lx - 4;
-      ctx.fillStyle = dark; ctx.fillRect(X - 4 + s, y - 5, 16, 5); // foot
-      ctx.fillStyle = mid; ctx.fillRect(X, y - 15, 8, 10); // shin
-      ctx.fillStyle = light; ctx.fillRect(X - 1, y - 18, 10, 4); // knee
-      ctx.fillStyle = mid; ctx.fillRect(X + 1, y - MECH_LIFT, 7, 5); // thigh
+  const x = Math.round(t.x), y = Math.round(t.y), f = t.facing, time = t.blink || 0;
+  const brace = clamp(t.recoil || 0, 0, 1);
+  const stride = t.walking > 0 ? Math.round(Math.sin(time * 12) * 4) : 0;
+  const dark = '#3a3f4a', mid = '#5a6070', light = '#868d9c', hot = '#ffb040';
+  const spread = Math.round(4 * brace);
+  for (const [lx, s] of [[-18 - spread, stride], [10 + spread, -stride]]) {
+    const X = x + f * lx - 5;
+    ctx.fillStyle = dark; ctx.fillRect(X - 6 + s, y - 6, 22, 6); // foot
+    ctx.fillStyle = light; ctx.fillRect(X - 6 + s, y - 7, 22, 2);
+    ctx.fillStyle = mid; ctx.fillRect(X, y - 18, 10, 12); // shin
+    ctx.fillStyle = light; ctx.fillRect(X - 2, y - 22, 14, 5); // knee
+    ctx.fillStyle = mid; ctx.fillRect(X + 1, y - MECH_LIFT + 2, 9, 8); // thigh
+  }
+  // stabiliser spades: folded up, dug in when she fires
+  ctx.fillStyle = dark;
+  ctx.fillRect(x - f * 30 - 3, y - 14 + Math.round(10 * brace), 6, 12);
+  ctx.fillRect(x - f * 36 - 5, y - 4 + Math.round(2 * brace), 10, 4);
+  ctx.fillStyle = dark; ctx.fillRect(x - 26, y - MECH_LIFT - 6, 52, 10); // hull she stands on
+  ctx.fillStyle = mid; ctx.fillRect(x - 24, y - MECH_LIFT - 2, 48, 4);
+  ctx.fillStyle = t.color; ctx.fillRect(x - 26, y - MECH_LIFT - 6, 52, 2);
+  ctx.fillStyle = light; ctx.fillRect(x - f * 28 - 4, y - MECH_LIFT - 16, 8, 16); // exhaust stack
+  if ((time * 6 | 0) % 2 || brace > 0.2) { ctx.fillStyle = hot; ctx.fillRect(x - f * 28 - 3, y - MECH_LIFT - 20, 6, 4); }
+}
+
+// ------------------------------------------------------------------------------ siege + quake
+Object.assign(Game.prototype, {
+  // the 80cm going off: a muzzle blast to match, the whole screen shaking
+  siegeBlast(t, m) {
+    for (let i = 0; i < 40; i++) {
+      const a = Math.atan2(t.aimVec().y, t.aimVec().x) + (Math.random() - 0.5) * 1.6, sp = 2 + Math.random() * 9;
+      this.particles.add({ x: m.x, y: m.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: -0.01, drag: 0.9, life: 0.8 + Math.random() * 0.8, size: 8 + Math.random() * 12, color: i % 4 ? [150, 146, 150] : [255, 200, 120] });
     }
-    ctx.fillStyle = dark; ctx.fillRect(x - 20, y - MECH_LIFT - 4, 40, 7); // hull she stands on
-    ctx.fillStyle = t.color; ctx.fillRect(x - 20, y - MECH_LIFT - 4, 40, 2);
-    ctx.fillStyle = light; ctx.fillRect(x - f * 22 - 3, y - MECH_LIFT - 10, 6, 12); // exhaust stack
-    if ((time * 6 | 0) % 2) { ctx.fillStyle = '#ffb040'; ctx.fillRect(x - f * 22 - 2, y - MECH_LIFT - 13, 4, 3); }
+    for (let i = 0; i < 16; i++) this.particles.add({ x: t.x + (Math.random() - 0.5) * 60, y: t.y - 2, vx: (Math.random() - 0.5) * 6, vy: -Math.random() * 1.5, g: 0.02, drag: 0.93, life: 0.9, size: 6 + Math.random() * 6, color: [170, 160, 150] });
+    this.shake = Math.max(this.shake, 22);
+    this.screenFlash = Math.max(this.screenFlash || 0, 0.35);
+    this.sfx.explosion(40);
+  },
+
+  // an earthquake from the impact: everyone on the ground within q.r takes up to q.dmg (falling
+  // off with distance), trees near the blast come down, dust runs out along the ground
+  quake(x, y, q, owner) {
+    for (const t of this.tanks) {
+      if (!t.alive) continue;
+      const d = Math.abs(t.x - x);
+      if (d > q.r || Math.abs(t.y - this.groundAt(t.x, t.y)) > 30) continue;
+      const amt = Math.round(q.dmg * (1 - d / q.r));
+      if (amt < 5) continue;
+      this.particles.text(t.x, t.y - 64, 'QUAKE', '#e8c890');
+      this.damage(t, amt, owner);
+      t.flash = 1;
+    }
+    this.terrain.fellTrees(x, y - 40, 320);
+    for (let i = 0; i < 70; i++) {
+      const dir = i % 2 ? 1 : -1, dx = dir * Math.random() * q.r;
+      this.particles.add({ x: x + dx, y: this.terrain.hAt(x + dx) - 2, vx: dir * (0.5 + Math.random() * 2), vy: -Math.random() * 1.2, g: 0.03, drag: 0.95, life: 0.8 + Math.random() * 0.8, size: 4 + Math.random() * 7, color: [160, 148, 136] });
+    }
+    this.shake = Math.max(this.shake, 30);
+    this.ui.notice('The ground shakes.');
+    this.events.push('An earthquake rolls out from the impact.');
+  },
+});
+
+// ------------------------------------------------------------------------- the war goddess
+// Alban's Morrighan: frames 0-70 the goddess descends on a cloud bank over the mark and the camera
+// pulls back to frame her; 70-95 she raises her hand and her halo wheel blazes; 95-175 she looses
+// arrows of light, one every 3 frames, each a strong seeker; 175-240 she rises and fades.
+const DEITY = { DESC: 70, RAISE: 95, VOLLEY: 175, END: 240 };
+const DEITY_SCALE = 1.6; // she is drawn this much larger than her parts list
+class DeitySummon {
+  constructor(game, owner, at, cfg) {
+    this.game = game;
+    this.owner = owner;
+    this.cfg = cfg;
+    this.x = at.x;
+    this.ground = Math.min(game.terrain.hAt(at.x), at.y);
+    this.restY = this.ground - 520; // her feet (the cloud) over the mark
+    this.y = this.restY - 900;
+    this.t = 0;
+    this.alpha = 0;
+    this.raise = 0;
+    this.zoom0 = game.cam.zoom;
+    this.arrow = { id: 'morrighan_arrow', name: 'Arrow of Light', kind: 'rocket', dmg: cfg.dmg, dmgR: cfg.r, explR: 3, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
+      rarity: 7, maxCharge: 10, drift: 0.1, arrow: true, guide: { arm: 2, burn: 0, seek: 0, turn: 9, range: cfg.reach, cone: 180, lift: 0, brake: false } };
+    game.cam.follow({ x: this.x, y: this.ground - 420 });
+    game.ui.notice('Morrighan answers.');
+  }
+
+  update() {
+    const g = this.game, t = ++this.t;
+    const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
+    if (t <= DEITY.DESC) {
+      const u = ease(t / DEITY.DESC);
+      this.y = lerp(this.restY - 900, this.restY, u);
+      this.alpha = u;
+      g.cam.setZoom(lerp(this.zoom0, Math.min(this.zoom0, 0.5), u));
+    }
+    if (t > DEITY.DESC && t <= DEITY.RAISE) this.raise = ease((t - DEITY.DESC) / (DEITY.RAISE - DEITY.DESC));
+    if (t > DEITY.RAISE && t <= DEITY.VOLLEY && (t - DEITY.RAISE) % 3 === 0 && (t - DEITY.RAISE) / 3 < this.cfg.arrows) {
+      const hand = { x: this.x + (47 + (Math.random() - 0.5) * 30) * DEITY_SCALE, y: this.y + (-390 + (Math.random() - 0.5) * 30) * DEITY_SCALE };
+      const a = Math.PI / 2 + (Math.random() - 0.5) * 1.4, sp = 12 + Math.random() * 5;
+      const p = new Projectile(g, this.arrow, this.owner, hand.x, hand.y, Math.cos(a) * sp, Math.sin(a) * sp, false);
+      p.age = 2;
+      g.projectiles.push(p);
+      if (t % 9 === 0) g.sfx.laser();
+    }
+    if (t > DEITY.VOLLEY) {
+      const u = ease((t - DEITY.VOLLEY) / (DEITY.END - DEITY.VOLLEY));
+      this.y = this.restY - 500 * u;
+      this.alpha = 1 - u;
+      this.raise = 1 - u;
+      g.cam.setZoom(lerp(Math.min(this.zoom0, 0.5), this.zoom0, u));
+    }
+    return t < DEITY.END;
+  }
+
+  draw(ctx) { drawScaled(ctx, Math.round(this.x), Math.round(this.y), DEITY_SCALE, 1, () => drawDeity(ctx, 0, 0, this.alpha, this.raise, this.game.time)); }
+}
+
+// The goddess, box-built and translucent (after Land of the Lustrous' Lunarian deities, as the
+// Morrighan of the old songs): a cloud bank under her, black feathered wings, a radiant halo wheel
+// behind, a serene pale face under a diadem, long dark hair, white and gold robes; one hand rises
+// to loose the volley. x, y: the cloud under her feet.
+function drawDeity(ctx, x, y, alpha, raise, time) {
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = alpha * 0.92;
+  const cy = y - 250; // halo / chest height
+  // the halo wheel: two rings and spokes, slowly turning, blazing as she raises her hand
+  const spin = time * 0.3;
+  const glow = 0.55 + 0.45 * raise;
+  for (let i = 0; i < 48; i++) {
+    const a = spin + (i / 48) * TAU;
+    ctx.fillStyle = i % 2 ? `rgba(255,236,170,${glow})` : `rgba(255,255,240,${glow})`;
+    ctx.fillRect(Math.round(x + Math.cos(a) * 150 - 4), Math.round(cy - 40 + Math.sin(a) * 150 - 4), 8, 8);
+    if (i % 2 === 0) ctx.fillRect(Math.round(x + Math.cos(a) * 112 - 3), Math.round(cy - 40 + Math.sin(a) * 112 - 3), 6, 6);
+  }
+  for (let k = 0; k < 16; k++) {
+    const a = -spin + (k / 16) * TAU;
+    ctx.fillStyle = `rgba(255,240,190,${glow * 0.7})`;
+    for (let r = 40; r < 112; r += 8) ctx.fillRect(Math.round(x + Math.cos(a) * r - 2), Math.round(cy - 40 + Math.sin(a) * r - 2), 4, 4);
+  }
+  // black feathered wings, stepped outward and down from the shoulders
+  for (const side of [-1, 1]) {
+    for (let k = 0; k < 7; k++) {
+      const w = 34 + k * 16, top = cy - 70 + k * 18;
+      ctx.fillStyle = k % 2 ? '#1c1a24' : '#2c2836';
+      ctx.fillRect(Math.round(side > 0 ? x + 26 : x - 26 - w), top, w, 16);
+      ctx.fillStyle = '#4a4458';
+      ctx.fillRect(Math.round(side > 0 ? x + 26 + w - 8 : x - 26 - w), top + 12, 8, 14); // feather tips
+    }
+  }
+  // long dark hair behind
+  ctx.fillStyle = '#2a2234';
+  ctx.fillRect(x - 30, cy - 110, 60, 150);
+  // robes: stepped, widening to the hem, white with gold trim
+  for (let k = 0; k < 9; k++) {
+    const w = 46 + k * 10;
+    ctx.fillStyle = k % 3 === 2 ? '#e8e2d0' : '#f6f4ee';
+    ctx.fillRect(x - w / 2, cy - 30 + k * 22, w, 22);
+  }
+  ctx.fillStyle = '#e0b850';
+  ctx.fillRect(x - 46, cy - 34, 92, 6); // collar
+  ctx.fillRect(x - 3, cy - 28, 6, 196); // a gold band down the front
+  ctx.fillRect(x - 68, cy + 168, 136, 6); // the hem
+  // the face: serene, eyes closed, under a gold diadem
+  ctx.fillStyle = '#fbeee4';
+  ctx.fillRect(x - 20, cy - 100, 40, 48);
+  ctx.fillStyle = '#2a2234';
+  ctx.fillRect(x - 22, cy - 106, 44, 12); // fringe
+  ctx.fillStyle = '#e0b850';
+  ctx.fillRect(x - 18, cy - 112, 36, 6); ctx.fillRect(x - 3, cy - 120, 6, 8); // diadem
+  ctx.fillStyle = '#8a6a7a';
+  ctx.fillRect(x - 12, cy - 78, 8, 2); ctx.fillRect(x + 4, cy - 78, 8, 2); // closed eyes
+  ctx.fillRect(x - 3, cy - 64, 6, 2);
+  // arms: one at her side, one rising to loose the volley
+  ctx.fillStyle = '#f6f4ee';
+  ctx.fillRect(x - 54, cy - 20, 14, 70);
+  const ra = raise;
+  ctx.fillRect(x + 40, Math.round(cy - 20 - 70 * ra), 14, 70);
+  ctx.fillStyle = '#fbeee4';
+  ctx.fillRect(x + 40, Math.round(cy - 32 - 70 * ra), 14, 14); // the raised hand
+  if (ra > 0.5) { ctx.fillStyle = `rgba(255,250,220,${ra})`; ctx.fillRect(x + 30, Math.round(cy - 60 - 70 * ra), 34, 34); }
+  // the cloud bank under her
+  for (let i = 0; i < 26; i++) {
+    const ox = ((i * 37) % 260) - 130, oy = (i % 4) * 8;
+    ctx.fillStyle = i % 3 ? 'rgba(236,236,246,0.9)' : 'rgba(200,204,222,0.9)';
+    ctx.fillRect(Math.round(x + ox - 22 + Math.sin(time + i) * 3), y - 18 + oy, 44, 22);
+  }
+  ctx.restore();
 }

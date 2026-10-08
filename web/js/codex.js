@@ -55,11 +55,11 @@ const GUN_NOTES = {
   feuerlilie: ['Matches', 'A homing rocket that bursts like flak: shrapnel and double damage to drones. The easiest anti-air gun to land.'],
   ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling): a heavy beam that leaves a boiling pool, twice a turn.'],
   massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). Point and click, if it can see.'],
-  ragnarok: ['Final', 'G.W. Tiger only. She rides a mech with four 380mm guns: two four-gun barrages a turn, heavy and loose.'],
+  ragnarok: ['Final', 'G.W. Tiger only. The mech braces and fires one 80cm shell: a giant crater, and an earthquake that hits everyone on the ground within 900.'],
   zeropoint: ['Final', 'Object 15X only. A flat, near-instant slug that goes through up to 240 of hill, fort or bridge before it stops.'],
   verdict: ['Final', 'November only. The round is just a target dot: an NXi battlecruiser lines up overhead and fires a tachyon lance straight down.'],
   constellation: ['Final', 'Innocentia only. Five MAIAs appear over the mark and fire one after another, 760 a beam.'],
-  morrighan: ['Final', 'Alban Eiler only. Breaks into ten strong seekers at the top of its climb; lob it, or it hits whole for half.'],
+  morrighan: ['Final', 'Alban Eiler only. A flare that summons the goddess Morrighan over the mark; she looses 26 seeking arrows of light at everything in reach.'],
   apollon: ['Final', 'Ikaros only. A laser like the others, and where it lands a meteorite follows a second later.'],
 };
 const GIRL_NOTES = {

@@ -6,6 +6,7 @@
 const CHATTINESS = 0.7; // scales every reaction probability in react(); lower = quieter CPUs
 const CAM_ZOOM_MIN = 0.5; // mouse-wheel zoom range (1: the standard 1600 x 900 view)
 const CAM_ZOOM_MAX = 1.8;
+const CAM_ZOOM_EASE = 6; // the wheel zoom closes 1/6 of the way to its target each frame
 const LABEL_ANCHOR = 60; // HUD labels hang this far (world units at zoom 1) above a vehicle's feet
 const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
 const SALVO_DELAY = 15;
@@ -90,8 +91,9 @@ class Camera {
   sya(y, lift) { return this.sy(y - lift) + lift; }
 
   // zoom about the centre of the view
-  setZoom(z) {
+  setZoom(z, ease = false) {
     z = clamp(z, CAM_ZOOM_MIN, CAM_ZOOM_MAX);
+    if (!ease) this.zoomTo = z; // set pieces jump straight there; the wheel eases (update)
     const cx = this.x + this.w / 2, cy = this.y + this.h * 0.55;
     this.zoom = z;
     this.x = clamp(cx - this.w / 2, 0, Math.max(0, WORLD_W - this.w));
@@ -110,6 +112,8 @@ class Camera {
   }
 
   update() {
+    // the wheel's zoom closes on its target a fraction a frame (P control), like the camera's pan
+    if (this.zoomTo && Math.abs(this.zoomTo - this.zoom) > 0.001) this.setZoom(this.zoom + (this.zoomTo - this.zoom) / CAM_ZOOM_EASE, true);
     const t = this.target();
     if (!t) return;
     this.x += (t.x - this.x) / CAM_EASE;
@@ -226,7 +230,7 @@ class Game {
     c.addEventListener('wheel', (e) => {
       if (this.phase === 'menu') return;
       e.preventDefault();
-      this.cam.setZoom(this.cam.zoom * Math.exp(-e.deltaY * 0.0015));
+      this.cam.zoomTo = clamp((this.cam.zoomTo || this.cam.zoom) * Math.exp(-e.deltaY * 0.0015), CAM_ZOOM_MIN, CAM_ZOOM_MAX); // eased in by Camera.update
     }, { passive: false });
     c.addEventListener('pointerdown', (e) => {
       if (this.phase === 'menu') return;
@@ -841,6 +845,7 @@ class Game {
       this.cam.follow(p);
     }
     this.particles.muzzle(m.x, m.y, t.aimVec(), s.w);
+    if (s.w.mech) this.siegeBlast(t, m); // the 80cm going off
     t.recoil = 1; // every round kicks the barrel back
     if (!s.first) this.sfx.shot(s.w);
     s.first = false;
@@ -990,6 +995,8 @@ class Game {
       }
       if (w.kind === 'flak' || w.airburst) this.shrapnel(p);
       if (w.orbital) this.projectiles.push(new OrbitalStrike(this, p.owner, p, w.orbital)); // November's Verdict (finals.js)
+      if (w.quake) this.quake(p.x, p.y, w.quake, p.owner); // G.W. Tiger's Ragnarök
+      if (w.deity) this.projectiles.push(new DeitySummon(this, p.owner, p, w.deity)); // Alban's Morrighan
       if (w.incendiary && w.frag) { // a burning fragment: a small patch of fire that sticks and scorches
         for (let i = 0; i < 2; i++) this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 2, (rng.next() - 0.5) * 3, -1 - rng.next() * 2, w.incendiary, true));
       }
@@ -1148,7 +1155,7 @@ class Game {
       if (amt > 0) this.damage(t, amt, owner, false, def, hit);
     }
     this.startSlide(x, def.explR || 10);
-    this.particles.explosion(x, y, def.dmgR, palette);
+    this.particles.explosion(x, y, def.visR || def.dmgR, palette); // visR: set pieces look bigger than they hit
     this.sfx.explosion(Math.min(60, (def.explR || 10) + def.dmgR * 0.1));
     this.shake = Math.max(this.shake, Math.min(14, 2 + def.dmgR * 0.05));
   }
@@ -1673,6 +1680,7 @@ class Game {
     // very high up (the NXi fleet shot) the sky gives way to space
     const space = clamp((-cam.y - 900) / 1400, 0, 1);
     if (space > 0) drawSpace(ctx, space, this.time);
+    if (this.ascent > 0) drawAscent(ctx, this.ascent, this.time); // the NXi fleet shot's climb
 
     // world
     const sx = this.shake > 0.5 ? (Math.random() - 0.5) * this.shake * 2 : 0;
