@@ -783,7 +783,7 @@ class Game {
     }
     if (this.events.length > 40) this.events.splice(0, this.events.length - 40);
     // G.W. Tiger's drill: the first shot of her turn hit a rival, so she gets the round back
-    const drilled = t && t.drill && this.report && [...this.report.dmg.keys()].some((x) => x !== t && !x.isMob);
+    const drilled = t && t.drill && this.report && (this.report.bestQ || 0) >= DRILL_QUALITY;
     if (t) t.drill = false;
     if (drilled && t.alive) { t.shotsLeft++; this.particles.text(t.x, t.y - 90, 'Drill: round back', '#f2c45a'); }
     this.react(this.report);
@@ -969,6 +969,7 @@ class Game {
     if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
     if (t.shield) { amt *= SHIELD_FACTOR; if (hit) hit.shield = true; }
     if (owner && owner !== t) t.lastAttacker = owner; // CPUs retaliate against this tank
+    if (hit && owner && owner !== t && this.report) this.report.bestQ = Math.max(this.report.bestQ || 0, hit.q); // best hit on a rival this shot
     let taken;
     if (t.armour > 0) {
       taken = Math.min(amt, t.armour);
