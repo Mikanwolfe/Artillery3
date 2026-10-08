@@ -47,6 +47,10 @@ class AsteroidStrike {
     this.zoom0 = game.cam.zoom;
     this.focus = { x: this.tx, y: this.ground - 200 };
     this.rock = { x: this.tx, y: this.belt, cells: rockCells(cfg.size, 3) };
+    // how deep each cell sits under the rock's underside (cells straight down to the open air), so
+    // the heat of entry can follow its contour rather than a straight line across
+    const filled = new Set(this.rock.cells.map(([x, y]) => x + ',' + y));
+    this.rock.under = this.rock.cells.map(([x, y]) => { let d = 0; while (d < 40 && filled.has(x + ',' + (y + (d + 1) * ROCK_CELL))) d++; return d; });
     this.mark = 0; // the yellow outline, forming then pulsing
     // the belt: rocks of every size drifting across the dark
     this.belt_ = [];
@@ -148,8 +152,16 @@ class AsteroidStrike {
     rockAt(r.cells, r.x, r.y);
     if (t > ROCK.PULSE) {
       const heat = clamp((t - ROCK.PULSE) / 30, 0, 1);
-      ctx.fillStyle = `rgba(255,140,40,${0.6 * heat})`;
-      for (const [cx, cy] of r.cells) if (cy > this.cfg.size * 0.35) ctx.fillRect(Math.round(r.x + cx - ROCK_CELL / 2), Math.round(r.y + cy - ROCK_CELL / 2), ROCK_CELL, ROCK_CELL);
+      // heat of entry along the underside, following its contour: white-yellow at the surface,
+      // orange, then red deeper in, creeping further into the rock as it falls
+      const reach = 1 + heat * 5;
+      r.cells.forEach(([cx, cy], i) => {
+        const d = r.under[i];
+        if (d >= reach) return;
+        const k = d / reach;
+        ctx.fillStyle = k < 0.25 ? `rgba(255,236,150,${0.85 * heat})` : k < 0.55 ? `rgba(255,150,40,${0.75 * heat})` : `rgba(200,50,30,${0.55 * heat})`;
+        ctx.fillRect(Math.round(r.x + cx - ROCK_CELL / 2), Math.round(r.y + cy - ROCK_CELL / 2), ROCK_CELL, ROCK_CELL);
+      });
     }
     if (this.mark > 0) {
       ctx.fillStyle = `rgba(255,214,60,${this.mark})`;
