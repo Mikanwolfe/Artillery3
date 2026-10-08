@@ -3,8 +3,8 @@
 //   Ikaros' Apollon        a laser like any other, but where the beam lands a meteorite comes down
 //   November's Verdict     a target dot; an NXi battlecruiser fleet drops in overhead, the camera
 //                          rolls to show it in formation, and the flagship's spinal lance fires down
-//   Innocentia's Array     five MAIAs over the target, each opening up for a Hatsuyuki barrage, their
-//                          volleys rolling over one another (Game.updateConstellation)
+//   Innocentia's Array     a dot; MAIA's eye opens, the sky fills with MAIAs and a vast one behind
+//                          them, and the mark takes wave after wave of fire, then the vast one's beam (MaiaArray)
 //   G.W. Tiger's Ragnarök  a marker shell; the camera whips off the map to her platoon of G.W.
 //                          SPGs and a Karl-Gerät, which rain shells on the area (BatteryStrike)
 //   Object 15X's Railgun   the slug goes through up to w.pierce of ground and cover (stepBallistic)
@@ -276,57 +276,184 @@ class OrbitalStrike {
   }
 }
 
-Object.assign(Game.prototype, {
-  // Innocentia's Array: four more MAIAs appear across the sky over the mark; the camera pulls back
-  // to hold them and the target in one view, and all five fire one after another (it never cuts)
-  updateConstellation(s, sat) {
-    const c = s.constellation;
-    const tg = s.target;
-    if (!s.extras) {
-      s.extras = [];
-      for (const ox of [-560, -280, 280, 560].slice(0, c.n - 1)) {
-        const e = new Satellite();
-        e.x = tg.x + ox; e.y = sat.y + rng.range(-60, 60); e.tier = 3; e.hp = e.maxHp;
-        e.barrage = true; // every one of them opens up for a Hatsuyuki barrage
-        e.lookAt(tg);
-        s.extras.push(e);
-        this.particles.explosion(e.x, e.y, 60, 'laser');
+// ------------------------------------------------------------------------- MAIA array
+// Innocentia's Constellation. The dot lands and nothing happens. The camera drifts up to MAIA and
+// the eye at her core opens; in flashes the whole sky fills with MAIAs, a vast one behind them all.
+// They unfold and charge, the camera comes down to the mark, and it is hit by wave after wave of
+// MAIA fire across a wide area; on the last, the vast MAIA charges and a massive beam comes down.
+const ARRAY = { PAN: 30, AT: 70, EYE: 108, FILL: 182, CHARGE: 214, DOWN: 238, WAVES: 244, WAVE_GAP: 30, WAVE_SHOTS: 40, WAVE_LEN: 22, BIG_CHARGE: 404, BIG_FIRE: 446, END: 580 };
+const ARRAY_BURSTS = [114, 130, 146, 162]; // the sky fills in four flashes
+class MaiaArray {
+  constructor(game, owner, at, cfg) {
+    this.game = game;
+    this.owner = owner;
+    this.cfg = cfg;
+    this.tx = at.x;
+    this.ground = Math.min(game.terrain.hAt(at.x), at.y);
+    this.t = 0;
+    this.eye = 0; // 0..1, the eye at MAIA's core opening
+    this.big = 0; // the vast MAIA's charge
+    this.opensMaia = false; // MAIA herself unfolds for the barrage (Game.step)
+    this.zoom0 = game.cam.zoom;
+    this.focus = { x: this.tx, y: this.ground - 200 };
+    const sky = this.ground - 1500;
+    // the array: foreground MAIAs (full art, scaled down) and far ones (silhouettes), each appearing
+    // in one of the bursts; positions from the seeded rng so a replay matches
+    this.fore = [];
+    for (let i = 0; i < cfg.fore; i++) {
+      const m = new Satellite();
+      m.tier = 1 + (i % 3); m.t = i * 37;
+      this.fore.push({ m, x: this.tx + (rng.next() * 2 - 1) * 1400, y: sky + 250 + rng.next() * 750, sc: 0.42 + rng.next() * 0.3, at: ARRAY_BURSTS[i % 4] });
+    }
+    this.far = [];
+    for (let i = 0; i < cfg.far; i++) this.far.push({ x: this.tx + (rng.next() * 2 - 1) * 2000, y: sky + rng.next() * 900, r: 14 + rng.next() * 16, at: ARRAY_BURSTS[i % 4] + 4 });
+    this.giant = new Satellite();
+    this.giant.tier = 3;
+    this.giantAt = { x: this.tx, y: sky + 80, sc: 3.4 }; // high over the mark, in frame for the last wave
+    game.cam.ceil = sky - 1600; // the camera may climb to see it all
+    game.cam.wide = 700; // and pull back wider than the map
+    // the barrage: every shot's mark, from the seeded rng
+    this.shots = [];
+    for (let w = 0; w < cfg.waves; w++) {
+      for (let i = 0; i < ARRAY.WAVE_SHOTS; i++) {
+        const x = clamp(this.tx + (rng.next() * 2 - 1) * cfg.spread * (0.4 + 0.6 * rng.next()), 4, WORLD_W - 4);
+        this.shots.push({ x, at: ARRAY.WAVES + w * ARRAY.WAVE_GAP + Math.round(rng.next() * ARRAY.WAVE_LEN), src: Math.floor(rng.next() * 1e6) });
       }
-      sat.x = clamp(tg.x, 200, WORLD_W - 200);
-      sat.lookAt(tg);
-      s.prevZoom = this.cam.zoom;
-      this.cam.setZoom(Math.min(this.cam.zoom, 0.55));
-      this.cam.follow({ x: tg.x, y: Math.min(tg.y - 520, (sat.y + tg.y) / 2 + 160) }); // the whole array and the mark
-      this.sfx.satPrep();
-      this.ui.notice('Constellation online: five MAIAs.');
     }
-    for (const e of s.extras) { e.update(); e.lookAt(tg); }
-    const all = [sat, ...s.extras];
-    const start = 80; // once their wings and antennae are open
-    for (const e of all) e.charge = s.t < start ? clamp((s.t - 30) / 50, 0, 1) : e.fired >= c.pulses ? 0 : 0.6;
-    // each opens fire c.gap frames after the last, from the middle outward and back, and fires
-    // c.pulses pulses c.pgap apart, so the volleys roll over one another
-    for (let k = 0; k < all.length; k++) {
-      const j = (s.t - start - k * c.gap) / c.pgap;
-      if (j < 0 || j % 1 !== 0 || j >= c.pulses) continue;
-      const e = all[[2, 1, 3, 0, 4][k] % all.length];
-      e.fired = j + 1;
-      const lens = e.lens();
-      const p = { x: tg.x + (k || j ? (rng.next() - 0.5) * 60 : 0), y: tg.y };
-      this.lasers.push(new Laser(lens.x, lens.y, p.x, p.y, j % 2 ? '#bfe8ff' : '#fffff0', 16, 50));
-      this.sfx.satFire();
-      const r = c.r * (hasTrait(s.owner, 'uplink') ? 1.3 : 1);
-      this.explode(p.x, p.y, { maia: true, dmg: c.dmg, dmgR: r, explR: 10, from: { x: lens.x - p.x, y: lens.y - p.y } }, s.owner, 'laser');
-      this.shake = Math.max(this.shake, 6);
-    }
-    if (s.t > start + c.gap * (all.length - 1) + c.pgap * c.pulses + 70) {
-      for (const e of s.extras) e.barrage = false;
-      this.cam.setZoom(s.prevZoom || 1);
-      this.satSeq = null;
-    }
-  },
+    game.cam.follow(this.focus);
+  }
 
-});
+  // a foreground MAIA's emitter, in the world
+  lensOf(f) { const l = f.m.lens(); return { x: f.x + l.x * f.sc, y: f.y + l.y * f.sc }; }
+
+  update() {
+    const g = this.game, cam = g.cam, t = ++this.t, sat = g.satellite;
+    const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
+    const f = this.focus, sc = sat.center();
+    if (t > ARRAY.PAN && t <= ARRAY.AT) { // up to MAIA
+      const u = ease((t - ARRAY.PAN) / (ARRAY.AT - ARRAY.PAN));
+      f.x = lerp(this.tx, sc.x, u); f.y = lerp(this.ground - 200, sc.y + 120, u);
+      cam.setZoom(lerp(this.zoom0, 1.15, u));
+    }
+    if (t > ARRAY.AT && t <= ARRAY.EYE) { this.eye = ease((t - ARRAY.AT) / (ARRAY.EYE - ARRAY.AT)); f.x = sc.x; f.y = sc.y + 120; }
+    if (t === ARRAY.AT + 10) g.ui.notice('MAIA opens her eye.');
+    if (t > ARRAY.EYE && t <= ARRAY.FILL) { // pulling back as the sky fills
+      const u = ease((t - ARRAY.EYE) / (ARRAY.FILL - ARRAY.EYE));
+      f.x = lerp(sc.x, this.tx, u); f.y = lerp(sc.y + 120, this.ground - 1100, u);
+      cam.zmin = 0.36;
+      cam.setZoom(lerp(1.15, 0.36, u));
+    }
+    if (ARRAY_BURSTS.includes(t)) { g.screenFlash = Math.max(g.screenFlash || 0, 0.55); g.sfx.satPrep(); }
+    if (t === ARRAY.FILL) g.ui.notice('Constellation online.');
+    if (t >= ARRAY.FILL) this.opensMaia = true;
+    for (const q of this.fore) {
+      q.m.barrage = t >= ARRAY.FILL;
+      q.m.update();
+      q.m.lookAt({ x: (this.tx - q.x) / q.sc, y: (this.ground - q.y) / q.sc });
+      q.m.charge = t >= ARRAY.FILL ? clamp((t - ARRAY.FILL) / (ARRAY.CHARGE - ARRAY.FILL), 0, 1) : 0;
+    }
+    this.giant.update();
+    this.giant.lookAt({ x: (this.tx - this.giantAt.x) / this.giantAt.sc, y: (this.ground - this.giantAt.y) / this.giantAt.sc });
+    if (t > ARRAY.CHARGE && t <= ARRAY.WAVES) { // down to the mark, the array still overhead
+      const u = ease((t - ARRAY.CHARGE) / (ARRAY.WAVES - ARRAY.CHARGE));
+      f.x = this.tx; f.y = lerp(this.ground - 1100, this.ground - 650, u);
+      cam.setZoom(lerp(0.36, 0.42, u));
+    }
+    // the barrage
+    for (const s of this.shots) {
+      if (s.at !== t) continue;
+      const src = this.fore.length && s.src % 3 ? this.lensOf(this.fore[s.src % this.fore.length]) : (() => { const q = this.far[s.src % this.far.length]; return { x: q.x, y: q.y }; })();
+      const y = g.terrain.hAt(s.x);
+      g.lasers.push(new Laser(src.x, src.y, s.x, y, s.src % 2 ? '#bfe8ff' : '#ffc0e8', 10, 26));
+      g.explode(s.x, y, { maia: true, dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 8, from: { x: src.x - s.x, y: src.y - y } }, this.owner, 'laser');
+      if (t % 4 === 0) g.sfx.satFire();
+      g.shake = Math.max(g.shake, 8);
+    }
+    // the last wave: the vast MAIA
+    if (t > ARRAY.BIG_CHARGE && t <= ARRAY.BIG_FIRE) {
+      this.big = (t - ARRAY.BIG_CHARGE) / (ARRAY.BIG_FIRE - ARRAY.BIG_CHARGE);
+      this.giant.charge = this.big;
+      cam.setZoom(lerp(0.42, 0.36, ease(this.big)));
+      f.y = lerp(this.ground - 650, this.ground - 900, ease(this.big));
+      if (t === ARRAY.BIG_CHARGE + 1) g.sfx.satPrep();
+    }
+    if (t === ARRAY.BIG_FIRE) {
+      const l = this.giant.lens(), G = this.giantAt;
+      this.beam = { x: G.x + l.x * G.sc, y: G.y + l.y * G.sc };
+      const y = g.terrain.hAt(this.tx);
+      g.lasers.push(new Laser(this.beam.x, this.beam.y, this.tx, y, '#ffe8f6', 150, 90));
+      const B = this.cfg.final;
+      g.explode(this.tx, y, { maia: true, dmg: B.dmg, dmgR: B.r, explR: B.explR, visR: 460, from: { x: this.beam.x - this.tx, y: this.beam.y - y } }, this.owner, 'laser');
+      g.shake = Math.max(g.shake, 34);
+      g.screenFlash = Math.max(g.screenFlash || 0, 0.85);
+      g.sfx.satFire(); g.sfx.explosion(70);
+      this.giant.charge = 0;
+    }
+    if (t > ARRAY.BIG_FIRE + 40 && t <= ARRAY.BIG_FIRE + 80) cam.setZoom(lerp(0.36, this.zoom0, ease((t - ARRAY.BIG_FIRE - 40) / 40)));
+    cam.follow(f);
+    if (t <= ARRAY.BIG_FIRE + 40) cam.snap();
+    if (t >= ARRAY.END) { this.opensMaia = false; cam.zmin = 0; cam.ceil = -1000; cam.wide = 0; return false; }
+    return true;
+  }
+
+  // the array fades out at the end, everything in the order it arrived
+  fade() { return 1 - clamp((this.t - ARRAY.BIG_FIRE - 50) / 80, 0, 1); }
+
+  draw(ctx) {
+    const t = this.t, time = this.game.time, fade = this.fade();
+    // the vast MAIA, hazy, behind everything
+    if (t >= ARRAY_BURSTS[3]) {
+      const G = this.giantAt, a = Math.min(1, (t - ARRAY_BURSTS[3]) / 20) * fade;
+      drawScaled(ctx, G.x, G.y, G.sc, 0.38 * a, () => { this.giant.x = 0; this.giant.y = 0; this.giant.draw(ctx); });
+      if (this.big > 0 && t < ARRAY.BIG_FIRE) { // gathering light at its emitter
+        const l = this.giant.lens();
+        ctx.fillStyle = `rgba(255,220,240,${0.3 + 0.6 * this.big})`;
+        sq(ctx, G.x + l.x * G.sc, G.y + l.y * G.sc, 40 + 160 * this.big + Math.sin(time * 30) * 10);
+      }
+    }
+    // far MAIAs: silhouettes with a glowing core
+    for (const q of this.far) {
+      if (t < q.at) continue;
+      const a = Math.min(1, (t - q.at) / 6) * fade;
+      ctx.fillStyle = `rgba(90,34,70,${0.6 * a})`;
+      for (let y = -q.r; y < q.r; y += 4) { const w = 2 * Math.sqrt(q.r * q.r - (y + 2) * (y + 2)); ctx.fillRect(Math.round(q.x - w / 2), Math.round(q.y + y), Math.round(w), 4); }
+      ctx.fillStyle = `rgba(255,190,230,${(0.4 + 0.5 * (t >= ARRAY.FILL ? 1 : 0)) * a})`;
+      sq(ctx, q.x, q.y, q.r * 0.6);
+      if (t - q.at < 6) { ctx.fillStyle = `rgba(255,255,255,${1 - (t - q.at) / 6})`; sq(ctx, q.x, q.y, q.r * 4); }
+    }
+    // the foreground array
+    for (const q of this.fore) {
+      if (t < q.at) continue;
+      const a = Math.min(1, (t - q.at) / 5) * fade;
+      drawScaled(ctx, q.x, q.y, q.sc, a, () => { q.m.x = 0; q.m.y = 0; q.m.draw(ctx); });
+      if (t - q.at < 8) { ctx.fillStyle = `rgba(255,255,255,${1 - (t - q.at) / 8})`; sq(ctx, q.x, q.y, 260 * q.sc); }
+    }
+    // the eye at MAIA's core
+    if (this.eye > 0 && fade > 0) {
+      const c = this.game.satellite.center(), o = this.eye;
+      ctx.globalAlpha = fade;
+      ctx.fillStyle = '#17172f'; ctx.fillRect(Math.round(c.x - 30), Math.round(c.y - 1), 60, 2); // the closed lid line
+      for (let y = -16; y < 16; y += 2) {
+        const v = (y + 1) / 16, half = 28 * Math.sqrt(Math.max(0, 1 - v * v));
+        if (Math.abs(y + 1) > 16 * o) continue;
+        ctx.fillStyle = '#fff6fb'; ctx.fillRect(Math.round(c.x - half), Math.round(c.y + y), Math.round(half * 2), 2);
+      }
+      const ir = 11 * Math.min(1, o * 1.4);
+      for (let y = -ir; y < ir; y += 2) {
+        if (Math.abs(y + 1) > 16 * o) continue;
+        const w = Math.sqrt(Math.max(0, ir * ir - (y + 1) * (y + 1)));
+        ctx.fillStyle = Math.abs(y) < ir * 0.5 ? '#e0409a' : '#a01e6a';
+        ctx.fillRect(Math.round(c.x - w), Math.round(c.y + y), Math.round(w * 2), 2);
+      }
+      ctx.fillStyle = '#12020c'; ctx.fillRect(Math.round(c.x - 1.5), Math.round(c.y - Math.min(9, 16 * o)), 3, Math.round(Math.min(18, 32 * o))); // slit pupil
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(c.x + 3), Math.round(c.y - 6 * o), 3, 3);
+      ctx.fillStyle = '#17172f'; // lashes on the lids as they part
+      ctx.fillRect(Math.round(c.x - 30), Math.round(c.y - 16 * o - 2), 60, 3);
+      ctx.fillRect(Math.round(c.x - 26), Math.round(c.y + 16 * o - 1), 52, 2);
+      ctx.globalAlpha = 1;
+    }
+  }
+}
 
 // ------------------------------------------------------------------------- G.W. battery
 // G.W. Tiger's Ragnarök: the shell is a marker. The camera whips sideways off the edge of the map

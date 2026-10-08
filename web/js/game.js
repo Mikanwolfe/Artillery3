@@ -81,6 +81,7 @@ class Camera {
     this.rot = 0; // a roll, in radians, for set pieces (the HUD never turns)
     this.ceil = -1000; // how high the camera may go (set pieces lift it, into space)
     this.wide = 0; // how far past the map's edges it may go (G.W.'s battery sits off the map)
+    this.zmin = 0; // set pieces may pull back further than the wheel can (0: CAM_ZOOM_MIN)
   }
 
   // the view in world units at this zoom, and world -> screen (HUD) coordinates
@@ -93,7 +94,7 @@ class Camera {
 
   // zoom about the centre of the view
   setZoom(z, ease = false) {
-    z = clamp(z, CAM_ZOOM_MIN, CAM_ZOOM_MAX);
+    z = clamp(z, this.zmin || CAM_ZOOM_MIN, CAM_ZOOM_MAX);
     if (!ease) this.zoomTo = z; // set pieces jump straight there; the wheel eases (update)
     const cx = this.x + this.w / 2, cy = this.y + this.h * 0.55;
     this.zoom = z;
@@ -489,7 +490,7 @@ class Game {
       this.cam.update();
       return;
     }
-    this.satellite.barrage = !!(this.satSeq && (this.satSeq.barrage || this.satSeq.constellation)); // the Hatsuyuki barrage (Yukikaze, Innocentia's Array)
+    this.satellite.barrage = !!(this.satSeq && this.satSeq.barrage) || this.projectiles.some((p) => p.opensMaia); // the Hatsuyuki barrage (Yukikaze, Innocentia's Array)
     this.satellite.update();
     for (const t of this.tanks) {
       t.update(DT);
@@ -909,7 +910,7 @@ class Game {
       this.satTarget = null;
       return;
     }
-    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, constellation: this.satTarget.constellation || null, lock: this.satTarget.lock || null, w: this.satTarget.w || null };
+    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, lock: this.satTarget.lock || null, w: this.satTarget.w || null };
     this.retarget(this.satSeq);
     this.satTarget = null;
     this.satellite.lookAt(this.satSeq.target);
@@ -940,7 +941,6 @@ class Game {
     const sat = this.satellite;
     s.t++;
     if (s.barrage) { this.updateBarrage(s, sat); return; }
-    if (s.constellation) { this.updateConstellation(s, sat); return; }
     sat.charge = s.t < 75 ? clamp((s.t - 25) / 50, 0, 1) : 0;
     if (s.t === 75) {
       const tg = s.target;
@@ -995,6 +995,7 @@ class Game {
       }
       if (w.kind === 'flak' || w.airburst) this.shrapnel(p);
       if (w.orbital) this.projectiles.push(new OrbitalStrike(this, p.owner, p, w.orbital)); // November's Verdict (finals.js)
+      if (w.array) this.projectiles.push(new MaiaArray(this, p.owner, p, w.array)); // Innocentia's Constellation
       if (w.battery) this.projectiles.push(new BatteryStrike(this, p.owner, p, w.battery)); // G.W. Tiger's Ragnarök
       if (w.deity) this.projectiles.push(new DeitySummon(this, p.owner, p, w.deity)); // Alban's Morrighan
       if (w.incendiary && w.frag) { // a burning fragment: a small patch of fire that sticks and scorches
@@ -1006,7 +1007,7 @@ class Game {
       // Yukikaze's barrage goes for whatever its rocket was locked onto, wherever the rocket landed
       const lock = w.maia && p.lastLock && p.lastLock.alive ? p.lastLock : null;
       const at = lock ? seekCenter(lock) : p;
-      this.satTarget = { x: at.x, y: at.y, owner: p.owner, barrage: w.maia || null, constellation: w.constellation || null, lock, w };
+      this.satTarget = { x: at.x, y: at.y, owner: p.owner, barrage: w.maia || null, lock, w };
     } // a laser's MAIA call follows its beam
   }
 
@@ -1694,7 +1695,6 @@ class Game {
       ctx.transform(VIEW_SCALE * cam.zoom, 0, 0, VIEW_SCALE * cam.zoom, -(cam.x + sx) * VIEW_SCALE * cam.zoom, -(cam.y + sy) * VIEW_SCALE * cam.zoom);
     }
     this.satellite.draw(ctx);
-    if (this.satSeq && this.satSeq.extras) for (const e of this.satSeq.extras) e.draw(ctx); // Innocentia's Array
     this.bg.drawRidges(ctx, cam);
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);

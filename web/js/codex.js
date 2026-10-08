@@ -58,7 +58,7 @@ const GUN_NOTES = {
   ragnarok: ['Final', 'G.W. Tiger only. A marker round: the camera whips off the map to her platoon (four G.W. Tiger SPGs and a Karl-Gerät), which drop eight 290mm rounds across 300 either side of the mark, then the 60cm: a giant crater, and an earthquake that hits everyone on the ground within 900.'],
   zeropoint: ['Final', 'Object 15X only. A flat, near-instant slug that goes through up to 240 of hill, fort or bridge before it stops.'],
   verdict: ['Final', 'November only. The round is just a target dot: an NXi battlecruiser lines up overhead and fires a tachyon lance straight down.'],
-  constellation: ['Final', 'Innocentia only. Five MAIAs appear over the mark, open their wings and antennae like Yukikaze\'s barrage, and each fires four pulses of 400, the volleys rolling over one another.'],
+  constellation: ['Final', 'Innocentia only. A laser dot. MAIA opens her eye and the sky fills with MAIAs, a vast one behind them; five waves of 40 shots (110 each) hit across 650 either side of the mark, then the vast MAIA\'s beam comes down: 2,600.'],
   morrighan: ['Final', 'Alban Eiler only. A flare that summons the goddess Morrighan over the mark; she looses 26 seeking arrows of light at everything in reach.'],
   apollon: ['Final', 'Ikaros only. A laser like the others, and where it lands a meteorite follows a second later.'],
 };
