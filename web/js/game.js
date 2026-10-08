@@ -314,7 +314,10 @@ class Game {
     const tg = t.mark;
     const wind = AIM_GUIDE_WIND || t.upgrades.computer ? this.wind : { x: 0, y: 0 };
     const dir = Math.sign(tg.x - m.x) || 1;
-    if (dir !== t.facing) return { frac: null, behind: true };
+    // which way the barrel actually throws: past vertical (a gun that can aim over her shoulder, or
+    // a slope tipping her back) it fires behind her, and the guide works that way too
+    const throws = Math.abs(u.x) < 1e-3 ? 0 : Math.sign(u.x);
+    if (throws !== dir) return { frac: null, behind: true, past: dir === t.facing, over: dir !== t.facing && t.aimVec(t.weapon.elevMax).x * t.facing < 0 };
     const reach = (v) => { // signed overshoot past the marker for speed v (null: never comes down to it)
       let x = m.x, y = m.y, vx = u.x * v, vy = u.y * v;
       const drift = t.weapon.drift;
@@ -1971,7 +1974,7 @@ class Game {
     const sy = this.cam.sy(t.mark.y);
     let txt;
     let col = HUD.fg;
-    if (info.behind) txt = 'turn around';
+    if (info.behind) txt = info.past ? 'lower the gun: it points back over her' : info.over ? 'turn around, or aim back past vertical' : 'turn around';
     else if (info.far || info.frac > 1) { txt = 'out of reach at this angle'; col = HUD.hot; }
     else { txt = `power ${Math.round(info.frac * 100)}%${info.blocked ? ' · blocked' : ''}`; if (info.blocked) col = HUD.hot; }
     ctx.font = `13px ${HUD_FONT}`;
