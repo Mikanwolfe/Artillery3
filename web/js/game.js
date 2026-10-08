@@ -260,6 +260,7 @@ class Game {
     if (dist(x, y, t.x, t.y - 10) < 40) { t.mark = null; this.sfx.click(); return; }
     y = Math.min(y, this.terrain.hAt(x)); // a click below the surface marks the ground there
     t.mark = { x, y };
+    store.set('markUsed', true); // the hint has done its job
     this.sfx.click();
   }
 
@@ -1805,6 +1806,22 @@ class Game {
     const t = this.active;
     this.markInfo = this.phase === 'aim' && t && !this.cpu && t.mark ? this.markPower(t) : null;
     if (this.markInfo) this.drawMarkLabel(ctx, t, this.markInfo);
+    // until a player has used it once: a hint that clicking the map shows the power a target needs
+    else if (this.phase === 'aim' && t && !this.cpu && !this.range && !t.firedThisTurn && !store.get('markUsed')) {
+      const txt = 'Tip: click a target to see the power it needs';
+      ctx.font = `13px ${HUD_FONT}`;
+      ctx.textAlign = 'center';
+      const w = ctx.measureText(txt).width + 16;
+      const bx = Math.round(1120 + 400 - w), by = 752;
+      ctx.globalAlpha = 0.75 + 0.25 * Math.sin(this.time * 3);
+      ctx.fillStyle = HUD.plate;
+      ctx.fillRect(bx, by, Math.round(w), 22);
+      ctx.fillStyle = t.color;
+      ctx.fillRect(bx, by, 4, 22);
+      ctx.fillStyle = HUD.dim;
+      ctx.fillText(txt, Math.round(bx + w / 2 + 2), by + 16);
+      ctx.globalAlpha = 1;
+    }
     if (t && this.phase !== 'roundEnd') this.drawBars(ctx, t);
   }
 
