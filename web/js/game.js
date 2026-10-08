@@ -20,7 +20,7 @@ const WIND_FULL = 0.5 * WIND_SCALE; // game.wind's magnitude at A3's strongest w
 const UPGRADE_PER_POINT = 6; // rebalanced Health++ / Armour++: $ per point of health or armour
 // Repair kits: bought in the shop, used with R instead of firing that turn
 const REPAIR_COST = 450;
-const WINGS_GLIDE = 3; // Seraphine's fall speed cap (world units a frame)
+const WINGS_GLIDE = 3; // Ikaros's fall speed cap (world units a frame)
 const REPAIR_MAX = 2;
 const REPAIR_FRAC = 0.7; // of max health and of max armour
 // Prize money counts only damage that actually came off a target (no overkill, no damage past
@@ -77,6 +77,8 @@ class Camera {
     this.manual = null;
     this.bias = 0; // shift what it follows right of centre by this much (the Codex range, behind its panel)
     this.zoom = 1; // mouse wheel: >1 closer, <1 further out (CAM_ZOOM_MIN..CAM_ZOOM_MAX)
+    this.rot = 0; // a roll, in radians, for set pieces (the HUD never turns)
+    this.ceil = -1000; // how high the camera may go (set pieces lift it, into space)
   }
 
   // the view in world units at this zoom, and world -> screen (HUD) coordinates
@@ -93,7 +95,7 @@ class Camera {
     const cx = this.x + this.w / 2, cy = this.y + this.h * 0.55;
     this.zoom = z;
     this.x = clamp(cx - this.w / 2, 0, Math.max(0, WORLD_W - this.w));
-    this.y = clamp(cy - this.h * 0.55, -1000, WORLD_BOTTOM - this.h);
+    this.y = clamp(cy - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h);
   }
 
   follow(obj) { this.focus = obj; this.manual = null; }
@@ -103,7 +105,7 @@ class Camera {
     if (!f) return null;
     return {
       x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), 0, Math.max(0, WORLD_W - this.w)),
-      y: clamp(f.y - this.h * 0.55, -1000, WORLD_BOTTOM - this.h),
+      y: clamp(f.y - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h),
     };
   }
 
@@ -440,7 +442,7 @@ class Game {
     t.shield = false; // a Deflector lasts until its owner's next turn
     t.barrier = null; // so does a Bulwark Barrier
     if (t.upgrades.workshop && t.armour < t.maxArmour) { // field workshop: patch some armour each turn
-      const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.05 * t.upgrades.workshop));
+      const ar = Math.round(Math.min(t.maxArmour - t.armour, t.maxArmour * 0.05 * t.upgrades.workshop)); // whole points
       t.armour += ar;
       this.particles.text(t.x, t.y - 40, `+${ar}`, '#8fe0a0');
     }
@@ -712,7 +714,7 @@ class Game {
 
   // W: hop in the facing direction for JUMP_FUEL of a full tank
   jump(t) {
-    const cost = Math.ceil(t.maxFuel * JUMP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)); // Seraphine's wings: half
+    const cost = Math.ceil(t.maxFuel * JUMP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)); // Ikaros's wings: half
     if (this.phase !== 'aim' || t !== this.active || t.falling || t.fuel < cost) { this.sfx.deny(); return false; }
     t.fuel -= cost;
     t.vy = JUMP_VY;
@@ -902,7 +904,7 @@ class Game {
       this.satTarget = null;
       return;
     }
-    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, lock: this.satTarget.lock || null, w: this.satTarget.w || null };
+    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, constellation: this.satTarget.constellation || null, lock: this.satTarget.lock || null, w: this.satTarget.w || null };
     this.retarget(this.satSeq);
     this.satTarget = null;
     this.satellite.lookAt(this.satSeq.target);
@@ -933,6 +935,7 @@ class Game {
     const sat = this.satellite;
     s.t++;
     if (s.barrage) { this.updateBarrage(s, sat); return; }
+    if (s.constellation) { this.updateConstellation(s, sat); return; }
     sat.charge = s.t < 75 ? clamp((s.t - 25) / 50, 0, 1) : 0;
     if (s.t === 75) {
       const tg = s.target;
@@ -986,6 +989,7 @@ class Game {
         this.sfx.acid();
       }
       if (w.kind === 'flak' || w.airburst) this.shrapnel(p);
+      if (w.orbital) this.projectiles.push(new OrbitalStrike(this, p.owner, p, w.orbital)); // November's Verdict (finals.js)
       if (w.incendiary && w.frag) { // a burning fragment: a small patch of fire that sticks and scorches
         for (let i = 0; i < 2; i++) this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 2, (rng.next() - 0.5) * 3, -1 - rng.next() * 2, w.incendiary, true));
       }
@@ -995,7 +999,7 @@ class Game {
       // Yukikaze's barrage goes for whatever its rocket was locked onto, wherever the rocket landed
       const lock = w.maia && p.lastLock && p.lastLock.alive ? p.lastLock : null;
       const at = lock ? seekCenter(lock) : p;
-      this.satTarget = { x: at.x, y: at.y, owner: p.owner, barrage: w.maia || null, lock, w };
+      this.satTarget = { x: at.x, y: at.y, owner: p.owner, barrage: w.maia || null, constellation: w.constellation || null, lock, w };
     } // a laser's MAIA call follows its beam
   }
 
@@ -1193,7 +1197,7 @@ class Game {
       this.sfx.hit();
       if (owner && owner !== t) this.events.push(`${owner.name} hit ${t.name} for ${Math.round(amt)}.`);
     }
-    if (t.hp <= 0 && hasTrait(t, 'grace') && !t.graceUsed) { // Seraphine: once a round she won't fall
+    if (t.hp <= 0 && hasTrait(t, 'grace') && !t.graceUsed) { // Ikaros: once a round she won't fall
       t.hp = 1;
       t.graceUsed = true;
       this.particles.text(t.x, t.y - 80, 'GRACE', '#ffe8a0', true);
@@ -1351,7 +1355,7 @@ class Game {
     this.phase = 'gameEnd';
     this.ui.showHud(false);
     this.ui.showGameEnd(st);
-    if (this.tanks.some((t) => !t.isCpu) && !this.range) this.ui.unlockSecret(); // a first game played: Seraphine comes through
+    if (this.tanks.some((t) => !t.isCpu) && !this.range) this.ui.unlockSecret(); // a first game played: Ikaros comes through
     if (st[0].isCpu && st[0].wins > (st[1] ? st[1].wins : -1)) this.ui.addEndQuip(st[0], pickTaunt(st[0], 'match_win'));
   }
 
@@ -1385,7 +1389,7 @@ class Game {
   buy(tank, kind, id) {
     if (kind === 'weapon') {
       const w = WEAPON_BY_ID[id];
-      if (tank.weapons.includes(id) || tank.weapons.length >= MAX_WEAPONS || tank.money < w.cost) { this.sfx.deny(); return false; }
+      if (tank.weapons.includes(id) || tank.weapons.length >= MAX_WEAPONS || tank.money < w.cost || !forVehicle(w, tank.vehicle.id)) { this.sfx.deny(); return false; }
       tank.money -= w.cost;
       tank.weapons.push(id);
       this.sfx.buyWeapon();
@@ -1444,7 +1448,7 @@ class Game {
       const weakest = (sellable.length ? sellable : owned).slice().sort((a, b) => weaponValue(a) - weaponValue(b))[0];
       const full = t.weapons.length >= MAX_WEAPONS;
       const budget = t.money + (full ? this.sellValue(weakest) : 0);
-      const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id)).sort((a, b) => weaponValue(b) - weaponValue(a));
+      const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id) && forVehicle(w, t.vehicle.id)).sort((a, b) => weaponValue(b) - weaponValue(a));
       let pick = shop.find((w) => w.cost <= budget);
       if (!pick) break;
       // not too clinical: any affordable gun within CPU_PICK_SPREAD of the best one's worth will do
@@ -1666,12 +1670,23 @@ class Game {
     ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.imageSmoothingEnabled = false;
     this.bg.drawSky(ctx);
+    // very high up (the NXi fleet shot) the sky gives way to space
+    const space = clamp((-cam.y - 900) / 1400, 0, 1);
+    if (space > 0) drawSpace(ctx, space, this.time);
 
     // world
     const sx = this.shake > 0.5 ? (Math.random() - 0.5) * this.shake * 2 : 0;
     const sy = this.shake > 0.5 ? (Math.random() - 0.5) * this.shake * 2 : 0;
     ctx.setTransform(s, 0, 0, s, -(cam.x + sx) * s, -(cam.y + sy) * s);
+    if (cam.rot) { // a camera roll (the NXi fleet shot): turn the world about the middle of the screen
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(cam.rot);
+      ctx.translate(-W / 2, -H / 2);
+      ctx.transform(VIEW_SCALE * cam.zoom, 0, 0, VIEW_SCALE * cam.zoom, -(cam.x + sx) * VIEW_SCALE * cam.zoom, -(cam.y + sy) * VIEW_SCALE * cam.zoom);
+    }
     this.satellite.draw(ctx);
+    if (this.satSeq && this.satSeq.extras) for (const e of this.satSeq.extras) e.draw(ctx); // Innocentia's Array
     this.bg.drawRidges(ctx, cam);
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);
@@ -1703,7 +1718,7 @@ class Game {
 
     // snow (screen pixels), and the flash of a lightning strike
     ctx.setTransform(k, 0, 0, k, 0, 0);
-    this.bg.drawSnow(ctx);
+    if (space < 0.3) this.bg.drawSnow(ctx);
     if (this.screenFlash > 0.01) {
       ctx.fillStyle = `rgba(235,245,255,${this.screenFlash})`;
       ctx.fillRect(0, 0, W, H);

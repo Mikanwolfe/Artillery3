@@ -69,11 +69,11 @@ const VEHICLES = [
   },
   // the secret girl (unlocked by finishing a first game): an angel who came through the gate
   {
-    id: 'ang', name: 'Seraphine', hp: 130, armour: 110, secret: true, blurb: 'Something came through the gate on white wings. She says she is here to help, and means it.',
+    id: 'ang', name: 'Ikaros', hp: 130, armour: 110, secret: true, blurb: 'Something came through the gate on white wings. She says she is here to help, and means it.',
     traits: ['wings', 'grace'],
     weapon: weapon('gloria', "'Gloria' Halo Lance", 'laser', -20, 35, {
       ceil: 110, clip: 2, maxCharge: 55, disp: 0.6, dmg: 200, explR: 4, dmgR: 40,
-      short: 'A little halo with wings that follows her about and answers when she points.', long: 'Starting weapon for Seraphine.' }),
+      short: 'A little halo with wings that follows her about and answers when she points.', long: 'Starting weapon for Ikaros.' }),
   },
 ];
 
@@ -230,6 +230,24 @@ const WEAPONS = [
   weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 1.6, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
     guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 3.5, range: 220, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 0.5, r: 75, at: 50, every: 2 },
     short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten bomblets in sequence, unguided and wind-blown.' }),
+  // Final weapons: one per girl, only in her own shop (sig), the price of the end game. Each has a
+  // set piece of its own (finals.js).
+  weapon('ragnarok', "G.W. 'Ragnarök' Geschützwagen Mech", 'shell', -10, 85, { sig: 'gwt', mech: true, salvo: 4, clip: 2, maxCharge: 110, disp: 3, dmg: 700, dmgR: 140, explR: 22, rarity: 7, cost: 75000,
+    short: 'She climbs into the mech the G.W. trials were really for: four 380mm guns on legs.', long: 'Two four-gun barrages a turn. G.W. Tiger only.' }),
+  weapon('zeropoint', "KTS-T 'Zero Point' Railgun", 'gun', -5, 30, { sig: 'obj', drift: 0.05, pierce: 240, maxCharge: 170, disp: 0, dmg: 2600, dmgR: 60, explR: 8, rarity: 7, cost: 75000,
+    short: 'A KTS-T slug so fast it goes through hills: up to 240 of ground, forts and bridges before it stops.', long: 'Flat, fast and through cover. Object 15X only.' }),
+  weapon('verdict', "NXi 'Queen's Verdict' Tachyon Lance", 'shell', 0, 80, { sig: 'nxi', drift: 0.6, maxCharge: 120, disp: 0.3, dmg: 20, dmgR: 20, explR: 2, rarity: 7, cost: 75000,
+    orbital: { dmg: 3600, r: 180 },
+    short: 'A target dot for the battlecruiser in orbit. It takes its time to line up, then it fires.', long: 'The November Division keeps the gate from above as well. November only.' }),
+  weapon('constellation', "Hatsuyuki 'Constellation' MAIA Array", 'shell', 0, 85, { sig: 'int', maxCharge: 90, disp: 0.5, dmg: 60, dmgR: 40, explR: 4, sat: true, rarity: 7, cost: 75000,
+    constellation: { n: 5, dmg: 760, r: 150, gap: 12 },
+    short: 'Not one MAIA but five. They take aim together and fire one after another.', long: 'Innocentia only.' }),
+  weapon('morrighan', "LFS 'Morrighan' Swarm Rocket", 'rocket', 0, 70, { sig: 'alb', maxCharge: 85, disp: 1.2, dmg: 420, dmgR: 70, explR: 8, rarity: 7, cost: 75000,
+    guide: { arm: 4, burn: 74, seek: 999, apex: true, turn: 6, range: 650, cone: 120, lift: 0.6 }, split: { n: 10, at: 26, spread: 10, boost: 1 },
+    short: 'Named for the phantom queen: it breaks into ten seekers that go for everything in reach.', long: 'Alban Eiler only.' }),
+  weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 7, cost: 75000,
+    meteor: { dmg: 3200, r: 240, time: 55 },
+    short: 'Where her arrow of light lands, the sky answers: a meteorite comes down on it.', long: 'Ikaros only.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
@@ -325,6 +343,8 @@ const BARRIER_COS = Math.cos(Math.PI * 0.3); // it covers +-54 degrees around it
 
 const WEAPON_BY_ID = Object.fromEntries([...WEAPONS, ...VEHICLES.map((v) => v.weapon)].map((w) => [w.id, w]));
 const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
+// final weapons (w.sig) are only for their own girl
+function forVehicle(w, vid) { return !w.sig || w.sig === vid; }
 
 // Rough worth of a weapon per turn, used by CPUs to rank, buy and pick weapons: damage over the
 // whole clip and salvo, scaled by blast radius (easier to hit with) and spread (harder), plus acid
@@ -525,6 +545,9 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
     if (p.x < -300 || p.x > WORLD_W + 300 || p.y > WORLD_BOTTOM + 200) return { hit: 'out' };
     if (p.x >= 0 && p.x < WORLD_W) {
       const gy = terrain.hAt(p.x);
+      // a piercing slug (the Zero Point) spends p.pierce going through ground and cover
+      const solid = p.y >= gy || (terrain.forts.length && terrain.fortAt(p.x, p.y)) || (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(p.x, p.y)) || (terrain.towers && terrain.towers.length && terrain.towerAt(p.x, p.y));
+      if (solid && p.pierce > 0) { p.pierce -= Math.hypot(sx, sy); p.inside = true; continue; }
       if (p.y >= gy) return { hit: 'terrain' };
       if (p.y > gy - TREE_MAX_H) {
         const tree = terrain.treeAt(p.x, p.y);
@@ -549,14 +572,15 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
 // Fire a hypothetical (dispersion-free) shot and return where it lands, how far it fell from the
 // top of its arc and how fast it was going (for the altitude / kinetic damage bonuses).
 function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy, drift = 1, w = null, seek = tanks) {
-  const p = { x: mx, y: my, vx, vy, age: 0, drift, guide: w && w.guide ? guideFor(w, owner) : null, prefer: w ? preferFor(owner) : null };
+  const p = { x: mx, y: my, vx, vy, age: 0, drift, guide: w && w.guide ? guideFor(w, owner) : null, prefer: w ? preferFor(owner) : null, pierce: w ? w.pierce || 0 : 0 };
   let peak = my;
   // a carpet rocket: follow its middle bomblet from the moment it would drop
   const C = w && w.carpet, dropAt = C ? C.at + C.every * Math.floor(C.n / 2) : -1;
+  const splitAt = w && w.split ? w.split.at : C ? C.at : -1;
   for (let i = 0; i < 900; i++) {
     const r = stepBallistic(p, terrain, wind, tanks, owner, seek);
     if (p.y < peak) peak = p.y;
-    if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null, drop: p.y - peak, speed: Math.hypot(p.vx, p.vy), lock: p.lastLock || null };
+    if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null, drop: p.y - peak, speed: Math.hypot(p.vx, p.vy), lock: p.lastLock || null, early: p.age < splitAt }; // early: it hit before it could split or open
     if (p.age === dropAt) Object.assign(p, { y: p.y + 4, vx: p.vx * 0.5, vy: Math.min(Math.max(p.vy, 0) * 0.5 + 1, 6), drift: BOMBLET_DRIFT, guide: null });
   }
   return { x: p.x, y: p.y, hit: 'out', tank: null, drop: 0, speed: 0 };

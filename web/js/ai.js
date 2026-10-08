@@ -71,6 +71,7 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
     if ((r.hit === 'tank' && r.tank === target) || (w.maia && r.lock === target)) err = 0; // a barrage follows the lock
     else err = Math.max(0, dist(r.x, r.y, tc.x, tc.y) - w.dmgR * 0.25);
     if (r.hit === 'out') err += 1000;
+    if (r.early) err += 80; // a split or carpet rocket that hits before it transforms does half damage
     const selfD = dist(r.x, r.y, tank.x, tank.y - 8);
     if (selfD < Math.max(w.dmgR, w.sat ? 150 : 0) + 20 && r.tank !== target) err += 400;
     // only shots that would actually do damage earn the bonus

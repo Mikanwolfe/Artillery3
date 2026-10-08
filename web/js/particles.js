@@ -37,19 +37,36 @@ class Particles {
     }
   }
 
-  // a little mushroom cloud for big blasts: a rising stem of smoke and a cap that billows out and
-  // drifts with the wind (boxes, as everything)
+  // a mushroom cloud for big blasts, sized by the blast (k ~0.9 at the threshold, ~2.5 for the
+  // Mass Driver): a stem drawn up into the cloud, and a cap that is a rising vortex ring, which side
+  // on is two rolls turning against each other (up the middle, out over the top, down the outside),
+  // swelling as it climbs; the biggest also push a ring of dust out along the ground
   mushroom(x, y, size) {
-    const k = Math.min(1.6, size / 200);
-    const n = Math.round(16 * k);
-    for (let i = 0; i < n; i++) { // stem
-      this.add({ x: x + (Math.random() - 0.5) * 14 * k, y: y - i * 4 * k, vx: (Math.random() - 0.5) * 0.3, vy: -1.6 * k - Math.random() * 0.4, g: 0, drag: 0.975,
-        life: 1.6 + Math.random() * 0.6, size: 8 + Math.random() * 6 * k, color: i % 3 ? [110, 96, 92] : [150, 128, 116] });
+    const k = clamp(size / 160, 0.7, 2.6);
+    const n = Math.round(14 * k);
+    for (let i = 0; i < n; i++) { // stem: smoke rising and drawn inward
+      const ox = (Math.random() - 0.5) * 14 * k;
+      this.add({ x: x + ox, y: y - i * 3 * k, vx: -ox * 0.01, vy: -(1.4 + Math.random() * 0.6) * k, g: 0, drag: 0.978,
+        life: 1.7 + Math.random() * 0.7 + 0.2 * k, size: (8 + Math.random() * 6) * Math.pow(k, 0.85), color: i % 3 ? [110, 96, 92] : [150, 128, 116] });
     }
-    for (let i = 0; i < n * 1.6; i++) { // cap: a ring that rises with the stem and spreads sideways
-      const a = (i / (n * 1.6)) * TAU;
-      this.add({ x: x + Math.cos(a) * 10 * k, y: y - 20 * k + Math.sin(a) * 6 * k, vx: Math.cos(a) * (0.9 + Math.random() * 0.5) * k, vy: -1.9 * k + Math.sin(a) * 0.35, g: 0.006, drag: 0.972,
-        life: 1.8 + Math.random() * 0.8, size: 11 + Math.random() * 9 * k, color: i % 4 === 0 ? [255, 170, 90] : i % 2 ? [128, 112, 106] : [170, 150, 140] });
+    const m = Math.round(44 * k);
+    const rise = 80 + 70 * k;
+    for (let i = 0; i < m; i++) { // cap: the vortex ring, two fat rolls that meet over the middle
+      const side = i % 2 ? 1 : -1;
+      const hot = i % 6 === 0;
+      this.add({ x, y, vx: 0, vy: 0, g: 0, drag: 1, life: 2.2 + Math.random() * 0.9 + 0.3 * k, size: (12 + Math.random() * 10) * Math.pow(k, 0.85),
+        color: hot ? [255, 170, 90] : i % 3 ? [128, 112, 106] : [170, 150, 140],
+        vortex: { x0: x, y0: y - 14 * k, side, R0: 6 * k, R1: (22 + Math.random() * 6) * k, r: (8 + Math.random() * 14) * k, th: Math.random() * TAU, w: (0.07 + Math.random() * 0.05) * side, rise } });
+    }
+    for (let i = 0; i < 10 * k; i++) { // the dome over the middle, riding up with the rolls
+      this.add({ x, y, vx: 0, vy: 0, g: 0, drag: 1, life: 2.2 + Math.random() * 0.7 + 0.3 * k, size: (14 + Math.random() * 10) * Math.pow(k, 0.85), color: i % 2 ? [140, 124, 116] : [118, 104, 98],
+        vortex: { x0: x, y0: y - 22 * k, side: 0, R0: 0, R1: 0, r: (6 + Math.random() * 14) * k, th: Math.random() * TAU, w: 0.03 * (i % 2 ? 1 : -1), rise } });
+    }
+    if (k > 1.3) { // base surge
+      for (let i = 0; i < 18 * k; i++) {
+        const d = i % 2 ? 1 : -1;
+        this.add({ x, y: y - 2, vx: d * (1 + Math.random() * 2.5) * k, vy: -Math.random() * 0.3, g: 0, drag: 0.955, life: 1.2 + Math.random() * 0.8, size: (6 + Math.random() * 6) * k * 0.8, color: [150, 136, 126] });
+      }
     }
   }
 
@@ -99,6 +116,16 @@ class Particles {
       if (p.age >= p.life) {
         L[i] = L[L.length - 1];
         L.pop();
+        continue;
+      }
+      if (p.vortex) { // a mushroom cap roll (see mushroom): it climbs and swells as it turns
+        const v = p.vortex;
+        const u = 1 - Math.exp(-p.age * 1.4);
+        v.th += v.w;
+        v.x0 += wx * 0.4;
+        const R = lerp(v.R0, v.R1, u);
+        p.x = v.x0 + v.side * R + Math.cos(v.th) * v.r * (0.6 + 0.4 * u);
+        p.y = v.y0 - v.rise * u + Math.sin(v.th) * v.r * 0.8;
         continue;
       }
       p.vx *= p.drag;

@@ -155,6 +155,7 @@ class DroneBeam {
       }
     }
     if (w.chain) g.chainArc(end, w, t, w.dmg * this.front);
+    if (w.meteor) g.projectiles.push(new Meteor(g, t, end, w.meteor)); // Ikaros' Apollon (finals.js)
     if ((w.sat || this.uplink) && this.main) g.satTarget = { x: end.x, y: end.y, owner: t };
   }
 
@@ -269,7 +270,7 @@ const DRONE_ART = {
     [-8, -8, 16, 16, '#14102a'], [-6, -6, 12, 12, '#2a2050'], [-2, -2, 4, 4, '#bfe8ff'],
     [-1, -15, 2, 7, '#8a8aa8'], [-1, 8, 2, 7, '#8a8aa8'], [-15, -1, 7, 2, '#8a8aa8'], [8, -1, 7, 2, '#8a8aa8'],
     [-2, -17, 4, 3, 'L'], [-2, 14, 4, 3, 'L'], [-17, -2, 3, 4, 'L'], [14, -2, 3, 4, 'L']] },
-  // Seraphine's Gloria: a gold halo with two little white wings
+  // Ikaros's Gloria: a gold halo with two little white wings
   gloria: { beam: '#fff2b0', parts: [
     [-7, -6, 14, 2, '#ffd65a'], [-9, -4, 2, 6, '#ffd65a'], [7, -4, 2, 6, '#ffd65a'], [-7, 2, 14, 2, '#d99a2a'],
     [-17, -6, 8, 3, '#ffffff'], [-15, -3, 6, 3, '#e4e6f4'], [9, -6, 8, 3, '#ffffff'], [9, -3, 6, 3, '#e4e6f4'],
