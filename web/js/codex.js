@@ -59,7 +59,7 @@ const GUN_NOTES = {
   zeropoint: ['Final', 'Object 15X only. A railgun probe (1,200). Past the fleet, the belt and Jupiter, the Naito MAIA Containment Satellite takes annihilation orders: the ground 520 either side of the probe is deleted outright, down through the world, and anything that falls in is gone.'],
   verdict: ['Final', 'November only. A target dot. The fleet takes station overhead; the flagship\'s lance comes down on the mark (6,000), then the rest of the fleet rains 60 laser shots (450 each) across 600 either side of it.'],
   constellation: ['Final', 'Innocentia only. A laser dot. MAIA opens her eye and the sky fills with MAIAs, a vast one behind them; five waves of 40 shots (320 each) hit across 650 either side of the mark, then the vast MAIA\'s beam comes down: 6,000.'],
-  morrighan: ['Final', 'Alban Eiler only. A flare that summons the goddess Morrighan over the mark; she looses 30 seeking arrows (600 each) of light at everything in reach.'],
+  morrighan: ['Final', 'Alban Eiler only. A flare; the sky over the mark unzips into five tears, scars splitting open above and below each, and 44 black rockets (600 each) rain out of them on long dark trails, seeking everything beneath.'],
   apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 6,000 across 520, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
 };
 const GIRL_NOTES = {

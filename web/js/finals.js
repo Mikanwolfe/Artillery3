@@ -10,8 +10,8 @@
 //                          SPGs and a Karl-Gerät, which rain shells on the area (BatteryStrike)
 //   Object 15X's Zero Point a railgun probe; the Naito MAIA fires from the Great Red Spot and the
 //                          ground round the probe is deleted outright (NaitoStrike)
-//   Alban's Morrighan      a flare that summons the war goddess over the mark; she looses a rain of
-//                          seeking arrows of light (DeitySummon)
+//   Alban's Morrighan      a flare; the sky over it tears open like a wound and black rockets rain out
+//                          of the tears on long dark trails (SkyTear)
 
 // ---------------------------------------------------------------------------------- asteroid
 // Ikaros' Apollon. Where her beam lands the sky answers: the camera climbs, the light streaking
@@ -1263,261 +1263,121 @@ Object.assign(Game.prototype, {
   },
 });
 
-// ------------------------------------------------------------------------- the war goddess
-// Alban's Morrighan: frames 0-70 the goddess descends on a cloud bank over the mark and the camera
-// pulls back to frame her; 70-95 she raises her hand and her halo wheel blazes; 95-175 she looses
-// arrows of light, one every 3 frames, each a strong seeker; 175-240 she rises and fades.
-const DEITY = { DESC: 70, RAISE: 95, VOLLEY: 175, END: 240 };
-const DEITY_SCALE = 1.6; // she is drawn this much larger than her parts list
-class DeitySummon {
+// ------------------------------------------------------------------------------ sky tears
+// Alban's Morrighan: the flare lands and the sky over it tears. Each tear unzips: a black hairline
+// a few pixels tall lengthens out from its centre and widens, then hard-edged bars split open above
+// and below it, stacked flush, each a little offset, shorter and thinner toward the top and bottom,
+// so the whole reads as a wound in the sky. Black rockets rain out of the tears on long, very dark trails,
+// seeking whatever is beneath; then the tears zip shut. The sky darkens while they're open.
+const RIFT = { RISE: 30, OPEN: 34, STAGGER: 16, GROW: 56, RAIN: 96, RAIN_LEN: 130, CLOSE: 250, END: 300 };
+// one tear's shape: a centre bar and the scars that split off it (seeded, so a replay matches)
+function makeTear(x, y, len, seed) {
+  const h = (k) => hash2(seed * 17 + 5, k * 29 + 3);
+  const T0 = 64 + h(1) * 40; // the centre's full height
+  const bars = [{ dy: 0, len: 1, th: T0, jit: 0, delay: 0, slant: 0 }];
+  const n = 4 + Math.floor(h(2) * 3);
+  let up = -T0 / 2, down = T0 / 2;
+  for (let j = 1; j <= n; j++) {
+    for (const s of [-1, 1]) {
+      const k = j * 2 + (s > 0 ? 1 : 0);
+      const th = T0 * (0.6 - 0.07 * j) * (0.6 + 0.5 * h(k + 10)); // thinner the further out
+      const gap = 0; // flush: each scar opens right against the last
+      const dy = s < 0 ? (up -= gap + th / 2) : (down += gap + th / 2);
+      if (s < 0) up -= th / 2; else down += th / 2;
+      bars.push({ dy, len: Math.max(0.12, (1 - Math.pow(j / (n + 1), 1.2)) * (0.55 + 0.5 * h(k + 30))), th: Math.max(2, th), jit: (h(k + 40) - 0.5) * len * 0.12, delay: 0.32 + j * 0.09 + h(k + 50) * 0.05, slant: 0 });
+    }
+  }
+  return { x, y, len, bars, open: 0, close: 0 };
+}
+class SkyTear {
   constructor(game, owner, at, cfg) {
     this.game = game;
     this.owner = owner;
     this.cfg = cfg;
-    this.x = at.x;
+    this.tx = at.x;
     this.ground = Math.min(game.terrain.hAt(at.x), at.y);
-    this.restY = this.ground - 520; // her feet (the cloud) over the mark
-    this.y = this.restY - 900;
     this.t = 0;
-    this.alpha = 0;
-    this.raise = 0;
     this.zoom0 = game.cam.zoom;
-    this.arrow = { id: 'morrighan_arrow', name: 'Arrow of Light', kind: 'rocket', dmg: cfg.dmg, dmgR: cfg.r, explR: 3, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
-      rarity: 7, maxCharge: 10, drift: 0.1, arrow: true, guide: { arm: 2, burn: 0, seek: 0, turn: 9, range: cfg.reach, cone: 180, lift: 0, brake: false } };
-    game.cam.follow({ x: this.x, y: this.ground - 420 });
-    game.ui.notice('Morrighan answers.');
+    this.dark = 0;
+    this.tears = [];
+    const spots = [[0, 0], [-700, 150], [690, 110], [-330, -260], [360, -230]].slice(0, cfg.tears);
+    spots.forEach(([dx, dy], i) => this.tears.push(makeTear(clamp(this.tx + dx, 250, WORLD_W - 250), this.ground - 1000 + dy, 560 + hash2(i, 9) * 380, i + 1)));
+    this.rocket = { id: 'morrighan_rocket', name: 'Rift Rocket', kind: 'rocket', dmg: cfg.dmg, dmgR: cfg.r, explR: 10, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
+      rarity: 7, maxCharge: 10, drift: 0.15, dark: true, guide: { arm: 2, burn: 0, seek: 0, turn: 5, range: cfg.reach, cone: 180, lift: 0, brake: false } };
+    this.focus = { x: this.tx, y: this.ground - 200 };
+    game.cam.follow(this.focus);
+    game.ui.notice('The sky tears open.');
   }
 
   update() {
-    const g = this.game, t = ++this.t;
+    const g = this.game, cam = g.cam, t = ++this.t, f = this.focus;
     const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
-    if (t <= DEITY.DESC) {
-      const u = ease(t / DEITY.DESC);
-      this.y = lerp(this.restY - 900, this.restY, u);
-      this.alpha = u;
-      g.cam.setZoom(lerp(this.zoom0, Math.min(this.zoom0, 0.5), u));
+    if (t <= RIFT.RISE) { // up and out to take in the sky over the mark
+      const u = ease(t / RIFT.RISE);
+      f.y = lerp(this.ground - 200, this.ground - 720, u);
+      cam.setZoom(lerp(this.zoom0, Math.max(CAM_FULL, 0.5), u));
     }
-    if (t > DEITY.DESC && t <= DEITY.RAISE) this.raise = ease((t - DEITY.DESC) / (DEITY.RAISE - DEITY.DESC));
-    if (t > DEITY.RAISE && t <= DEITY.VOLLEY && (t - DEITY.RAISE) % 3 === 0 && (t - DEITY.RAISE) / 3 < this.cfg.arrows) {
-      const ang = Math.random() * TAU; // from around her halo
-      const hand = { x: this.x + Math.cos(ang) * 74 * DEITY_SCALE, y: this.y + (DEITY_HEAD_Y + Math.sin(ang) * 74) * DEITY_SCALE };
-      const a = Math.PI / 2 + (Math.random() - 0.5) * 1.4, sp = 12 + Math.random() * 5;
-      const p = new Projectile(g, this.arrow, this.owner, hand.x, hand.y, Math.cos(a) * sp, Math.sin(a) * sp, false);
-      p.age = 2;
-      g.projectiles.push(p);
-      if (t % 9 === 0) g.sfx.laser();
-    }
-    if (t > DEITY.VOLLEY) {
-      const u = ease((t - DEITY.VOLLEY) / (DEITY.END - DEITY.VOLLEY));
-      this.y = this.restY - 500 * u;
-      this.alpha = 1 - u;
-      this.raise = 1 - u;
-      g.cam.setZoom(lerp(Math.min(this.zoom0, 0.5), this.zoom0, u));
-    }
-    return t < DEITY.END;
-  }
-
-  draw(ctx) { drawScaled(ctx, Math.round(this.x), Math.round(this.y), DEITY_SCALE, 1, () => drawDeity(ctx, 0, 0, this.alpha, this.raise, this.game.time)); }
-}
-
-// The goddess, after the Morrighan of the reference art, as anime pixel art. Rather than a hand-typed
-// grid she is painted once from curved shapes onto a fine pixel grid (DEITY_P units a pixel), each
-// part outlined in a darker shade of itself, then merged into runs and cached (closed and open eyes):
-// long straight black hair with a hime cut and a sheen, a soft face with a pointed chin, big eyes
-// (closed and serene, then open and glowing violet while she looses the volley), bare shoulders
-// above a white off-shoulder gown (bust, a narrow waist, hips, a long flowing skirt), detached bell
-// sleeves, gold Celtic choker, arm cuffs and a chain between her wrists, hands clasped at her chest,
-// and great feathered black wings. The halo, the ring of light and the cloud bank are drawn live.
-const DEITY_P = 2; // world units per sprite pixel
-const DEITY_FEET = 112; // sprite row her feet stand on; her head's centre is at row 20
-const DEITY_HEAD_Y = -(DEITY_FEET - 20) * DEITY_P; // her head, in units above her feet (before DEITY_SCALE)
-const DEITY_PAL = {
-  h: '#221a24', H: '#140f16', L: '#5e4a66', s: '#ffece2', S: '#f2c8b8', b: '#ff9fb4', m: '#d46a7c', E: '#2a1a26',
-  I: '#6a3cc0', i: '#b48cff', o: '#ffffff', W: '#fdfcf8', w: '#dcd8ea', v: '#bdb6d4', G: '#f0c860', g: '#a87a2a', C: '#d8b860',
-  f: '#1e1b26', F: '#2a2636', l: '#4e4864',
-};
-const DEITY_LINE = { // the outline each part gets
-  h: '#08060a', H: '#08060a', L: '#08060a', s: '#c4867c', S: '#c4867c', W: '#9c98b8', w: '#9c98b8',
-  G: '#7a5418', g: '#7a5418', C: '#7a5418', f: '#08070c', F: '#08070c', l: '#08070c',
-};
-const _deityFrames = {};
-function deityFrame(open) {
-  const key = open ? 'open' : 'shut';
-  if (_deityFrames[key]) return _deityFrames[key];
-  const X0 = -70, Y0 = -50, GW = 212, GH = DEITY_FEET + 52; // grid covers figure x -70..141, y -50..113
-  const grid = new Array(GW * GH).fill(null);
-  const set = (x, y, k) => { x = Math.round(x) - X0; y = Math.round(y) - Y0; if (x >= 0 && y >= 0 && x < GW && y < GH) grid[y * GW + x] = k; };
-  const get = (x, y) => { x -= X0; y -= Y0; return x >= 0 && y >= 0 && x < GW && y < GH ? grid[y * GW + x] : null; };
-  // paint a shape (a point test) with key k, ringed by its outline colour
-  const paint = (inside, k, line = true, bx = [X0, X0 + GW], by = [Y0, Y0 + GH]) => {
-    for (let y = by[0]; y < by[1]; y++) for (let x = bx[0]; x < bx[1]; x++) {
-      if (inside(x, y)) set(x, y, k);
-      else if (line && (inside(x - 1, y) || inside(x + 1, y) || inside(x, y - 1) || inside(x, y + 1))) set(x, y, '#' + k);
-    }
-  };
-  const ell = (cx, cy, rx, ry, rot = 0) => (x, y) => {
-    const dx = x - cx, dy = y - cy, c = Math.cos(rot), s = Math.sin(rot);
-    const u = (dx * c + dy * s) / rx, v = (-dx * s + dy * c) / ry;
-    return u * u + v * v <= 1;
-  };
-  const poly = (pts) => (x, y) => {
-    let inn = false;
-    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-      const [xi, yi] = pts[i], [xj, yj] = pts[j];
-      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inn = !inn;
-    }
-    return inn;
-  };
-  const or = (...fs) => (x, y) => fs.some((f) => f(x, y));
-  const and = (a, b) => (x, y) => a(x, y) && b(x, y);
-  const mir = (pts) => pts.map(([x, y]) => [72 - x, y]); // mirror about her centre line (x 36)
-  const C = 36;
-
-  // ---- wings: feathers hung from a bone that sweeps up and out from her shoulder blades
-  for (const side of [-1, 1]) {
-    const bone = (t) => { const u = 1 - t; return [C + side * (u * u * 6 + 2 * u * t * 26 + t * t * 92), u * u * 44 + 2 * u * t * -24 + t * t * -34]; };
-    for (const [n, l0, l1, wid, k] of [[15, 30, 74, 4.6, 'f'], [12, 18, 40, 4.4, 'F'], [9, 9, 18, 4.2, 'F']]) {
-      for (let i = n - 1; i >= 0; i--) {
-        const t = 0.06 + (i / (n - 1)) * 0.94, [bx, by] = bone(t);
-        const L = l0 + (l1 - l0) * Math.pow(t, 0.8), a = side * (0.12 + t * 0.62); // fanning outward toward the tip
-        const cx = bx + Math.sin(a) * L * 0.5, cy = by + Math.cos(a) * L * 0.5;
-        const feather = ell(cx, cy, wid, L * 0.5 + 2, -a);
-        paint(feather, k, true, [Math.floor(cx - L), Math.ceil(cx + L)], [Math.floor(cy - L), Math.ceil(cy + L)]);
-        // a sheen down each feather's leading edge
-        const ex = cx + Math.cos(a) * side * wid * 0.55, ey = cy - Math.sin(a) * side * wid * 0.55;
-        paint(and(feather, ell(ex, ey, 1.3, L * 0.42, -a)), 'l', false, [Math.floor(cx - L), Math.ceil(cx + L)], [Math.floor(cy - L), Math.ceil(cy + L)]);
+    this.tears.forEach((tr, i) => {
+      const t0 = RIFT.OPEN + i * RIFT.STAGGER;
+      tr.open = clamp((t - t0) / RIFT.GROW, 0, 1);
+      tr.close = clamp((t - RIFT.CLOSE - i * 6) / 30, 0, 1);
+      if (t === t0) g.sfx.thud();
+    });
+    this.dark = Math.min(1, (t - RIFT.OPEN) / 50) * (1 - clamp((t - RIFT.CLOSE) / 40, 0, 1));
+    // the rain: black rockets out of the open tears, one every few frames, each tear in turn
+    const k = t - RIFT.RAIN;
+    if (k >= 0 && k < RIFT.RAIN_LEN && k % Math.max(1, Math.floor(RIFT.RAIN_LEN / this.cfg.rockets)) === 0) {
+      const live = this.tears.filter((tr) => tr.open > 0.7 && tr.close === 0);
+      if (live.length) {
+        const tr = live[(k * 7) % live.length];
+        const x = tr.x + (rng.next() - 0.5) * tr.len * 0.8, y = tr.y + 6;
+        const a = Math.PI / 2 + (rng.next() - 0.5) * 0.9, sp = 10 + rng.next() * 6;
+        const p = new Projectile(g, this.rocket, this.owner, x, y, Math.cos(a) * sp, Math.sin(a) * sp, false);
+        p.age = 2;
+        g.projectiles.push(p);
+        if (k % 6 === 0) g.sfx.shot(this.rocket);
       }
     }
-    for (let i = 0; i <= 40; i++) { const [bx, by] = bone(i / 40); paint(ell(bx, by, 3.2, 3.2), 'f', true, [Math.floor(bx - 5), Math.ceil(bx + 5)], [Math.floor(by - 5), Math.ceil(by + 5)]); }
+    if (t > RIFT.RAIN + RIFT.RAIN_LEN + 20 && t <= RIFT.RAIN + RIFT.RAIN_LEN + 60) cam.setZoom(lerp(Math.max(CAM_FULL, 0.5), this.zoom0, ease((t - RIFT.RAIN - RIFT.RAIN_LEN - 20) / 40)));
+    cam.follow(f);
+    if (t <= RIFT.RISE) cam.snap();
+    return t < RIFT.END;
   }
 
-  // ---- hair, behind her: to her hips, cut straight with fine points
-  const backHair = poly([[22, 14], [50, 14], [54, 40], [56, 70], [55, 80], [52, 76], [49, 82], [46, 77], [42, 83], [38, 78], [34, 83], [30, 77], [26, 82], [23, 76], [20, 80], [16, 70], [18, 40]]);
-  paint(backHair, 'h');
-  paint(and(backHair, (x, y) => (x === 21 || x === 51 || x === 44 || x === 28) && y > 40 && y < 74), 'H', false);
-
-  // ---- the gown: off the shoulder, bust, narrow waist, hips, a long skirt flaring to the cloud
-  const gown = or(
-    poly([[23, 46], [49, 46], [47, 54], [42.5, 60], [48, 68], [53, 84], [59, 104], [62, 112], [10, 112], [13, 104], [19, 84], [24, 68], [29.5, 60], [25, 54]]),
-    ell(31, 49, 6.5, 5.5), ell(41, 49, 6.5, 5.5));
-  paint(gown, 'W');
-  paint(and(gown, (x, y) => x - C > 3 + (y - 45) * 0.22), 'w', false); // shaded on her left
-  for (const bx of [31, 41]) paint(and(gown, (x, y) => !ell(bx, 48.4, 6.3, 5.1)(x, y) && ell(bx, 49.6, 6.6, 5.6)(x, y) && y > 49), 'v', false); // under the bust
-  paint(and(gown, (x, y) => x === C && y >= 46 && y <= 52), 'v', false); // and between
-  paint(and(gown, (x, y) => y === 60 && Math.abs(x - C) < 6), 'w', false); // a sash at her waist
-  for (const [x0, k] of [[30, 0.22], [24, 0.4], [42, -0.1], [48, -0.3]]) paint(and(gown, (x, y) => y > 70 && Math.abs(x - (x0 - (y - 70) * k)) < 0.6), 'w', false); // skirt folds
-  paint(and(gown, (x, y) => y > 108), 'w', false);
-
-  // ---- bare shoulders and neck
-  const shoulders = and(ell(C, 46, 16, 6.5), (x, y) => !gown(x, y));
-  paint(or(shoulders, poly([[32, 28], [40, 28], [40, 40], [32, 40]])), 's');
-  paint(and(shoulders, (x, y) => y > 44 && !gown(x, y + 1) && gown(x, y + 2)), 'S', false);
-  paint((x, y) => x >= 32 && x <= 40 && y >= 31 && y <= 33, 'S', false); // under her chin
-
-  // ---- arms: upper arms at her sides, forearms in to her hands clasped at her chest
-  const thick = (ax, ay, bx, by, r) => (x, y) => {
-    const dx = bx - ax, dy = by - ay, u = clamp(((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy), 0, 1);
-    const px = ax + dx * u - x, py = ay + dy * u - y;
-    return px * px + py * py <= r * r;
-  };
-  for (const s of [-1, 1]) {
-    const sx = C + s * 13, ex = C + s * 15, hx = C + s * 3;
-    paint(or(thick(sx, 45, ex, 61, 2.3), thick(ex, 61, hx, 58, 2.2)), 's');
-    paint(thick(sx + s * 0.6, 51.5, sx + s * 0.9, 53, 2.5), 'G'); // gold cuff above the elbow
-    // the detached bell sleeve, hanging from her forearm
-    const sleeve = poly([[ex - s * 1, 60], [hx + s * 4, 58], [hx + s * 1, 64], [ex + s * 2, 84], [ex + s * 9, 80], [ex + s * 4, 64]]);
-    paint(sleeve, 'W');
-    paint(and(sleeve, (x, y) => s * (x - ex) > 3 || y > 76), 'w', false);
-    paint(thick(hx + s * 4.5, 57, hx + s * 3.5, 61, 1.8), 'G'); // wrist cuff
-  }
-  paint(ell(C, 58, 4.5, 3.5), 's'); // her hands, clasped
-  paint((x, y) => (x === C - 1 || x === C + 1) && y >= 56 && y <= 60, 'S', false);
-  for (let i = 0; i <= 8; i++) set(C - 6 + i * 1.5, 63 + Math.sin((i / 8) * Math.PI) * 3, 'C'); // the chain between her wrists
-
-  // ---- gold Celtic choker and its knot
-  paint((x, y) => x >= 31 && x <= 41 && y >= 35 && y <= 36, 'G');
-  paint(ell(C, 38.5, 2.2, 2.2), 'G');
-  set(C, 38, 'g'); set(C, 39, 'g');
-
-  // ---- her face: a soft oval with a pointed chin
-  paint(or(and(ell(C, 20, 12.5, 12), (x, y) => y < 23), poly([[23.5, 21], [48.5, 21], [46, 27], [40, 32], [36, 33], [32, 32], [26, 27]])), 's');
-  paint(and(ell(C, 20, 12.5, 12), (x, y) => x > 46), 'S', false);
-  // hair over the top of her head, with the anime sheen ring
-  const cap = and(ell(C, 16, 15.5, 14), (x, y) => y < 15 || x < 23 || x > 49);
-  paint(cap, 'h');
-  paint(and(cap, (x, y) => Math.abs(Math.hypot((x - C) / 1.15, y - 15) - 9) < 0.8 && y < 13 && (x + y) % 5), 'L', false);
-  // hime-cut bangs, straight with a few points
-  paint(poly([[22, 12], [50, 12], [50, 22], [48, 19], [46, 22], [43, 18], [40, 21], [37, 17], [34, 21], [31, 18], [28, 22], [25, 19], [22, 23]]), 'h', false);
-  paint((x, y) => y === 18 && (x === 32 || x === 41), 'H', false);
-  // the long sidelocks, falling in front of her shoulders to her chest
-  const lock = [[20, 16], [24, 16], [24, 30], [24.5, 44], [24, 56], [22.5, 62], [20.5, 58], [19.5, 44], [19, 30]];
-  paint(or(poly(lock), poly(mir(lock))), 'h');
-  paint((x, y) => (x === 22 || x === 50) && y > 22 && y < 54, 'L', false);
-  // eyes
-  for (const s of [-1, 1]) {
-    const ex = C + s * 5.5;
-    if (open) {
-      paint((x, y) => Math.abs(x - ex) <= 3 && y >= 21 && y <= 26, 'I', false);
-      paint((x, y) => Math.abs(x - ex) <= 2 && y >= 24 && y <= 26, 'i', false);
-      paint((x, y) => Math.abs(x - ex) <= 3.5 && y === 20, 'E', false); // upper lash line
-      set(ex + s * 4, 20, 'E'); set(ex + s * 4, 21, 'E'); // the flick at the outer corner
-      set(ex - 1, 22, 'o'); set(ex - 1.5, 23, 'o'); set(ex + 1.5, 25, 'o'); // highlights
-    } else {
-      // closed: a gentle downward curve with lashes
-      for (let i = -3; i <= 3; i++) set(ex + i, 23 + (Math.abs(i) >= 3 ? -1 : Math.abs(i) >= 2 ? 0 : 1) - 1 + 1, 'E');
-      set(ex + s * 4, 21, 'E'); set(ex + s * 4.5, 22, 'E'); set(ex + s * 1, 25, 'E'); set(ex - s * 1, 25, 'E');
-    }
-    paint((x, y) => Math.abs(x - (ex + s * 1)) <= 1.5 && y === 27, 'b', false); // blush
-  }
-  set(C + 0.5, 26, 'S'); // nose
-  paint((x, y) => y === 29 && x >= C - 1 && x <= C + 1, 'm', false);
-
-  // runs of one colour, row by row
-  const runs = [];
-  for (let y = 0; y < GH; y++) {
-    let x = 0;
-    while (x < GW) {
-      const k = grid[y * GW + x];
-      if (!k) { x++; continue; }
-      let e = x + 1;
-      while (e < GW && grid[y * GW + e] === k) e++;
-      const col = k[0] === '#' ? DEITY_LINE[k.slice(1)] || '#08070c' : DEITY_PAL[k];
-      runs.push([col, x + X0 - C, y + Y0 - DEITY_FEET, e - x]);
-      x = e;
+  // the tears themselves, in the sky behind the hills
+  drawBack(ctx) {
+    const time = this.game.time;
+    for (const tr of this.tears) {
+      if (tr.open <= 0 || tr.close >= 1) continue;
+      // each bar: first a hairline lengthening from the centre, then it widens; the scars after.
+      // The glow at the lips goes down first, then the black, so flush bars read as one wound.
+      const rects = [];
+      for (const b of tr.bars) {
+        const u = clamp((tr.open - b.delay) / (1 - b.delay * 0.6), 0, 1);
+        if (u <= 0) continue;
+        const L = tr.len * b.len * Math.min(1, u * 1.8) * (1 - tr.close);
+        const th = Math.max(1.5, b.th * clamp((u - 0.35) / 0.65, 0, 1) * (1 - tr.close)); // a 1-5 px line first
+        const cx = tr.x + b.jit, cy = tr.y + b.dy * (b.dy ? clamp((u - 0.2) / 0.8, 0, 1) * 0.6 + 0.4 : 0);
+        rects.push([cx - L / 2, cy - th / 2, L, th]);
+      }
+      ctx.fillStyle = 'rgba(110,30,140,0.35)';
+      for (const [x, y, w, h] of rects) ctx.fillRect(Math.round(x - 3), Math.round(y - 2), Math.round(w + 6), Math.round(h + 4));
+      ctx.fillStyle = '#040206';
+      for (const [x, y, w, h] of rects) ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.max(1, Math.round(h)));
+      // a few motes drifting out of the dark
+      if (tr.open > 0.6) {
+        ctx.fillStyle = 'rgba(190,120,230,0.6)';
+        for (let i = 0; i < 6; i++) sq(ctx, tr.x + (hash2(i, 3) - 0.5) * tr.len * 0.6, tr.y + ((time * 20 + i * 37) % 80), 3);
+      }
     }
   }
-  runs.sort((a, b) => (a[0] < b[0] ? -1 : 1)); // fewer fillStyle changes
-  return (_deityFrames[key] = runs);
-}
-function drawDeity(ctx, x, y, alpha, raise, time) {
-  if (alpha <= 0) return;
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  const P = DEITY_P, hy = y + DEITY_HEAD_Y, bob = Math.round(Math.sin(time * 1.4) * 3);
-  // a ring of light around her where the arrows form, brightening as she raises them
-  const glow = 0.2 + 0.6 * raise;
-  for (let k = 0; k < 48; k++) {
-    const a = time * 0.4 + (k / 48) * TAU;
-    ctx.fillStyle = k % 2 ? `rgba(255,226,140,${glow})` : `rgba(255,250,225,${glow})`;
-    ctx.fillRect(Math.round(x + Math.cos(a) * 74 - 2), Math.round(hy + Math.sin(a) * 74 - 2), 4, 4);
+
+  draw() {}
+
+  // the sky dims while the tears are open
+  drawScreen(ctx) {
+    if (this.dark <= 0) return;
+    ctx.fillStyle = `rgba(14,4,22,${0.32 * this.dark})`;
+    ctx.fillRect(0, 0, W, H);
   }
-  let last = null;
-  for (const [col, rx, ry, len] of deityFrame(raise > 0.5)) {
-    if (col !== last) { ctx.fillStyle = col; last = col; }
-    ctx.fillRect(x + rx * P, y + ry * P + bob, len * P + 0.4, P + 0.4); // overlap: no seams at fractional scales
-  }
-  // her halo, a flat gold ring floating over her head
-  const halo = 0.75 + 0.25 * raise, hb = hy - 34 + bob + Math.sin(time * 2) * 2;
-  for (let k = 0; k < 32; k++) {
-    const a = (k / 32) * TAU;
-    ctx.fillStyle = Math.sin(a) < 0 ? `rgba(196,150,60,${halo})` : `rgba(255,234,150,${halo})`;
-    ctx.fillRect(Math.round(x + Math.cos(a) * 22 - 2), Math.round(hb + Math.sin(a) * 5 - 1.5), 4, 3);
-  }
-  // the cloud bank under her
-  for (let i = 0; i < 26; i++) {
-    const ox = ((i * 37) % 240) - 120, oy = (i % 4) * 8;
-    ctx.fillStyle = i % 3 ? 'rgba(240,240,250,0.92)' : 'rgba(206,210,228,0.92)';
-    ctx.fillRect(Math.round(x + ox - 22 + Math.sin(time + i) * 3), y - 18 + oy, 44, 22);
-  }
-  ctx.restore();
 }
