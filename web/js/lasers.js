@@ -4,19 +4,26 @@
 // lands, the drone rises until it can see the spot, up to its weapon's ceiling (w.ceil above its
 // resting height), and fires a beam straight at it. If a ridge still blocks the line at the
 // ceiling, the beam burns into the ridge instead: lasers can't shoot over ridges, but in direct
-// fire they land exactly where the pointer did, at full strength. Anything in the beam's path (a
+// fire they land exactly where the pointer did, at full strength. At rest it perches beside her head;
+// to fire it always rises clear of her name plate first (DRONE_CLEAR). Anything in the beam's path (a
 // vehicle, a drone, a fort, a bridge deck) takes the hit first; trees don't stop it.
 // The Void Between Stars is a lightning drone: its bolt arcs on from whatever it hits to the
 // nearest other thing in reach (vehicles, drones, MAIA, trees, poles, crates), weaker each jump.
 
-const DRONE_REST = 104; // the drone's hover height above its girl's ground point (clear of her labels)
-const DRONE_RISE = 7; // units a frame it climbs toward a shot
-const DRONE_SINK = 3; // and sinks back when it's done
+const DRONE_REST = 32; // at rest the drone perches beside its girl's head, just behind her
+const DRONE_BACK = 20; // (this far behind her, under her health bars)
+const DRONE_CLEAR = 90; // to fire it first rises at least this far, clear of her name plate
+const DRONE_RISE = 7; // units a frame it climbs toward a shot (faster on a long climb)
+const DRONE_SINK = 4; // and sinks back when it's done
+// a shot plays out like a MAIA strike: the camera rides the drone up while it charges, then pans to
+// the target, and only then does the beam land. Later beams in the same volley skip the wind-up.
+const DRONE_CHARGE = 30;
+const DRONE_PAN = 28;
 const BEAM_STEP = 5; // beam trace resolution
 const CEIL_STEP = 6; // height search resolution
 
-function droneOrigin(t, h = t.drone ? t.drone.h : 0) { return { x: t.x, y: t.y - DRONE_REST - h }; }
-function laserCeil(w) { return w.ceil || 100 + 20 * w.rarity; }
+function droneOrigin(t, h = t.drone ? t.drone.h : 0) { return { x: t.x - t.facing * DRONE_BACK, y: t.y - DRONE_REST - h }; }
+function laserCeil(w) { return 3 * (w.ceil || 100 + 20 * w.rarity); } // how far above DRONE_CLEAR it can climb
 
 // march a beam from (x0,y0) toward (x1,y1); `solid` only (no targets) for line-of-sight checks.
 // Stops on terrain, forts, bridge decks or (unless solid) the first target hitbox in the way.
@@ -50,10 +57,12 @@ function droneShot(terrain, targets, owner, w, spot) {
     const r = beamTrace(terrain, targets, owner, o0.x, o0.y - h, spot.x, spot.y - 3, true);
     return r.hit === 'spot';
   };
-  let h = ceil;
-  for (let k = 0; k <= ceil; k += CEIL_STEP * 3) { // coarse, then fine
-    if (sees(k)) { h = k; for (let j = Math.max(0, k - CEIL_STEP * 3); j < k; j += CEIL_STEP) if (sees(j)) { h = j; break; } break; }
+  const top = DRONE_CLEAR + ceil;
+  let h = top;
+  for (let k = DRONE_CLEAR; k <= top; k += CEIL_STEP * 3) { // coarse, then fine
+    if (sees(k)) { h = k; for (let j = Math.max(DRONE_CLEAR, k - CEIL_STEP * 3); j < k; j += CEIL_STEP) if (sees(j)) { h = j; break; } break; }
   }
+  if (h < top) h = Math.min(top, h + 12); // a little margin over the ridge that only just allowed it
   const o = { x: o0.x, y: o0.y - h };
   const L = dist(o.x, o.y, spot.x, spot.y) || 1;
   const ex = spot.x + ((spot.x - o.x) / L) * 8, ey = spot.y + ((spot.y - o.y) / L) * 8;
@@ -81,18 +90,44 @@ class DroneBeam {
   update() {
     const g = this.game, t = this.owner;
     this.age++;
-    if (!t.drone) t.drone = { h: 0, busy: 0 };
+    if (!t.drone) t.drone = { h: 0, busy: 0, charge: 0, primed: false };
     const d = t.drone;
-    d.busy = 20;
+    d.busy = 30;
     if (!this.fired) {
-      if (d.h < this.shot.h) { d.h = Math.min(this.shot.h, d.h + DRONE_RISE); return true; }
-      if (d.h > this.shot.h + DRONE_RISE) { d.h -= DRONE_RISE; return true; } // a lower shot after a high one
+      if (!this.stage) { // a later beam in the same volley skips the wind-up
+        this.stage = 'move';
+        this.charge = d.primed ? 4 : DRONE_CHARGE;
+        const far = Math.abs(this.shot.end.x - g.cam.x - VIEW_W / 2) > VIEW_W * 0.3;
+        this.pan = d.primed && !far ? 0 : DRONE_PAN;
+        if (!d.primed) g.cam.follow(this.droneFocus());
+      }
+      if (this.stage === 'move') {
+        const gap = this.shot.h - d.h;
+        if (Math.abs(gap) > 0.5) { d.h += Math.sign(gap) * Math.min(Math.abs(gap), Math.max(DRONE_RISE, Math.abs(gap) * 0.1)); return true; }
+        d.h = this.shot.h;
+        this.stage = 'charge';
+      }
+      if (this.stage === 'charge') {
+        d.charge = Math.min(1, d.charge + 1 / DRONE_CHARGE);
+        if (--this.charge > 0) return true;
+        this.stage = 'pan';
+        if (this.pan) g.cam.follow({ x: this.shot.end.x, y: this.shot.end.y });
+      }
+      if (this.stage === 'pan' && --this.pan > 0) return true;
       this.fire(g);
       this.fired = true;
-      this.hold = 14;
+      d.primed = true;
+      d.charge = 0;
+      this.hold = 24;
       return true;
     }
     return --this.hold > 0;
+  }
+
+  // a camera target that tracks the drone as it climbs
+  droneFocus() {
+    const t = this.owner;
+    return { get x() { return droneOrigin(t).x; }, get y() { return droneOrigin(t).y + VIEW_H * 0.2; } };
   }
 
   fire(g) {
@@ -133,7 +168,9 @@ Object.assign(Game.prototype, {
       if (!d) continue;
       if (d.flash) d.flash = Math.max(0, d.flash - 0.08);
       if (d.busy > 0) { d.busy--; continue; }
-      if (d.h > 0) d.h = Math.max(0, d.h - DRONE_SINK);
+      d.primed = false;
+      d.charge = 0;
+      if (d.h > 0) d.h = Math.max(0, d.h - Math.max(DRONE_SINK, d.h * 0.04));
     }
   },
 
@@ -183,13 +220,13 @@ Object.assign(Game.prototype, {
       if (!t.alive || t.weapon.kind !== 'laser') continue;
       const o = droneOrigin(t);
       if (t === aiming) { // how high it can climb: a faint rail of ticks up to its ceiling
-        const top = droneOrigin(t, laserCeil(t.weapon)).y;
+        const top = droneOrigin(t, DRONE_CLEAR + laserCeil(t.weapon)).y;
         ctx.fillStyle = 'rgba(255,255,255,0.22)';
-        for (let y = o.y - 20; y > top; y -= 12) ctx.fillRect(Math.round(o.x - 1), Math.round(y), 2, 5);
+        for (let y = droneOrigin(t, DRONE_CLEAR).y; y > top; y -= 12) ctx.fillRect(Math.round(o.x - 1), Math.round(y), 2, 5);
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.fillRect(Math.round(o.x - 7), Math.round(top), 14, 2);
       }
-      drawDrone(ctx, t.weapon, o.x, o.y + Math.sin(this.time * 3 + t.x) * 1.5, t.facing, this.time, t.drone ? t.drone.flash || 0 : 0, t.drone && t.drone.busy > 0);
+      drawDrone(ctx, t.weapon, o.x, o.y + Math.sin(this.time * 3 + t.x) * 1.5, t.facing, this.time, t.drone ? t.drone.flash || 0 : 0, t.drone && t.drone.busy > 0, t.drone ? t.drone.charge || 0 : 0);
     }
   },
 });
@@ -237,7 +274,7 @@ const DRONE_ART = {
     [18, -2, 4, 4, 'L'], [-24, -4, 4, 8, '#5a6070']] },
 };
 
-function drawDrone(ctx, w, x, y, facing, time, flash, working) {
+function drawDrone(ctx, w, x, y, facing, time, flash, working, charge = 0) {
   const art = DRONE_ART[w.id] || genericDrone(w);
   const lens = RARITY[w.rarity].color === '#ffffff' ? '#e0e0ff' : RARITY[w.rarity].color;
   // thrusters underneath, brighter while it climbs
@@ -266,6 +303,13 @@ function drawDrone(ctx, w, x, y, facing, time, flash, working) {
     const a = time * 7;
     sq(ctx, x + Math.cos(a) * 12, y + Math.sin(a) * 12, 2);
     sq(ctx, x - Math.cos(a * 1.3) * 10, y + Math.sin(a * 1.3) * 10, 2);
+  }
+  if (charge > 0) { // powering up, like MAIA: a growing glow under the lens
+    const c = hexToRgb((DRONE_ART[w.id] && DRONE_ART[w.id].beam) || lens);
+    ctx.fillStyle = rgb(c, 0.25 + 0.35 * charge);
+    sq(ctx, x, y + 10, 6 + 18 * charge * (0.85 + 0.15 * Math.sin(time * 40)));
+    ctx.fillStyle = `rgba(255,255,255,${0.5 * charge})`;
+    sq(ctx, x, y + 10, 4 + 6 * charge);
   }
   if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash * 0.5})`; sq(ctx, x, y, 26 * flash); }
 }
