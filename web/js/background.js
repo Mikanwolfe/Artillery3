@@ -89,6 +89,8 @@ class Background {
       ctx.fillStyle = l.color;
       const ox = cam.x * (1 - l.parallax);
       fillSteps(ctx, l.height, cam.x, cam.x + (cam.w || VIEW_W), 8, ox, 0);
+      if (l.voids && l.voids.length) this.drawLayerVoids(ctx, l, ox); // cut by 15X's Zero Point
+      ctx.fillStyle = l.color;
       for (const t of l.trees) {
         const tx = t.x + ox;
         if (tx < cam.x - 40 || tx > cam.x + (cam.w || VIEW_W) + 40) continue;
@@ -104,6 +106,24 @@ class Background {
           const w = (t.h - i) * 5 + 2;
           ctx.fillRect(tx - w / 2, base - 6 - (i + 1) * 7, w, 7);
         }
+      }
+    }
+  }
+
+  // where a ridge was cut through (the Naito MAIA's strike): the same darkness as in the ground's
+  // void, welling up from below the lips, and black cut faces either side
+  drawLayerVoids(ctx, l, ox) {
+    for (const [a, b] of l.voids) {
+      const la = l.height[Math.max(0, a - 1)], lb = l.height[Math.min(WORLD_W - 1, b + 1)];
+      const top = Math.min(la < WORLD_BOTTOM ? la : WORLD_BOTTOM, lb < WORLD_BOTTOM ? lb : WORLD_BOTTOM);
+      for (let i = 0; i < 16; i++) {
+        ctx.fillStyle = `rgba(6,4,10,${Math.min(1, 0.3 + i * 0.05)})`;
+        ctx.fillRect(a + ox, Math.round(top + 40 + i * 15), b - a + 1, i === 15 ? VOID_Y : 15);
+      }
+      for (const [x, y, dir] of [[a, la, -1], [b, lb, 1]]) {
+        if (y >= WORLD_BOTTOM) continue;
+        ctx.fillStyle = '#07060b';
+        ctx.fillRect((dir < 0 ? x - 30 : x + 1) + ox, Math.round(y), 30, VOID_Y - y);
       }
     }
   }

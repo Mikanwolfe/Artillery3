@@ -247,9 +247,9 @@ class Terrain {
       if (b < x0 - 60 || a > x1 + 60) continue;
       const la = this.height[Math.max(0, a - 1)], lb = this.height[Math.min(WORLD_W - 1, b + 1)];
       const top = Math.min(la < WORLD_BOTTOM ? la : WORLD_BOTTOM, lb < WORLD_BOTTOM ? lb : WORLD_BOTTOM);
-      for (let i = 0; i < 8; i++) { // the abyss, black a little way below the lips
-        ctx.fillStyle = `rgba(6,4,10,${Math.min(1, 0.3 + i * 0.12)})`;
-        ctx.fillRect(a, Math.round(top + 40 + i * 30), b - a + 1, i === 7 ? VOID_Y : 30);
+      for (let i = 0; i < 16; i++) { // the abyss, black a little way below the lips
+        ctx.fillStyle = `rgba(6,4,10,${Math.min(1, 0.3 + i * 0.05)})`;
+        ctx.fillRect(a, Math.round(top + 40 + i * 15), b - a + 1, i === 15 ? VOID_Y : 15);
       }
       for (const [x, y, dir] of [[a, la, -1], [b, lb, 1]]) {
         if (y >= WORLD_BOTTOM) continue;

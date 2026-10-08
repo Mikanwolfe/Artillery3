@@ -766,7 +766,15 @@ class NaitoStrike {
     if (t > N.HIT && t <= N.HIT + N.ERASE) {
       const r = this.cfg.r * ((t - N.HIT) / N.ERASE);
       g.terrain.erase(this.tx - r, this.tx + r);
-      for (const l of g.bg.layers || []) for (let x = Math.max(0, Math.floor(this.tx - r)); x <= Math.min(WORLD_W - 1, this.tx + r); x++) l.height[x] = VOID_Y; // the background too
+      for (const l of g.bg.layers || []) { // the background too, with the same darkness in the cut
+        const a = Math.max(0, Math.floor(this.tx - r)), b = Math.min(WORLD_W - 1, Math.ceil(this.tx + r));
+        for (let x = a; x <= b; x++) l.height[x] = VOID_Y;
+        l.voids = l.voids || [];
+        if (!this.bgCut) this.bgCut = new Map();
+        let v = this.bgCut.get(l);
+        if (!v) { v = [a, b]; l.voids.push(v); this.bgCut.set(l, v); }
+        v[0] = a; v[1] = b;
+      }
       this.cut = r;
       for (const c of g.crates) if (c.alive && Math.abs(c.x - this.tx) < r) c.alive = false;
       g.shake = Math.max(g.shake, 6);
