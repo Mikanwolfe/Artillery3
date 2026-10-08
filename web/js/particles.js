@@ -53,8 +53,11 @@ class Particles {
     this.add({ type: 'text', x, y, vx: (Math.random() - 0.5) * 0.4, vy: -0.8, g: 0, drag: 0.98, life: 1.4, str, color, big });
   }
 
-  update(dt) {
+  // wind: light world particles (smoke, dust, ash; little or no gravity) drift with it, heavy
+  // debris barely; popups and text don't
+  update(dt, wind = null) {
     const L = this.list;
+    const wx = wind ? wind.x * 30 : 0;
     for (let i = L.length - 1; i >= 0; i--) {
       const p = L[i];
       p.age += dt;
@@ -67,23 +70,56 @@ class Particles {
       p.vy = p.vy * p.drag + p.g;
       p.x += p.vx;
       p.y += p.vy;
+      if (wx && p.type !== 'text' && p.type !== 'hit') p.x += wx * clamp(1 - (p.g || 0) / 0.3, 0.1, 1) * Math.min(1, p.age * 2);
     }
   }
 
   // world space
   draw(ctx) {
     for (const p of this.list) {
-      if (p.type === 'text') continue;
+      if (p.type === 'text' || p.type === 'hit') continue;
       const t = p.age / p.life;
       ctx.fillStyle = rgb(p.color, 1 - t * t);
       sq(ctx, p.x, p.y, p.size * (1 - t * 0.5));
     }
   }
 
+  // a hit popup (Game.hitPopup): the number punches in oversized and settles, then the quality
+  // tag and the modifier chips appear under it one by one
+  drawHit(ctx, cam, p) {
+    const t = p.age / p.life;
+    const punch = p.age < 0.14 ? 1 + 0.6 * (1 - p.age / 0.14) : 1;
+    const sx = Math.round(p.x - cam.x);
+    const sy = Math.round(p.y - cam.y);
+    ctx.globalAlpha = clamp(2 * (1 - t), 0, 1);
+    ctx.textAlign = 'center';
+    ctx.font = `700 ${Math.round(p.size * punch)}px ${HUD_FONT}`;
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(3, p.size / 7); // a dark outline so pale numbers read on snow and sky
+    ctx.strokeStyle = 'rgba(14,12,22,0.85)';
+    ctx.strokeText(p.str, sx, sy);
+    ctx.fillStyle = p.color;
+    ctx.fillText(p.str, sx, sy);
+    let y = sy + 16;
+    ctx.font = `700 11px ${HUD_FONT}`;
+    const lines = [[p.tag, p.color]].concat(p.chips);
+    lines.forEach(([txt, col], i) => {
+      if (p.age < 0.1 + i * 0.08) return;
+      const w = ctx.measureText(txt).width + 10;
+      ctx.fillStyle = 'rgba(14,12,22,0.78)';
+      ctx.fillRect(Math.round(sx - w / 2), y - 10, Math.round(w), 14);
+      ctx.fillStyle = col;
+      ctx.fillText(txt, sx, y);
+      y += 15;
+    });
+    ctx.globalAlpha = 1;
+  }
+
   // screen space (HUD units); cam converts world -> screen
   drawText(ctx, cam) {
     ctx.textAlign = 'center';
     for (const p of this.list) {
+      if (p.type === 'hit') { this.drawHit(ctx, cam, p); continue; }
       if (p.type !== 'text') continue;
       const t = p.age / p.life;
       ctx.globalAlpha = clamp(1.6 * (1 - t), 0, 1);

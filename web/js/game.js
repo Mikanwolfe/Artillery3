@@ -47,6 +47,13 @@ const SLIDE_RATE = 0.25;
 const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
 const KILL_BOUNTY = 250;
+// damage popup tiers by accuracy (share of the blast radius from dead centre)
+const HIT_TIERS = [
+  { tag: 'GRAZE', color: '#c8c4d4' },
+  { tag: 'GLANCING', color: '#ffd8b0' },
+  { tag: 'SOLID', color: '#ff9a4a' },
+  { tag: 'DIRECT HIT', color: '#fff27a' },
+];
 const LEADER_BOUNTY = 400; // per round-win of lead over the runner-up
 // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
 
@@ -416,7 +423,7 @@ class Game {
   step() {
     this.time += DT;
     this.bg.update(DT, this.wind);
-    this.particles.update(DT);
+    this.particles.update(DT, this.wind);
     this.satellite.update();
     for (const t of this.tanks) {
       t.update(DT);
@@ -533,7 +540,7 @@ class Game {
   updateTraces() {
     for (const t of this.traces) {
       t.age++;
-      t.x += this.wind.x * 8 + t.vx;
+      t.x += this.wind.x * 30 + t.vx; // smoke drifts with the wind (up to ~0.9 units a frame)
       t.y += t.vy;
     }
     // puffs have their own lifetimes now, so filter rather than trim from the front
@@ -826,7 +833,7 @@ class Game {
       this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, '#fffff0', 22, 90));
       this.sfx.satFire();
       const r = sat.dmgR * (hasTrait(s.owner, 'uplink') ? 1.3 : 1); // Innocentia's priority uplink
-      this.explode(tg.x, tg.y, { dmg: sat.damage, dmgR: r, explR: sat.explR, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
+      this.explode(tg.x, tg.y, { maia: true, dmg: sat.damage, dmgR: r, explR: sat.explR, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
       this.cam.follow({ x: tg.x, y: tg.y });
     }
     if (s.t > 75 + 70) this.satSeq = null;
@@ -842,7 +849,7 @@ class Game {
       const c = RARITY[w.rarity].color;
       this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
       this.sfx.laser();
-      this.explode(p.x, p.y, { ...w, dmg: w.dmg * this.frontMult(p) * this.traitDmg(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
+      this.explode(p.x, p.y, { ...w, front: this.frontMult(p), trait: this.traitDmg(p), dmg: w.dmg * this.frontMult(p) * this.traitDmg(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
     } else {
       this.explode(p.x, p.y, { ...this.shotBonus(p), from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
@@ -860,6 +867,29 @@ class Game {
   }
 
   // kinetic and altitude bonuses for a shell's impact (see KINETIC_* / ALTITUDE_*)
+  // A damage popup that reads the hit: the number grows and heats up the closer to dead centre it
+  // landed (and with the size of the hit), with a quality tag and a chip per modifier underneath
+  hitPopup(x, y, amt, h) {
+    const tier = h.q > 0.85 ? 3 : h.q > 0.6 ? 2 : h.q > 0.3 ? 1 : 0;
+    const color = HIT_TIERS[tier].color;
+    const size = Math.round(18 + 22 * h.q + Math.min(18, Math.sqrt(amt) * 0.9));
+    const chips = [];
+    if (h.alt >= 0.05) chips.push([`ALT +${Math.round(h.alt * 100)}%`, '#f2c45a']);
+    if (h.kin >= 1) chips.push([`KIN +${Math.round(h.kin)}`, '#ff9a5a']);
+    if (h.front > 1.01) chips.push([`FORCE ×${h.front.toFixed(2)}`, '#ffd84a']);
+    if (h.front < 0.99) chips.push([`RAIN ×${h.front.toFixed(2)}`, '#8ab4ff']);
+    if (h.trait > 1) chips.push(['DISCIPLINE +25%', '#f2c45a']);
+    if (h.sat) chips.push(['MAIA', '#ff78c8']);
+    if (h.sloped) chips.push(['SLOPED −20%', '#9ab0c8']);
+    if (h.blocked) chips.push(['BARRIER −80%', '#78e6d2']);
+    if (h.shield) chips.push(['DEFLECTOR ½', '#96d2ff']);
+    if (h.capped) chips.push(['REDUNDANCY CAP', '#c3b0ff']);
+    if (h.flak) chips.push(['FLAK ×2', '#78d8c4']);
+    this.particles.add({ type: 'hit', x, y, vx: (Math.random() - 0.5) * 0.3, vy: -0.6, g: 0, drag: 0.98, life: 1.5 + 0.5 * h.q + chips.length * 0.12,
+      str: String(Math.round(amt)), color, size, tag: HIT_TIERS[tier].tag, chips });
+    if (tier === 3) this.shake = Math.max(this.shake, 5);
+  }
+
   // Object 15X's single-shot discipline: +25% from guns without an autoloader
   traitDmg(p) { return p.w && p.w.clip === 1 && !p.w.frag && hasTrait(p.owner, 'discipline') ? 1.25 : 1; }
 
@@ -868,8 +898,8 @@ class Game {
     const alt = altitudeBonus(p.y - p.peak, p.launch || 0);
     const speed = Math.hypot(p.vx, p.vy);
     const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg;
-    if (p.main && alt >= 0.2) this.particles.text(p.x, p.y - 70, `altitude +${Math.round(alt * 100)}%`, '#ffd84a');
-    return { ...w, dmg: w.dmg * (1 + alt) * this.frontMult(p) * this.traitDmg(p), kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
+    const front = this.frontMult(p), trait = this.traitDmg(p);
+    return { ...w, alt, front, trait, dmg: w.dmg * (1 + alt) * front * trait, kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
   }
 
   // flak burst: fragments rain down from the airburst
@@ -905,10 +935,12 @@ class Game {
       const c = t.center();
       const d = dist(c.x, c.y, x, y);
       let amt = d < def.dmgR ? def.dmg * (1 - d / def.dmgR) : 0;
-      if (def.kin && d < def.kin.r) amt += def.kin.dmg * (1 - d / def.kin.r);
+      // what went into the hit, for the damage popup: accuracy (1 = dead centre) and each modifier
+      const hit = { q: def.dmgR ? clamp(1 - d / def.dmgR, 0, 1) : 0, alt: def.alt || 0, front: def.front || 1, trait: def.trait || 1, kin: 0, sat: !!def.maia };
+      if (def.kin && d < def.kin.r) { hit.kin = def.kin.dmg * (1 - d / def.kin.r); amt += hit.kin; }
       if (amt > 0 && t.armour > 0 && hasTrait(t, 'sloped')) { // Object 15X: blasts from the side she faces
         const fx = Math.abs(x - c.x) < 12 && def.from ? def.from.x : x - c.x;
-        if (fx * t.facing > 0) amt *= 0.8;
+        if (fx * t.facing > 0) { amt *= 0.8; hit.sloped = true; }
       }
       if (amt > 0 && t.barrier) {
         // Bulwark Barrier: does this blast come from the side it covers? (a direct hit counts from
@@ -919,10 +951,10 @@ class Game {
         if ((dx * t.barrier.x + dy * t.barrier.y) / len > BARRIER_COS) {
           amt *= 1 - BARRIER_BLOCK;
           t.barrierHit = 1;
-          this.particles.text(t.x, t.y - 70, 'blocked', '#78e6d2');
+          hit.blocked = true;
         }
       }
-      if (amt > 0) this.damage(t, amt, owner, false, def);
+      if (amt > 0) this.damage(t, amt, owner, false, def, hit);
     }
     this.startSlide(x, def.explR || 10);
     this.particles.explosion(x, y, def.dmgR, palette);
@@ -931,18 +963,18 @@ class Game {
   }
 
   // A3 Character.Damage: armour soaks hits until it is gone, then health takes them
-  damage(t, amt, owner, quiet = false, def = null) {
+  damage(t, amt, owner, quiet = false, def = null, hit = null) {
     if (!t.alive || amt <= 0) return;
     if (owner && owner.isMob) owner = null; // mob attacks count as the environment
-    if (t.isMob) { this.damageMob(t, amt, owner, def); return; }
-    if (t.shield) amt *= SHIELD_FACTOR;
+    if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
+    if (t.shield) { amt *= SHIELD_FACTOR; if (hit) hit.shield = true; }
     if (owner && owner !== t) t.lastAttacker = owner; // CPUs retaliate against this tank
     let taken;
     if (t.armour > 0) {
       taken = Math.min(amt, t.armour);
       t.armour -= taken;
     } else {
-      if (hasTrait(t, 'redundancy')) amt = Math.min(amt, t.maxHp * 0.4); // November: triple redundancy
+      if (hasTrait(t, 'redundancy') && amt > t.maxHp * 0.4) { amt = t.maxHp * 0.4; if (hit) hit.capped = true; } // November: triple redundancy
       taken = Math.min(amt, t.hp);
       t.hp -= amt;
     }
@@ -964,7 +996,8 @@ class Game {
         t.dmgAcc = 0;
       }
     } else if (amt > 3) {
-      this.particles.text(t.x + (Math.random() - 0.5) * 20, t.y - 40, String(Math.round(amt)), '#ffffff', amt > 100);
+      if (hit) this.hitPopup(t.x + (Math.random() - 0.5) * 16, t.y - 46, amt, hit);
+      else this.particles.text(t.x + (Math.random() - 0.5) * 20, t.y - 40, String(Math.round(amt)), '#ffffff', amt > 100);
       this.sfx.hit();
       if (owner && owner !== t) this.events.push(`${owner.name} hit ${t.name} for ${Math.round(amt)}.`);
     }

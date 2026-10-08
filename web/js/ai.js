@@ -27,6 +27,16 @@ const MOB_DISLIKE = 90; // score penalty for going after a mob instead of a play
 // aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge.
 // arc: how much the solver values the altitude / kinetic damage bonuses, in miss-distance units per
 // +100% damage. Higher = happier to trade a little accuracy for a high, plunging lob.
+// Ranging in, like a person would: a CPU's first shot at a target misjudges the wind (by a
+// persistent error, WIND_GUESS of it at worst) and aims loosely; each further shot at the same
+// target from the same spot tightens both (LEARN, by shots already fired) and makes it bolder about
+// high lobs (LOB_TRUST), which would be hopeless guesses first time. Any movement by either side,
+// or a change of wind, and it starts over. Kept per tank in tank.aimMemo for the round.
+const LEARN = [1.25, 0.9, 0.65, 0.5, 0.4];
+const LOB_TRUST = [0.5, 0.8, 1.1, 1.3, 1.45];
+const WIND_GUESS = { easy: 0.6, normal: 0.4, hard: 0.25 };
+const MEMO_MOVE = 4; // world units of sideways movement that resets it (craters under a target don't)
+
 const DIFFICULTY = {
   easy: { se: 4, sc: 0.07, arc: 25 },
   normal: { se: 2, sc: 0.035, arc: 60 },
@@ -35,16 +45,16 @@ const DIFFICULTY = {
 
 // Search for the best shot at `target`. Each candidate is scored by its miss distance minus a bonus
 // for the damage multiplier it would earn (bonusFactor), so among shots that land, high arcs win.
-function solveShot(game, tank, w, target) {
+function solveShot(game, tank, w, target, wind = game.wind, arcScale = 1) {
   const facing = target.x >= tank.x ? 1 : -1;
   const tc = target.center();
-  const arc = (DIFFICULTY[tank.type] || DIFFICULTY.normal).arc;
+  const arc = (DIFFICULTY[tank.type] || DIFFICULTY.normal).arc * arcScale;
   const kinR = Math.max(18, w.dmgR * KINETIC_RADIUS);
   const maxV = Math.min(w.maxCharge, 140); // beyond this everything leaves the map anyway
   const evalShot = (elev, v) => {
     const m = tank.muzzle(elev, facing);
     const u = tank.aimVec(elev, facing); // elevation is relative to the hull
-    const r = simulateShot(game.terrain, game.wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift);
+    const r = simulateShot(game.terrain, wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift);
     let err;
     if (r.hit === 'tank' && r.tank === target) err = 0;
     else err = Math.max(0, dist(r.x, r.y, tc.x, tc.y) - w.dmgR * 0.25);
@@ -104,9 +114,21 @@ class CpuController {
     if (t.type === 'easy') options = rng.chance(0.6) ? [rng.pick(options)] : options.slice(-1);
     else if (t.type === 'normal' && rng.chance(0.4)) options = [rng.pick(options)];
     let best = null;
+    const memo = (t.aimMemo = t.aimMemo || new Map());
+    const learn = (e) => { // how many shots it has ranged in on e with, and its wind guess
+      let m = memo.get(e);
+      if (!m || Math.abs(m.sx - t.x) > MEMO_MOVE || Math.abs(m.tx - e.x) > MEMO_MOVE || m.windDir !== g.windDir) {
+        m = { sx: t.x, tx: e.x, windDir: g.windDir, shots: 0, werr: clamp(rng.gauss(), -1.5, 1.5) * (WIND_GUESS[t.type] || WIND_GUESS.normal) };
+        memo.set(e, m);
+      }
+      return m;
+    };
     for (const w of options) {
       for (const e of enemies) {
-        const s = solveShot(g, t, w, e);
+        const m = learn(e);
+        const k = Math.min(m.shots, LEARN.length - 1);
+        const wf = 1 + m.werr * LEARN[k] / LEARN[0]; // the wind as it judges it, closer each shot
+        const s = solveShot(g, t, w, e, { x: g.wind.x * wf, y: g.wind.y * wf }, LOB_TRUST[k]);
         let score = s.score - (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1 - (e.bounty || 0) * BOUNTY_PULL;
         if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
         if (e.isMob) score += MOB_DISLIKE - Math.min(150, e.bounty * 0.03) - (w.kind === 'flak' ? 120 : 0);
@@ -118,7 +140,9 @@ class CpuController {
     const w = best.weapon;
     // aim error grows with range: sharp up close, increasingly loose across the map
     const range = Math.abs(best.target.x - t.x);
-    const f = clamp(RANGE_ERR_BASE + range / RANGE_ERR_SCALE, RANGE_ERR_BASE, 3) * (t.upgrades.computer ? 0.7 : 1);
+    const m = memo.get(best.target);
+    const f = clamp(RANGE_ERR_BASE + range / RANGE_ERR_SCALE, RANGE_ERR_BASE, 3) * (t.upgrades.computer ? 0.7 : 1) * LEARN[Math.min(m.shots, LEARN.length - 1)];
+    m.shots++;
     best.elev = clamp(best.elev + rng.gauss() * k.se * f, w.elevMin, w.elevMax);
     best.v = clamp(best.v * (1 + rng.gauss() * k.sc * f), w.maxCharge * 0.05, w.maxCharge);
     best.revenge = best.target === grudge;

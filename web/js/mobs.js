@@ -245,12 +245,13 @@ Object.assign(Game.prototype, {
     return x;
   },
 
-  damageMob(m, amt, owner, def) {
+  damageMob(m, amt, owner, def, hit) {
     if (!m.alive) return;
-    if (def && def.kind === 'flak') amt *= FLAK_MOB_MULT;
+    if (def && def.kind === 'flak') { amt *= FLAK_MOB_MULT; if (hit) hit.flak = true; }
     m.hp -= amt;
     m.flash = 1;
-    this.particles.text(m.x, m.y - m.hh - 20, String(Math.round(amt)), '#ffffff', amt > 100);
+    if (hit) this.hitPopup(m.x, m.y - m.hh - 20, amt, hit);
+    else this.particles.text(m.x, m.y - m.hh - 20, String(Math.round(amt)), '#ffffff', amt > 100);
     if (m.hp > 0) return;
     m.alive = false;
     const c = m.center();
