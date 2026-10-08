@@ -67,6 +67,7 @@ const UI = {
     $('ge-again').onclick = () => { $('gameend').hidden = true; game.sfx.music('shop'); game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); this.syncLoad(); };
     $('resume').onclick = () => game.togglePause();
     $('pause-end').onclick = () => game.endMatch();
+    $('pause-turn').onclick = () => { game.togglePause(); if (game.phase === 'aim') game.input.queue.push({ endTurn: true }); };
     $('re-end').onclick = () => { $('roundend').hidden = true; game.endMatch(); };
     $('btn-pause').onclick = () => game.togglePause();
     $('btn-mute').onclick = () => game.toggleMute();
@@ -241,7 +242,11 @@ const UI = {
     $('btn-mute').textContent = this.game.sfx.muted ? '✕' : '♪';
     $('btn-music').classList.toggle('off', !this.game.sfx.musicOn);
   },
-  showPause(on) { $('pause').hidden = !on; },
+  showPause(on) {
+    const g = this.game;
+    $('pause').hidden = !on;
+    $('pause-turn').hidden = !(g.phase === 'aim' && g.active && !g.active.isCpu && !g.cpu); // (Enter on a keyboard)
+  },
 
   turn(t) {
     const g = this.game;
@@ -367,8 +372,9 @@ const UI = {
       b.addEventListener('pointerdown', set(true));
       ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => b.addEventListener(ev, set(false)));
     });
-    document.querySelectorAll('#touch [data-end]').forEach((b) => {
-      b.addEventListener('pointerdown', (e) => { e.preventDefault(); if (g.phase === 'aim') g.input.queue.push({ endTurn: true }); });
+    // MENU: the pause menu (resume, end turn, end match), at a size a thumb can hit
+    document.querySelectorAll('#touch [data-menu]').forEach((b) => {
+      b.addEventListener('click', (e) => { e.preventDefault(); if (!g.paused) g.togglePause(); });
     });
   },
 

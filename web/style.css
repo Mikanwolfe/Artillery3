@@ -336,6 +336,7 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
   #touch { display: flex; align-items: flex-end; }
   #touch .pad.r { margin-bottom: calc(8cqw * var(--em)); } /* clear of the power and fuel meters */
   #hints { display: none; }
+  #pause .stack button { font-size: 1.35em; padding: 0.7em 1.2em; } /* thumb-sized */
   #dock { left: 50%; transform: translateX(-50%); max-width: 56%; align-items: center; }
   #rack { flex-wrap: wrap; justify-content: center; }
   .slot .txt .nm { display: none; }
