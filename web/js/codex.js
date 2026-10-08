@@ -51,7 +51,7 @@ const GUN_NOTES = {
   avalon: ['Matches', 'Ten seeking bomblets twice a turn. Lob high to stack them on one target, skim low for area denial.'],
   demigod: ['Matches', 'Arcs like a rocket, stops, and charges the nearest target as a lance with ×2.5 kinetic. Armour still takes the whole hit, so it is a death sentence only once armour is gone.'],
   kagutsuchi: ['Matches', 'Forty incendiary shells a turn with a wide spread. Small blasts, but every fragment leaves fire burning on the ground.'],
-  yukikaze: ['Matches', 'Weak warheads, as advertised: the Hatsuyuki barrage does the damage (five MAIA pulses of 120, barely dependent on MAIA\'s level). The seeker wakes after two and a half seconds, so it wants a long, high lob.'],
+  yukikaze: ['Matches', 'Weak warheads, as advertised: the Hatsuyuki barrage does the damage (five MAIA pulses of 120, barely dependent on MAIA\'s level). It seeks from the top of its arc and never airbrakes, so a high lob dives in fast for ×6 kinetic damage.'],
   feuerlilie: ['Matches', 'A homing rocket that bursts like flak: shrapnel and double damage to drones. The easiest anti-air gun to land.'],
   ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling): a heavy beam that leaves a boiling pool, twice a turn.'],
   massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). Point and click, if it can see.'],
