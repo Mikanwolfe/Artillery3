@@ -107,7 +107,7 @@ class CpuController {
     this.tank = tank;
     this.ctl = new Ctl();
     this.state = 'think';
-    this.timer = (tank.firedThisTurn ? 0.3 : 0.8) + Math.random() * 0.4;
+    this.timer = (tank.firedThisTurn ? 0.3 : 0.8) + rng.next() * 0.4;
     this.plan = null;
     this.moved = tank.firedThisTurn;
   }
@@ -219,6 +219,8 @@ class CpuController {
         break;
       }
       case 'plan': {
+        // the search runs a few milliseconds a frame; the game world holds still meanwhile (see
+        // Game.step), so a seeded match replays the same however long the search takes
         const t0 = performance.now();
         let r = this.planGen.next();
         while (!r.done && performance.now() - t0 < AI_BUDGET_MS) r = this.planGen.next();

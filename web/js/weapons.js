@@ -23,6 +23,9 @@ function weapon(id, name, kind, elevMin, elevMax, o) {
 }
 
 // starting vehicles: (hp, armour) and a signature gun
+// who built each girl: CLS-T runs the trials; KTS-T leads every other maker in tech
+const MAKERS = { gwt: 'CLS-T trials', obj: 'KTS-T', nxi: 'NXi · November Division', alb: 'Lymilark Future Sciences', int: 'CLS-T trials' };
+const MAKER_CLASS = { nxi: ' nxi', obj: ' kts' };
 const VEHICLES = [
   {
     id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'A sturdy Geschützwagen girl with a two-round autoloader on her back.',
@@ -32,11 +35,11 @@ const VEHICLES = [
       short: 'Extensively field-tested, a reliable and sturdy weapon with no equal.', long: 'Starting weapon for G.W. Tiger.' }),
   },
   {
-    id: 'obj', name: 'Object 15X', hp: 65, armour: 175, blurb: 'A heavily armoured Soviet girl: thin hull, one huge accurate shot.',
-    traits: ['sloped', 'discipline'],
+    id: 'obj', name: 'Object 15X', hp: 65, armour: 175, blurb: 'A KTS-T girl: thin hull, thick angled plating, one huge accurate shot.',
+    traits: ['sloped', 'designator'],
     weapon: weapon('d76', '190mm D-76ST 15X', 'shell', 0, 45, {
       dmg: 200, disp: 0.9, maxCharge: 58, drift: 0.75, dmgR: 75,
-      short: 'An experimental adaption from CLS-T developed during the last Neko Wars.', long: 'Starting weapon for Object 15X.' }),
+      short: 'A KTS-T design from the last Neko Wars, years ahead of anything CLS-T fielded.', long: 'Starting weapon for Object 15X.' }),
   },
   // NXi (the user's canon): November Division of the United Aurora Federation, "Built Like A
   // Battlecruiser": overbuilt, triple-redundant, slow, never fails. A rival to CLS-T.
@@ -67,14 +70,14 @@ const VEHICLES = [
 ];
 
 // Character traits: two passives per girl, so they play differently beyond stats and starter gun.
-// Hooks: Game.finishShot (drill), landed / ramTree (geschutz), explode (sloped), traitDmg
-// (discipline), damage (redundancy), the shop and useAbility (gatekeeper), startSatellite /
+// Hooks: Game.finishShot (drill), landed / ramTree (geschutz), explode (sloped), designation /
+// stepBallistic (designator), damage (redundancy), the shop and useAbility (gatekeeper), startSatellite /
 // updateSatellite (uplink, retarget).
 const TRAITS = {
   drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn lands a solid hit on a rival, she gets that round back.' },
   geschutz: { name: 'Geschützwagen', desc: 'Never takes fall or tree damage.' },
   sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
-  discipline: { name: 'Single-shot discipline', desc: '+25% damage from guns without an autoloader.' },
+  designator: { name: 'Laser designator', desc: 'A laser dot goes out ahead of every shot onto her selected target (mark it with a click); no damage, but her shells and beams veer slightly toward it.' },
   redundancy: { name: 'Triple redundancy', desc: 'No single hit takes more than 40% of her max health.' },
   gatekeeper: { name: 'Gatekeeper', desc: 'The Bulwark Barrier is hers from round one, at half price.' },
   uplink: { name: 'Priority uplink', desc: 'MAIA strikes she calls have a 30% bigger blast.' },
@@ -349,6 +352,9 @@ function windAccel(p, wind) {
 // the motor cancels this frame. Deterministic, so the CPU's simulations match the real flight.
 const SEEK_FRAMES = 150; // how long a locked seeker can keep steering (no endless loitering)
 function seekCenter(c) { return c.center ? c.center() : { x: c.x, y: c.y - 9 }; }
+const DESIGNATE_SNAP = 70; // how close to a target her marker must be to designate it
+const DESIGNATE_PULL = 0.02; // how hard a designated shot veers toward the dot, per frame
+function designPoint(d) { return d.point ? d : seekCenter(d); }
 function findLock(p, seek, owner) {
   const G = p.guide;
   const sp = Math.hypot(p.vx, p.vy) || 1;
@@ -370,6 +376,7 @@ function findLock(p, seek, owner) {
 }
 // carpet bomblets: unpowered, steering from the moment they drop, for whatever is in reach
 const BOMBLET_GUIDE = { arm: 2, burn: 0, seek: 0, turn: 2.5, range: 420, cone: 180, lift: 0, brake: false };
+const BOMBLET_FAN = 16; // each later bomblet aims this much further out from the target, alternating sides
 function guideStep(p, seek, owner) {
   const G = p.guide;
   if (!G || p.age < G.arm) return 0;
@@ -414,6 +421,7 @@ function guideStep(p, seek, owner) {
   if (p.lock) p.locked = (p.locked || 0) + 1;
   if (p.lock && p.locked < SEEK_FRAMES) { // steering lasts SEEK_FRAMES once locked, then it falls
     const q = seekCenter(p.lock);
+    if (p.aimOff) q.x += p.aimOff; // carpet bomblets fan out around the target
     // aim above the target by the drop it will see on the way (remaining gravity, flight time)
     // (diving rockets aim straight at it: they steer every frame, and gravity is helping; the
     // allowance is capped so a slowed rocket doesn't aim high and hover over its target)
@@ -444,6 +452,18 @@ function guideStep(p, seek, owner) {
 function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
   const lift = p.guide ? guideStep(p, seek, owner) : 0;
   const a = windAccel(p, wind);
+  // Object 15X's designator: the shot drifts sideways to close the gap between where it is going to
+  // come down (at the dot's height, ignoring wind) and the dot
+  if (p.designate && p.designate.alive) {
+    const q = designPoint(p.designate);
+    const g = p.noGrav ? 0 : GRAV, h = q.y - p.y;
+    const disc = p.vy * p.vy + 2 * g * h;
+    if (g > 0 && disc >= 0) {
+      const T = (-p.vy + Math.sqrt(disc)) / g;
+      const miss = q.x - (p.x + p.vx * T);
+      p.vx += Math.sign(miss) * Math.min(DESIGNATE_PULL, Math.abs(miss) / Math.max(T * T, 1));
+    }
+  }
   p.vx += a.x;
   p.vy += (p.noGrav ? 0 : GRAV * (1 - lift)) + a.y;
   const speed = Math.hypot(p.vx, p.vy);

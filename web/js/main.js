@@ -1,13 +1,16 @@
 'use strict';
 // Bootstrap. URL params (handy for testing):
-//   ?seed=N   deterministic gameplay RNG
+//   ?seed=N   deterministic gameplay RNG (otherwise a random seed, shown when paused)
 //   ?auto=N   skip the menu and run an N-tank all-CPU match
 //   ?speed=X  simulation speed multiplier
 //   ?vehicles=alb,gwt,...  the auto match's vehicles, in seat order
 (function () {
   const params = new URLSearchParams(location.search);
-  if (params.has('seed')) rng.seed(+params.get('seed'));
+  // every game is seeded, so any match can be replayed: the seed shows on the pause screen
+  const seed = params.has('seed') ? +params.get('seed') : Math.floor(Math.random() * 1e6);
+  rng.seed(seed);
   const game = new Game($('view'), UI);
+  game.seed = seed;
   UI.init(game);
   window.A3 = game;
   if (params.has('speed')) game.speed = +params.get('speed') || 1;

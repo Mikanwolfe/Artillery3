@@ -146,7 +146,7 @@ Object.assign(Game.prototype, {
         case 'updraft': p.vy -= GRAV * 0.35 * s; break;
         case 'gale': p.vx += f.dir * 0.05 * s; break;
         case 'blizzard': p.vx *= 1 - 0.007 * s; p.vy *= 1 - 0.004 * s; break;
-        case 'sandstorm': p.vx += (Math.random() - 0.5) * 0.3 * s; p.vy += (Math.random() - 0.5) * 0.3 * s; break;
+        case 'sandstorm': p.vx += (rng.next() - 0.5) * 0.3 * s; p.vy += (rng.next() - 0.5) * 0.3 * s; break;
         default: break;
       }
       if (p.age % 3 === 0) {

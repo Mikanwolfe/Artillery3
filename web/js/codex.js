@@ -57,11 +57,11 @@ const GUN_NOTES = {
   massdriver: ['Matches', 'Range 1000 and zero spread: point and click. The most expensive gun, and the best.'],
 };
 const GIRL_NOTES = {
-  gwt: { maker: 'CLS-T trials', plays: 'A two round autoloader makes her forgiving and flexible. Paired with excellent damage and great flexibility, she is a solid all-rounder.' },
-  obj: { maker: 'CLS-T trials', plays: 'The glass cannon - thin hull, but thick, angled armour plating. Strongly suits single-shot weaponry but punishing when you miss.' },
-  nxi: { maker: 'NXi · November Division', plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
-  alb: { maker: 'Lymilark Future Sciences', plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },
-  int: { maker: 'CLS-T trials', plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
+  gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and she drives anywhere without fall or tree damage.' },
+  obj: { plays: 'The glass cannon: a thin hull behind thick, angled plating. Mark a target and her designator bends every shot a little onto it, so she rewards patient, deliberate sniping; but she can’t take many hits back when she misses.' },
+  nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
+  alb: { plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },
+  int: { plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
 };
 
 const RANGE_DIST = { near: 300, mid: 550, far: 850 }; // world units from the girl to the dummy
@@ -256,7 +256,7 @@ Object.assign(UI, {
     });
     $('cx-chars').querySelectorAll('button').forEach((b) => { b.onclick = () => { c.vid = b.dataset.v; this.renderCodex(); this.game.startRange(c.vid, c.wid); this.codexReadout(); b.blur(); }; });
     const note = GIRL_NOTES[v.id];
-    $('cx-char').innerHTML = `<p class="maker${v.id === 'nxi' ? ' nxi' : ''}">${esc(note ? note.maker : '')}</p><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
+    $('cx-char').innerHTML = `<p class="maker${MAKER_CLASS[v.id] || ''}">${esc(MAKERS[v.id] || '')}</p><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
       <div class="cx-stats"><span class="mgh">Health</span><b>${v.hp}</b><span class="mgh">Armour</span><b>${v.armour}</b><span class="mgh">Fuel</span><b>${Math.round((v.fuel || 1) * 100)}%</b></div>
       <ul class="traits">${(v.traits || []).map((id) => `<li><b>${esc(TRAITS[id].name)}</b> ${esc(TRAITS[id].desc)}</li>`).join('')}</ul>
       ${note ? `<p class="cx-meta">${esc(note.plays)}</p>` : ''}`;

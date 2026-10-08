@@ -293,6 +293,12 @@ class Game {
 
   // opts: { balance: 'rebalanced' | 'classic', events: bool }
   startMatch(configs, rounds, opts = {}) {
+    // each match runs on its own seed (the page's ?seed for the first), shown on the pause screen
+    if (this.seedUsed || this.seed === undefined) this.seed = Math.floor(Math.random() * 1e6);
+    this.seedUsed = true;
+    rng.seed(this.seed);
+    const label = document.getElementById('pause-seed');
+    if (label) label.textContent = `Seed ${this.seed} · replay the first match with ?seed=${this.seed}`;
     this.setOptions(opts);
     this.sfx.unlock();
     this.turnSerial = 0;
@@ -434,6 +440,14 @@ class Game {
     this.time += DT;
     this.bg.update(DT, this.wind, this.cam);
     this.particles.update(DT, this.wind);
+    // while a CPU searches for its shot the world holds still (only effects move), so how long the
+    // search takes on this machine never changes the match: seeded games replay exactly
+    if (this.cpu && this.cpu.planGen && this.phase === 'aim') {
+      this.updateAim();
+      this.updateTraces();
+      this.cam.update();
+      return;
+    }
     this.satellite.update();
     for (const t of this.tanks) {
       t.update(DT);
@@ -742,7 +756,7 @@ class Game {
     if (t.armed.over) t.cooldown.over = ABILITY_BY_ID.over.cd;
     t.lastCharge = t.charge / t.chargeCap();
     t.armed = { double: false, over: false };
-    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo * (dbl ? 2 : 1), timer: 0, first: true, uplink: !!t.uplink };
+    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo * (dbl ? 2 : 1), timer: 0, first: true, uplink: !!t.uplink, designate: this.designation(t) };
     t.uplink = false;
     t.charge = 0;
     t.recoil = 1;
@@ -780,6 +794,11 @@ class Game {
     const p = new Projectile(this, s.w, t, m.x, m.y, vx, vy, s.first);
     p.launch = Math.atan2(-vy, Math.abs(vx)); // launch angle above the horizon: steeper shots earn more altitude bonus
     p.uplink = s.uplink && s.first;
+    if (s.designate) { // the designator's dot goes out ahead of every round (no damage)
+      p.designate = s.designate;
+      const q = s.designate.point ? s.designate : seekCenter(s.designate);
+      this.lasers.push(new Laser(m.x, m.y, q.x, q.y, '#ff3a4a', 3, 16));
+    }
     if (s.first) {
       p.rec = [];
       this.cam.follow(p);
@@ -901,11 +920,11 @@ class Game {
       const c = RARITY[w.rarity].color;
       this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
       this.sfx.laser();
-      this.explode(p.x, p.y, { ...w, front: this.frontMult(p), trait: this.traitDmg(p), dmg: w.dmg * this.frontMult(p) * this.traitDmg(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
+      this.explode(p.x, p.y, { ...w, front: this.frontMult(p), dmg: w.dmg * this.frontMult(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
       if (w.acid) { // an acid laser (the Ichor): the beam leaves a boiling pool
         for (let i = 0; i < 18; i++) {
-          const a = -Math.PI * (0.15 + 0.7 * Math.random());
-          const sp = 1.5 + Math.random() * 4;
+          const a = -Math.PI * (0.15 + 0.7 * rng.next());
+          const sp = 1.5 + rng.next() * 4;
           this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 4, Math.cos(a) * sp, Math.sin(a) * sp, w.acid));
         }
       }
@@ -913,15 +932,15 @@ class Game {
       this.explode(p.x, p.y, { ...this.shotBonus(p), from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
         for (let i = 0; i < 30; i++) {
-          const a = -Math.PI * (0.1 + 0.8 * Math.random());
-          const sp = 2 + Math.random() * 6;
+          const a = -Math.PI * (0.1 + 0.8 * rng.next());
+          const sp = 2 + rng.next() * 6;
           this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 4, Math.cos(a) * sp, Math.sin(a) * sp, w.acid));
         }
         this.sfx.acid();
       }
       if (w.kind === 'flak' || w.airburst) this.shrapnel(p);
       if (w.incendiary && w.frag) { // a burning fragment: a small patch of fire that sticks and scorches
-        for (let i = 0; i < 2; i++) this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 2, (Math.random() - 0.5) * 3, -1 - Math.random() * 2, w.incendiary, true));
+        for (let i = 0; i < 2; i++) this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 2, (rng.next() - 0.5) * 3, -1 - rng.next() * 2, w.incendiary, true));
       }
     }
     if (p.storm) this.lightning(p, w);
@@ -973,7 +992,6 @@ class Game {
     if (h.kin >= 1) chips.push([`KIN +${Math.round(h.kin)}`, '#ff9a5a']);
     if (h.front > 1.01) chips.push([`FORCE ×${h.front.toFixed(2)}`, '#ffd84a']);
     if (h.front < 0.99) chips.push([`RAIN ×${h.front.toFixed(2)}`, '#8ab4ff']);
-    if (h.trait > 1) chips.push(['DISCIPLINE +25%', '#f2c45a']);
     if (h.sat) chips.push(['MAIA', '#ff78c8']);
     if (h.region) chips.push([`MAIA ${h.region}`, '#ff78c8']);
     if (h.sloped) chips.push(['SLOPED −20%', '#9ab0c8']);
@@ -989,8 +1007,21 @@ class Game {
   // a rocket that transforms in flight but hits before it does: half damage (the payload is the point)
   bodyFactor(p) { const w = p.w; return (w.carpet || w.split || w.lance) && !p.charging && !p.dropped ? 0.5 : 1; }
 
-  // Object 15X's single-shot discipline: +25% from guns without an autoloader
-  traitDmg(p) { return p.w && p.w.clip === 1 && !p.w.frag && hasTrait(p.owner, 'discipline') ? 1.25 : 1; }
+  // Object 15X's laser designator: what she has selected. A player's target marker snaps to a
+  // vehicle, drone or the satellite within DESIGNATE_SNAP of it (and follows it), otherwise it
+  // designates the marked point; a CPU designates the target of its plan.
+  designation(t) {
+    if (!hasTrait(t, 'designator')) return null;
+    if (t.isCpu) return this.cpu && this.cpu.tank === t && this.cpu.plan ? this.cpu.plan.target || null : null;
+    if (!t.mark) return null;
+    let best = null, bd = DESIGNATE_SNAP;
+    for (const c of this.targets()) {
+      if (c === t || !c.alive) continue;
+      const q = seekCenter(c), d = dist(q.x, q.y, t.mark.x, t.mark.y);
+      if (d < bd) { bd = d; best = c; }
+    }
+    return best || { x: t.mark.x, y: t.mark.y, alive: true, point: true };
+  }
 
   shotBonus(p) {
     const w = p.w;
@@ -998,8 +1029,8 @@ class Game {
     const speed = Math.hypot(p.vx, p.vy);
     const body = this.bodyFactor(p);
     const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg * body * (p.charging ? w.lance.kin : 1);
-    const front = this.frontMult(p), trait = this.traitDmg(p);
-    return { ...w, alt, front, trait, dmg: w.dmg * body * (1 + alt) * front * trait, kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
+    const front = this.frontMult(p);
+    return { ...w, alt, front, dmg: w.dmg * body * (1 + alt) * front, kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
   }
 
   // flak burst: fragments rain down from the airburst
@@ -1007,8 +1038,8 @@ class Game {
     const frag = { id: 'frag', name: 'Shrapnel', kind: 'shell', dmg: p.w.dmg * 0.2, dmgR: 24, explR: 2, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 10, frag: true, incendiary: p.w.incendiary || 0 };
     const n = p.w.incendiary ? 3 : 6 + Math.min(6, Math.round(p.w.dmgR / 40)); // incendiary: fewer, burning
     for (let i = 0; i < n; i++) {
-      const a = Math.PI / 2 + (Math.random() - 0.5) * 1.6; // a downward cone
-      const sp = 3 + Math.random() * 5;
+      const a = Math.PI / 2 + (rng.next() - 0.5) * 1.6; // a downward cone
+      const sp = 3 + rng.next() * 5;
       const f = new Projectile(this, frag, p.owner, p.x, p.y, Math.cos(a) * sp + p.vx * 0.2, Math.sin(a) * sp, false);
       f.age = 10;
       this.projectiles.push(f);
@@ -1037,7 +1068,7 @@ class Game {
       const d = dist(c.x, c.y, x, y);
       let amt = d < def.dmgR ? def.dmg * (1 - d / def.dmgR) : 0;
       // what went into the hit, for the damage popup: accuracy (1 = dead centre) and each modifier
-      const hit = { px: x, py: y, q: def.dmgR ? clamp(1 - d / def.dmgR, 0, 1) : 0, alt: def.alt || 0, front: def.front || 1, trait: def.trait || 1, kin: 0, sat: !!def.maia };
+      const hit = { px: x, py: y, q: def.dmgR ? clamp(1 - d / def.dmgR, 0, 1) : 0, alt: def.alt || 0, front: def.front || 1, kin: 0, sat: !!def.maia };
       if (def.kin && d < def.kin.r) { hit.kin = def.kin.dmg * (1 - d / def.kin.r); amt += hit.kin; }
       if (amt > 0 && t.armour > 0 && hasTrait(t, 'sloped')) { // Object 15X: blasts from the side she faces
         const fx = Math.abs(x - c.x) < 12 && def.from ? def.from.x : x - c.x;
@@ -1587,6 +1618,16 @@ class Game {
     for (const t of this.tanks) t.draw(ctx, t === aiming);
     if (aiming && !this.cpu) this.drawAimGuide(ctx, aiming);
     if (aiming && !this.cpu && aiming.mark) this.drawMark(ctx, aiming);
+    if (aiming && hasTrait(aiming, 'designator')) { // her laser dot sits on the designated target
+      const d = this.designation(aiming);
+      if (d && d.alive) {
+        const q = designPoint(d);
+        ctx.fillStyle = (this.time * 4 | 0) % 2 ? '#ff3a4a' : '#ffd0d4';
+        sq(ctx, q.x, q.y, 5);
+        ctx.fillStyle = 'rgba(255,58,74,0.35)';
+        sq(ctx, q.x, q.y, 11);
+      }
+    }
     for (const d of this.drops) d.draw(ctx);
     for (const c of this.crates) c.draw(ctx);
     this.drawTraces(ctx);
