@@ -103,7 +103,7 @@ const WEAPONS = [
     short: 'A big gun with a short barrel; sacrifices range and accuracy for big boom.', long: 'A well-worn 152mm howitzer.' }),
   weapon('claymore', "90mm/109 LFS 'Claymore'", 'shell', -5, 40, { clip: 3, maxCharge: 50, disp: 1.5, dmg: 100, explR: 5, dmgR: 60, rarity: 1, cost: 1650,
     short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the side.", long: 'A three-clip low-calibre artillery piece.' }),
-  weapon('lensx2', '75mm CLS-T Lensed x2 Laser Mount', 'laser', -25, 25, { clip: 2, maxCharge: 80, disp: 0.6, dmg: 200, explR: 3, dmgR: 30, rarity: 1, cost: 1980,
+  weapon('lensx2', '75mm CLS-T Lensed x2 Laser Mount', 'laser', -25, 25, { ceil: 120, clip: 2, maxCharge: 80, disp: 0.6, dmg: 200, explR: 3, dmgR: 30, rarity: 1, cost: 1980,
     short: 'Nothing says experimental like duct tape everywhere. Even on the lens.', long: 'Like all lasers, high damage, low consistency.' }),
   weapon('lance', "122mm/90 LFS 'Long Lance'", 'shell', -5, 60, { drift: 0.75, clip: 2, maxCharge: 60, disp: 1, dmg: 150, explR: 8, dmgR: 80, rarity: 2, cost: 2650,
     short: 'An older model from the Lymilark, the Long Lance boasts excellent accuracy.', long: 'A higher-accuracy piece with surprisingly high damage.' }),
@@ -113,7 +113,7 @@ const WEAPONS = [
     short: 'Retrofitted from Anti-Air to Anti-Everything. Reminds you of twintails...', long: 'Larger shell means large blast radius. Also means one shot.' }),
   weapon('type11', 'Hatsuyuki Type-11/N15', 'shell', 0, 90, { clip: 3, maxCharge: 90, disp: 0.5, dmg: 120, sat: true, dmgR: 70, explR: 10, rarity: 3, cost: 3990,
     short: 'A relic of the Hatsuyuki Project; utilises the MAIA Satellite System', long: "Flexible but doesn't do much damage." }),
-  weapon('lensae', '50mm x3 Kotona Lensed-AE Rifle', 'laser', -30, 30, { clip: 3, maxCharge: 80, disp: 0.5, dmg: 200, explR: 2, dmgR: 50, rarity: 3, cost: 4520,
+  weapon('lensae', '50mm x3 Kotona Lensed-AE Rifle', 'laser', -30, 30, { ceil: 150, clip: 3, maxCharge: 80, disp: 0.5, dmg: 200, explR: 2, dmgR: 50, rarity: 3, cost: 4520,
     short: 'Classified as an old-generation Light Firearm, found at a relic site.', long: "A relic from the an ancient Kotona empire. It's surprising it still works." }),
   weapon('type91', '122mm CLS-T Type-91', 'acid', -5, 50, { clip: 2, maxCharge: 50, disp: 2, dmg: 50, dmgR: 80, acid: 0.63, rarity: 3, cost: 5080,
     short: 'Developed during the last Neko War, fires highly acidic projectiles', long: '2-Round Acid Projectiles, otherwise, somewhat mediocre.' }),
@@ -125,13 +125,13 @@ const WEAPONS = [
     short: 'A weapon developed from the G.W. Tiger program, a deadly weapon, if it hits.', long: 'High damage, long range, and everything in-between.' }),
   weapon('cls220', "220mm/80 CLS-T 'Doki-Doki'", 'shell', 0, 60, { clip: 3, salvo: 3, maxCharge: 50, disp: 2.65, dmg: 360, dmgR: 120, explR: 17, rarity: 4, cost: 17150,
     short: 'A mix of sadness and sweetness with a tinge of searing iron.', long: 'Three by three they come! Are we missing one? Jus------' }),
-  weapon('lfs75', "75mm 2x3 LFS 'Neko Paradise'", 'laser', -25, 25, { clip: 2, salvo: 3, maxCharge: 90, disp: 1, dmg: 400, explR: 5, dmgR: 55, rarity: 4, cost: 20880,
+  weapon('lfs75', "75mm 2x3 LFS 'Neko Paradise'", 'laser', -25, 25, { ceil: 170, clip: 2, salvo: 3, maxCharge: 90, disp: 1, dmg: 400, explR: 5, dmgR: 55, rarity: 4, cost: 20880,
     short: 'Part of the next-generation design from the Neko Paradise Project.', long: 'Somewhat bad accuracy for a laser-weapon, but packs a cute sting.' }),
   weapon('triple', '460mm/18.1in Type 94 Triple Turrets', 'shell', -5, 90, { clip: 2, maxCharge: 120, salvo: 3, disp: 4, dmg: 550, dmgR: 160, explR: 22, rarity: 5, cost: 26360,
     short: "A miniaturised version of the Yamato's triple-turrets. For cute girls.", long: 'High damage, long range, but even worse accuracy!' }),
-  weapon('laser88', "88mm x3 'Nadeko Snake' Laser Turret", 'laser', -30, 30, { clip: 2, salvo: 3, maxCharge: 100, disp: 1.55, dmg: 650, dmgR: 80, explR: 10, rarity: 5, cost: 28850,
+  weapon('laser88', "88mm x3 'Nadeko Snake' Laser Turret", 'laser', -30, 30, { ceil: 180, clip: 2, salvo: 3, maxCharge: 100, disp: 1.55, dmg: 650, dmgR: 80, explR: 10, rarity: 5, cost: 28850,
     short: 'Twice cursed and once more, fires just as hot as the darkness near Shirahebi Shrine.', long: 'A direct hit is deadly, be careful of small-ish explosions.' }),
-  weapon('laser15x', '90mm Neko-15X Laser', 'laser', -30, 30, { clip: 2, maxCharge: 100, dmg: 1150, disp: 0.25, dmgR: 90, explR: 5, sat: true, rarity: 6, cost: 39800,
+  weapon('laser15x', '90mm Neko-15X Laser', 'laser', -30, 30, { ceil: 220, clip: 2, maxCharge: 100, dmg: 1150, disp: 0.25, dmgR: 90, explR: 5, sat: true, rarity: 6, cost: 39800,
     short: 'A technologically advanced laser developed from the Neko-15X project. Top Secret.', long: "'Nekomimi Cooperative' written on the plate. Cute!" }),
   weapon('acid220', "220mm 3x2 CLS-T 'KARAKARA' Acid", 'acid', 0, 60, { clip: 3, salvo: 2, maxCharge: 70, disp: 3, dmg: 250, dmgR: 100, explR: 10, acid: 2, rarity: 6, cost: 44680,
     short: 'Developed on the desolate planet KARAKARA. The cause of environmental damage: this.', long: 'Acid! Acid! Not the one that makes you high, but it kills you too!' }),
@@ -160,7 +160,7 @@ const WEAPONS = [
     hybrid: true, maker: 'G.W. × Lymilark', airburst: true,
     guide: { arm: 8, burn: 55, seek: 999, apex: true, turn: 4.5, range: 700, cone: 80, lift: 0.5 },
     short: 'A G.W. anti-air rocket with a Lymilark seeker: it homes, then bursts like flak.', long: 'Proximity-fused airbursts with shrapnel, double damage to drones. Feuerlilie: fire lily.' }),
-  weapon('ichor', "KTS-T × CLS-T 'Ichor' Acid Lance", 'laser', -25, 30, { clip: 2, maxCharge: 95, disp: 0.6, dmg: 520, dmgR: 70, explR: 6, acid: 1.2, rarity: 5, cost: 25000,
+  weapon('ichor', "KTS-T × CLS-T 'Ichor' Acid Lance", 'laser', -25, 30, { ceil: 170, clip: 2, maxCharge: 95, disp: 0.6, dmg: 520, dmgR: 70, explR: 6, acid: 1.2, rarity: 5, cost: 25000,
     hybrid: true, maker: 'Kotona × CLS-T',
     short: 'A Kotona lens bolted to a CLS-T acid tank. The beam leaves the ground boiling.', long: 'A laser that lands an acid pool where it strikes, twice a turn.' }),
   // CLS-T's napalm: an autocannon that hoses incendiary flak; every fragment lands burning
@@ -176,13 +176,14 @@ const WEAPONS = [
     short: 'SEC-9 has veto power. Drones do not get a vote.', long: 'Proximity-fused point defence for the gate.' }),
   weapon('nxiarch7', "NXi ARCH-7 'Battlecruiser' 280mm", 'shell', -5, 70, { clip: 2, disp: 0.4, maxCharge: 70, dmg: 600, dmgR: 140, explR: 20, rarity: 4, cost: 9800,
     short: 'Built like a battlecruiser: maximum armour, maximum redundancy, maximum reliability.', long: 'Slow to load, slower to miss.' }),
-  weapon('nxiintel3', "NXi INTEL-3 'Gatewatch' Lance", 'laser', -25, 30, { clip: 2, salvo: 2, disp: 0.4, maxCharge: 100, dmg: 600, dmgR: 70, explR: 6, rarity: 5, cost: 27500,
+  weapon('nxiintel3', "NXi INTEL-3 'Gatewatch' Lance", 'laser', -25, 30, { ceil: 200, clip: 2, salvo: 2, disp: 0.4, maxCharge: 100, dmg: 600, dmgR: 70, explR: 6, rarity: 5, cost: 27500,
     short: 'The gate is guarded at all cost. INTEL-3 sees everything that comes through it.', long: 'Paired beams, triple-verified targeting.' }),
   weapon('nxiaeria', "NXi 'Aeria Charlotte' 406mm Royal Battery", 'shell', -5, 85, { clip: 3, salvo: 3, disp: 2, maxCharge: 110, dmg: 450, dmgR: 150, explR: 24, rarity: 6, cost: 58000,
     short: 'Commanded by Queen Aeria Charlotte herself. Every shell is worthy of royal inspection.', long: 'Three triple turrets. For the UAF.' }),
-  weapon('nxivoid', "NXi November 'Void Between Stars' Rift Lance", 'laser', 0, 25, { drift: 0.35, clip: 2, maxCharge: 400, disp: 0.01, dmg: 4000, dmgR: 260, explR: 50, sat: true, rarity: 7, cost: 150000,
-    short: 'Opens a rift to the void between dimensions, briefly. Do not stand in it.', long: 'We advance slowly because we advance forever.' }),
-  weapon('massdriver', '210mm Kinetic Mass Driver', 'laser', 0, 20, { drift: 0.15, clip: 2, maxCharge: 1000, disp: 0.001, explR: 80, dmg: 10000, dmgR: 400, sat: true, rarity: 7, cost: 195420,
+  weapon('nxivoid', "NXi November 'Void Between Stars' Arc Lance", 'laser', 0, 25, { ceil: 240, drift: 0.35, clip: 2, maxCharge: 400, disp: 0.01, dmg: 3000, dmgR: 120, explR: 30, sat: true, rarity: 7, cost: 150000,
+    chain: { n: 4, range: 280, fall: 0.8 },
+    short: 'Opens a rift for an instant and lets the storm between dimensions through. It does not stay where it lands.', long: 'Lightning that arcs from its target to the next nearest thing, four times, a fifth weaker each jump. Trees and poles draw it off. We advance slowly because we advance forever.' }),
+  weapon('massdriver', '210mm Kinetic Mass Driver', 'laser', 0, 20, { ceil: 260, drift: 0.15, clip: 2, maxCharge: 1000, disp: 0.001, explR: 80, dmg: 10000, dmgR: 400, sat: true, rarity: 7, cost: 195420,
     short: 'A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.', long: 'Holding two rounds, it was salvaged from KTNS Hatsuyuki.' }),
   // Guided rockets (Lymilark Future Sciences). After `arm` frames in flight the seeker locks onto
   // the nearest thing in a `cone` ahead within `range`: a rival, a drone, a supply crate, whatever
@@ -237,7 +238,7 @@ const REBALANCE = {
   flak40: { dmg: 40, cost: 950 }, akizuki: { dmg: 195, cost: 5000 }, maya: { dmg: 305, cost: 11000 },
   sanshiki: { dmg: 2115, cost: 30000 }, nxi105: { dmg: 110, cost: 950 }, nxitv: { dmg: 105, cost: 2650 },
   nxisec9: { dmg: 135, cost: 5100 }, nxiarch7: { dmg: 740, cost: 10000 }, nxiintel3: { dmg: 1040, cost: 19000 },
-  nxiaeria: { dmg: 510, cost: 30000 }, nxivoid: { dmg: 3000, cost: 48000 }, massdriver: { dmg: 2620, cost: 52000 },
+  nxiaeria: { dmg: 510, cost: 30000 }, nxivoid: { dmg: 1800, cost: 48000 }, massdriver: { dmg: 2620, cost: 52000 },
   // rockets: about 75% of a shell gun's worth for the price (the seeker makes up the rest)
   lfs0: { dmg: 70 }, wren: { dmg: 85, cost: 850 }, kestrel: { dmg: 90, cost: 2400 }, dunbarton: { dmg: 285, cost: 5200 },
   tirchonaill: { dmg: 390, cost: 10500 }, emain: { dmg: 415, cost: 19000 }, avalon: { dmg: 440, cost: 32000 },
@@ -323,7 +324,9 @@ function weaponValue(w) {
   const carpet = w.carpet ? w.carpet.n * w.carpet.frac * 0.45 : 0;
   const fire = w.incendiary ? w.incendiary * 60 * w.salvo * Math.min(w.clip, 4) : 0;
   const guided = w.guide ? 1.2 : 1;
-  return (w.dmg * shots * (heads + carpet) * radius * spread * guided + acid + sat + fire) * (1 + 0.12 * (w.rarity - 1));
+  // lightning: each arc jump counts for about half its damage (it often goes to a tree or a pole)
+  const arcs = w.chain ? Array.from({ length: w.chain.n }, (_, k) => w.chain.fall ** (k + 1)).reduce((a, b) => a + b, 0) * 0.5 : 0;
+  return (w.dmg * shots * (heads + carpet + arcs) * radius * spread * guided + acid + sat + fire) * (1 + 0.12 * (w.rarity - 1));
 }
 
 // Wind on a shell, scaled by its drift (p.drift, 1 by default). Two parts: a steady push (A3's wind,

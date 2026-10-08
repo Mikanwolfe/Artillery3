@@ -22,6 +22,8 @@ const REPAIR_FRAC = 0.4; // of max health and of max armour
 // Prize money counts only damage that actually came off a target (no overkill, no damage past
 // armour), and acid drip at a reduced rate: acid's many small hits used to flood the payout.
 const ACID_PAY_RATE = 0.5;
+const ROUND_BASE = 800; // flat credits everyone gets at the end of a round (A3: 500)
+const ROUND_STEP = 200; // and this much more for each round after the first
 const SAVE_KEY = 'a3.save';
 const CRATE_CHANCE = 0.3; // chance of a supply drop at the start of each turn (after the first few)
 const CRATE_MAX = 2;
@@ -459,6 +461,7 @@ class Game {
       }
     }
     this.stepTanks();
+    this.stepDrones();
     this.updateHazards();
     if (this.phase === 'aim') this.updateAim();
     else if (this.phase === 'resolve') this.updateResolve();
@@ -915,19 +918,8 @@ class Game {
     const w = p.w;
     if (r && r.hit === 'tree' && this.report) this.report.treeHit = true;
     if (w.kind === 'laser') {
-      // A3 LaserTargetProjectile: the shell marks a point, the gun's laser hits it
-      const m = p.owner.alive ? p.owner.muzzle() : { x: p.owner.x, y: p.owner.y - TANK_H };
-      const c = RARITY[w.rarity].color;
-      this.lasers.push(new Laser(m.x, m.y, p.x, p.y, c === '#ffffff' ? '#e0e0ff' : c, 12, 60));
-      this.sfx.laser();
-      this.explode(p.x, p.y, { ...w, front: this.frontMult(p), dmg: w.dmg * this.frontMult(p), from: { x: m.x - p.x, y: m.y - p.y } }, p.owner, 'laser');
-      if (w.acid) { // an acid laser (the Ichor): the beam leaves a boiling pool
-        for (let i = 0; i < 18; i++) {
-          const a = -Math.PI * (0.15 + 0.7 * rng.next());
-          const sp = 1.5 + rng.next() * 4;
-          this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 4, Math.cos(a) * sp, Math.sin(a) * sp, w.acid));
-        }
-      }
+      // the pointer has landed: the drone climbs until it can see the spot and fires (lasers.js)
+      if (r && r.hit !== 'out') this.projectiles.push(new DroneBeam(this, w, p.owner, p));
     } else {
       this.explode(p.x, p.y, { ...this.shotBonus(p), from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
@@ -944,7 +936,7 @@ class Game {
       }
     }
     if (p.storm) this.lightning(p, w);
-    if ((w.sat || p.uplink) && p.main) this.satTarget = { x: p.x, y: p.y, owner: p.owner };
+    if ((w.sat || p.uplink) && p.main && w.kind !== 'laser') this.satTarget = { x: p.x, y: p.y, owner: p.owner }; // a laser's MAIA call follows its beam
   }
 
   // kinetic and altitude bonuses for a shell's impact (see KINETIC_* / ALTITUDE_*)
@@ -1260,7 +1252,8 @@ class Game {
     // A3 CombatGameState paid everyone 500 + half the round's damage (scaled up each round). That
     // counted raw damage, so overkill and acid floods inflated it; we count only damage that came
     // off a target (acid drip at ACID_PAY_RATE), and so count it in full to keep the same pace.
-    const award = Math.round(500 + this.roundDamage * this.awardMult);
+    // a flat ROUND_BASE that grows by ROUND_STEP each round, so progression keeps pace over a run
+    const award = Math.round(ROUND_BASE + ROUND_STEP * (this.round - 1) + this.roundDamage * this.awardMult);
     this.lastAward = award;
     this.awardMult += 0.08;
     for (const t of this.tanks) t.money += award;
@@ -1616,6 +1609,7 @@ class Game {
     const aiming = this.phase === 'aim' ? this.active : null;
     if (aiming && !this.cpu) this.drawGhost(ctx, aiming);
     for (const t of this.tanks) t.draw(ctx, t === aiming);
+    this.drawDrones(ctx, aiming && !this.cpu ? aiming : null);
     if (aiming && !this.cpu) this.drawAimGuide(ctx, aiming);
     if (aiming && !this.cpu && aiming.mark) this.drawMark(ctx, aiming);
     if (aiming && hasTrait(aiming, 'designator')) { // her laser dot sits on the designated target

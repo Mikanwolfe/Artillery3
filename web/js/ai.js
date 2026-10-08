@@ -62,7 +62,11 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
   const evalShot = (elev, v) => {
     const m = tank.muzzle(elev, facing);
     const u = tank.aimVec(elev, facing); // elevation is relative to the hull
-    const r = simulateShot(game.terrain, wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift, w, seek);
+    let r = simulateShot(game.terrain, wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift, w, seek);
+    if (w.kind === 'laser' && r.hit !== 'out') { // the pointer only marks: the drone's beam is what lands
+      const b = droneShot(game.terrain, game.targets(), tank, w, r).end;
+      r = { ...r, x: b.x, y: b.y, hit: b.hit === 'spot' ? r.hit : b.hit, tank: b.hit === 'spot' ? r.tank : b.tank || null };
+    }
     let err;
     if (r.hit === 'tank' && r.tank === target) err = 0;
     else err = Math.max(0, dist(r.x, r.y, tc.x, tc.y) - w.dmgR * 0.25);

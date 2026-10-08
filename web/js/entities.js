@@ -75,6 +75,7 @@ class Tank {
 
   resetRound(x, terrain) {
     this.x = x;
+    this.drone = null;
     this.y = terrain ? terrain.hAt(x) : 1000;
     this.vy = 0;
     this.alive = true;
