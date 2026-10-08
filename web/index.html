@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Artillery 3</title>
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#121119">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -38,7 +43,7 @@
         <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
       </div>
       <div class="pad r">
-        <button data-end="1" class="wide">END TURN</button>
+        <button data-menu="1">MENU</button>
         <button data-k="charge" class="fire">FIRE</button>
       </div>
     </div>
@@ -181,7 +186,7 @@
   </section>
 
   <section id="pause" class="screen" hidden>
-    <div class="panel plate small"><h2 class="big">Paused</h2><div class="stack"><button id="resume" class="primary">Resume</button><button id="pause-keys" class="ghost">Controls</button><button id="pause-end" class="ghost danger">End match</button></div><p id="pause-seed" class="mgh seed"></p></div>
+    <div class="panel plate small"><h2 class="big">Paused</h2><div class="stack"><button id="resume" class="primary">Resume</button><button id="pause-turn" class="ghost" hidden>End turn</button><button id="pause-keys" class="ghost">Controls</button><button id="pause-end" class="ghost danger">End match</button></div><p id="pause-seed" class="mgh seed"></p></div>
   </section>
 </div>
 
