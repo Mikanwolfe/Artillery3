@@ -25,6 +25,7 @@ const FRONT_WIDTH = [null, [60, 90], [100, 140], [150, 200]];
 const FRONT_DRIFT = 1200; // world units of drift per turn per unit of wind
 const FOG_RISE = 45; // world units per turn cycle (+5 per stage)
 const FOG_DMG = 0.1; // of max health + max armour, at the start of each turn spent in it
+const LAVA_DMG = 60; // at the start of each turn spent standing in lava (Ikaros' Apollon), at full melt
 const ROMAN = ['', 'I', 'II', 'III'];
 
 Object.assign(Game.prototype, {
@@ -283,6 +284,16 @@ Object.assign(Game.prototype, {
       this.resolveSteps = 0;
       this.quiet = 0;
     }
+  },
+
+  // start of a vehicle's turn standing in lava (Ikaros' Apollon)
+  lavaDamage(t) {
+    if (!t.alive) return;
+    const l = this.terrain.lavaAt(t.x);
+    if (l < 0.1 || Math.abs(t.y - this.terrain.hAt(t.x)) > 12) return;
+    this.particles.text(t.x, t.y - 64, 'LAVA', '#ff9a40');
+    this.events.push(`${t.name} is standing in lava.`);
+    this.damage(t, Math.round(LAVA_DMG * (0.4 + 0.6 * l)), null);
   },
 
   // start of a vehicle's turn inside the rising hazard

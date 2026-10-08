@@ -209,7 +209,7 @@ class CpuController {
           const reach = t.fuel * TANK_SPEED * 0.9;
           let to = null;
           if (wire) to = t.x - wire.a < wire.b - t.x ? wire.a - 24 : wire.b + 24;
-          else if (g.coveredAt(t.x, t.y)) to = g.clearSpot(t, Math.min(reach, 700));
+          else if (g.coveredAt(t.x, t.y) || g.terrain.lavaAt(t.x) >= 0.1) to = g.clearSpot(t, Math.min(reach, 700)); // under a deck, or in lava
           if (to !== null && Math.abs(to - t.x) <= reach) {
             this.moveDir = to > t.x ? 1 : -1;
             this.moveFrames = Math.ceil(Math.abs(to - t.x) / TANK_SPEED) + 4;
@@ -284,7 +284,7 @@ class CpuController {
       case 'move': {
         // other moves stop short of a live wire or a deck overhead (escaping one, it drives on)
         const g = this.game, nx = t.x + this.moveDir * TANK_SPEED * 6;
-        const into = !this.escaping && !t.falling && (g.liveWireAt(nx, g.groundAt(nx, t.y)) || g.coveredAt(nx, g.groundAt(nx, t.y)));
+        const into = !this.escaping && !t.falling && (g.liveWireAt(nx, g.groundAt(nx, t.y)) || g.coveredAt(nx, g.groundAt(nx, t.y)) || (g.terrain.lavaAt(nx) >= 0.1 && g.terrain.lavaAt(t.x) < 0.1));
         if (!into && this.moveFrames-- > 0 && t.fuel > 1) {
           if (this.moveDir < 0) c.left = true; else c.right = true;
           // stuck against a wall or fort for a moment: jump it, if there's the fuel

@@ -311,7 +311,7 @@ Object.assign(Game.prototype, {
       for (const dir of [1, -1]) {
         const x = t.x + dir * d;
         if (x < 30 || x > WORLD_W - 30) continue;
-        if (!this.coveredAt(x, this.groundAt(x, t.y)) && !this.liveWireAt(x, this.terrain.hAt(x))) return x;
+        if (!this.coveredAt(x, this.groundAt(x, t.y)) && !this.liveWireAt(x, this.terrain.hAt(x)) && this.terrain.lavaAt(x) < 0.1) return x;
       }
     }
     return null;

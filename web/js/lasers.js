@@ -155,7 +155,7 @@ class DroneBeam {
       }
     }
     if (w.chain) g.chainArc(end, w, t, w.dmg * this.front);
-    if (w.meteor) g.projectiles.push(new Meteor(g, t, end, w.meteor)); // Ikaros' Apollon (finals.js)
+    if (w.meteor) g.projectiles.push(new AsteroidStrike(g, t, end, w.meteor)); // Ikaros' Apollon (finals.js)
     if ((w.sat || this.uplink) && this.main) g.satTarget = { x: end.x, y: end.y, owner: t };
   }
 

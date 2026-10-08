@@ -60,7 +60,7 @@ const GUN_NOTES = {
   verdict: ['Final', 'November only. The round is just a target dot: an NXi battlecruiser lines up overhead and fires a tachyon lance straight down.'],
   constellation: ['Final', 'Innocentia only. A laser dot. MAIA opens her eye and the sky fills with MAIAs, a vast one behind them; five waves of 40 shots (110 each) hit across 650 either side of the mark, then the vast MAIA\'s beam comes down: 2,600.'],
   morrighan: ['Final', 'Alban Eiler only. A flare that summons the goddess Morrighan over the mark; she looses 26 seeking arrows of light at everything in reach.'],
-  apollon: ['Final', 'Ikaros only. A laser like the others, and where it lands a meteorite follows a second later.'],
+  apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 3,400 across 400, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
 };
 const GIRL_NOTES = {
   gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and she drives anywhere without fall or tree damage.' },

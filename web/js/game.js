@@ -453,6 +453,7 @@ class Game {
       this.particles.text(t.x, t.y - 40, `+${ar}`, '#8fe0a0');
     }
     this.fogDamage(t);
+    this.lavaDamage(t);
     this.infraTurn(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
@@ -1681,7 +1682,7 @@ class Game {
     // very high up (the NXi fleet shot) the sky gives way to space
     const space = clamp((-cam.y - 900) / 1400, 0, 1);
     if (space > 0) drawSpace(ctx, space, this.time);
-    if (this.ascent > 0) drawAscent(ctx, this.ascent, this.time); // the NXi fleet shot's climb
+    if (this.ascent > 0) drawAscent(ctx, this.ascent, this.time, this.ascentDir || 1); // a set piece's climb (or fall)
 
     // world
     const sx = this.shake > 0.5 ? (Math.random() - 0.5) * this.shake * 2 : 0;

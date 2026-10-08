@@ -63,6 +63,7 @@ class Terrain {
     this.lines = [];
     this.towers = [];
     this.soot = new Float32Array(WORLD_W); // 0..1 scorch per column, drawn along the surface
+    this.lava = new Float32Array(WORLD_W); // 0..1 molten ground per column (Ikaros' Apollon): permanent
     const peaks = Math.round(rng.int(g.peaks[0], g.peaks[1]) * WORLD_W / 2400); // the biome's count is per 2400 units
     for (let k = 0; k < peaks; k++) {
       const cx = rng.range(250, WORLD_W - 250);
@@ -101,6 +102,16 @@ class Terrain {
       this.soot[x] = Math.min(1, this.soot[x] + amt * k * (0.6 + 0.4 * hash2(x, 7)));
     }
   }
+
+  // the ground melted to lava within r of cx (strongest in the middle); it stays for the round
+  melt(cx, r) {
+    if (!this.lava) return;
+    for (let x = Math.max(0, Math.floor(cx - r)); x < Math.min(WORLD_W, cx + r); x++) {
+      const k = 1 - Math.abs(x - cx) / r;
+      this.lava[x] = Math.min(1, this.lava[x] + Math.min(1, k * 1.6) * (0.75 + 0.25 * hash2(x, 19)));
+    }
+  }
+  lavaAt(x) { return this.lava ? this.lava[clamp(Math.round(x), 0, WORLD_W - 1)] : 0; }
 
   crater(cx, explRad) {
     const width = Math.max(8, explRad * 8 - 1);
@@ -191,6 +202,7 @@ class Terrain {
       fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
     }
     for (const f of this.forts) f.draw(ctx);
+    if (this.lava) this.drawLava(ctx, x0, x1);
     if (!this.soot) return;
     // soot: a brown band of squares along the surface, deeper and darker where it's heavier
     const step = TERRAIN_STEP;
@@ -203,6 +215,30 @@ class Terrain {
       if (s > 0.35 && hash2(x, 3) < s * 0.6) { // flecks thrown a little further down
         ctx.fillStyle = rgb(this.sootColor || SOOT_RGB, 0.35 * s);
         ctx.fillRect(x + 1, top + Math.round(5 + 14 * s), 3, 3);
+      }
+    }
+  }
+
+  // lava: a dark crust over the surface with molten cracks that glow and flicker, thicker and
+  // brighter toward the middle, and embers rising off the hottest parts
+  drawLava(ctx, x0, x1) {
+    const step = TERRAIN_STEP, now = performance.now() / 1000; // flicker only: not game state
+    for (let x = Math.max(0, Math.floor(x0 / step) * step); x < Math.min(WORLD_W, x1 + step); x += step) {
+      const l = this.lava[Math.min(WORLD_W - 1, x + (step >> 1))];
+      if (l < 0.05) continue;
+      const top = Math.round(this.height[Math.min(WORLD_W - 1, x + (step >> 1))]);
+      const th = Math.round(6 + 26 * l);
+      ctx.fillStyle = `rgba(52,20,14,${0.5 + 0.5 * l})`;
+      ctx.fillRect(x, top - 1, step, th);
+      const glow = 0.55 + 0.45 * Math.sin(now * 3 + x * 0.07);
+      if (hash2(x, 23) < 0.35 + 0.6 * l) {
+        ctx.fillStyle = `rgba(255,${Math.round(90 + 110 * glow * l)},30,${(0.5 + 0.5 * l) * glow})`;
+        ctx.fillRect(x, top - 1 + Math.round(hash2(x, 29) * th * 0.5), step, Math.max(2, Math.round(th * 0.35)));
+      }
+      if (l > 0.5 && hash2(x, 31) < 0.25) { // embers
+        const e = (now * 0.8 + hash2(x, 37)) % 1;
+        ctx.fillStyle = `rgba(255,190,80,${1 - e})`;
+        ctx.fillRect(x + 2, top - 6 - Math.round(e * 40), 3, 3);
       }
     }
   }
@@ -224,4 +260,5 @@ function fillSteps(ctx, heights, x0, x1, step, ox, oy) {
   ctx.lineTo(Math.min(n, b) + step + ox, bottom);
   ctx.closePath();
   ctx.fill();
+
 }

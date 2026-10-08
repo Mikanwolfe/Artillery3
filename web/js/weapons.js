@@ -249,8 +249,8 @@ const WEAPONS = [
     deity: { arrows: 26, dmg: 240, r: 45, reach: 950 },
     short: 'A signal flare to the sky, and something answers: the war goddess of the old songs, on a cloud, with a quiver of light.', long: 'She looses a rain of seeking arrows on everything in reach. Alban Eiler only.' }),
   weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 8, cost: 75000,
-    meteor: { dmg: 3200, r: 240, time: 55 },
-    short: 'Where her arrow of light lands, the sky answers: a meteorite comes down on it.', long: 'Ikaros only.' }),
+    meteor: { dmg: 3400, r: 400, explR: 130, size: 170, lava: 640, splash: 20 },
+    short: 'Where her arrow of light lands, the sky answers: she marks an asteroid and brings it down.', long: 'Ikaros only.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its

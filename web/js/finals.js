@@ -1,6 +1,7 @@
 'use strict';
 // Final weapons (w.sig: one per girl, only in her own shop) and their set pieces:
-//   Ikaros' Apollon        a laser like any other, but where the beam lands a meteorite comes down
+//   Ikaros' Apollon        a laser; where it lands the camera climbs to an asteroid belt, marks a rock
+//                          and flings it down: a vast crater melted to lava for good (AsteroidStrike)
 //   November's Verdict     a target dot; an NXi battlecruiser fleet drops in overhead, the camera
 //                          rolls to show it in formation, and the flagship's spinal lance fires down
 //   Innocentia's Array     a dot; MAIA's eye opens, the sky fills with MAIAs and a vast one behind
@@ -11,47 +12,138 @@
 //   Alban's Morrighan      a flare that summons the war goddess over the mark; she looses a rain of
 //                          seeking arrows of light (DeitySummon)
 
-// ---------------------------------------------------------------------------------- meteor
-class Meteor {
+// ---------------------------------------------------------------------------------- asteroid
+// Ikaros' Apollon. Where her beam lands the sky answers: the camera climbs, the light streaking
+// past, the sky darkens to space, it passes the NXi fleet on station and comes out among an
+// asteroid belt. It settles on one rock; a yellow outline forms around it and pulses, in silence;
+// then the rock is flung down, faster than the climb, and lands: a vast crater, the ground melted
+// to lava that stains it for good (Terrain.melt) and burns anyone who stands in it.
+const ROCK = { CLIMB: 130, MARK: 142, PULSE: 226, DROP: 276, END: 366 };
+const ROCK_ALT = 15000; // the belt, above the mark
+const ROCK_CELL = 10; // the rocks' box size
+// a lumpy rock as boxes: cells inside a noisy radius, shaded light on the upper left
+function rockCells(R, seed) {
+  const out = [], n = Math.ceil(R / ROCK_CELL);
+  const bump = (a) => 0.78 + 0.12 * Math.sin(a * 3 + seed) + 0.08 * Math.sin(a * 7 + seed * 2.3) + 0.05 * Math.sin(a * 13 + seed * 5.1);
+  for (let j = -n; j <= n; j++) for (let i = -n; i <= n; i++) {
+    const x = i * ROCK_CELL, y = j * ROCK_CELL, r = Math.hypot(x, y);
+    if (r > R * bump(Math.atan2(y, x))) continue;
+    const lit = (-x - y) / (R * 1.4), pit = hash2(i * 13 + seed * 7, j * 17) < 0.08;
+    const v = pit ? 0.55 : 0.75 + 0.3 * lit + 0.08 * hash2(i, j + seed);
+    out.push([x, y, `rgb(${Math.round(120 * v)},${Math.round(108 * v)},${Math.round(98 * v)})`]);
+  }
+  return out;
+}
+class AsteroidStrike {
   constructor(game, owner, at, cfg) {
     this.game = game;
     this.owner = owner;
     this.cfg = cfg;
-    this.tx = at.x; this.ty = at.y;
-    const dir = rng.chance(0.5) ? 1 : -1;
-    this.sx = at.x - dir * 900; this.sy = at.y - 1500; // in from high up, at a slant
-    this.x = this.sx; this.y = this.sy;
-    this.k = 0;
-    this.T = cfg.time || 55;
-    game.cam.follow(this);
+    this.tx = at.x;
+    this.ground = Math.min(game.terrain.hAt(at.x), at.y);
+    this.belt = this.ground - ROCK_ALT;
+    this.t = 0;
+    this.zoom0 = game.cam.zoom;
+    this.focus = { x: this.tx, y: this.ground - 200 };
+    this.rock = { x: this.tx, y: this.belt, cells: rockCells(cfg.size, 3) };
+    this.mark = 0; // the yellow outline, forming then pulsing
+    // the belt: rocks of every size drifting across the dark
+    this.belt_ = [];
+    for (let i = 0; i < 46; i++) {
+      const R = 16 + hash2(i, 5) * 90, side = i % 2 ? 1 : -1;
+      this.belt_.push({ x: this.tx + side * (240 + hash2(i, 9) * 2400), y: this.belt + (hash2(i, 2) - 0.5) * 1100, vx: (hash2(i, 4) - 0.5) * 1.2, R, cells: rockCells(R, i), far: hash2(i, 8) < 0.5 });
+    }
+    // the outline: cells just outside the rock
+    const inside = new Set(this.rock.cells.map(([x, y]) => x + ',' + y));
+    this.edge = [];
+    for (const [x, y] of this.rock.cells) {
+      for (const [dx, dy] of [[ROCK_CELL, 0], [-ROCK_CELL, 0], [0, ROCK_CELL], [0, -ROCK_CELL]]) {
+        const k = (x + dx) + ',' + (y + dy);
+        if (!inside.has(k)) { inside.add(k); this.edge.push([x + dx, y + dy]); }
+      }
+    }
+    game.cam.ceil = this.belt - 2500;
+    game.cam.follow(this.focus);
     game.ui.notice('The sky answers.');
   }
 
   update() {
-    const g = this.game;
-    this.k++;
-    const f = Math.min(1, Math.pow(this.k / this.T, 1.5)); // it speeds up as it falls
-    this.x = lerp(this.sx, this.tx, f);
-    this.y = lerp(this.sy, this.ty, f);
-    for (let i = 0; i < 3; i++) {
-      g.particles.add({ x: this.x + (Math.random() - 0.5) * 18, y: this.y + (Math.random() - 0.5) * 18, vx: (Math.random() - 0.5) * 2, vy: -Math.random(), g: -0.02, drag: 0.96, life: 0.6 + Math.random() * 0.6, size: 8 + Math.random() * 12, color: i ? [255, 150 + Math.random() * 80, 40] : [90, 80, 80] });
+    const g = this.game, cam = g.cam, t = ++this.t, f = this.focus, r = this.rock;
+    const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
+    for (const b of this.belt_) b.x += b.vx;
+    if (t <= ROCK.CLIMB) { // the climb, gathering speed then easing into the belt
+      // eased, and slowing right down as it passes the fleet (at ORB_ALT / ROCK_ALT of the way)
+      const k = 0.85, mid = ORB_ALT / ROCK_ALT - 0.08, p = (q) => q - (k / TAU) * Math.sin(TAU * (q - mid));
+      const u = (p(ease(t / ROCK.CLIMB)) - p(0)) / (p(1) - p(0));
+      f.x = this.tx; f.y = lerp(this.ground - 200, this.belt + 40, u);
+      cam.setZoom(lerp(this.zoom0, 0.8, u));
+      g.ascent = Math.sin(Math.PI * Math.min(1, t / ROCK.CLIMB)); g.ascentDir = 1;
     }
-    if (this.k < this.T) return true;
-    const c = this.cfg;
-    g.explode(this.tx, this.ty, { dmg: c.dmg, dmgR: c.r, explR: 60, from: { x: this.sx - this.tx, y: this.sy - this.ty } }, this.owner, 'shell');
-    g.shake = Math.max(g.shake, 22);
-    g.screenFlash = Math.max(g.screenFlash || 0, 0.5);
-    g.sfx.explosion(60);
-    g.cam.follow({ x: this.tx, y: this.ty });
-    return false;
+    if (t > ROCK.CLIMB && t <= ROCK.DROP) { g.ascent = 0; f.y = this.belt + 40; }
+    if (t > ROCK.CLIMB && t <= ROCK.MARK) this.mark = (t - ROCK.CLIMB) / (ROCK.MARK - ROCK.CLIMB);
+    if (t > ROCK.MARK && t <= ROCK.PULSE) this.mark = 0.6 + 0.4 * Math.abs(Math.sin((t - ROCK.MARK) * 0.11));
+    if (t > ROCK.PULSE && t <= ROCK.DROP) { // and down: faster than the climb, harder all the way
+      this.mark = Math.max(0, 1 - (t - ROCK.PULSE) / 10);
+      const u = Math.pow((t - ROCK.PULSE) / (ROCK.DROP - ROCK.PULSE), 2.2);
+      r.y = lerp(this.belt, this.ground, u);
+      f.y = r.y - 120 * (1 - u) - 60;
+      cam.setZoom(lerp(0.8, 0.5, u));
+      g.ascent = Math.min(1, u * 4) * (1 - u * 0.3); g.ascentDir = -1;
+      for (let i = 0; i < 4; i++) {
+        g.particles.add({ x: r.x + (Math.random() - 0.5) * this.cfg.size * 1.4, y: r.y - this.cfg.size * 0.6 - Math.random() * 40, vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 3, g: -0.02, drag: 0.95, life: 0.5 + Math.random() * 0.5, size: 14 + Math.random() * 20, color: i ? [255, 150 + Math.random() * 80, 40] : [110, 96, 90] });
+      }
+      if (t === ROCK.PULSE + 1) g.sfx.laser();
+    }
+    if (t === ROCK.DROP) {
+      g.ascent = 0;
+      const c = this.cfg, y = g.terrain.hAt(this.tx);
+      g.explode(this.tx, y, { dmg: c.dmg, dmgR: c.r, explR: c.explR, visR: 620, from: { x: 0, y: -1 } }, this.owner, 'shell');
+      g.terrain.melt(this.tx, c.lava);
+      for (let i = 0; i < 90; i++) { // molten rock thrown out of the crater
+        const a = -Math.PI * (0.08 + 0.84 * rng.next()), sp = 3 + rng.next() * 12;
+        g.drops.push(new AcidDrop(g, this.owner, this.tx + (rng.next() - 0.5) * 200, g.terrain.hAt(this.tx) - 6, Math.cos(a) * sp, Math.sin(a) * sp, c.splash, true));
+      }
+      g.shake = Math.max(g.shake, 44);
+      g.screenFlash = Math.max(g.screenFlash || 0, 1);
+      g.sfx.explosion(80);
+      g.events.push('The ground melts.');
+    }
+    cam.follow(f);
+    if (t <= ROCK.DROP) cam.snap();
+    if (t > ROCK.DROP + 30 && t <= ROCK.DROP + 70) cam.setZoom(lerp(0.5, this.zoom0, ease((t - ROCK.DROP - 30) / 40)));
+    if (t >= ROCK.END) { cam.ceil = -1000; g.ascent = 0; g.ascentDir = 1; return false; }
+    return true;
   }
 
   draw(ctx) {
-    const t = this.game.time;
-    ctx.fillStyle = '#5a4a44'; sq(ctx, this.x, this.y, 30);
-    ctx.fillStyle = '#7a6258'; sq(ctx, this.x - 5, this.y - 5, 18);
-    ctx.fillStyle = (t * 20 | 0) % 2 ? '#ffb040' : '#ffe080';
-    sq(ctx, this.x + 8, this.y + 8, 12);
+    const t = this.t, time = this.game.time, r = this.rock;
+    // the NXi fleet on station, passed on the way up
+    const fy = this.ground - ORB_ALT;
+    drawScaled(ctx, this.tx - 900, fy - 260, 0.6, 0.6, () => drawBattlecruiser(ctx, 0, 0, 1, time + 3));
+    drawBattlecruiser(ctx, Math.round(this.tx + 520), Math.round(fy), -1, time);
+    drawBattlecruiser(ctx, Math.round(this.tx - 380), Math.round(fy + 330), -1, time + 1);
+    drawFrigate(ctx, Math.round(this.tx + 120), Math.round(fy - 200), time, false);
+    drawFrigate(ctx, Math.round(this.tx - 640), Math.round(fy + 120), time + 2, false);
+    // the belt
+    const rockAt = (cells, x, y, a = 1) => {
+      ctx.globalAlpha = a;
+      for (const [cx, cy, col] of cells) { ctx.fillStyle = col; ctx.fillRect(Math.round(x + cx - ROCK_CELL / 2), Math.round(y + cy - ROCK_CELL / 2), ROCK_CELL, ROCK_CELL); }
+      ctx.globalAlpha = 1;
+    };
+    for (const b of this.belt_) rockAt(b.cells, b.x, b.y, b.far ? 0.45 : 1);
+    if (t >= ROCK.DROP) return;
+    // the chosen rock, glowing underneath as it comes down, and its yellow outline
+    rockAt(r.cells, r.x, r.y);
+    if (t > ROCK.PULSE) {
+      const heat = clamp((t - ROCK.PULSE) / 30, 0, 1);
+      ctx.fillStyle = `rgba(255,140,40,${0.6 * heat})`;
+      for (const [cx, cy] of r.cells) if (cy > this.cfg.size * 0.35) ctx.fillRect(Math.round(r.x + cx - ROCK_CELL / 2), Math.round(r.y + cy - ROCK_CELL / 2), ROCK_CELL, ROCK_CELL);
+    }
+    if (this.mark > 0) {
+      ctx.fillStyle = `rgba(255,214,60,${this.mark})`;
+      const grow = 1 + (1 - Math.min(1, this.mark * 1.5)) * 0.3;
+      for (const [cx, cy] of this.edge) ctx.fillRect(Math.round(r.x + cx * grow - ROCK_CELL / 2), Math.round(r.y + cy * grow - ROCK_CELL / 2), ROCK_CELL, ROCK_CELL);
+    }
   }
 }
 
@@ -180,9 +272,9 @@ function drawSpace(ctx, a, time) {
 
 // the climb: streaks of light rushing up the screen (screen pixels), thick in the middle of the climb
 const ASCENT_STREAKS = Array.from({ length: 90 }, (_, i) => [((i * 7919) % 997) / 997, ((i * 104729) % 991) / 991, 0.6 + ((i * 31) % 7) / 7]);
-function drawAscent(ctx, a, time) {
+function drawAscent(ctx, a, time, dir = 1) {
   for (const [u, v, sp] of ASCENT_STREAKS) {
-    const y = (((v - time * 2.2 * sp) % 1) + 1) % 1; // moving up
+    const y = (((v - dir * time * 2.2 * sp) % 1) + 1) % 1; // moving up (climbing) or down (falling)
     const len = 30 + 90 * a * sp;
     ctx.fillStyle = `rgba(${sp > 1.2 ? '200,225,255' : '255,255,255'},${0.15 + 0.55 * a})`;
     ctx.fillRect(Math.round(u * W), Math.round(y * H), 2 + Math.round(sp), Math.round(len));
