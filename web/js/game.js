@@ -50,8 +50,9 @@ const SLIDE_RATE = 0.25;
 const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
 const KILL_BOUNTY = 250;
+const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs every turn
-const SAT_DOWN_ROTATIONS = 2; // shot down, MAIA stays offline this many turns of every vehicle left
+const SAT_DOWN_TURNS = 2; // shot down, MAIA stays offline this many turns
 const SAT_REBOOT = 0.5; // and comes back with this share of its health
 // damage popup tiers by accuracy (share of the blast radius from dead centre)
 const HIT_TIERS = [
@@ -985,9 +986,9 @@ class Game {
     if (!sat.alive) {
       this.particles.explosion(c.x, c.y, 160, 'laser');
       this.shake = Math.max(this.shake, 8);
-      // it stays down for SAT_DOWN_ROTATIONS full turns of everyone left, then reboots at half health
-      sat.downUntil = this.turnCount + SAT_DOWN_ROTATIONS * Math.max(1, this.tanks.filter((t) => t.alive).length);
-      this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline for ${SAT_DOWN_ROTATIONS} rounds of turns.`);
+      // it stays down for SAT_DOWN_TURNS turns, then reboots at half health
+      sat.downUntil = this.turnCount + SAT_DOWN_TURNS;
+      this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline for ${SAT_DOWN_TURNS} turns.`);
       this.events.push('MAIA is offline.');
     } else this.events.push(`${owner ? owner.name : 'Something'} hit MAIA (${reg.tag.toLowerCase()}): ${Math.round(sat.health * 100)}%.`);
   }
@@ -1417,6 +1418,9 @@ class Game {
       const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id)).sort((a, b) => weaponValue(b) - weaponValue(a));
       let pick = shop.find((w) => w.cost <= budget);
       if (!pick) break;
+      // not too clinical: any affordable gun within CPU_PICK_SPREAD of the best one's worth will do
+      const close = shop.filter((w) => w.cost <= budget && weaponValue(w) >= weaponValue(pick) * CPU_PICK_SPREAD);
+      pick = rng.pick(close);
       if (t.type === 'easy' && rng.chance(0.4)) pick = rng.pick(shop.filter((w) => w.cost <= budget));
       else {
         const later = shop.find((w) => w.cost <= budget + horizon);
