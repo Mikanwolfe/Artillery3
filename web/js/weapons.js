@@ -155,8 +155,9 @@ const WEAPONS = [
   weapon('yukikaze', "Hatsuyuki 'Yukikaze' Uplink Seeker", 'rocket', 10, 80, { salvo: 2, maxCharge: 70, disp: 0.8, dmg: 40, dmgR: 45, explR: 5, rarity: 4, cost: 13000, sat: true,
     maia: { pulses: 5, dmg: 120, r: 120, gap: 14 }, // the Hatsuyuki barrage (Game.updateSatellite)
     hybrid: true, maker: 'Hatsuyuki × Lymilark',
-    guide: { arm: 6, burn: 230, seek: 150, turn: 9, range: 1200, cone: 140, lift: 0.5 },
-    short: 'A Hatsuyuki seeker that wakes up late: two and a half seconds out, it hunts hard. Its call opens MAIA all the way.', long: 'The warheads barely scratch. The Hatsuyuki barrage does the work: MAIA spreads its wings and antenna and strikes five times, at near full strength from round one.' }),
+    kin: 6, // it comes in hot (no airbrake): six times the usual kinetic damage for a direct hit
+    guide: { arm: 6, burn: 230, seek: 150, apex: true, brake: false, turn: 9, range: 1200, cone: 140, lift: 0.5 },
+    short: 'A Hatsuyuki seeker that dives on the nearest target past the top of its arc, without braking. Its call opens MAIA all the way.', long: 'The warheads barely scratch, but a fast direct hit does six times the usual kinetic damage. The Hatsuyuki barrage does the rest: MAIA spreads its wings and antenna and strikes five times, at near full strength from round one.' }),
   weapon('feuerlilie', "G.W.–LFS 'Feuerlilie' Seeker Flak", 'rocket', 10, 85, { salvo: 2, clip: 2, maxCharge: 75, disp: 0.6, dmg: 90, dmgR: 90, explR: 4, rarity: 3, cost: 7000,
     hybrid: true, maker: 'G.W. × Lymilark', airburst: true,
     guide: { arm: 8, burn: 55, seek: 999, apex: true, turn: 4.5, range: 700, cone: 80, lift: 0.5 },

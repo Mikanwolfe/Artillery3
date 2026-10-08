@@ -1043,7 +1043,7 @@ class Game {
     const alt = altitudeBonus(p.y - p.peak, p.launch || 0);
     const speed = Math.hypot(p.vx, p.vy);
     const body = this.bodyFactor(p);
-    const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg * body * (p.charging ? w.lance.kin : 1);
+    const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg * body * (p.charging ? w.lance.kin : w.kin || 1); // w.kin: a weapon's own kinetic multiplier
     const front = this.frontMult(p);
     return { ...w, alt, front, dmg: w.dmg * body * (1 + alt) * front, kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
   }
