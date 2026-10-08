@@ -10,8 +10,8 @@
 //                          SPGs and a Karl-Gerät, which rain shells on the area (BatteryStrike)
 //   Object 15X's Zero Point a railgun probe; the Naito MAIA fires from the Great Red Spot and the
 //                          ground round the probe is deleted outright (NaitoStrike)
-//   Alban's Morrighan      a flare that summons the war goddess over the mark; she looses a rain of
-//                          seeking arrows of light (DeitySummon)
+//   Alban's Morrighan      a flare; the sky over it tears open like a wound and black rockets rain out
+//                          of the tears on long dark trails (SkyTear)
 
 // ---------------------------------------------------------------------------------- asteroid
 // Ikaros' Apollon. Where her beam lands the sky answers: the camera climbs, the light streaking
@@ -152,9 +152,8 @@ class AsteroidStrike {
 // The November Division flagship as built in Avorion, pixelised from the side shot (its red accents
 // recoloured to the NXi's navy): a long arrowhead hull in grey splinter camo, its bow drawn out flat and sharp, a row of turrets on the
 // raised deck, the bridge mast aft of them, navy light strips down the flanks and swept navy fins at
-// the stern. The plate amidships (BC_WING) is its own piece: as the lance charges it lifts clear,
-// light gathers in the gap, and the beam comes down out of the belly under it (BC_EMIT).
-// Profile only, bow toward +x (facing d), centred on x, y.
+// the stern. The lance is spinal: it leaves from under the fore end of the plate amidships (BC_EMIT)
+// and fires forward along the ship's axis. Drawn in profile (bow toward facing d) or turned nose-down.
 const BC_SPRITE = [
   '..........................................................................................................................................NNP...................................................................................................................................................................................',
   '.....................................................................................................................................BBM......................MGM...............................................................................................................................................................',
@@ -200,60 +199,53 @@ const BC_SPRITE = [
 ];
 const BC_PAL = { A: '#69b0f4', B: '#a3a3a2', C: '#436fb5', D: '#7a7570', E: '#345596', F: '#6b5953', G: '#515d55', H: '#4d5049', I: '#233ac2', J: '#213878', K: '#504740', L: '#4c3b33', M: '#39423b', N: '#323731', O: '#31322b', P: '#22312b', Q: '#111f5e', R: '#2e241f', S: '#242b25', T: '#24211c', U: '#1d2c25', V: '#1d2721', W: '#1d241f', X: '#1c1e19', Y: '#162621', Z: '#151f1b', a: '#151d18', b: '#131c17', c: '#121714', d: '#0c1411', e: '#050a08', f: '#010403' };
 const BC_P = 1.6; // world units per sprite pixel
-const BC_EMIT = [225, 33]; // the emitter, under the wing, in line with the red block on the flank
-const BC_WING = (x, y) => y >= 11 && y <= 22 && x >= 123 && x <= 226 - (y - 11) * 0.9; // the plate that lifts, angled at its fore end
-// the hull and the wing as runs of one colour, precomputed
-const [_bcBody, _bcWing] = (() => {
-  const body = [], wing = [];
+const BC_EMIT = [226, 20]; // where the lance leaves: under the fore end of the plate amidships, on the ship's axis
+// the hull as runs of one colour, precomputed
+const _bcRuns = (() => {
+  const out = [];
   BC_SPRITE.forEach((row, y) => {
     let x = 0;
     while (x < row.length) {
       const k = row[x];
       if (k === '.') { x++; continue; }
-      const w = BC_WING(x, y);
       let e = x + 1;
-      while (e < row.length && row[e] === k && BC_WING(e, y) === w) e++;
-      (w ? wing : body).push([BC_PAL[k], x, y, e - x]);
+      while (e < row.length && row[e] === k) e++;
+      out.push([BC_PAL[k], x, y, e - x]);
       x = e;
     }
   });
-  return [body, wing];
+  return out;
 })();
-// where the beam leaves the ship, in the world
-function bcEmitter(x, y, d) {
+// where the lance leaves the ship, in the world. down: the ship turned nose-down (bow toward +y),
+// so the spinal lance fires straight down; otherwise in profile, bow toward facing d.
+function bcEmitter(x, y, d, down = false) {
   const W = BC_SPRITE[0].length, H = BC_SPRITE.length;
-  const ex = d > 0 ? BC_EMIT[0] : W - BC_EMIT[0];
-  return { x: x + (ex - W / 2) * BC_P, y: y + (BC_EMIT[1] - H / 2) * BC_P };
+  const ox = (BC_EMIT[0] - W / 2) * BC_P, oy = (BC_EMIT[1] - H / 2) * BC_P;
+  return down ? { x: x - oy, y: y + ox } : { x: x + d * ox, y: y + oy };
 }
 function drawBattlecruiser(ctx, x, y, d, time, down = false, charge = 0) {
   const W = BC_SPRITE[0].length, H = BC_SPRITE.length, P = BC_P;
-  const x0 = x - (W / 2) * P, y0 = y - (H / 2) * P;
-  const run = (runs, ox, oy) => {
-    for (const [c, rx, ry, n] of runs) {
-      ctx.fillStyle = c;
-      const lx = d > 0 ? rx : W - rx - n;
-      ctx.fillRect(Math.round(x0 + (lx + ox) * P), Math.round(y0 + (ry + oy) * P), Math.ceil(n * P), Math.ceil(P));
-    }
-  };
-  run(_bcBody, 0, 0);
-  // the gap under the lifting wing: dark, then filling with the lance's light
-  const lift = 9 * Math.min(1, charge * 1.6);
-  if (lift > 0.3) {
-    const gx = d > 0 ? 123 : W - 226, gw = 104;
-    ctx.fillStyle = '#121014'; ctx.fillRect(Math.round(x0 + gx * P), Math.round(y0 + 12 * P), Math.round(gw * P), Math.round(10 * P));
-    ctx.fillStyle = `rgba(70,110,255,${0.4 + 0.6 * charge})`; ctx.fillRect(Math.round(x0 + gx * P), Math.round(y0 + 16 * P), Math.round(gw * P), Math.round(3 * P));
-    const e = bcEmitter(x, y, d);
-    ctx.fillStyle = `rgba(200,220,255,${charge})`; ctx.fillRect(Math.round(e.x - 4 * P), Math.round(y0 + 13 * P), Math.round(8 * P), Math.round(e.y - y0 - 13 * P));
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  if (down) ctx.rotate(Math.PI / 2);
+  else if (d < 0) ctx.scale(-1, 1);
+  const x0 = -(W / 2) * P, y0 = -(H / 2) * P;
+  for (const [c, rx, ry, n] of _bcRuns) {
+    ctx.fillStyle = c;
+    ctx.fillRect(Math.round(x0 + rx * P), Math.round(y0 + ry * P), Math.ceil(n * P), Math.ceil(P));
   }
-  run(_bcWing, d * lift * 0.4, -lift);
-  // the flank strips burning brighter as it charges; the emitter's glow under the belly
+  // charging: light gathers under the fore end of the plate and runs out along the axis to the bow
   if (charge > 0) {
-    const e = bcEmitter(x, y, d);
-    ctx.fillStyle = `rgba(120,160,255,${0.4 + 0.6 * charge})`;
-    sq(ctx, e.x, e.y + 4, 6 + 14 * charge + Math.sin(time * 30) * 2);
+    const ex = x0 + BC_EMIT[0] * P, ey = y0 + BC_EMIT[1] * P;
+    ctx.fillStyle = `rgba(90,130,255,${0.25 + 0.5 * charge})`;
+    ctx.fillRect(Math.round(ex), Math.round(ey - 3), Math.round((W - BC_EMIT[0]) * P * Math.min(1, charge * 1.5)), 6);
+    ctx.fillStyle = `rgba(200,220,255,${charge})`;
+    const g = 6 + 16 * charge + Math.sin(time * 30) * 2;
+    ctx.fillRect(Math.round(ex - g / 2), Math.round(ey - g / 2), Math.round(g), Math.round(g));
   }
-  // red running lights
-  if ((time * 2 | 0) % 2) { ctx.fillStyle = '#ff3a3a'; ctx.fillRect(Math.round(x0 + (d > 0 ? W - 2 : 1) * P), Math.round(y0 + 16 * P), 3, 3); }
+  // red running lights at the bow
+  if ((time * 2 | 0) % 2) { ctx.fillStyle = '#ff3a3a'; ctx.fillRect(Math.round(x0 + (W - 2) * P), Math.round(y0 + 16 * P), 3, 3); }
+  ctx.restore();
 }
 
 // the frigates and the fleet's palette (greys, red lights, violet thrusters)
@@ -277,15 +269,18 @@ function drawFrigate(ctx, x, y, time, down = true) {
 // ------------------------------------------------------------------------- orbital strike
 // A fleet shot. The November Division holds station far above the battlefield (ORB_ALT up). Frames:
 // 0-80 the climb: the camera rushes up from the mark through streaks of light, the sky giving way
-// to space, rolling over and back on the way, and comes level on the fleet in formation (escorts
-// and frigates round the flagship, smaller, darker battlecruisers in layers behind); 80-140 the
-// flagship charges, the plate amidships lifting clear as light gathers under it; 140 the lance
-// comes down out of its belly; 140-205 the camera rides the beam down to the mark, which it hits
+// to space, rolling a quarter turn on the way, so the fleet (hanging nose-down over the battlefield)
+// comes in side-on, in formation: escorts and frigates round the flagship, smaller, darker
+// battlecruisers in layers behind; 80-140 the camera closes on the flagship as light gathers under
+// the plate amidships; 140 the spinal lance fires (to the right, on screen: straight down, in the
+// world); 140-205 the camera rolls back level and rides the beam down to the mark, which it hits
 // with a blast far bigger than its damage radius; then the rest of the fleet opens up, a rain of
 // laser fire across the area round it.
 const ORB_ALT = 9000;
 const ORB = { CLIMB: 80, FIRE: 140, HIT: 205, VOLLEY: 214, VOLLEY_LEN: 70, END: 330 };
-// [dx, dy, facing] from the flagship's centre, in profile
+// [dx, dy] from the flagship's centre as the formation appears on screen with the camera rolled a
+// quarter turn (the ships themselves hang nose-down over the battlefield: fleetAt turns it into the world)
+const fleetAt = (sx, sy) => [-sy, sx];
 const FLEET = {
   escorts: [[-700, 170, 1], [660, -150, 1]],
   frigates: [[-300, 300, 1], [320, 230, 1], [-860, -60, 1], [900, 120, 1]],
@@ -330,7 +325,7 @@ class OrbitalStrike {
     this.tx = at.x;
     this.ground = Math.min(game.terrain.hAt(at.x), at.y);
     this.y = this.ground - ORB_ALT; // the flagship's centre on station
-    this.x = this.tx - (bcEmitter(0, 0, 1).x); // placed so its emitter is right over the mark
+    this.x = this.tx - bcEmitter(0, 0, 1, true).x; // nose-down, placed so its lance is right over the mark
     this.t = 0;
     this.charge = 0;
     this.beam = 0;
@@ -341,32 +336,33 @@ class OrbitalStrike {
     this.volley = [];
     for (let i = 0; i < v.n; i++) {
       const s = ships[i % ships.length];
-      this.volley.push({ x: clamp(this.tx + (rng.next() * 2 - 1) * v.spread, 4, WORLD_W - 4), at: ORB.VOLLEY + Math.round(rng.next() * ORB.VOLLEY_LEN), sx: this.x + s[0] });
+      this.volley.push({ x: clamp(this.tx + (rng.next() * 2 - 1) * v.spread, 4, WORLD_W - 4), at: ORB.VOLLEY + Math.round(rng.next() * ORB.VOLLEY_LEN), sx: this.x + fleetAt(s[0], s[1])[0] });
     }
     game.cam.ceil = this.y - 2500;
     game.cam.follow(this.focus);
     game.ui.notice('NXi November Division fleet on station.');
   }
 
-  get emit() { return bcEmitter(this.x, this.y, 1); }
+  get emit() { return bcEmitter(this.x, this.y, 1, true); }
 
   update() {
     const g = this.game, cam = g.cam, t = ++this.t;
     const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
     const f = this.focus, e = this.emit;
-    if (t <= ORB.CLIMB) { // the climb, rolling over and back, pulling out to take in the fleet
+    if (t <= ORB.CLIMB) { // the climb, rolling a quarter turn and pulling out: the fleet comes in side-on
       const u = ease(t / ORB.CLIMB);
       f.x = this.tx;
-      f.y = lerp(this.ground - 200, this.y + 120, u);
-      cam.rot = -Math.PI / 2 * Math.sin(Math.PI * u);
-      cam.setZoom(lerp(this.zoom0, 0.5, u));
+      f.y = lerp(this.ground - 200, this.y, u);
+      const r = ease((t - ORB.CLIMB * 0.35) / (ORB.CLIMB * 0.65));
+      cam.rot = -Math.PI / 2 * r;
+      cam.setZoom(lerp(this.zoom0, 0.5, r));
       g.ascent = Math.sin(Math.PI * Math.min(1, t / ORB.CLIMB)); g.ascentDir = 1; // streaks swell, then clear for the reveal
-    } else { g.ascent = 0; cam.rot = 0; }
+    } else g.ascent = 0;
     if (t > ORB.CLIMB && t <= ORB.FIRE) { // in on the flagship as it charges
       this.charge = (t - ORB.CLIMB) / (ORB.FIRE - ORB.CLIMB);
       const u = ease((t - ORB.CLIMB) / 30);
-      cam.setZoom(lerp(0.5, 1.6, u));
-      f.x = lerp(this.tx, this.x, u); f.y = lerp(this.y + 120, this.y + 40, u);
+      cam.setZoom(lerp(0.5, 1.4, u));
+      f.x = lerp(this.tx, this.x, u); f.y = this.y + 60 * u; // a little toward the bow
     }
     if (t === ORB.FIRE) {
       this.hit = beamTrace(g.terrain, g.targets(), null, e.x, e.y + 4, e.x, WORLD_BOTTOM);
@@ -375,13 +371,15 @@ class OrbitalStrike {
       g.screenFlash = Math.max(g.screenFlash || 0, 0.4);
       g.sfx.satFire();
     }
-    if (t > ORB.FIRE && t <= ORB.HIT) { // ride the beam down
+    if (t > ORB.FIRE && t <= ORB.HIT) { // roll back level and ride the beam down
       const u = ease((t - ORB.FIRE) / (ORB.HIT - ORB.FIRE));
-      cam.setZoom(lerp(1.6, Math.min(this.zoom0, 0.6), Math.min(1, u * 2)));
+      cam.rot = -Math.PI / 2 * (1 - Math.min(1, u * 1.6));
+      cam.setZoom(lerp(1.4, Math.min(this.zoom0, 0.6), Math.min(1, u * 2)));
       f.x = lerp(this.x, e.x, Math.min(1, u * 3));
-      f.y = lerp(e.y + 40, this.hitY - 220, u);
+      f.y = lerp(e.y, this.hitY - 220, u);
     }
     if (t === ORB.HIT) {
+      cam.rot = 0;
       g.explode(e.x, this.hitY, { dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 60, visR: 520, from: { x: 0, y: -1 } }, this.owner, 'laser');
       for (let i = 0; i < 90; i++) { // the shockwave, running out along the ground and up
         const a = -Math.PI * Math.random(), sp = 6 + Math.random() * 10;
@@ -414,11 +412,12 @@ class OrbitalStrike {
 
   draw(ctx) {
     const time = this.game.time, x = this.x, y = this.y;
-    for (const [dx, dy] of FLEET.far) drawScaled(ctx, x + dx, y + dy, 0.3, 0.35, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx));
-    for (const [dx, dy] of FLEET.mid) drawScaled(ctx, x + dx, y + dy, 0.55, 0.6, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx));
-    for (const [dx, dy, d] of FLEET.frigates) drawFrigate(ctx, Math.round(x + dx), Math.round(y + dy), time + dx, false);
-    for (const [dx, dy, d] of FLEET.escorts) drawBattlecruiser(ctx, Math.round(x + dx), Math.round(y + dy), d, time + dx, false, 0);
-    drawBattlecruiser(ctx, Math.round(x), Math.round(y), 1, time, false, this.charge);
+    const at = (p) => fleetAt(p[0], p[1]);
+    for (const p of FLEET.far) { const [dx, dy] = at(p); drawScaled(ctx, x + dx, y + dy, 0.3, 0.35, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx, true)); }
+    for (const p of FLEET.mid) { const [dx, dy] = at(p); drawScaled(ctx, x + dx, y + dy, 0.55, 0.6, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx, true)); }
+    for (const p of FLEET.frigates) { const [dx, dy] = at(p); drawFrigate(ctx, Math.round(x + dx), Math.round(y + dy), time + dx, true); }
+    for (const p of FLEET.escorts) { const [dx, dy] = at(p); drawBattlecruiser(ctx, x + dx, y + dy, 1, time + dx, true, 0); }
+    drawBattlecruiser(ctx, x, y, 1, time, true, this.charge);
     if (this.beam > 0) {
       const e = this.emit, w = 26 * this.beam + 6;
       ctx.fillStyle = `rgba(80,130,255,${0.5 * this.beam})`;
@@ -1264,261 +1263,120 @@ Object.assign(Game.prototype, {
   },
 });
 
-// ------------------------------------------------------------------------- the war goddess
-// Alban's Morrighan: frames 0-70 the goddess descends on a cloud bank over the mark and the camera
-// pulls back to frame her; 70-95 she raises her hand and her halo wheel blazes; 95-175 she looses
-// arrows of light, one every 3 frames, each a strong seeker; 175-240 she rises and fades.
-const DEITY = { DESC: 70, RAISE: 95, VOLLEY: 175, END: 240 };
-const DEITY_SCALE = 1.6; // she is drawn this much larger than her parts list
-class DeitySummon {
+// ------------------------------------------------------------------------------ sky tears
+// Alban's Morrighan: the flare lands and the sky over it tears. Each tear unzips: a black hairline
+// a few pixels wide lengthens up and down from its centre and widens, then more columns of the same
+// width split open either side of it, flush, each a little offset and shorter than the last, down
+// to slivers at the edges, so the sky reads as split open vertically, like a wound. Black rockets rain out of the tears on long, very dark trails,
+// seeking whatever is beneath; then the tears zip shut. The sky darkens while they're open.
+const RIFT = { RISE: 30, OPEN: 34, STAGGER: 16, GROW: 56, RAIN: 96, RAIN_LEN: 130, CLOSE: 250, END: 300 };
+// one tear's shape: bars all the same thickness, flush, the centre one longest; going out from it
+// each is shorter (with a little jitter in length and offset) down to slivers, so the tear thins
+// toward its edges by length alone. Drawn upright (dy runs across, len up and down). Seeded, so a replay matches.
+const TEAR_BAR = 12; // every bar's height
+function makeTear(x, y, len, seed) {
+  const h = (k) => hash2(seed * 17 + 5, k * 29 + 3);
+  const bars = [{ dy: 0, len: 1, th: TEAR_BAR, jit: 0, delay: 0 }];
+  const n = 9 + Math.floor(h(2) * 6); // bars each side
+  for (let j = 1; j <= n; j++) {
+    for (const s of [-1, 1]) {
+      const k = j * 2 + (s > 0 ? 1 : 0);
+      const fall = 1 - Math.pow(j / (n + 1), 1.4); // shorter the further out, to a sliver
+      bars.push({ dy: s * j * TEAR_BAR, len: Math.max(0.04, fall * (0.75 + 0.35 * h(k + 30))), th: TEAR_BAR,
+        jit: (h(k + 40) - 0.5) * len * 0.1 * (1 + j / n), delay: 0.28 + (j / n) * 0.5 + h(k + 50) * 0.06 });
+    }
+  }
+  return { x, y, len, bars, open: 0, close: 0 };
+}
+class SkyTear {
   constructor(game, owner, at, cfg) {
     this.game = game;
     this.owner = owner;
     this.cfg = cfg;
-    this.x = at.x;
+    this.tx = at.x;
     this.ground = Math.min(game.terrain.hAt(at.x), at.y);
-    this.restY = this.ground - 520; // her feet (the cloud) over the mark
-    this.y = this.restY - 900;
     this.t = 0;
-    this.alpha = 0;
-    this.raise = 0;
     this.zoom0 = game.cam.zoom;
-    this.arrow = { id: 'morrighan_arrow', name: 'Arrow of Light', kind: 'rocket', dmg: cfg.dmg, dmgR: cfg.r, explR: 3, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
-      rarity: 7, maxCharge: 10, drift: 0.1, arrow: true, guide: { arm: 2, burn: 0, seek: 0, turn: 9, range: cfg.reach, cone: 180, lift: 0, brake: false } };
-    game.cam.follow({ x: this.x, y: this.ground - 420 });
-    game.ui.notice('Morrighan answers.');
+    this.dark = 0;
+    this.tears = [];
+    const spots = [[0, 0], [-760, 60], [740, 40], [-380, -80], [390, -60]].slice(0, cfg.tears);
+    spots.forEach(([dx, dy], i) => this.tears.push(makeTear(clamp(this.tx + dx, 250, WORLD_W - 250), this.ground - 1050 + dy, 620 + hash2(i, 9) * 380, i + 1)));
+    this.rocket = { id: 'morrighan_rocket', name: 'Rift Rocket', kind: 'rocket', dmg: cfg.dmg, dmgR: cfg.r, explR: 10, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
+      rarity: 7, maxCharge: 10, drift: 0.15, dark: true, guide: { arm: 2, burn: 0, seek: 0, turn: 5, range: cfg.reach, cone: 180, lift: 0, brake: false } };
+    this.focus = { x: this.tx, y: this.ground - 200 };
+    game.cam.follow(this.focus);
+    game.ui.notice('The sky tears open.');
   }
 
   update() {
-    const g = this.game, t = ++this.t;
+    const g = this.game, cam = g.cam, t = ++this.t, f = this.focus;
     const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
-    if (t <= DEITY.DESC) {
-      const u = ease(t / DEITY.DESC);
-      this.y = lerp(this.restY - 900, this.restY, u);
-      this.alpha = u;
-      g.cam.setZoom(lerp(this.zoom0, Math.min(this.zoom0, 0.5), u));
+    if (t <= RIFT.RISE) { // up and out to take in the sky over the mark
+      const u = ease(t / RIFT.RISE);
+      f.y = lerp(this.ground - 200, this.ground - 720, u);
+      cam.setZoom(lerp(this.zoom0, Math.max(CAM_FULL, 0.5), u));
     }
-    if (t > DEITY.DESC && t <= DEITY.RAISE) this.raise = ease((t - DEITY.DESC) / (DEITY.RAISE - DEITY.DESC));
-    if (t > DEITY.RAISE && t <= DEITY.VOLLEY && (t - DEITY.RAISE) % 3 === 0 && (t - DEITY.RAISE) / 3 < this.cfg.arrows) {
-      const ang = Math.random() * TAU; // from around her halo
-      const hand = { x: this.x + Math.cos(ang) * 74 * DEITY_SCALE, y: this.y + (DEITY_HEAD_Y + Math.sin(ang) * 74) * DEITY_SCALE };
-      const a = Math.PI / 2 + (Math.random() - 0.5) * 1.4, sp = 12 + Math.random() * 5;
-      const p = new Projectile(g, this.arrow, this.owner, hand.x, hand.y, Math.cos(a) * sp, Math.sin(a) * sp, false);
-      p.age = 2;
-      g.projectiles.push(p);
-      if (t % 9 === 0) g.sfx.laser();
-    }
-    if (t > DEITY.VOLLEY) {
-      const u = ease((t - DEITY.VOLLEY) / (DEITY.END - DEITY.VOLLEY));
-      this.y = this.restY - 500 * u;
-      this.alpha = 1 - u;
-      this.raise = 1 - u;
-      g.cam.setZoom(lerp(Math.min(this.zoom0, 0.5), this.zoom0, u));
-    }
-    return t < DEITY.END;
-  }
-
-  draw(ctx) { drawScaled(ctx, Math.round(this.x), Math.round(this.y), DEITY_SCALE, 1, () => drawDeity(ctx, 0, 0, this.alpha, this.raise, this.game.time)); }
-}
-
-// The goddess, after the Morrighan of the reference art, as anime pixel art. Rather than a hand-typed
-// grid she is painted once from curved shapes onto a fine pixel grid (DEITY_P units a pixel), each
-// part outlined in a darker shade of itself, then merged into runs and cached (closed and open eyes):
-// long straight black hair with a hime cut and a sheen, a soft face with a pointed chin, big eyes
-// (closed and serene, then open and glowing violet while she looses the volley), bare shoulders
-// above a white off-shoulder gown (bust, a narrow waist, hips, a long flowing skirt), detached bell
-// sleeves, gold Celtic choker, arm cuffs and a chain between her wrists, hands clasped at her chest,
-// and great feathered black wings. The halo, the ring of light and the cloud bank are drawn live.
-const DEITY_P = 2; // world units per sprite pixel
-const DEITY_FEET = 112; // sprite row her feet stand on; her head's centre is at row 20
-const DEITY_HEAD_Y = -(DEITY_FEET - 20) * DEITY_P; // her head, in units above her feet (before DEITY_SCALE)
-const DEITY_PAL = {
-  h: '#221a24', H: '#140f16', L: '#5e4a66', s: '#ffece2', S: '#f2c8b8', b: '#ff9fb4', m: '#d46a7c', E: '#2a1a26',
-  I: '#6a3cc0', i: '#b48cff', o: '#ffffff', W: '#fdfcf8', w: '#dcd8ea', v: '#bdb6d4', G: '#f0c860', g: '#a87a2a', C: '#d8b860',
-  f: '#1e1b26', F: '#2a2636', l: '#4e4864',
-};
-const DEITY_LINE = { // the outline each part gets
-  h: '#08060a', H: '#08060a', L: '#08060a', s: '#c4867c', S: '#c4867c', W: '#9c98b8', w: '#9c98b8',
-  G: '#7a5418', g: '#7a5418', C: '#7a5418', f: '#08070c', F: '#08070c', l: '#08070c',
-};
-const _deityFrames = {};
-function deityFrame(open) {
-  const key = open ? 'open' : 'shut';
-  if (_deityFrames[key]) return _deityFrames[key];
-  const X0 = -70, Y0 = -50, GW = 212, GH = DEITY_FEET + 52; // grid covers figure x -70..141, y -50..113
-  const grid = new Array(GW * GH).fill(null);
-  const set = (x, y, k) => { x = Math.round(x) - X0; y = Math.round(y) - Y0; if (x >= 0 && y >= 0 && x < GW && y < GH) grid[y * GW + x] = k; };
-  const get = (x, y) => { x -= X0; y -= Y0; return x >= 0 && y >= 0 && x < GW && y < GH ? grid[y * GW + x] : null; };
-  // paint a shape (a point test) with key k, ringed by its outline colour
-  const paint = (inside, k, line = true, bx = [X0, X0 + GW], by = [Y0, Y0 + GH]) => {
-    for (let y = by[0]; y < by[1]; y++) for (let x = bx[0]; x < bx[1]; x++) {
-      if (inside(x, y)) set(x, y, k);
-      else if (line && (inside(x - 1, y) || inside(x + 1, y) || inside(x, y - 1) || inside(x, y + 1))) set(x, y, '#' + k);
-    }
-  };
-  const ell = (cx, cy, rx, ry, rot = 0) => (x, y) => {
-    const dx = x - cx, dy = y - cy, c = Math.cos(rot), s = Math.sin(rot);
-    const u = (dx * c + dy * s) / rx, v = (-dx * s + dy * c) / ry;
-    return u * u + v * v <= 1;
-  };
-  const poly = (pts) => (x, y) => {
-    let inn = false;
-    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-      const [xi, yi] = pts[i], [xj, yj] = pts[j];
-      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inn = !inn;
-    }
-    return inn;
-  };
-  const or = (...fs) => (x, y) => fs.some((f) => f(x, y));
-  const and = (a, b) => (x, y) => a(x, y) && b(x, y);
-  const mir = (pts) => pts.map(([x, y]) => [72 - x, y]); // mirror about her centre line (x 36)
-  const C = 36;
-
-  // ---- wings: feathers hung from a bone that sweeps up and out from her shoulder blades
-  for (const side of [-1, 1]) {
-    const bone = (t) => { const u = 1 - t; return [C + side * (u * u * 6 + 2 * u * t * 26 + t * t * 92), u * u * 44 + 2 * u * t * -24 + t * t * -34]; };
-    for (const [n, l0, l1, wid, k] of [[15, 30, 74, 4.6, 'f'], [12, 18, 40, 4.4, 'F'], [9, 9, 18, 4.2, 'F']]) {
-      for (let i = n - 1; i >= 0; i--) {
-        const t = 0.06 + (i / (n - 1)) * 0.94, [bx, by] = bone(t);
-        const L = l0 + (l1 - l0) * Math.pow(t, 0.8), a = side * (0.12 + t * 0.62); // fanning outward toward the tip
-        const cx = bx + Math.sin(a) * L * 0.5, cy = by + Math.cos(a) * L * 0.5;
-        const feather = ell(cx, cy, wid, L * 0.5 + 2, -a);
-        paint(feather, k, true, [Math.floor(cx - L), Math.ceil(cx + L)], [Math.floor(cy - L), Math.ceil(cy + L)]);
-        // a sheen down each feather's leading edge
-        const ex = cx + Math.cos(a) * side * wid * 0.55, ey = cy - Math.sin(a) * side * wid * 0.55;
-        paint(and(feather, ell(ex, ey, 1.3, L * 0.42, -a)), 'l', false, [Math.floor(cx - L), Math.ceil(cx + L)], [Math.floor(cy - L), Math.ceil(cy + L)]);
+    this.tears.forEach((tr, i) => {
+      const t0 = RIFT.OPEN + i * RIFT.STAGGER;
+      tr.open = clamp((t - t0) / RIFT.GROW, 0, 1);
+      tr.close = clamp((t - RIFT.CLOSE - i * 6) / 30, 0, 1);
+      if (t === t0) g.sfx.thud();
+    });
+    this.dark = Math.min(1, (t - RIFT.OPEN) / 50) * (1 - clamp((t - RIFT.CLOSE) / 40, 0, 1));
+    // the rain: black rockets out of the open tears, one every few frames, each tear in turn
+    const k = t - RIFT.RAIN;
+    if (k >= 0 && k < RIFT.RAIN_LEN && k % Math.max(1, Math.floor(RIFT.RAIN_LEN / this.cfg.rockets)) === 0) {
+      const live = this.tears.filter((tr) => tr.open > 0.7 && tr.close === 0);
+      if (live.length) {
+        const tr = live[(k * 7) % live.length];
+        const x = tr.x + (rng.next() - 0.5) * TEAR_BAR * 8, y = tr.y + (rng.next() - 0.3) * tr.len * 0.6; // out along the split
+        const a = Math.PI / 2 + (rng.next() - 0.5) * 0.9, sp = 10 + rng.next() * 6;
+        const p = new Projectile(g, this.rocket, this.owner, x, y, Math.cos(a) * sp, Math.sin(a) * sp, false);
+        p.age = 2;
+        g.projectiles.push(p);
+        if (k % 6 === 0) g.sfx.shot(this.rocket);
       }
     }
-    for (let i = 0; i <= 40; i++) { const [bx, by] = bone(i / 40); paint(ell(bx, by, 3.2, 3.2), 'f', true, [Math.floor(bx - 5), Math.ceil(bx + 5)], [Math.floor(by - 5), Math.ceil(by + 5)]); }
+    if (t > RIFT.RAIN + RIFT.RAIN_LEN + 20 && t <= RIFT.RAIN + RIFT.RAIN_LEN + 60) cam.setZoom(lerp(Math.max(CAM_FULL, 0.5), this.zoom0, ease((t - RIFT.RAIN - RIFT.RAIN_LEN - 20) / 40)));
+    cam.follow(f);
+    if (t <= RIFT.RISE) cam.snap();
+    return t < RIFT.END;
   }
 
-  // ---- hair, behind her: to her hips, cut straight with fine points
-  const backHair = poly([[22, 14], [50, 14], [54, 40], [56, 70], [55, 80], [52, 76], [49, 82], [46, 77], [42, 83], [38, 78], [34, 83], [30, 77], [26, 82], [23, 76], [20, 80], [16, 70], [18, 40]]);
-  paint(backHair, 'h');
-  paint(and(backHair, (x, y) => (x === 21 || x === 51 || x === 44 || x === 28) && y > 40 && y < 74), 'H', false);
-
-  // ---- the gown: off the shoulder, bust, narrow waist, hips, a long skirt flaring to the cloud
-  const gown = or(
-    poly([[23, 46], [49, 46], [47, 54], [42.5, 60], [48, 68], [53, 84], [59, 104], [62, 112], [10, 112], [13, 104], [19, 84], [24, 68], [29.5, 60], [25, 54]]),
-    ell(31, 49, 6.5, 5.5), ell(41, 49, 6.5, 5.5));
-  paint(gown, 'W');
-  paint(and(gown, (x, y) => x - C > 3 + (y - 45) * 0.22), 'w', false); // shaded on her left
-  for (const bx of [31, 41]) paint(and(gown, (x, y) => !ell(bx, 48.4, 6.3, 5.1)(x, y) && ell(bx, 49.6, 6.6, 5.6)(x, y) && y > 49), 'v', false); // under the bust
-  paint(and(gown, (x, y) => x === C && y >= 46 && y <= 52), 'v', false); // and between
-  paint(and(gown, (x, y) => y === 60 && Math.abs(x - C) < 6), 'w', false); // a sash at her waist
-  for (const [x0, k] of [[30, 0.22], [24, 0.4], [42, -0.1], [48, -0.3]]) paint(and(gown, (x, y) => y > 70 && Math.abs(x - (x0 - (y - 70) * k)) < 0.6), 'w', false); // skirt folds
-  paint(and(gown, (x, y) => y > 108), 'w', false);
-
-  // ---- bare shoulders and neck
-  const shoulders = and(ell(C, 46, 16, 6.5), (x, y) => !gown(x, y));
-  paint(or(shoulders, poly([[32, 28], [40, 28], [40, 40], [32, 40]])), 's');
-  paint(and(shoulders, (x, y) => y > 44 && !gown(x, y + 1) && gown(x, y + 2)), 'S', false);
-  paint((x, y) => x >= 32 && x <= 40 && y >= 31 && y <= 33, 'S', false); // under her chin
-
-  // ---- arms: upper arms at her sides, forearms in to her hands clasped at her chest
-  const thick = (ax, ay, bx, by, r) => (x, y) => {
-    const dx = bx - ax, dy = by - ay, u = clamp(((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy), 0, 1);
-    const px = ax + dx * u - x, py = ay + dy * u - y;
-    return px * px + py * py <= r * r;
-  };
-  for (const s of [-1, 1]) {
-    const sx = C + s * 13, ex = C + s * 15, hx = C + s * 3;
-    paint(or(thick(sx, 45, ex, 61, 2.3), thick(ex, 61, hx, 58, 2.2)), 's');
-    paint(thick(sx + s * 0.6, 51.5, sx + s * 0.9, 53, 2.5), 'G'); // gold cuff above the elbow
-    // the detached bell sleeve, hanging from her forearm
-    const sleeve = poly([[ex - s * 1, 60], [hx + s * 4, 58], [hx + s * 1, 64], [ex + s * 2, 84], [ex + s * 9, 80], [ex + s * 4, 64]]);
-    paint(sleeve, 'W');
-    paint(and(sleeve, (x, y) => s * (x - ex) > 3 || y > 76), 'w', false);
-    paint(thick(hx + s * 4.5, 57, hx + s * 3.5, 61, 1.8), 'G'); // wrist cuff
-  }
-  paint(ell(C, 58, 4.5, 3.5), 's'); // her hands, clasped
-  paint((x, y) => (x === C - 1 || x === C + 1) && y >= 56 && y <= 60, 'S', false);
-  for (let i = 0; i <= 8; i++) set(C - 6 + i * 1.5, 63 + Math.sin((i / 8) * Math.PI) * 3, 'C'); // the chain between her wrists
-
-  // ---- gold Celtic choker and its knot
-  paint((x, y) => x >= 31 && x <= 41 && y >= 35 && y <= 36, 'G');
-  paint(ell(C, 38.5, 2.2, 2.2), 'G');
-  set(C, 38, 'g'); set(C, 39, 'g');
-
-  // ---- her face: a soft oval with a pointed chin
-  paint(or(and(ell(C, 20, 12.5, 12), (x, y) => y < 23), poly([[23.5, 21], [48.5, 21], [46, 27], [40, 32], [36, 33], [32, 32], [26, 27]])), 's');
-  paint(and(ell(C, 20, 12.5, 12), (x, y) => x > 46), 'S', false);
-  // hair over the top of her head, with the anime sheen ring
-  const cap = and(ell(C, 16, 15.5, 14), (x, y) => y < 15 || x < 23 || x > 49);
-  paint(cap, 'h');
-  paint(and(cap, (x, y) => Math.abs(Math.hypot((x - C) / 1.15, y - 15) - 9) < 0.8 && y < 13 && (x + y) % 5), 'L', false);
-  // hime-cut bangs, straight with a few points
-  paint(poly([[22, 12], [50, 12], [50, 22], [48, 19], [46, 22], [43, 18], [40, 21], [37, 17], [34, 21], [31, 18], [28, 22], [25, 19], [22, 23]]), 'h', false);
-  paint((x, y) => y === 18 && (x === 32 || x === 41), 'H', false);
-  // the long sidelocks, falling in front of her shoulders to her chest
-  const lock = [[20, 16], [24, 16], [24, 30], [24.5, 44], [24, 56], [22.5, 62], [20.5, 58], [19.5, 44], [19, 30]];
-  paint(or(poly(lock), poly(mir(lock))), 'h');
-  paint((x, y) => (x === 22 || x === 50) && y > 22 && y < 54, 'L', false);
-  // eyes
-  for (const s of [-1, 1]) {
-    const ex = C + s * 5.5;
-    if (open) {
-      paint((x, y) => Math.abs(x - ex) <= 3 && y >= 21 && y <= 26, 'I', false);
-      paint((x, y) => Math.abs(x - ex) <= 2 && y >= 24 && y <= 26, 'i', false);
-      paint((x, y) => Math.abs(x - ex) <= 3.5 && y === 20, 'E', false); // upper lash line
-      set(ex + s * 4, 20, 'E'); set(ex + s * 4, 21, 'E'); // the flick at the outer corner
-      set(ex - 1, 22, 'o'); set(ex - 1.5, 23, 'o'); set(ex + 1.5, 25, 'o'); // highlights
-    } else {
-      // closed: a gentle downward curve with lashes
-      for (let i = -3; i <= 3; i++) set(ex + i, 23 + (Math.abs(i) >= 3 ? -1 : Math.abs(i) >= 2 ? 0 : 1) - 1 + 1, 'E');
-      set(ex + s * 4, 21, 'E'); set(ex + s * 4.5, 22, 'E'); set(ex + s * 1, 25, 'E'); set(ex - s * 1, 25, 'E');
-    }
-    paint((x, y) => Math.abs(x - (ex + s * 1)) <= 1.5 && y === 27, 'b', false); // blush
-  }
-  set(C + 0.5, 26, 'S'); // nose
-  paint((x, y) => y === 29 && x >= C - 1 && x <= C + 1, 'm', false);
-
-  // runs of one colour, row by row
-  const runs = [];
-  for (let y = 0; y < GH; y++) {
-    let x = 0;
-    while (x < GW) {
-      const k = grid[y * GW + x];
-      if (!k) { x++; continue; }
-      let e = x + 1;
-      while (e < GW && grid[y * GW + e] === k) e++;
-      const col = k[0] === '#' ? DEITY_LINE[k.slice(1)] || '#08070c' : DEITY_PAL[k];
-      runs.push([col, x + X0 - C, y + Y0 - DEITY_FEET, e - x]);
-      x = e;
+  // the tears themselves, in the sky behind the hills
+  drawBack(ctx) {
+    const time = this.game.time;
+    for (const tr of this.tears) {
+      if (tr.open <= 0 || tr.close >= 1) continue;
+      // each bar: first a hairline lengthening from the centre, then it widens; the scars after.
+      // The glow at the lips goes down first, then the black, so flush bars read as one wound.
+      const rects = [];
+      for (const b of tr.bars) {
+        const u = clamp((tr.open - b.delay) / (1 - b.delay * 0.6), 0, 1);
+        if (u <= 0) continue;
+        const L = tr.len * b.len * Math.min(1, u * 1.8) * (1 - tr.close);
+        const th = b.dy ? b.th : Math.max(1.5, b.th * clamp((u - 0.12) / 0.2, 0, 1)); // the centre starts as a 1-5 px line; the rest open at full width, flush
+        const cx = tr.x + b.dy, cy = tr.y + b.jit; // bars stand side by side, each a little offset up or down
+        rects.push([cx - th / 2, cy - L / 2, th, L]); // turned upright: the sky splits vertically
+      }
+      ctx.fillStyle = 'rgba(110,30,140,0.35)';
+      for (const [x, y, w, h] of rects) ctx.fillRect(Math.round(x - 3), Math.round(y - 2), Math.round(w + 6), Math.round(h + 4));
+      ctx.fillStyle = '#040206';
+      for (const [x, y, w, h] of rects) ctx.fillRect(Math.round(x), Math.round(y), Math.max(1, Math.round(w)) + (w >= TEAR_BAR - 0.5 ? 1 : 0), Math.round(h)); // full columns overlap a unit: no seams
+      // a few motes drifting out of the dark
+      if (tr.open > 0.6) {
+        ctx.fillStyle = 'rgba(190,120,230,0.6)';
+        for (let i = 0; i < 6; i++) sq(ctx, tr.x + (hash2(i, 3) - 0.5) * tr.len * 0.6, tr.y + ((time * 20 + i * 37) % 80), 3);
+      }
     }
   }
-  runs.sort((a, b) => (a[0] < b[0] ? -1 : 1)); // fewer fillStyle changes
-  return (_deityFrames[key] = runs);
-}
-function drawDeity(ctx, x, y, alpha, raise, time) {
-  if (alpha <= 0) return;
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  const P = DEITY_P, hy = y + DEITY_HEAD_Y, bob = Math.round(Math.sin(time * 1.4) * 3);
-  // a ring of light around her where the arrows form, brightening as she raises them
-  const glow = 0.2 + 0.6 * raise;
-  for (let k = 0; k < 48; k++) {
-    const a = time * 0.4 + (k / 48) * TAU;
-    ctx.fillStyle = k % 2 ? `rgba(255,226,140,${glow})` : `rgba(255,250,225,${glow})`;
-    ctx.fillRect(Math.round(x + Math.cos(a) * 74 - 2), Math.round(hy + Math.sin(a) * 74 - 2), 4, 4);
+
+  draw() {}
+
+  // the sky dims while the tears are open
+  drawScreen(ctx) {
+    if (this.dark <= 0) return;
+    ctx.fillStyle = `rgba(14,4,22,${0.32 * this.dark})`;
+    ctx.fillRect(0, 0, W, H);
   }
-  let last = null;
-  for (const [col, rx, ry, len] of deityFrame(raise > 0.5)) {
-    if (col !== last) { ctx.fillStyle = col; last = col; }
-    ctx.fillRect(x + rx * P, y + ry * P + bob, len * P + 0.4, P + 0.4); // overlap: no seams at fractional scales
-  }
-  // her halo, a flat gold ring floating over her head
-  const halo = 0.75 + 0.25 * raise, hb = hy - 34 + bob + Math.sin(time * 2) * 2;
-  for (let k = 0; k < 32; k++) {
-    const a = (k / 32) * TAU;
-    ctx.fillStyle = Math.sin(a) < 0 ? `rgba(196,150,60,${halo})` : `rgba(255,234,150,${halo})`;
-    ctx.fillRect(Math.round(x + Math.cos(a) * 22 - 2), Math.round(hb + Math.sin(a) * 5 - 1.5), 4, 3);
-  }
-  // the cloud bank under her
-  for (let i = 0; i < 26; i++) {
-    const ox = ((i * 37) % 240) - 120, oy = (i % 4) * 8;
-    ctx.fillStyle = i % 3 ? 'rgba(240,240,250,0.92)' : 'rgba(206,210,228,0.92)';
-    ctx.fillRect(Math.round(x + ox - 22 + Math.sin(time + i) * 3), y - 18 + oy, 44, 22);
-  }
-  ctx.restore();
 }

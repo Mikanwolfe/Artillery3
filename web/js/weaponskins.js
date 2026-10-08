@@ -138,7 +138,7 @@ function shellSkin(w) {
   const size = clamp(5 + w.dmg / 140, 5, 12);
   if (w.frag) return { size: 3, body: [70, 60, 50], nose: [140, 110, 80] };
   if (w.id === 'ragnarok') return { size: 8, body: [70, 74, 86], nose: [255, 70, 50] }; // a marker round
-  if (w.arrow) return { size: 4, body: [255, 240, 200], nose: [255, 255, 255] }; // Morrighan's arrows of light
+  if (w.dark) return { size: 7, body: [14, 10, 18], nose: [150, 30, 60] }; // the black rockets out of Morrighan's tears
   if (w.bomblet) return { size: 5, body: [64, 70, 56], nose: [230, 200, 90] };
   if (w.kind === 'rocket') return { size: clamp(5 + w.dmg / 120, 5, 9), body: [214, 216, 202], nose: [200, 60, 50] };
   if (w.id && w.id.startsWith('mob') || w.id === 'shipbomb') return { size, body: [80, 40, 50], nose: [255, 90, 90] };

@@ -626,8 +626,8 @@ class Game {
       const f = d / len;
       this.traces.push({
         x: p.puff.x + dx * f + (Math.random() - 0.5) * 5, y: p.puff.y + dy * f + (Math.random() - 0.5) * 5,
-        age: 0, life: TRACE_LIFE * (0.6 + Math.random() * 0.6), s: 0.6 + Math.random() * 0.8,
-        vx: (Math.random() - 0.5) * 0.12, vy: -0.02 - Math.random() * 0.08,
+        age: 0, life: TRACE_LIFE * (0.6 + Math.random() * 0.6) * (p.w.dark ? 1.8 : 1), s: (0.6 + Math.random() * 0.8) * (p.w.dark ? 1.7 : 1),
+        vx: (Math.random() - 0.5) * 0.12, vy: -0.02 - Math.random() * 0.08, dark: !!p.w.dark, // the rift's rockets trail near-black smoke
       });
     }
     p.puff = { x, y, next: d - len };
@@ -647,7 +647,7 @@ class Game {
     for (const t of this.traces) {
       const k = t.age / t.life;
       if (k >= 1) continue;
-      ctx.fillStyle = `rgba(96,90,108,${0.42 * (1 - k) * (1 - k * 0.3)})`;
+      ctx.fillStyle = t.dark ? `rgba(10,6,14,${0.8 * (1 - k) * (1 - k * 0.3)})` : `rgba(96,90,108,${0.42 * (1 - k) * (1 - k * 0.3)})`;
       sq(ctx, t.x, t.y, (3 + k * 10) * t.s);
     }
   }
@@ -1006,7 +1006,7 @@ class Game {
       if (w.naito) this.projectiles.push(new NaitoStrike(this, p.owner, p, w.naito)); // 15X's Zero Point
       if (w.array) this.projectiles.push(new MaiaArray(this, p.owner, p, w.array)); // Innocentia's Constellation
       if (w.battery) this.projectiles.push(new BatteryStrike(this, p.owner, p, w.battery)); // G.W. Tiger's Ragnarök
-      if (w.deity) this.projectiles.push(new DeitySummon(this, p.owner, p, w.deity)); // Alban's Morrighan
+      if (w.rift) this.projectiles.push(new SkyTear(this, p.owner, p, w.rift)); // Alban's Morrighan
       if (w.incendiary && w.frag) { // a burning fragment: a small patch of fire that sticks and scorches
         for (let i = 0; i < 2; i++) this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 2, (rng.next() - 0.5) * 3, -1 - rng.next() * 2, w.incendiary, true));
       }
