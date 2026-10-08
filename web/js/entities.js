@@ -419,7 +419,7 @@ class Projectile {
     }
     if (w.split && this.age === w.split.at) {
       const sp = w.split;
-      const child = { ...w, split: null, dmg: w.dmg * (sp.boost || 1), guide: { ...w.guide, seek: 0 } }; // the children seek at once
+      const child = { ...w, split: null, dmg: w.dmg * (sp.boost || 1), guide: { ...w.guide, seek: 0, apex: false } }; // the children seek at once
       const taken = [];
       const speed = Math.hypot(this.vx, this.vy);
       const a0 = Math.atan2(this.vy, this.vx);

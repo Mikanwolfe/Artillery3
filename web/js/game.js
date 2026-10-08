@@ -240,9 +240,11 @@ class Game {
     const reach = (v) => { // signed overshoot past the marker for speed v (null: never comes down to it)
       let x = m.x, y = m.y, vx = u.x * v, vy = u.y * v;
       const drift = t.weapon.drift;
+      const G = guideFor(t.weapon, t); // rockets: the motor's lift while it burns shapes the arc
       for (let i = 0; i < 1500; i++) {
         const a = windAccel({ vx, drift }, wind);
-        vy += GRAV + a.y;
+        const lift = G && i >= G.arm && i <= G.arm + G.burn ? G.lift : 0;
+        vy += GRAV * (1 - lift) + a.y;
         vx += a.x;
         const px = x, py = y;
         x += vx;
@@ -267,7 +269,7 @@ class Game {
     }
     const v = hi;
     // does terrain or a tree get in the way?
-    const hit = simulateShot(this.terrain, wind, this.targets(), t, m.x, m.y, u.x * v, u.y * v, t.weapon.drift, t.weapon, this.seekables());
+    const hit = simulateShot(this.terrain, wind, this.targets(), t, m.x, m.y, u.x * v, u.y * v, t.weapon.drift, t.weapon, []); // the arc alone (no seeker), for terrain in the way
     return { v, frac: v / cap, blocked: dist(hit.x, hit.y, tg.x, tg.y) > 45 };
   }
 

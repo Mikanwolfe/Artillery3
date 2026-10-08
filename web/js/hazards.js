@@ -41,8 +41,9 @@ Object.assign(Game.prototype, {
     if (this.satellite && this.satellite.alive) list.push(this.satellite); // MAIA can be shot
     return list;
   },
-  // what a rocket's seeker can lock onto: vehicles, mobs and supply crates
-  seekables() { return this.targets().concat(this.crates.filter((c) => c.alive)); },
+  // what a rocket's seeker can lock onto: vehicles, mobs and supply crates (not MAIA: up there it
+  // is the nearest thing to a diving rocket, which would then circle it)
+  seekables() { return this.targets().filter((x) => !x.isSat).concat(this.crates.filter((c) => c.alive)); },
 
   // ------------------------------------------------------------ round setup
   setupHazards() {
