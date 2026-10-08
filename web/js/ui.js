@@ -83,6 +83,7 @@ const UI = {
     this.syncMute();
     this.initTouch();
     this.rackClicks();
+    this.initCodex();
     window.addEventListener('keydown', (e) => {
       // character select: 1-4 picks a card
       if (this.pick && !$('vehicles').hidden && /^Digit[1-5]$/.test(e.code)) {
@@ -232,7 +233,7 @@ const UI = {
   turn(t) {
     const g = this.game;
     $('turn').innerHTML = `<span class="dot" style="background:${t.color}"></span>${esc(t.name)}`;
-    if (g.phase === 'aim' && !t.firedThisTurn) {
+    if (g.phase === 'aim' && !t.firedThisTurn && !g.range) {
       const b = $('banner');
       b.innerHTML = `<span>${esc(t.name)}${t.isCpu ? '' : ' · your move'}</span>`;
       if (!t.isCpu && ++this.humanTurns === 4) $('hints').classList.add('quiet');

@@ -63,7 +63,28 @@
         <button id="start" class="primary">Start match ▸</button>
         <button id="load" class="ghost" hidden>Resume</button>
       </div>
-      <button id="how" class="link">How to play</button>
+      <div class="go2"><button id="codex-open" class="ghost">Codex · test range</button><button id="how" class="link">How to play</button></div>
+    </div>
+  </section>
+
+  <!-- the Codex: characters and weapons, with a test range on the terrain to the right -->
+  <section id="codex" class="screen left" hidden>
+    <div class="side codex-side">
+      <div class="phead"><h2>Codex</h2><button id="codex-close" class="ghost">◂ Menu</button></div>
+      <h3 class="sec">Character <span class="grip"></span></h3>
+      <div id="cx-chars"></div>
+      <div id="cx-char" class="cx-card"></div>
+      <h3 class="sec">Weapon <span class="grip"></span></h3>
+      <div class="seg wrap" id="cx-filter"><button data-f="all">All</button><button data-f="shell">Shell</button><button data-f="gun">Gun</button><button data-f="laser">Laser</button><button data-f="acid">Acid</button><button data-f="flak">Flak</button><button data-f="rocket">Rocket</button><button data-f="hybrid">Hybrid</button><button data-f="NXi">NXi</button></div>
+      <div id="cx-list"></div>
+      <div id="cx-wpn" class="cx-card"></div>
+      <h3 class="sec">Test range <span class="grip"></span></h3>
+      <div class="opts">
+        <span class="mgh">Dummy</span><div class="seg" id="cx-dist"><button data-d="near">Near</button><button data-d="mid">Mid</button><button data-d="far">Far</button></div>
+        <span class="mgh">Wind</span><div class="seg" id="cx-wind"><button data-w="live">Live</button><button data-w="calm">Calm</button></div>
+      </div>
+      <div id="cx-readout"></div>
+      <p class="mgh cx-hint">Space fire · ←→ move · ↑↓ aim · 1–4 abilities · click to mark · Esc back <button id="cx-reset" class="link">reset tally</button></p>
     </div>
   </section>
 
@@ -174,6 +195,7 @@
 <script src="js/forts.js"></script>
 <script src="js/mobs.js"></script>
 <script src="js/hazards.js"></script>
+<script src="js/codex.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

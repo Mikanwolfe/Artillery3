@@ -66,6 +66,7 @@ class Camera {
     this.y = 0;
     this.focus = null;
     this.manual = null;
+    this.bias = 0; // shift what it follows right of centre by this much (the Codex range, behind its panel)
   }
 
   follow(obj) { this.focus = obj; this.manual = null; }
@@ -74,7 +75,7 @@ class Camera {
     const f = this.manual || this.focus;
     if (!f) return null;
     return {
-      x: clamp(f.x - VIEW_W / 2, 0, WORLD_W - VIEW_W),
+      x: clamp(f.x - VIEW_W / 2 - (this.manual ? 0 : this.bias), 0, WORLD_W - VIEW_W),
       y: clamp(f.y - VIEW_H * 0.55, -1000, WORLD_BOTTOM - VIEW_H),
     };
   }
@@ -127,7 +128,7 @@ class Input {
       case 'Enter': if (down && !e.repeat && this.g.phase === 'aim') this.queue.push({ endTurn: true }); else handled = false; break;
       case 'KeyM': if (down && !e.repeat) this.g.toggleMute(); break;
       case 'KeyN': if (down && !e.repeat) this.g.toggleMusic(); break;
-      case 'Escape': if (down && !e.repeat) { if (this.g.ui.helpOpen()) this.g.ui.toggleHelp(false); else this.g.togglePause(); } break;
+      case 'Escape': if (down && !e.repeat) { if (this.g.ui.helpOpen()) this.g.ui.toggleHelp(false); else if (this.g.range) this.g.ui.closeCodex(); else this.g.togglePause(); } break;
       case 'KeyH': case 'Slash': if (down && !e.repeat) this.g.ui.toggleHelp(); break;
       default: handled = false;
     }
@@ -403,6 +404,7 @@ class Game {
     this.fogDamage(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
+    if (this.range) { t.reload = {}; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting
     t.tickReloads();
     t.drill = hasTrait(t, 'drill');
     t.shotsLeft = t.weapon.clip; // autoloaders reload every turn
@@ -420,7 +422,7 @@ class Game {
     this.sfx.chargeStop();
     this.phase = 'aim';
     this.cpu = t.isCpu ? new CpuController(this, t) : null;
-    this.cam.follow(t);
+    this.cam.follow(this.range ? this.rangeFocus() : t);
     this.ui.turn(t);
   }
 
@@ -691,6 +693,7 @@ class Game {
 
   fire(t) {
     const w = t.weapon;
+    if (this.range) { this.range.shots++; this.range.last = 0; }
     if (!t.firedThisTurn && reloadOf(w)) t.reload[w.id] = reloadOf(w) + 1; // sits out reloadOf(w) of its owner's turns
     t.shotsLeft--;
     t.firedThisTurn = true;
@@ -1027,6 +1030,7 @@ class Game {
     if (owner && owner.isMob) owner = null; // mob attacks count as the environment
     if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
     if (t.isSat) { this.damageSat(t, amt, owner, hit); return; }
+    if (t.dummy) { this.rangeHit(t, amt, hit); return; } // the Codex's training dummy
     if (t.shield) { amt *= SHIELD_FACTOR; if (hit) hit.shield = true; }
     if (owner && owner !== t) t.lastAttacker = owner; // CPUs retaliate against this tank
     if (hit && owner && owner !== t && this.report) this.report.bestQ = Math.max(this.report.bestQ || 0, hit.q); // best hit on a rival this shot
@@ -1096,6 +1100,7 @@ class Game {
   }
 
   banter(tank, situation, foe, delay = 0) {
+    if (tank.dummy || this.range) return false; // the Codex range is quiet
     const line = pickTaunt(tank, situation, foe && foe.name);
     if (line) this.say(tank, line, delay);
   }

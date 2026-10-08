@@ -192,6 +192,7 @@ class Tank {
   // relative to the ground point) and mirrors them when the vehicle faces left. Boxes never
   // rotate: to sit on a slope each box is shifted vertically by tilt * its offset from centre.
   draw(ctx, active) {
+    if (this.dummy) { this.drawDummy(ctx); return; }
     const f = this.facing;
     const x = Math.round(this.x);
     const y = Math.round(this.y);
@@ -243,9 +244,27 @@ class Tank {
     }
   }
 
+  // the Codex's training dummy: a post with a bullseye board, that shakes when hit
+  drawDummy(ctx) {
+    const x = Math.round(this.x + (this.flash > 0 ? (Math.random() - 0.5) * 4 * this.flash : 0));
+    const y = Math.round(this.y);
+    ctx.fillStyle = '#6a4a32';
+    ctx.fillRect(x - 2, y - 30, 5, 30);
+    ctx.fillRect(x - 9, y - 3, 19, 3);
+    const rings = [['#f4f0e6', 15], ['#c8433a', 12], ['#f4f0e6', 8], ['#c8433a', 4]];
+    for (const [c, r] of rings) { ctx.fillStyle = c; ctx.fillRect(x - r, y - 34 - r, r * 2, r * 2); }
+    if (this.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.6})`; ctx.fillRect(x - 15, y - 49, 30, 30); }
+  }
+
   // screen space (1600x900 HUD units); sx, sy = ground point on screen
   drawLabel(ctx, sx, sy, active) {
     if (!this.alive) return;
+    if (this.dummy) {
+      ctx.textAlign = 'center';
+      ctx.font = `13px ${HUD_FONT}`;
+      plateText(ctx, 'TRAINING DUMMY', Math.round(sx), Math.round(sy - 70), HUD.dim, 'center');
+      return;
+    }
     ctx.textAlign = 'center';
     ctx.font = `13px ${HUD_FONT}`;
     const title = `${this.name} | ${this.vehicle.name}`;
