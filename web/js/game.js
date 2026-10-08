@@ -14,7 +14,7 @@ const AIM_ARC_LEN = 650;
 const AIM_GUIDE_WIND = false; // true = the guide also bends with the wind (much easier)
 const WIND_SCALE = 0.06;
 const WIND_FULL = 0.5 * WIND_SCALE; // game.wind's magnitude at A3's strongest wind
-const UPGRADE_PER_POINT = 7.5; // rebalanced Health++ / Armour++: $ per point of health or armour
+const UPGRADE_PER_POINT = 6; // rebalanced Health++ / Armour++: $ per point of health or armour
 // Repair kits: bought in the shop, used with R instead of firing that turn
 const REPAIR_COST = 450;
 const REPAIR_MAX = 3;
@@ -120,6 +120,7 @@ class Input {
       case 'KeyS': case 'KeyE': case 'Tab': if (down && !e.repeat) this.queue.push({ cycle: 1 }); break;
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
+      case 'KeyW': case 'KeyJ': if (down && !e.repeat) this.queue.push({ jump: true }); break;
       case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': {
         const ab = ABILITIES.find((a) => a.key === e.code.slice(5));
         if (down && !e.repeat && ab) this.queue.push({ ability: ab.id });
@@ -459,8 +460,26 @@ class Game {
     this.stepSlides();
     for (const t of this.tanks) {
       t.tilt += (groundSlope(this.terrain, t.x) - t.tilt) * 0.2;
-      if (!t.alive) { t.y = this.terrain.hAt(t.x); continue; } // wrecks settle into new craters
-      const gy = this.terrain.hAt(t.x);
+      if (!t.alive) { t.y = this.groundAt(t.x); continue; } // wrecks settle into new craters
+      if (t.jumping) { // a hop (W): its own arc, landing only on the way down
+        const nx = t.x + t.jvx;
+        if (nx < 20 || nx > WORLD_W - 20) t.jvx = 0;
+        else if (this.groundAt(nx) >= t.y - 4) t.x = nx; // clear of it: carry on along
+        else if (t.vy >= 0) t.jvx = 0; // coming down into a wall: drop straight
+        t.vy += GRAV;
+        t.y += t.vy;
+        const gy = this.groundAt(t.x);
+        if (t.y >= gy) {
+          t.y = gy;
+          if (t.vy >= 0) {
+            t.vy = 0; t.jvx = 0; t.jumping = false; t.falling = false;
+            this.particles.puff(t.x, t.y);
+            this.landed(t, t.y - t.fallFrom);
+          }
+        }
+        continue;
+      }
+      const gy = this.groundAt(t.x);
       if (t.y < gy - 0.5) {
         if (!t.falling) t.fallFrom = t.y;
         t.falling = true;
@@ -623,11 +642,11 @@ class Game {
     if (t.fuel <= 0) return;
     const nx = t.x + dir * TANK_SPEED;
     if (nx < 20 || nx > WORLD_W - 20) return;
-    if ((this.terrain.hAt(t.x) - this.terrain.hAt(nx)) / TANK_SPEED > t.climb) return;
+    if (t.falling) return; // no driving in mid-air
+    if ((this.groundAt(t.x) - this.groundAt(nx)) / TANK_SPEED > t.climb) return; // too steep (fort walls included)
     for (const o of this.tanks) {
       if (o !== t && o.alive && Math.abs(o.x - nx) < TANK_W + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
     }
-    if (this.terrain.forts.length && this.fortBlocks(nx, this.terrain.hAt(nx))) return;
     // driving into a tree knocks it down, at a cost
     for (const tr of this.terrain.trees) {
       if (tr.alive && Math.abs(tr.x - nx) < TANK_W / 2 + 3 && Math.abs(tr.x - nx) < Math.abs(tr.x - t.x)) this.ramTree(t, tr);
@@ -635,6 +654,21 @@ class Game {
     t.x = nx;
     t.fuel--;
     t.walking = 4;
+  }
+
+  // W: hop in the facing direction for JUMP_FUEL of a full tank
+  jump(t) {
+    const cost = Math.ceil(t.maxFuel * JUMP_FUEL);
+    if (this.phase !== 'aim' || t !== this.active || t.falling || t.fuel < cost) { this.sfx.deny(); return false; }
+    t.fuel -= cost;
+    t.vy = JUMP_VY;
+    t.jvx = t.facing * JUMP_VX;
+    t.fallFrom = t.y;
+    t.jumping = true;
+    t.falling = true; // (no driving mid-air, and the turn waits for her to land)
+    this.particles.puff(t.x, t.y);
+    this.sfx.click();
+    return true;
   }
 
   updateAim() {
@@ -650,6 +684,8 @@ class Game {
           if (t.cycleWeapon(a.cycle)) this.sfx.click(); else this.sfx.deny();
         } else if (a.select !== undefined) {
           if (!t.firedThisTurn && t.selectWeapon(a.select)) this.sfx.click(); else this.sfx.deny();
+        } else if (a.jump) {
+          this.jump(t);
         } else if (a.repair) {
           this.useRepair(t);
           return;

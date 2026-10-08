@@ -245,6 +245,10 @@ class CpuController {
       case 'move':
         if (this.moveFrames-- > 0 && t.fuel > 1) {
           if (this.moveDir < 0) c.left = true; else c.right = true;
+          // stuck against a wall or fort for a moment: jump it, if there's the fuel
+          if (!t.falling && this.lastX !== undefined && Math.abs(t.x - this.lastX) < 0.01) this.stuck = (this.stuck || 0) + 1; else this.stuck = 0;
+          this.lastX = t.x;
+          if (this.stuck > 6 && t.fuel >= t.maxFuel * JUMP_FUEL + 20) { t.facing = this.moveDir; this.game.jump(t); this.stuck = 0; }
         } else {
           this.timer = 0.15;
           this.state = 'think';

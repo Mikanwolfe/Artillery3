@@ -10,8 +10,13 @@ const GIRL_SCALE = 0.6;
 const TANK_H = 34; // hitbox height: her body and rigging at GIRL_SCALE
 const LABEL_LIFT = 38; // HUD labels sit this much lower than they did over full-size girls
 const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
-const TANK_SPEED = 1.5; // A3 Constants.PlayerSpeed
-const TANK_CLIMB = 2.2; // steepest slope (dy/dx) a vehicle can drive up
+const TANK_SPEED = 2; // A3 Constants.PlayerSpeed was 1.5; quicker, so there's time to reach cover
+const TANK_CLIMB = 3.2; // steepest slope (dy/dx) a vehicle can drive up
+// jump (W): a hop in the facing direction for a share of the tank's full fuel; clears ridges and
+// lands on fort tops
+const JUMP_FUEL = 0.3;
+const JUMP_VY = -12; // up to about 120 units high: enough to top a fort from the ground beside it
+const JUMP_VX = 3.2; // and about 100 along
 
 // Vehicle upgrades beyond A3's Health++ / Armour++ (which use Game.upgradeCost's curve). Each level
 // is bought in turn from `costs`.
@@ -84,6 +89,7 @@ class Tank {
     this.flash = 0;
     this.tilt = terrain ? groundSlope(terrain, x) : 0;
     this.falling = false;
+    this.jvx = 0; // sideways speed during a jump
     this.fallFrom = 0;
     this.pose = 'idle';
     this.armed = { double: false, over: false };
