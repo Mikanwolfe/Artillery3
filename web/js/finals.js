@@ -333,10 +333,14 @@ Object.assign(Game.prototype, {
 // to her platoon (four G.W. Tiger SPGs in the original Artillery box art, and a Karl-Gerät 60cm
 // siege mortar), which ripple-fires two rounds a gun, then the mortar; it whips back to the mark as
 // the shells rain in across the area, and the Karl's round lands last with an earthquake.
-const BATTERY = { OUT: 34, FIRE: 44, KARL: 112, BACK: 128, BACK_END: 160, LAND: 168, LAND_GAP: 7, KARL_LAND: 246, END: 320 };
+const BATTERY = { OUT: 34, FIRE: 44, KARL: 112, BACK: 128, BACK_END: 160, LAND: 166, KARL_LAND: 250, END: 324 };
 const BATTERY_OFF = 1100; // how far past the edge of the map the guns sit
-const BATTERY_SCALE = 2.6;
-const BATTERY_GUNS = [-660, -490, -320, -150]; // the G.W.s, from the Karl outward (x, before facing)
+const BATTERY_SCALE = 4.2; // tanks are a lot bigger than the girls
+const BATTERY_GUNS = [-1060, -820, -580, -340]; // the G.W.s, from the Karl outward (x, before facing)
+const BATTERY_MID = 560; // the middle of the platoon, from the Karl
+// more batteries dug in along the background ridges (layer index, parallax scale, count): the
+// whole line is firing. Each of their rounds lands too, at half a G.W. round's damage.
+const BATTERY_BACK = [[2, 0.55, 7], [2, 0.36, 9]]; // the nearest ridge hides the rest; two depths along it
 
 // the original G.W. Tiger SPG (Geschützwagen): a long, low six-wheel chassis, a small cab up front,
 // an open raised fighting platform at the rear with a gun shield, a long barrel with a muzzle brake.
@@ -393,11 +397,22 @@ class BatteryStrike {
     this.karl = { x: this.bx, recoil: 0, flash: 0 };
     // where each round comes down (deterministic: rng)
     this.rounds = [];
-    for (let i = 0; i < BATTERY_GUNS.length * 2; i++) {
-      const x = clamp(this.tx + (rng.next() * 2 - 1) * cfg.spread, 4, WORLD_W - 4);
-      this.rounds.push({ x, at: BATTERY.LAND + i * BATTERY.LAND_GAP + Math.round(rng.next() * 4), done: false });
+    const land = (dmg, r, spread) => this.rounds.push({
+      x: clamp(this.tx + (rng.next() * 2 - 1) * spread, 4, WORLD_W - 4), at: BATTERY.LAND + Math.round(rng.next() * (BATTERY.KARL_LAND - BATTERY.LAND - 16)), dmg, r, done: false });
+    for (let i = 0; i < BATTERY_GUNS.length * 2; i++) land(cfg.dmg, cfg.r, cfg.spread);
+    // the guns on the background ridges: positions in each layer's own coordinates, past its edge
+    this.back = [];
+    const layers = game.bg.layers || [];
+    for (const [li, sc, n] of BATTERY_BACK) {
+      const l = layers[li];
+      if (!l) continue;
+      for (let i = 0; i < n; i++) {
+        const fire = BATTERY.FIRE + Math.round(rng.next() * (BATTERY.KARL - BATTERY.FIRE));
+        this.back.push({ li, sc, x: this.edge + this.side * (180 + i * (1500 / n) + sc * 200 + rng.next() * 60), fire: [fire, fire + 26], recoil: 0, flash: 0 });
+        land(cfg.dmg * 0.5, cfg.r * 0.8, cfg.spread * 1.5);
+      }
     }
-    game.cam.wide = BATTERY_OFF + 1600;
+    game.cam.wide = BATTERY_OFF + 2200;
     game.cam.follow(this.focus);
     game.ui.notice('G.W. battery, fire for effect.');
   }
@@ -406,38 +421,39 @@ class BatteryStrike {
     const g = this.game, cam = g.cam, t = ++this.t;
     const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
     const f = this.focus, px = f.x;
-    const view = { x: this.bx + this.face * 320, y: this.by - 150 }; // the middle of the platoon
+    const view = { x: this.bx + this.face * BATTERY_MID, y: this.by - 260 }; // the middle of the platoon
     if (t <= BATTERY.OUT) { // whip out to the guns
       const u = ease(t / BATTERY.OUT);
       f.x = lerp(this.tx, view.x, u); f.y = lerp(this.ground - 160, view.y, u);
-      cam.setZoom(lerp(this.zoom0, 0.75, u));
+      cam.setZoom(lerp(this.zoom0, 0.6, u));
     }
     // ripple fire: two rounds a gun, the autoloader's second close behind, then the mortar
     this.guns.forEach((gun, i) => {
       if (t === BATTERY.FIRE + i * 6 || t === BATTERY.FIRE + 30 + i * 6) this.fire(gun, false);
     });
     if (t === BATTERY.KARL) this.fire(this.karl, true);
+    for (const b of this.back) if (b.fire.includes(t)) { b.recoil = 1; b.flash = 1; if (t % 3 === 0) g.sfx.explosion(18); }
     if (t > BATTERY.BACK && t <= BATTERY.BACK_END) { // and whip back to the mark
       const u = ease((t - BATTERY.BACK) / (BATTERY.BACK_END - BATTERY.BACK));
       f.x = lerp(view.x, this.tx, u); f.y = lerp(view.y, this.ground - 200, u);
-      cam.setZoom(lerp(0.75, Math.min(this.zoom0, 0.6), u));
+      cam.setZoom(lerp(0.6, Math.min(this.zoom0, 0.6), u));
     }
     for (const r of this.rounds) {
       if (r.done || t < r.at) continue;
       r.done = true;
       const y = g.terrain.hAt(r.x);
-      g.explode(r.x, y, { dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 36, from: { x: this.face, y: -2 } }, this.owner, 'shell');
+      g.explode(r.x, y, { dmg: r.dmg, dmgR: r.r, explR: 30, from: { x: this.face, y: -2 } }, this.owner, 'shell');
       g.shake = Math.max(g.shake, 14);
     }
     if (t === BATTERY.KARL_LAND) {
-      const k = this.cfg.karl;
-      g.explode(this.tx, this.ground, { dmg: k.dmg, dmgR: k.r, explR: k.explR, visR: 320, from: { x: this.face, y: -3 } }, this.owner, 'shell');
-      g.quake(this.tx, this.ground, k.quake, this.owner);
+      const k = this.cfg.karl, y = g.terrain.hAt(this.tx); // the floor of whatever craters are there by now
+      g.explode(this.tx, y, { dmg: k.dmg, dmgR: k.r, explR: k.explR, visR: 320, from: { x: this.face, y: -3 } }, this.owner, 'shell');
+      g.quake(this.tx, y, k.quake, this.owner);
       g.shake = Math.max(g.shake, 36);
       g.screenFlash = Math.max(g.screenFlash || 0, 0.6);
       g.sfx.explosion(70);
     }
-    for (const gun of [...this.guns, this.karl]) { gun.recoil = Math.max(0, gun.recoil - 0.06); gun.flash = Math.max(0, gun.flash - 0.15); }
+    for (const gun of [...this.guns, this.karl, ...this.back]) { gun.recoil = Math.max(0, gun.recoil - 0.06); gun.flash = Math.max(0, gun.flash - 0.15); }
     if (t > BATTERY.KARL_LAND && t <= BATTERY.KARL_LAND + 30) cam.setZoom(lerp(Math.min(this.zoom0, 0.6), this.zoom0, (t - BATTERY.KARL_LAND) / 30));
     cam.follow(f);
     if (t <= BATTERY.BACK_END) cam.snap(); // the set piece drives the camera itself
@@ -461,16 +477,57 @@ class BatteryStrike {
   }
 
   aim(karl) { const e = karl ? 1.2 : 0.95; return { x: Math.cos(e) * this.face, y: -Math.sin(e) }; } // raised steeply
-  muzzle(gun, karl) {
-    const S = BATTERY_SCALE, v = this.aim(karl), piv = karl ? [0, -24] : [-9, -18];
+  muzzle(gun, karl, gx = gun.x, gy = this.by, S = BATTERY_SCALE) {
+    const v = this.aim(karl), piv = karl ? [0, -24] : [-9, -18];
     const d = (karl ? 50 : 34) - gun.recoil * 6;
-    return { x: gun.x + this.face * piv[0] * S + v.x * d * S, y: this.by + piv[1] * S + v.y * d * S };
+    return { x: gx + this.face * piv[0] * S + v.x * d * S, y: gy + piv[1] * S + v.y * d * S };
+  }
+
+  // one gun (a G.W. or the Karl) at ground point gx, gy and scale S, in the palette pal
+  drawGun(ctx, gun, karl, gx, gy, S, pal) {
+    const face = this.face;
+    const box = (c, lx, ty, w, h) => {
+      ctx.fillStyle = c;
+      const left = face > 0 ? gx + lx * S : gx - (lx + w) * S;
+      ctx.fillRect(Math.round(left), Math.round(gy + ty * S), Math.ceil(w * S), Math.ceil(h * S));
+    };
+    if (karl) drawKarl(box, pal); else drawGWSPG(box, pal);
+    const v = this.aim(karl), piv = karl ? [0, -24] : [-9, -18];
+    const px = gx + face * piv[0] * S, py = gy + piv[1] * S;
+    const n = karl ? 6 : 8, step = karl ? 7 : 4.5, size = karl ? 13 : 4;
+    ctx.fillStyle = pal.deep;
+    for (let i = 0; i < n; i++) {
+      const d = 6 + i * step - gun.recoil * 6;
+      sq(ctx, px + v.x * d * S, py + v.y * d * S, (i === n - 1 ? (karl ? 16 : 6.5) : size) * S);
+    }
+    if (!karl) drawGWMount(box, pal);
+    if (gun.flash > 0) {
+      const m = this.muzzle(gun, karl, gx, gy, S);
+      ctx.fillStyle = `rgba(255,236,170,${gun.flash})`;
+      sq(ctx, m.x + v.x * 10 * S, m.y + v.y * 10 * S, (karl ? 30 : 16) * S * gun.flash);
+      ctx.fillStyle = `rgba(255,160,60,${gun.flash * 0.8})`;
+      sq(ctx, m.x + v.x * 18 * S, m.y + v.y * 18 * S, (karl ? 20 : 10) * S * gun.flash);
+    }
   }
 
   draw(ctx) {
     const g = this.game, t = this.t, S = BATTERY_SCALE, face = this.face, time = g.time;
+    // the background ridges run on past the edge of the map, with more batteries dug in along them
+    const layers = g.bg.layers || [];
+    for (const li of [...new Set(BATTERY_BACK.map((b) => b[0]))]) {
+      const l = layers[li];
+      if (!l) continue;
+      const ox = g.cam.x * (1 - l.parallax), ly = l.height[this.side < 0 ? 0 : WORLD_W - 1];
+      const e0 = this.edge + ox; // where that layer's own ridge line ends on screen
+      ctx.fillStyle = l.color;
+      ctx.fillRect(this.side < 0 ? e0 - 4000 : e0, ly, 4000, WORLD_BOTTOM - ly + 400);
+      const [r0, g0, b0] = (l.color.match(/\d+/g) || [60, 60, 60]).map(Number);
+      const tone = (k) => `rgb(${Math.round(r0 * k)},${Math.round(g0 * k)},${Math.round(b0 * k)})`;
+      const bpal = { hull: tone(0.8), light: tone(0.95), dark: tone(0.65), deep: tone(0.5), track: tone(0.45), wheel: tone(0.7), metal: tone(0.7), lamp: tone(1.1) };
+      for (const b of this.back.filter((q) => q.li === li).sort((p, q) => p.sc - q.sc)) this.drawGun(ctx, b, false, b.x + ox, ly + 2, S * b.sc, bpal);
+    }
     // the ground out past the edge of the map, where the guns are dug in
-    const x0 = this.side < 0 ? this.edge - 2600 : this.edge, x1 = this.side < 0 ? this.edge : this.edge + 2600;
+    const x0 = this.side < 0 ? this.edge - 3200 : this.edge, x1 = this.side < 0 ? this.edge : this.edge + 3200;
     const T = g.terrain;
     ctx.fillStyle = T.color; ctx.fillRect(x0, this.by, x1 - x0, WORLD_BOTTOM - this.by + 400);
     if (T.cap) { ctx.fillStyle = T.cap; ctx.fillRect(x0, this.by, x1 - x0, 8); }
@@ -478,31 +535,8 @@ class BatteryStrike {
       hull: this.owner.color, light: shade(this.owner.color, 0.3), dark: shade(this.owner.color, -0.25), deep: shade(this.owner.color, -0.5),
       track: '#2b2d33', wheel: '#6b6f78', metal: '#8a8fa0', lamp: '#fff3c0',
     };
-    const box = (gx) => (c, lx, ty, w, h) => {
-      ctx.fillStyle = c;
-      const left = face > 0 ? gx + lx * S : gx - (lx + w) * S;
-      ctx.fillRect(Math.round(left), Math.round(this.by + ty * S), Math.ceil(w * S), Math.ceil(h * S));
-    };
-    const barrel = (gun, karl) => {
-      const v = this.aim(karl), piv = karl ? [0, -24] : [-9, -18];
-      const px = gun.x + face * piv[0] * S, py = this.by + piv[1] * S;
-      const n = karl ? 6 : 8, step = karl ? 7 : 4.5, start = karl ? 6 : 6, size = karl ? 13 : 4;
-      ctx.fillStyle = pal.deep;
-      for (let i = 0; i < n; i++) {
-        const d = start + i * step - gun.recoil * 6;
-        sq(ctx, px + v.x * d * S, py + v.y * d * S, (i === n - 1 ? (karl ? 16 : 6.5) : size) * S);
-      }
-      if (gun.flash > 0) {
-        const m = this.muzzle(gun, karl);
-        ctx.fillStyle = `rgba(255,236,170,${gun.flash})`;
-        sq(ctx, m.x + v.x * 10 * S, m.y + v.y * 10 * S, (karl ? 30 : 16) * S * gun.flash);
-        ctx.fillStyle = `rgba(255,160,60,${gun.flash * 0.8})`;
-        sq(ctx, m.x + v.x * 18 * S, m.y + v.y * 18 * S, (karl ? 20 : 10) * S * gun.flash);
-      }
-    };
-    drawKarl(box(this.karl.x), pal);
-    barrel(this.karl, true);
-    for (const gun of this.guns) { drawGWSPG(box(gun.x), pal); barrel(gun, false); drawGWMount(box(gun.x), pal); }
+    this.drawGun(ctx, this.karl, true, this.karl.x, this.by, S, pal);
+    for (const gun of this.guns) this.drawGun(ctx, gun, false, gun.x, this.by, S, pal);
     // rounds on the way down: a shell and its streak over the mark
     for (const r of this.rounds) {
       const k = r.at - t;
