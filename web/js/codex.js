@@ -98,6 +98,35 @@ function codexMeta(w) {
   return lines;
 }
 
+// price against worth for every shop gun (log-log, like the armoury's chart), with `sel` ringed and
+// labelled; the dashed line is the median fit, worth ∝ price^0.75. Dots are buttons (data-w).
+const KIND_COL = { shell: '#c3b0ff', gun: '#aab0c8', laser: '#78c8ff', acid: '#8ad86a', flak: '#78d8c4', rocket: '#ff7c66' };
+function codexChart(sel) {
+  const W = 400, H = 210, L = 40, R = 10, T = 10, B = 26;
+  const guns = WEAPONS.map((w) => ({ w, c: w.cost, v: codexWorth(w) }));
+  const lx = Math.log10;
+  const x0 = lx(500), x1 = lx(60000), y0 = lx(Math.min(...guns.map((g) => g.v)) * 0.8), y1 = lx(Math.max(...guns.map((g) => g.v)) * 1.2);
+  const X = (c) => L + ((lx(c) - x0) / (x1 - x0)) * (W - L - R);
+  const Y = (v) => H - B - ((lx(v) - y0) / (y1 - y0)) * (H - T - B);
+  let s = '';
+  for (const c of [1000, 3000, 10000, 30000]) s += `<line x1="${X(c)}" x2="${X(c)}" y1="${T}" y2="${H - B}" class="g"/><text x="${X(c)}" y="${H - 9}" text-anchor="middle">$${c / 1000}k</text>`;
+  for (const v of [100, 300, 1000, 3000, 10000]) if (lx(v) > y0 && lx(v) < y1) s += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="g"/><text x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v >= 1000 ? v / 1000 + 'k' : v}</text>`;
+  const ks = guns.map((g) => g.v / Math.pow(g.c, 0.75)).sort((a, b) => a - b);
+  const K = ks[ks.length >> 1];
+  s += `<path d="M${X(500)} ${Y(K * Math.pow(500, 0.75))}L${X(60000)} ${Y(K * Math.pow(60000, 0.75))}" class="fit"/>`;
+  for (const g of guns) {
+    if (g.w === sel) continue;
+    s += `<rect data-w="${g.w.id}" x="${X(g.c) - 3.5}" y="${Y(g.v) - 3.5}" width="7" height="7" fill="${KIND_COL[g.w.kind]}"><title>${esc(g.w.name)}: $${g.c.toLocaleString('en-US')}, ${Math.round(g.v)} a firing turn</title></rect>`;
+  }
+  const sw = sel.starter ? { c: 500, v: codexWorth(sel) } : { c: sel.cost, v: codexWorth(sel) };
+  const sx = X(sw.c), sy = Y(sw.v);
+  s += `<rect x="${sx - 7}" y="${sy - 7}" width="14" height="14" fill="none" stroke="#ffffff" stroke-width="2"/><rect x="${sx - 4}" y="${sy - 4}" width="8" height="8" fill="${KIND_COL[sel.kind]}"/>`;
+  const right = sx > W - 130;
+  s += `<text x="${sx + (right ? -11 : 11)}" y="${sy - 8}" text-anchor="${right ? 'end' : 'start'}" class="sel">${esc(sel.name.length > 22 ? sel.name.slice(0, 21) + '…' : sel.name)}${sel.starter ? ' (starter, at $500)' : ''}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="cx-chart" role="img" aria-label="Price against worth per firing turn for every gun">${s}</svg>
+    <p class="cx-legend">${Object.entries(KIND_COL).map(([k, c]) => `<span><i style="background:${c}"></i>${k}</span>`).join('')}<span><i class="fit"></i>fit</span></p>`;
+}
+
 // ---------------------------------------------------------------- the range (game side)
 Object.assign(Game.prototype, {
   startRange(vid, wid) {
@@ -242,7 +271,9 @@ Object.assign(UI, {
       <p>${esc(w.short)} <i>${esc(w.long)}</i></p>
       <div class="stats">${this.weaponStats(w)}</div>
       <dl class="cx-dl">${codexMeta(w).map(([k, val]) => `<dt>${k}</dt><dd>${esc(val)}</dd>`).join('')}</dl>
-      ${gn ? `<p class="cx-meta"><span class="chip ${gn[0]}">${gn[0]}</span> ${esc(gn[1])}</p>` : ''}`;
+      ${gn ? `<p class="cx-meta"><span class="chip ${gn[0]}">${gn[0]}</span> ${esc(gn[1])}</p>` : ''}
+      <p class="mgh">Price against worth per firing turn (log) · click a dot</p>${codexChart(w)}`;
+    $('cx-wpn').querySelectorAll('rect[data-w]').forEach((r) => { r.onclick = () => { c.wid = r.dataset.w; this.renderCodex(); this.game.startRange(c.vid, c.wid); this.codexReadout(); }; });
     const r = this.game.range;
     $('cx-dist').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.d === (r ? r.dist : 'mid')));
     $('cx-wind').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.w === (r && r.calm ? 'calm' : 'live')));

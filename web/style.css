@@ -161,6 +161,16 @@ option { background: var(--bg); color: var(--fg); }
 #cx-readout { display: grid; grid-template-columns: repeat(4, auto auto); gap: 0.2em 0.6em; justify-content: start; align-items: baseline; margin: 0.6em 0 0.4em; }
 #cx-readout b { color: var(--gold); font-size: 1.15em; font-variant-numeric: tabular-nums; font-weight: 400; }
 .cx-hint { line-height: 1.6; }
+.cx-chart { width: 100%; height: auto; display: block; background: var(--bg); border: 1px solid var(--line); }
+.cx-chart text { font-family: var(--font); font-size: 9px; fill: var(--ash); }
+.cx-chart text.sel { fill: var(--bright); font-size: 10px; }
+.cx-chart .g { stroke: var(--line); stroke-width: 1; }
+.cx-chart .fit { stroke: var(--ash); stroke-width: 1.2; stroke-dasharray: 5 4; fill: none; }
+.cx-chart rect[data-w] { cursor: pointer; }
+.cx-chart rect[data-w]:hover { stroke: var(--bright); stroke-width: 1.5; }
+.cx-legend { display: flex; flex-wrap: wrap; gap: 0.3em 0.8em; font-size: 0.8em; color: var(--ash) !important; }
+.cx-legend i { display: inline-block; width: 0.6em; height: 0.6em; margin-right: 0.3em; }
+.cx-legend i.fit { height: 0; border-top: 1px dashed var(--ash); width: 1.2em; vertical-align: middle; }
 /* the range runs behind the Codex panel: move the HUD clear of it */
 #stage.ranging #dock { left: 36%; }
 #stage.ranging #topleft, #stage.ranging #chat { left: 36%; }
