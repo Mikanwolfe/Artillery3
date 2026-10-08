@@ -6,7 +6,7 @@
 
 ### Update: web rewrite
 
-The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step or dependencies. The assets are the original's sounds and music (`web/sounds`, transcoded to MP3 from `Resources/sounds`; firing and hits are synthesised, as A3 had no samples for them; charging is silent, and the round-win sting is the original reversed and filtered) and Cascadia Mono (SIL OFL, `web/fonts`). The UI follows the NXi / NEKOX//NET design system's rules (one monospace face, square corners, uppercase micro-labels, hatched meters, engraved plates) in its own ink-and-lilac palette; the weapon badges keep A3's rarity colours, lifted a little to read on dark panels.
+The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step or dependencies. The assets are the original's sounds and music (`web/sounds`, transcoded to MP3 from `Resources/sounds`; firing and hits are synthesised, as A3 had no samples for them; charging is silent, and the menu hover blip is the original reversed and filtered) and Cascadia Mono (SIL OFL, `web/fonts`). The UI follows the NXi / NEKOX//NET design system's rules (one monospace face, square corners, uppercase micro-labels, hatched meters, engraved plates) in its own ink-and-lilac palette; the weapon badges keep A3's rarity colours, lifted a little to read on dark panels.
 Open `web/index.html` in a browser, or serve the folder (e.g. `python3 -m http.server -d web`).
 
 It lifts as much as it can from A3s, in the original's world units (terrain widened from A3's 2400 to 3600, 1600x900 camera, gravity 0.6, muzzle speed = charge):
