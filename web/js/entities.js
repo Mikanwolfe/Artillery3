@@ -390,6 +390,7 @@ class Projectile {
     this.trail = [];
     this.peak = y; // highest point reached (smallest y), for the altitude bonus
     this.guide = guideFor(w, owner); // rockets: seeker settings (null for shells)
+    if (this.guide) this.wseed = rng.int(0, 1e9); // its own fin quirks (see finFor)
     this.prefer = preferFor(owner);
   }
 
