@@ -5,7 +5,7 @@
 // (stone with snow, a timber palisade, sandstone).
 
 const FORT_CELL = 12;
-const FORT_HP = 120; // per block
+const FORT_HP = 60; // per block
 
 class Fort {
   constructor(x, terrain, style) {

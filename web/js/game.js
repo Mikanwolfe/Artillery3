@@ -1243,7 +1243,7 @@ class Game {
     const cur = stat === 'hp' ? tank.maxHp : tank.maxArmour;
     return Math.max(100, Math.round((cur * 0.3 * UPGRADE_PER_POINT) / 10) * 10);
   }
-  sellValue(w) { return Math.floor(w.cost / 2); }
+  sellValue(w) { return w.cost; } // a full refund: trying a new gun should cost nothing
 
   buy(tank, kind, id) {
     if (kind === 'weapon') {

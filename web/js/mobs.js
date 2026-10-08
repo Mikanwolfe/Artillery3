@@ -32,9 +32,9 @@ class Mob {
     this.color = '#5a5a6a';
     this.stage = stage;
     const S = {
-      drone: { name: 'Hatsuyuki drone', hp: 100 + 40 * stage, hw: 18, hh: 16, bounty: 250 + 60 * stage },
-      gunner: { name: 'Hatsuyuki gunner', hp: 90 + 35 * stage, hw: 18, hh: 16, bounty: 300 + 70 * stage },
-      turret: { name: 'Shore battery', hp: 300 + 60 * stage, hw: 24, hh: 22, bounty: 500 + 80 * stage },
+      drone: { name: 'Hatsuyuki drone', hp: 50 + 20 * stage, hw: 18, hh: 16, bounty: 250 + 60 * stage },
+      gunner: { name: 'Hatsuyuki gunner', hp: 45 + 18 * stage, hw: 18, hh: 16, bounty: 300 + 70 * stage },
+      turret: { name: 'Shore battery', hp: 150 + 30 * stage, hw: 24, hh: 22, bounty: 500 + 80 * stage },
       mothership: { name: 'Mothership Shirayuki', hp: 1500 + 300 * stage, hw: 120, hh: 46, bounty: 4000 + 600 * stage },
     }[kind];
     Object.assign(this, S);
@@ -178,10 +178,13 @@ class Mob {
       return;
     }
     const top = this.kind === 'turret' ? 40 : 34;
-    ctx.fillStyle = 'rgba(232,230,244,0.85)';
+    ctx.fillStyle = HUD.plate;
     ctx.fillRect(Math.round(sx - 26), Math.round(sy - top - 8), 52, 8);
-    ctx.fillStyle = 'rgb(184,67,58)';
+    ctx.fillStyle = HUD.hot;
     ctx.fillRect(Math.round(sx - 24), Math.round(sy - top - 6), Math.round(48 * clamp(this.hp / this.maxHp, 0, 1)), 4);
+    // armed (fires on the next hostile turn): a blinking red pip; reloading: a dim one
+    ctx.fillStyle = this.armed ? ((this.t | 0) % 30 < 18 ? '#ff4a3a' : '#7a2420') : HUD.ash;
+    ctx.fillRect(Math.round(sx + 30), Math.round(sy - top - 10), 7, 7);
   }
 }
 
@@ -190,7 +193,7 @@ function mobWeapon(kind, st) {
   const base = { kind: 'shell', salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 60 };
   if (kind === 'bomb') return { ...base, id: 'mobbomb', name: 'Drone bomb', dmg: 35 + 12 * st, dmgR: 70, explR: 8 };
   if (kind === 'bullet') return { ...base, id: 'mobgun', name: 'Drone gun', dmg: 14 + 5 * st, dmgR: 30, explR: 2 };
-  if (kind === 'battery') return { ...base, id: 'mobshell', name: 'Battery shell', dmg: 40 + 15 * st, dmgR: 80, explR: 10 };
+  if (kind === 'battery') return { ...base, id: 'mobshell', name: 'Battery shell', dmg: 20 + 8 * st, dmgR: 80, explR: 10 };
   return { ...base, id: 'shipbomb', name: 'Mothership bomb', dmg: 50 + 15 * st, dmgR: 85, explR: 12 };
 }
 
@@ -230,6 +233,8 @@ Object.assign(Game.prototype, {
     const st = Math.max(1, Math.round(this.stage()));
     const y = kind === 'turret' ? this.terrain.hAt(x) : kind === 'mothership' ? Mob.shipY(this.terrain) : Mob.hoverY(this.terrain, x);
     const m = new Mob(kind, x, y, st);
+    // enemies attack every other hostile turn, staggered so about half of them fire each time
+    m.armed = this.mobs.filter((x) => x.alive && x.armed).length * 2 < this.mobs.filter((x) => x.alive).length + 1;
     this.mobs.push(m);
     return m;
   },
@@ -301,6 +306,9 @@ Object.assign(Game.prototype, {
     let shots = 0;
     const live = this.mobs.filter((m) => m.alive);
     for (const m of live) {
+      const armed = m.armed;
+      m.armed = !m.armed; // every other turn: reload while the others fire
+      if (!armed) continue;
       const v = m.victim;
       if (!v || !v.alive) continue;
       const vc = v.center();
