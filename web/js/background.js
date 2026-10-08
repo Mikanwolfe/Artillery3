@@ -122,8 +122,7 @@ class Background {
       }
       for (const [x, y, dir] of [[a, la, -1], [b, lb, 1]]) {
         if (y >= WORLD_BOTTOM) continue;
-        ctx.fillStyle = '#07060b';
-        ctx.fillRect((dir < 0 ? x - 30 : x + 1) + ox, Math.round(y), 30, VOID_Y - y);
+        drawMoltenFace(ctx, x + ox, y, dir, 30, 0.6); // dimmer, further off
       }
     }
   }

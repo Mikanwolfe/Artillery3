@@ -468,6 +468,7 @@ class Game {
 
   startAim() {
     const t = this.active;
+    this.timeScale = 1; // (in case a set piece's bullet time was cut short)
     t.charge = 0;
     t.clampElev();
     this.input.ctl.reset();
@@ -1671,7 +1672,7 @@ class Game {
   // ------------------------------------------------------------ frame
   frame(dtReal) {
     if (!this.paused) {
-      this.acc = (this.acc || 0) + Math.min(0.1, dtReal) * this.speed;
+      this.acc = (this.acc || 0) + Math.min(0.1, dtReal) * this.speed * (this.timeScale || 1); // set pieces can slow time (bullet time)
       let n = 0;
       while (this.acc >= DT && n < 800) { this.step(); this.acc -= DT; n++; }
     }

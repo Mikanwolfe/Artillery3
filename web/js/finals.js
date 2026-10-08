@@ -19,7 +19,7 @@
 // asteroid belt. It settles on one rock; a yellow outline forms around it and pulses, in silence;
 // then the rock is flung down, faster than the climb, and lands: a vast crater, the ground melted
 // to lava that stains it for good (Terrain.melt) and burns anyone who stands in it.
-const ROCK = { CLIMB: 130, MARK: 142, PULSE: 226, DROP: 276, END: 366 };
+const ROCK = { CLIMB: 130, MARK: 142, PULSE: 226, DROP: 276, END: 400 };
 const ROCK_ALT = 15000; // the belt, above the mark
 const ROCK_CELL = 10; // the rocks' box size
 // a lumpy rock as boxes: cells inside a noisy radius, shaded light on the upper left
@@ -98,21 +98,32 @@ class AsteroidStrike {
     if (t === ROCK.DROP) {
       g.ascent = 0;
       const c = this.cfg, y = g.terrain.hAt(this.tx);
-      g.explode(this.tx, y, { dmg: c.dmg, dmgR: c.r, explR: c.explR, visR: 620, from: { x: 0, y: -1 } }, this.owner, 'shell');
+      g.explode(this.tx, y, { dmg: c.dmg, dmgR: c.r, explR: c.explR, visR: 950, from: { x: 0, y: -1 } }, this.owner, 'shell');
       g.terrain.melt(this.tx, c.lava);
-      for (let i = 0; i < 90; i++) { // molten rock thrown out of the crater
-        const a = -Math.PI * (0.08 + 0.84 * rng.next()), sp = 3 + rng.next() * 12;
-        g.drops.push(new AcidDrop(g, this.owner, this.tx + (rng.next() - 0.5) * 200, g.terrain.hAt(this.tx) - 6, Math.cos(a) * sp, Math.sin(a) * sp, c.splash, true));
+      for (let i = 0; i < 260; i++) { // molten rock thrown out of the crater, high and wide
+        const a = -Math.PI * (0.14 + 0.72 * rng.next()), sp = 7 + rng.next() * 26;
+        const d = new AcidDrop(g, this.owner, this.tx + (rng.next() - 0.5) * 320, g.terrain.hAt(this.tx) - 6, Math.cos(a) * sp, Math.sin(a) * sp, c.splash, true);
+        d.size *= 2 + rng.next() * 1.5;
+        g.drops.push(d);
       }
+      for (let i = 0; i < 160; i++) { // and glowing spatter, lighter, hanging in the air
+        const a = -Math.PI * (0.1 + 0.8 * Math.random()), sp = 6 + Math.random() * 24;
+        g.particles.add({ x: this.tx + (Math.random() - 0.5) * 200, y: y - 10, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 0.16, drag: 0.985, life: 1.6 + Math.random() * 1.4, size: 6 + Math.random() * 14, color: i % 3 ? [255, 120 + Math.random() * 90, 30] : [255, 236, 170] });
+      }
+      g.timeScale = 0.14; // bullet time: the lava hangs in the air
       g.shake = Math.max(g.shake, 44);
       g.screenFlash = Math.max(g.screenFlash || 0, 1);
       g.sfx.explosion(80);
       g.events.push('The ground melts.');
     }
+    // then time comes back, slowly at first
+    if (t > ROCK.DROP + 22 && t <= ROCK.DROP + 60) g.timeScale = lerp(0.14, 1, ease((t - ROCK.DROP - 22) / 38));
+    if (t === ROCK.DROP + 61) g.timeScale = 1;
     cam.follow(f);
     if (t <= ROCK.DROP) cam.snap();
-    if (t > ROCK.DROP + 30 && t <= ROCK.DROP + 70) cam.setZoom(lerp(0.5, this.zoom0, ease((t - ROCK.DROP - 30) / 40)));
-    if (t >= ROCK.END) { cam.ceil = -1000; g.ascent = 0; g.ascentDir = 1; return false; }
+    if (t > ROCK.DROP && t <= ROCK.DROP + 40) f.y = lerp(this.ground - 60, this.ground - 260, ease((t - ROCK.DROP) / 40)); // up a little to watch it fall
+    if (t > ROCK.DROP + 50 && t <= ROCK.DROP + 90) cam.setZoom(lerp(0.5, this.zoom0, ease((t - ROCK.DROP - 50) / 40)));
+    if (t >= ROCK.END) { cam.ceil = -1000; g.ascent = 0; g.ascentDir = 1; g.timeScale = 1; return false; }
     return true;
   }
 

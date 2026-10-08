@@ -28,7 +28,33 @@ function plateText(ctx, txt, x, y, color, align = 'center') {
 }
 const WORLD_W = 3600; // A3 Constants.TerrainWidth was 2400; widened for room to move and lob
 const WORLD_BOTTOM = 1800; // Constants.TerrainDepth
-const VOID_Y = WORLD_BOTTOM + 1200; // ground height where the ground is gone altogether (15X's Zero Point)
+const VOID_Y = WORLD_BOTTOM + 1200;
+// a face cut sheer through the ground (15X's Zero Point): black glass, melted at the lip like the
+// asteroid's lava, with molten veins running down it that cool and fade with depth. x, y: the top
+// of the face's outer edge; dir: -1 for a face looking right (the void's left side), 1 looking left.
+function drawMoltenFace(ctx, x, y, dir, w, a = 1) {
+  const now = performance.now() / 1000; // flicker only: not game state
+  const fx = dir < 0 ? x - w : x + 1;
+  ctx.fillStyle = '#07060b'; ctx.fillRect(fx, Math.round(y), w, VOID_Y - y);
+  // the lip: a melted crust along the top of the face
+  ctx.fillStyle = `rgba(52,20,14,${a})`; ctx.fillRect(fx, Math.round(y), w, 14);
+  for (let i = 0; i < w; i += 4) {
+    const glow = 0.55 + 0.45 * Math.sin(now * 3 + i * 0.3 + x * 0.01);
+    ctx.fillStyle = `rgba(255,${Math.round(110 + 100 * glow)},30,${a * glow})`;
+    ctx.fillRect(fx + i, Math.round(y + 2 + hash2(i, x) * 6), 4, 4);
+  }
+  // veins running down the face, hottest at the top
+  for (let k = 0; k < 6; k++) {
+    const vx = fx + Math.round(hash2(k, x * 3 + 7) * (w - 3)), len = 50 + hash2(k + 9, x) * 180;
+    for (let d = 0; d < len; d += 6) {
+      const u = d / len, glow = (1 - u) * (0.6 + 0.4 * Math.sin(now * 4 + k + d * 0.05));
+      ctx.fillStyle = `rgba(255,${Math.round(80 + 120 * (1 - u))},30,${a * glow})`;
+      ctx.fillRect(vx + Math.round(Math.sin(d * 0.08 + k) * 3), Math.round(y + 12 + d), 3, 6);
+    }
+  }
+  // the very edge, glowing where it meets the void
+  ctx.fillStyle = `rgba(255,120,40,${0.45 * a})`; ctx.fillRect(dir < 0 ? x - 2 : x + 1, Math.round(y), 2, 220);
+} // ground height where the ground is gone altogether (15X's Zero Point)
 const GRAV = 0.6; // Constants.Gravity, px / frame^2
 const DT = 1 / 60;
 const TAU = Math.PI * 2;

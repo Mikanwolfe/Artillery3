@@ -241,7 +241,7 @@ class Terrain {
   }
 
   // where the ground was deleted: darkness welling up from below, and the sheer cut faces in black
-  // glass either side, a faint violet sheen down their edges
+  // glass either side, melted at their lips with molten veins running down (drawMoltenFace)
   drawVoids(ctx, x0, x1) {
     for (const [a, b] of this.voids) {
       if (b < x0 - 60 || a > x1 + 60) continue;
@@ -253,9 +253,7 @@ class Terrain {
       }
       for (const [x, y, dir] of [[a, la, -1], [b, lb, 1]]) {
         if (y >= WORLD_BOTTOM) continue;
-        const fx = dir < 0 ? x - 44 : x + 1;
-        ctx.fillStyle = '#07060b'; ctx.fillRect(fx, Math.round(y), 44, VOID_Y - y);
-        ctx.fillStyle = 'rgba(120,90,170,0.35)'; ctx.fillRect(dir < 0 ? x - 2 : x + 1, Math.round(y), 2, VOID_Y - y);
+        drawMoltenFace(ctx, x, y, dir, 44); // melted like the asteroid's crater
       }
     }
   }
