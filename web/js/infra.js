@@ -15,20 +15,20 @@
 
 const BRIDGE_SEG = 24; // width of a deck segment
 const BRIDGE_DECK = 8; // deck thickness
-const BRIDGE_SEG_HP = 160;
+const BRIDGE_SEG_HP = 140;
 const BRIDGE_OVERHANG = 3; // segments of deck that can hang past their nearest support
 const POLE_H = 72;
 const POLE_HP = 50;
 const POLE_GAP = 150;
 const HIGHWAY_DECK = 14;
-const HIGHWAY_SEG_HP = 260;
+const HIGHWAY_SEG_HP = 220;
 const TOWER_SEC = 40; // height of a radio tower section
-const TOWER_SEC_HP = 140;
+const TOWER_SEC_HP = 120;
 const TOWER_CRUSH = 14; // damage per fallen section to whatever a toppling tower lands on (up to 90)
 const MATERIALS = {
   timber: { hp: 1, deck: ['#8a6440', '#a47c52', '#5a3e26'], pole: '#5a4030' },
-  concrete: { hp: 1.7, deck: ['#a4a29c', '#c2c0ba', '#6a6864'], pole: '#8a8884' },
-  steel: { hp: 2.6, deck: ['#56667a', '#7888a0', '#323a48'], pole: '#4a5260' },
+  concrete: { hp: 1.5, deck: ['#a4a29c', '#c2c0ba', '#6a6864'], pole: '#8a8884' },
+  steel: { hp: 2.2, deck: ['#56667a', '#7888a0', '#323a48'], pole: '#4a5260' },
 };
 function materialFor(round) { return round >= 5 ? 'steel' : round >= 3 ? 'concrete' : 'timber'; }
 const LIVE_TURNS = 6; // how many turns a fallen line stays live
@@ -280,6 +280,41 @@ Object.assign(Game.prototype, {
     }
     this.events.push(falls.length > broken.length ? 'A bridge section collapsed.' : 'The bridge deck is holed.');
     if (b.segs.every((s) => s.gone)) T.bridges = T.bridges.filter((x) => x !== b);
+  },
+
+  // for the CPUs: the live span a vehicle at ground level at x would be standing under, if any
+  liveWireAt(x, y) {
+    if (Math.abs(y - this.terrain.hAt(x)) > 8) return null;
+    for (const line of this.terrain.lines || []) {
+      for (let k = 0; k < line.spans.length; k++) {
+        const a = line.poles[k].x, b = line.poles[k + 1].x;
+        if (line.spans[k].state === 'live' && x >= a - 6 && x <= b + 6) return { a, b };
+      }
+    }
+    return null;
+  },
+
+  // and whether a deck (bridge or highway) is overhead, close enough to catch its shots
+  coveredAt(x, y) {
+    for (const b of this.terrain.bridges || []) {
+      for (const dx of [-12, 0, 12]) {
+        const top = deckTopAt(b, x + dx);
+        if (top < y - 10 && y - top < 400) return true;
+      }
+    }
+    return false;
+  },
+
+  // the nearest place to drive to (ground x) with open sky, within `reach`; null if none
+  clearSpot(t, reach) {
+    for (let d = 16; d <= reach; d += 8) {
+      for (const dir of [1, -1]) {
+        const x = t.x + dir * d;
+        if (x < 30 || x > WORLD_W - 30) continue;
+        if (!this.coveredAt(x, this.groundAt(x, t.y)) && !this.liveWireAt(x, this.terrain.hAt(x))) return x;
+      }
+    }
+    return null;
   },
 
   // live wire on the ground between poles k and k+1: shocks vehicles standing on the ground there
