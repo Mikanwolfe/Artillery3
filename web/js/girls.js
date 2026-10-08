@@ -38,7 +38,7 @@ const GIRL_SIT = 9; // wrecks: how far the upper body drops when she sits down
 //   d  sweat/tear         h/H/L hair/shade/highlight       c/C hat or scarf / shade   y/Y gold
 //   u/U/z top / shade / light          x/X stockings, boots    T shell nose / grey
 //   p/P/q player colour / dark / light  r/R/g rigging / dark / light   k/K scorch / soot
-//   n  hair tie        B  beacon (blinks MAIA pink)       a/v/N aurora teal / violet / blue
+//   n  hair tie        B  beacon (blinks MAIA blue)       a/v/N aurora teal / violet / blue
 const GIRL_BASE_PAL = {
   s: '#ffe8d8', S: '#f4c2ac', e: '#3a2440', w: '#ffffff', W: '#d6d8ee', b: '#ff9db4', m: '#e0607a',
   d: '#a8e6ff', y: '#ffd65a', Y: '#d99a2a', x: '#2e2a3a', X: '#5a5470', f: '#2a2430', T: '#7c8090',
@@ -848,7 +848,7 @@ function girlPalette(id, color, state) {
   return pal;
 }
 
-const GIRL_BEACON = 'rgb(255,120,200)';
+const GIRL_BEACON = 'rgb(120,190,255)'; // MAIA's blue
 
 function girlFill(ctx, o, c, r, w, h) {
   const P = GIRL_P;
