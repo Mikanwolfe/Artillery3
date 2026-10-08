@@ -235,13 +235,13 @@ const WEAPONS = [
   // of their own above Godly (Ascendant). Each has a
   // set piece of its own (finals.js).
   weapon('ragnarok', "G.W. 'Ragnarök' Battery Fire", 'shell', 5, 75, { sig: 'gwt', maxCharge: 120, disp: 0.3, drift: 0.5, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
-    battery: { dmg: 520, r: 190, spread: 300, karl: { dmg: 3400, r: 230, explR: 70, quake: { r: 900, dmg: 320 } } },
+    battery: { dmg: 520, r: 190, spread: 300, karl: { dmg: 3400, r: 300, explR: 120, quake: { r: 1000, dmg: 360 } } },
     short: 'A marker round for her platoon off the map: four G.W. Tiger SPGs and a Karl-Gerät 60cm siege mortar.', long: 'Eight 290mm rounds across 300 either side of the mark, then the Karl\'s: a giant crater, and an earthquake that hits everyone on the ground within 900. G.W. Tiger only.' }),
   weapon('zeropoint', "KTS-T 'Zero Point' Probe", 'gun', -5, 30, { sig: 'obj', drift: 0.05, pierce: 240, maxCharge: 170, disp: 0, dmg: 400, dmgR: 60, explR: 8, rarity: 8, cost: 75000,
     naito: { r: 520 },
     short: 'A railgun probe for the Naito MAIA Containment Satellite, out past Jupiter.', long: 'Annihilation orders: the ground 520 either side of the probe is deleted, and anything that falls in is gone. Object 15X only.' }),
   weapon('verdict', "NXi 'Queen's Verdict' Tachyon Lance", 'shell', 0, 80, { sig: 'nxi', drift: 0.6, maxCharge: 120, disp: 0.3, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
-    orbital: { dmg: 3600, r: 180 },
+    orbital: { dmg: 3600, r: 180, volley: { n: 48, dmg: 150, r: 80, spread: 620 } },
     short: 'A target dot for the battlecruiser in orbit. It takes its time to line up, then it fires.', long: 'The November Division keeps the gate from above as well. November only.' }),
   weapon('constellation', "Hatsuyuki 'Constellation' MAIA Array", 'shell', 0, 85, { sig: 'int', maxCharge: 90, disp: 0.5, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
     array: { fore: 22, far: 40, waves: 5, spread: 650, dmg: 110, r: 80, final: { dmg: 2600, r: 280, explR: 90 } },

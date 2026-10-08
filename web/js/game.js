@@ -6,6 +6,7 @@
 const CHATTINESS = 0.7; // scales every reaction probability in react(); lower = quieter CPUs
 const CAM_ZOOM_MIN = 0.5; // mouse-wheel zoom range (1: the standard 1600 x 900 view)
 const CAM_ZOOM_MAX = 1.8;
+const CAM_FULL = VIEW_W / WORLD_W; // the furthest a set piece pulls back: the map's whole width, edge to edge
 const CAM_ZOOM_EASE = 6; // the wheel zoom closes 1/6 of the way to its target each frame
 const LABEL_ANCHOR = 60; // HUD labels hang this far (world units at zoom 1) above a vehicle's feet
 const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
@@ -1703,6 +1704,7 @@ class Game {
       ctx.transform(VIEW_SCALE * cam.zoom, 0, 0, VIEW_SCALE * cam.zoom, -(cam.x + sx) * VIEW_SCALE * cam.zoom, -(cam.y + sy) * VIEW_SCALE * cam.zoom);
     }
     this.satellite.draw(ctx);
+    for (const p of this.projectiles) if (p.drawBack) p.drawBack(ctx); // set pieces' backdrops, behind the hills
     this.bg.drawRidges(ctx, cam);
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);
