@@ -157,12 +157,12 @@ const WEAPONS = [
   weapon('sanshiki', "46cm 'Sanshikidan' Type 3 Shell", 'flak', 0, 80, { clip: 2, maxCharge: 110, disp: 1.5, dmg: 900, dmgR: 260, explR: 12, rarity: 6, cost: 52000,
     short: 'Incendiary shrapnel shells for the 46cm guns. Lights up the whole sky.', long: 'Enormous airbursts and a rain of burning fragments.' }),
   // Hybrids: two makers' ideas in one gun (w.maker names both; the shop has a Hybrid filter)
-  weapon('yukikaze', "Hatsuyuki 'Yukikaze' Uplink Seeker", 'rocket', 10, 80, { salvo: 2, maxCharge: 70, disp: 3.2, dmg: 40, dmgR: 45, explR: 5, rarity: 4, cost: 13000, sat: true,
-    maia: { pulses: 6, dmg: 140, r: 120, gap: 14 }, // the Hatsuyuki barrage (Game.updateSatellite)
+  weapon('yukikaze', "Hatsuyuki 'Yukikaze' Uplink Seeker", 'rocket', 10, 80, { salvo: 2, clip: 2, maxCharge: 70, disp: 3.2, dmg: 40, dmgR: 45, explR: 5, rarity: 4, cost: 13000, sat: true,
+    maia: { pulses: 6, mult: 3.5, r: 120, gap: 14 }, // the Hatsuyuki barrage: each pulse does mult x the rocket's damage (Game.updateBarrage)
     hybrid: true, maker: 'Hatsuyuki × Lymilark',
     kin: 6, // it comes in hot (no airbrake): six times the usual kinetic damage for a direct hit
     guide: { arm: 6, burn: 230, seek: 150, apex: true, brake: false, turn: 9, range: 1200, cone: 140, lift: 0.5 },
-    short: 'A Hatsuyuki seeker that dives on the nearest target past the top of its arc, without braking. Its call opens MAIA all the way.', long: 'The warheads barely scratch, but a fast direct hit does six times the usual kinetic damage. The Hatsuyuki barrage does the rest: MAIA spreads its wings and antenna and strikes six times at whatever the rocket locked onto, at near full strength from round one.' }),
+    short: 'A Hatsuyuki seeker that dives on the nearest target past the top of its arc, without braking. Its call opens MAIA all the way.', long: 'The warheads barely scratch, but a fast direct hit does six times the usual kinetic damage. The Hatsuyuki barrage does the rest: MAIA spreads its wings and antenna and strikes six times at whatever the rocket locked onto, each pulse three and a half times a warhead, whatever MAIA\'s level. Twice a turn.' }),
   weapon('feuerlilie', "G.W.–LFS 'Feuerlilie' Seeker Flak", 'rocket', 10, 85, { salvo: 2, clip: 2, maxCharge: 75, disp: 2.8, dmg: 90, dmgR: 90, explR: 4, rarity: 3, cost: 7000,
     hybrid: true, maker: 'G.W. × Lymilark', airburst: true,
     guide: { arm: 8, burn: 55, seek: 999, apex: true, turn: 4.5, range: 700, cone: 80, lift: 0.5 },
@@ -209,8 +209,8 @@ const WEAPONS = [
     guide: { arm: 6, burn: 90, seek: 999, apex: true, turn: 5, range: 800, cone: 60, lift: 0.85, popup: { range: 240, frames: 16, angle: 60, height: 160 } },
     short: 'A tube so long it can hardly elevate. It skims the ground, then pops up over its target and dives.', long: 'Flat-flying cruise rocket: find a gap in the terrain. Within about 240 of a target ahead it pulls up hard and comes down on top.' }),
   weapon('tirchonaill', "LFS 'Tir Chonaill' Carpet Rocket", 'rocket', 5, 60, { maxCharge: 70, disp: 2.0, dmg: 150, dmgR: 70, explR: 8, rarity: 4, cost: 12500,
-    guide: { arm: 4, burn: 70, seek: 999, apex: true, turn: 4, range: 480, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 1.1, r: 60, at: 40, every: 3 },
-    short: 'Two-thirds of a second out it starts dropping seven heavy bomblets, one after another.', long: 'They tumble and the wind takes them: skim it low over the target and it lays a strip.' }),
+    guide: { arm: 4, burn: 70, seek: 999, apex: true, turn: 4, range: 480, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 0.5, r: 60, at: 40, every: 3 },
+    short: 'Two-thirds of a second out it starts dropping seven bomblets, one after another.', long: 'They tumble and the wind takes them: skim it low over the target and it lays a strip.' }),
   weapon('emain', "LFS 'Emain Macha' Split Rocket", 'rocket', 0, 50, { clip: 2, maxCharge: 75, disp: 2.0, dmg: 300, dmgR: 80, explR: 10, rarity: 5, cost: 22000,
     guide: { arm: 4, burn: 75, seek: 999, apex: true, turn: 4.5, range: 520, cone: 80, lift: 0.6 }, split: { n: 3, at: 32, spread: 14, boost: 1.15 },
     short: 'Breaks into three seekers half a second out, each going for whatever is closest.', long: 'They can all pile onto one target, or spread over a crowd of drones.' }),
@@ -218,8 +218,8 @@ const WEAPONS = [
     guide: { arm: 4, burn: 40, seek: 999, turn: 2, range: 600, cone: 80, lift: 0.5 }, lance: { at: 45, hover: 20, speed: 75, range: 1800, kin: 2.5 },
     short: 'It arcs like any rocket. Then it stops dead in the air, becomes a lance of light, and charges.', long: 'Three-quarters of a second out it picks the nearest target in any direction and runs it through. Kinetic damage ×2.5.' }),
   weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 1.6, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
-    guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 5, range: 600, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 1.0, r: 75, at: 50, every: 2 },
-    short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten heavy bomblets in sequence, unguided and wind-blown.' }),
+    guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 5, range: 600, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 0.5, r: 75, at: 50, every: 2 },
+    short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten bomblets in sequence, unguided and wind-blown.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
@@ -325,7 +325,7 @@ function weaponValue(w) {
   // (a seeker takes out part of its launch spread, so a rocket's counts half)
   const spread = 1 / (1 + w.disp * (w.guide ? 0.5 : 1) * (w.salvo > 1 ? 0.05 : 0.12));
   const acid = w.acid * 60 * shots;
-  const sat = w.maia ? w.maia.pulses * w.maia.dmg * 0.6 * Math.min(w.clip, 3) : w.sat ? 110 * Math.min(w.clip, 3) : 0;
+  const sat = w.maia ? w.maia.pulses * w.maia.mult * w.dmg * 0.6 * Math.min(w.clip, 3) : w.sat ? 110 * Math.min(w.clip, 3) : 0;
   // rockets: a split multiplies the warheads, a carpet adds bomblets (about half of them land
   // close enough to count), and the seeker is worth some consistency on top
   const heads = w.split ? w.split.n * (w.split.boost || 1) : w.lance ? 1 + (w.lance.speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.lance.kin * 0.5 : 1;
