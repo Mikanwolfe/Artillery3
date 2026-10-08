@@ -15,10 +15,32 @@
   window.A3 = game;
   if (params.has('speed')) game.speed = +params.get('speed') || 1;
 
+  // the stage takes the window's shape when it's close to 16:9 (a 20:9 phone, a 16:10 laptop) and
+  // letterboxes past that (Game.setAspect)
   const stage = $('stage');
   const resize = () => game.resize(stage.clientWidth);
+  const fit = () => {
+    const vv = window.visualViewport;
+    const w = vv ? vv.width : innerWidth, h = vv ? vv.height : innerHeight;
+    stage.style.setProperty('--ar', game.setAspect(w / h).toFixed(4));
+    resize();
+  };
   new ResizeObserver(resize).observe(stage);
-  resize();
+  window.addEventListener('resize', fit);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
+  fit();
+
+  // phones: landscape. Fullscreen first (the orientation lock needs it, and it hides the URL bar)
+  const root = document.documentElement;
+  const canFull = !!root.requestFullscreen && matchMedia('(pointer: coarse)').matches;
+  const goFull = () => root.requestFullscreen({ navigationUI: 'hide' })
+    .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'))
+    .catch(() => {});
+  $('rotate-full').hidden = !canFull;
+  $('btn-full').hidden = !canFull;
+  $('rotate-full').onclick = goFull;
+  $('btn-full').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : goFull());
+  $('rotate-skip').onclick = () => document.body.classList.add('portrait-ok');
 
   if (params.has('auto')) {
     const types = (params.get('types') || 'normal,hard,easy,hard').split(',');

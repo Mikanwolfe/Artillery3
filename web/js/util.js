@@ -5,10 +5,14 @@
 
 // Canvas is drawn at W x H CSS pixels; the camera looks at VIEW_W x VIEW_H world units
 // (the original's 1600x900 window), so world numbers below are lifted straight from A3.
-const W = 1024;
+// The height is fixed; the width follows the screen's shape between ASPECT_MIN and ASPECT_MAX
+// (setAspect), so a phone's 20:9 or a 16:10 tablet fills the screen instead of letterboxing.
+let W = 1024;
 const H = 576;
-const VIEW_W = 1600;
+let VIEW_W = 1600;
 const VIEW_H = 900;
+const ASPECT_MIN = 1.5;
+const ASPECT_MAX = 2.4;
 const VIEW_SCALE = W / VIEW_W;
 const HUD_FONT = '"Cascadia Mono", ui-monospace, Menlo, Consolas, monospace';
 // canvas HUD palette (matches style.css)
