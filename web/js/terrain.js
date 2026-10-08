@@ -109,7 +109,7 @@ class Terrain {
     if (!this.lava) return;
     for (let x = Math.max(0, Math.floor(cx - r)); x < Math.min(WORLD_W, cx + r); x++) {
       const k = 1 - Math.abs(x - cx) / r;
-      this.lava[x] = Math.min(1, this.lava[x] + Math.min(1, k * 1.6) * (0.75 + 0.25 * hash2(x, 19)));
+      this.lava[x] = Math.min(1, this.lava[x] + Math.min(1, k * 1.4) * (0.85 + 0.15 * hash2(x, 19))); // fading out to the rim
     }
   }
   // the ground between x0 and x1 deleted outright, down through the bottom of the world: sheer
@@ -241,21 +241,19 @@ class Terrain {
   }
 
   // where the ground was deleted: darkness welling up from below, and the sheer cut faces in black
-  // glass either side, a faint violet sheen down their edges
+  // glass either side, melted at their lips with molten veins running down (drawMoltenFace)
   drawVoids(ctx, x0, x1) {
     for (const [a, b] of this.voids) {
       if (b < x0 - 60 || a > x1 + 60) continue;
       const la = this.height[Math.max(0, a - 1)], lb = this.height[Math.min(WORLD_W - 1, b + 1)];
       const top = Math.min(la < WORLD_BOTTOM ? la : WORLD_BOTTOM, lb < WORLD_BOTTOM ? lb : WORLD_BOTTOM);
-      for (let i = 0; i < 8; i++) { // the abyss, black a little way below the lips
-        ctx.fillStyle = `rgba(6,4,10,${Math.min(1, 0.3 + i * 0.12)})`;
-        ctx.fillRect(a, Math.round(top + 40 + i * 30), b - a + 1, i === 7 ? VOID_Y : 30);
+      for (let i = 0; i < 16; i++) { // the abyss, black a little way below the lips
+        ctx.fillStyle = `rgba(6,4,10,${Math.min(1, 0.3 + i * 0.05)})`;
+        ctx.fillRect(a, Math.round(top + 40 + i * 15), b - a + 1, i === 15 ? VOID_Y : 15);
       }
       for (const [x, y, dir] of [[a, la, -1], [b, lb, 1]]) {
         if (y >= WORLD_BOTTOM) continue;
-        const fx = dir < 0 ? x - 44 : x + 1;
-        ctx.fillStyle = '#07060b'; ctx.fillRect(fx, Math.round(y), 44, VOID_Y - y);
-        ctx.fillStyle = 'rgba(120,90,170,0.35)'; ctx.fillRect(dir < 0 ? x - 2 : x + 1, Math.round(y), 2, VOID_Y - y);
+        drawMoltenFace(ctx, x, y, dir, 44); // melted like the asteroid's crater
       }
     }
   }
@@ -268,7 +266,19 @@ class Terrain {
       const l = this.lava[Math.min(WORLD_W - 1, x + (step >> 1))];
       if (l < 0.05) continue;
       const top = Math.round(this.height[Math.min(WORLD_W - 1, x + (step >> 1))]);
-      const th = Math.round(6 + 26 * l);
+      const th = Math.round(2 + 30 * l);
+      // the ground under it, scorched: a deep char layer, blackest just beneath the lava and fading
+      // brown down into the ground, deeper toward the middle, with burnt streaks reaching further
+      const char = Math.round(4 + 186 * Math.pow(l, 1.3) * (0.9 + 0.08 * Math.sin(x * 0.045) + 0.04 * Math.sin(x * 0.13))); // thinning to nothing at the edges
+      for (let i = 0; i < 6; i++) {
+        const u = i / 6;
+        ctx.fillStyle = `rgba(${Math.round(16 + 40 * u)},${Math.round(11 + 24 * u)},${Math.round(10 + 16 * u)},${(0.92 - 0.75 * u) * Math.min(1, l * 2.2)})`;
+        ctx.fillRect(x, top + th - 2 + Math.round(char * u), step, Math.ceil(char / 6) + 1);
+      }
+      if (hash2(x, 47) < 0.1 * l) { // now and then a burnt crack further down
+        ctx.fillStyle = `rgba(22,14,12,${0.45 * l})`;
+        ctx.fillRect(x + Math.round(hash2(x, 53) * (step - 3)), top + th + char - 4, 3, Math.round(12 + hash2(x, 59) * 30 * l));
+      }
       ctx.fillStyle = `rgba(52,20,14,${0.5 + 0.5 * l})`;
       ctx.fillRect(x, top - 1, step, th);
       const glow = 0.55 + 0.45 * Math.sin(now * 3 + x * 0.07);

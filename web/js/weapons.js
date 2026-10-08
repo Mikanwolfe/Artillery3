@@ -250,7 +250,7 @@ const WEAPONS = [
     rift: { tears: 5, rockets: 44, dmg: 600, r: 90, reach: 1000 },
     short: 'A flare, and the sky over it tears open like a wound.', long: 'Black rockets rain out of the tears on long dark trails, seeking everything beneath. Alban Eiler only.' }),
   weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 8, cost: 75000,
-    meteor: { dmg: 6000, r: 520, explR: 130, size: 170, lava: 640, splash: 30 },
+    meteor: { dmg: 6000, r: 650, explR: 175, size: 300, lava: 920, splash: 30 },
     short: 'Where her arrow of light lands, the sky answers: she marks an asteroid and brings it down.', long: 'Ikaros only.' }),
 ];
 
