@@ -1,15 +1,17 @@
 'use strict';
 // Infrastructure on every map: bridges and power lines.
 //   Bridges span a valley: a deck of segments on columns. Vehicles drive across the deck (or
-//   under it), shells stop on the deck, and both pass between the columns. Blast any deck segment
-//   apart and the whole bridge collapses; whoever was on it falls.
+//   under it), shells stop on the deck, and both pass between the columns. Blasts break the deck
+//   in sections: a broken segment falls, and so does any stretch of deck left without support (a
+//   bank or a column within BRIDGE_OVERHANG segments); whoever was on it falls too.
 //   Power lines run on wooden poles. Knock a pole over and the wires either side of it fall live:
 //   anyone on the ground under them takes a shock at once and at the start of each of their turns
 //   until the line burns out.
 
 const BRIDGE_SEG = 24; // width of a deck segment
 const BRIDGE_DECK = 8; // deck thickness
-const BRIDGE_SEG_HP = 90;
+const BRIDGE_SEG_HP = 160;
+const BRIDGE_OVERHANG = 3; // segments of deck that can hang past their nearest support
 const POLE_H = 72;
 const POLE_HP = 50;
 const POLE_GAP = 150;
@@ -21,7 +23,7 @@ const SHOCK_TURN = 16; // and at the start of each of your turns under it
 function deckTopAt(b, x) {
   if (x < b.x0 || x >= b.x1) return Infinity;
   const s = b.segs[Math.floor((x - b.x0) / BRIDGE_SEG)];
-  return s ? s.y : Infinity;
+  return s && !s.gone ? s.y : Infinity;
 }
 
 Object.assign(Terrain.prototype, {
@@ -94,13 +96,14 @@ Object.assign(Game.prototype, {
     const T = this.terrain;
     const r = Math.max(28, def.dmgR * 0.6);
     for (const b of (T.bridges || []).slice()) {
-      let broken = false;
+      const broken = [];
       b.segs.forEach((s, i) => {
+        if (s.gone) return;
         const cx = b.x0 + (i + 0.5) * BRIDGE_SEG;
         const d = dist(cx, s.y + BRIDGE_DECK / 2, x, y);
-        if (d < r) { s.hp -= (def.dmg * 0.5 + 40) * (1 - d / r); if (s.hp <= 0) broken = true; }
+        if (d < r) { s.hp -= (def.dmg * 0.5 + 40) * (1 - d / r); if (s.hp <= 0) broken.push(i); }
       });
-      if (broken) this.collapseBridge(b);
+      if (broken.length) this.breakBridge(b, broken);
     }
     for (const line of T.lines || []) {
       line.poles.forEach((p, i) => {
@@ -121,19 +124,40 @@ Object.assign(Game.prototype, {
     }
   },
 
-  collapseBridge(b) {
+  // drop the broken segments, then every stretch of deck left hanging: a run of segments stays up
+  // only where it rests on a bank (its end segments) or a column, out to BRIDGE_OVERHANG either side
+  breakBridge(b, broken) {
     const T = this.terrain;
-    T.bridges = T.bridges.filter((x) => x !== b);
+    for (const i of broken) b.segs[i].gone = true;
+    const n = b.segs.length;
+    const support = b.segs.map((_, i) => i === 0 || i === n - 1);
+    for (const x of b.cols) support[clamp(Math.floor((x - b.x0) / BRIDGE_SEG), 0, n - 1)] = true;
+    const falls = broken.slice();
+    for (let i = 0; i < n;) {
+      if (b.segs[i].gone) { i++; continue; }
+      let j = i;
+      while (j + 1 < n && !b.segs[j + 1].gone) j++;
+      // segments of the run [i, j] further than BRIDGE_OVERHANG from a support in the run fall
+      const sup = [];
+      for (let k = i; k <= j; k++) if (support[k]) sup.push(k);
+      for (let k = i; k <= j; k++) {
+        const near = sup.length ? Math.min(...sup.map((q) => Math.abs(q - k))) : Infinity;
+        if (near > BRIDGE_OVERHANG) { b.segs[k].gone = true; falls.push(k); }
+      }
+      i = j + 1;
+    }
     const col = hexToRgb(b.style.stone);
-    b.segs.forEach((s, i) => {
-      const cx = b.x0 + (i + 0.5) * BRIDGE_SEG;
-      for (let k = 0; k < 4; k++) this.particles.add({ x: cx + (Math.random() - 0.5) * 20, y: s.y, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 2, g: 0.3, drag: 0.98, life: 1.2 + Math.random(), size: 5 + Math.random() * 6, color: col });
-    });
-    for (const x of b.cols) this.particles.puff(x, T.hAt(x), [150, 140, 130]);
-    this.shake = Math.max(this.shake, 8);
-    this.sfx.explosion(30);
-    this.ui.notice('The bridge collapses!');
-    this.events.push('The bridge collapsed.');
+    for (const i of falls) {
+      const cx = b.x0 + (i + 0.5) * BRIDGE_SEG, y = b.segs[i].y;
+      for (let k = 0; k < 4; k++) this.particles.add({ x: cx + (Math.random() - 0.5) * 20, y, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 2, g: 0.3, drag: 0.98, life: 1.2 + Math.random(), size: 5 + Math.random() * 6, color: col });
+    }
+    this.shake = Math.max(this.shake, 3 + falls.length * 0.5);
+    if (falls.length > broken.length) { // more than the blast itself took: a section came down
+      this.sfx.explosion(20);
+      this.ui.notice('A bridge section collapses!');
+    }
+    this.events.push(falls.length > broken.length ? 'A bridge section collapsed.' : 'The bridge deck is holed.');
+    if (b.segs.every((s) => s.gone)) T.bridges = T.bridges.filter((x) => x !== b);
   },
 
   // live wire on the ground between poles k and k+1: shocks vehicles standing on the ground there
@@ -169,13 +193,14 @@ Object.assign(Game.prototype, {
       const s = b.style;
       ctx.fillStyle = s.dark;
       for (const x of b.cols) { // columns from under the deck to the ground (vehicles and shells pass)
-        const top = deckTopAt(b, x) + BRIDGE_DECK;
+        const top = b.segs[clamp(Math.floor((x - b.x0) / BRIDGE_SEG), 0, b.segs.length - 1)].y + BRIDGE_DECK; // a column stands even when its deck is gone
         ctx.fillRect(x - 5, top, 10, T.hAt(x) - top + 4);
         ctx.fillStyle = s.light;
         ctx.fillRect(x - 5, top, 3, T.hAt(x) - top + 4);
         ctx.fillStyle = s.dark;
       }
       b.segs.forEach((seg, i) => {
+        if (seg.gone) return;
         const x = b.x0 + i * BRIDGE_SEG;
         ctx.fillStyle = i % 2 ? s.stone : s.light;
         ctx.fillRect(x, seg.y, BRIDGE_SEG, BRIDGE_DECK);
