@@ -124,8 +124,8 @@ class Particles {
   drawHit(ctx, cam, p) {
     const t = p.age / p.life;
     const punch = p.age < 0.14 ? 1 + 0.6 * (1 - p.age / 0.14) : 1;
-    const sx = Math.round(p.x - cam.x);
-    const sy = Math.round(p.y - cam.y);
+    const sx = Math.round(cam.sx(p.x));
+    const sy = Math.round(cam.sy(p.y));
     ctx.globalAlpha = clamp(2 * (1 - t), 0, 1);
     ctx.textAlign = 'center';
     ctx.font = `700 ${Math.round(p.size * punch)}px ${HUD_FONT}`;
@@ -159,8 +159,8 @@ class Particles {
       const t = p.age / p.life;
       ctx.globalAlpha = clamp(1.6 * (1 - t), 0, 1);
       ctx.font = `700 ${p.big ? 34 : 22}px ${HUD_FONT}`;
-      const sx = Math.round(p.x - cam.x);
-      const sy = Math.round(p.y - cam.y);
+      const sx = Math.round(cam.sx(p.x));
+      const sy = Math.round(cam.sy(p.y));
       ctx.fillStyle = 'rgba(20,20,40,0.6)';
       ctx.fillText(p.str, sx + 2, sy + 2);
       ctx.fillStyle = p.color;

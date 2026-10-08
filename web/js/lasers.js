@@ -98,7 +98,7 @@ class DroneBeam {
       if (!this.stage) { // a later beam in the same volley skips the wind-up
         this.stage = 'move';
         this.charge = d.primed ? 4 : DRONE_CHARGE;
-        const far = Math.abs(this.shot.end.x - g.cam.x - VIEW_W / 2) > VIEW_W * 0.3;
+        const far = Math.abs(this.shot.end.x - g.cam.x - g.cam.w / 2) > g.cam.w * 0.3;
         this.pan = d.primed && !far ? 0 : DRONE_PAN;
         if (!d.primed) g.cam.follow(this.droneFocus());
       }

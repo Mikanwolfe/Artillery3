@@ -4,6 +4,9 @@
 // wind every 12 turns, end-of-round prize money) and rendering.
 
 const CHATTINESS = 0.7; // scales every reaction probability in react(); lower = quieter CPUs
+const CAM_ZOOM_MIN = 0.5; // mouse-wheel zoom range (1: the standard 1600 x 900 view)
+const CAM_ZOOM_MAX = 1.8;
+const LABEL_ANCHOR = 60; // HUD labels hang this far (world units at zoom 1) above a vehicle's feet
 const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
 const SALVO_DELAY = 15;
 const TREE_RAM_DMG = 6; // + 3 per tree size: driving through a tree knocks it down but hurts // A3 ProjectileFactory._firingDelay (frames between salvo rounds)
@@ -73,6 +76,24 @@ class Camera {
     this.focus = null;
     this.manual = null;
     this.bias = 0; // shift what it follows right of centre by this much (the Codex range, behind its panel)
+    this.zoom = 1; // mouse wheel: >1 closer, <1 further out (CAM_ZOOM_MIN..CAM_ZOOM_MAX)
+  }
+
+  // the view in world units at this zoom, and world -> screen (HUD) coordinates
+  get w() { return VIEW_W / this.zoom; }
+  get h() { return VIEW_H / this.zoom; }
+  sx(x) { return (x - this.x) * this.zoom; }
+  sy(y) { return (y - this.y) * this.zoom; }
+  // a HUD anchor `lift` above a world point keeps its screen distance above it at any zoom
+  sya(y, lift) { return this.sy(y - lift) + lift; }
+
+  // zoom about the centre of the view
+  setZoom(z) {
+    z = clamp(z, CAM_ZOOM_MIN, CAM_ZOOM_MAX);
+    const cx = this.x + this.w / 2, cy = this.y + this.h * 0.55;
+    this.zoom = z;
+    this.x = clamp(cx - this.w / 2, 0, Math.max(0, WORLD_W - this.w));
+    this.y = clamp(cy - this.h * 0.55, -1000, WORLD_BOTTOM - this.h);
   }
 
   follow(obj) { this.focus = obj; this.manual = null; }
@@ -81,8 +102,8 @@ class Camera {
     const f = this.manual || this.focus;
     if (!f) return null;
     return {
-      x: clamp(f.x - VIEW_W / 2 - (this.manual ? 0 : this.bias), 0, WORLD_W - VIEW_W),
-      y: clamp(f.y - VIEW_H * 0.55, -1000, WORLD_BOTTOM - VIEW_H),
+      x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), 0, Math.max(0, WORLD_W - this.w)),
+      y: clamp(f.y - this.h * 0.55, -1000, WORLD_BOTTOM - this.h),
     };
   }
 
@@ -193,11 +214,18 @@ class Game {
     this.cam.snap();
   }
 
-  // drag (either mouse button, or touch) pans the camera; it eases back on the next event.
+  // drag (either mouse button, or touch) pans the camera; it eases back on the next event. The
+  // wheel zooms.
   // A click / tap without dragging puts down a target marker (or clears it, near your own vehicle).
   initDrag() {
     const c = this.canvas;
     c.addEventListener('contextmenu', (e) => e.preventDefault());
+    // mouse wheel: zoom in and out about the centre of the view
+    c.addEventListener('wheel', (e) => {
+      if (this.phase === 'menu') return;
+      e.preventDefault();
+      this.cam.setZoom(this.cam.zoom * Math.exp(-e.deltaY * 0.0015));
+    }, { passive: false });
     c.addEventListener('pointerdown', (e) => {
       if (this.phase === 'menu') return;
       this.sfx.unlock();
@@ -211,10 +239,10 @@ class Game {
       if (!this.drag) return;
       if (!this.drag.moved && Math.hypot(e.clientX - this.drag.x, e.clientY - this.drag.y) < 6) return;
       this.drag.moved = true;
-      const sc = VIEW_W / c.clientWidth;
+      const sc = VIEW_W / c.clientWidth / this.cam.zoom;
       this.cam.manual = {
-        x: this.drag.cx - (e.clientX - this.drag.x) * sc + VIEW_W / 2,
-        y: this.drag.cy - (e.clientY - this.drag.y) * sc + VIEW_H * 0.55,
+        x: this.drag.cx - (e.clientX - this.drag.x) * sc + this.cam.w / 2,
+        y: this.drag.cy - (e.clientY - this.drag.y) * sc + this.cam.h * 0.55,
       };
     });
     const end = () => { this.drag = null; };
@@ -226,7 +254,7 @@ class Game {
     const t = this.active;
     if (this.phase !== 'aim' || !t || t.isCpu) return;
     const r = this.canvas.getBoundingClientRect();
-    const sc = VIEW_W / r.width;
+    const sc = VIEW_W / r.width / this.cam.zoom;
     const x = clamp(this.cam.x + (e.clientX - r.left) * sc, 0, WORLD_W - 1);
     let y = this.cam.y + (e.clientY - r.top) * sc;
     if (dist(x, y, t.x, t.y - 10) < 40) { t.mark = null; this.sfx.click(); return; }
@@ -1632,8 +1660,8 @@ class Game {
   render() {
     const ctx = this.ctx;
     const k = this.k;
-    const s = k * VIEW_SCALE;
     const cam = this.cam;
+    const s = k * VIEW_SCALE * cam.zoom;
     ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.imageSmoothingEnabled = false;
     this.bg.drawSky(ctx);
@@ -1645,8 +1673,8 @@ class Game {
     this.satellite.draw(ctx);
     this.bg.drawRidges(ctx, cam);
     this.drawHazardsBack(ctx, cam);
-    this.terrain.draw(ctx, cam.x, cam.x + VIEW_W);
-    this.terrain.drawTrees(ctx, cam.x, cam.x + VIEW_W);
+    this.terrain.draw(ctx, cam.x, cam.x + cam.w);
+    this.terrain.drawTrees(ctx, cam.x, cam.x + cam.w);
     this.drawInfra(ctx);
     const aiming = this.phase === 'aim' ? this.active : null;
     if (aiming && !this.cpu) this.drawGhost(ctx, aiming);
@@ -1682,7 +1710,7 @@ class Game {
     }
 
     // HUD in the original's 1600x900 screen units
-    ctx.setTransform(s, 0, 0, s, 0, 0);
+    ctx.setTransform(k * VIEW_SCALE, 0, 0, k * VIEW_SCALE, 0, 0); // the HUD never zooms
     if (this.phase !== 'menu') this.drawHud(ctx);
   }
 
@@ -1745,29 +1773,29 @@ class Game {
     const cam = this.cam;
     const sat = this.satellite;
     // satellite caption (A3 Satellite.Draw)
-    if (sat.y - cam.y > -80) {
+    if (cam.sy(sat.y) > -80) {
       ctx.font = `15px ${HUD_FONT}`;
       ctx.textAlign = 'left';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 4));
-      ctx.fillText(`Level: ${sat.level} · ${sat.alive ? Math.round(sat.health * 100) + '% power' : `OFFLINE (${Math.max(0, (sat.downUntil || 0) - this.turnCount)} turns)`}`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 26));
+      ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(cam.sx(sat.x) + 120), Math.round(cam.sy(sat.y) + 4));
+      ctx.fillText(`Level: ${sat.level} · ${sat.alive ? Math.round(sat.health * 100) + '% power' : `OFFLINE (${Math.max(0, (sat.downUntil || 0) - this.turnCount)} turns)`}`, Math.round(cam.sx(sat.x) + 120), Math.round(cam.sy(sat.y) + 26));
       // MAIA's health bar (its strike damage scales with it)
-      const bx = Math.round(sat.x - cam.x + 120), by = Math.round(sat.y - cam.y + 34);
+      const bx = Math.round(cam.sx(sat.x) + 120), by = Math.round(cam.sy(sat.y) + 34);
       ctx.fillStyle = HUD.plate;
       ctx.fillRect(bx, by, 204, 10);
       ctx.fillStyle = sat.health > 0.5 ? '#ff78c8' : sat.alive ? HUD.gold : HUD.ash;
       ctx.fillRect(bx + 2, by + 2, Math.round(200 * sat.health), 6);
     }
     const live = this.phase === 'aim' ? this.active : null;
-    for (const t of this.tanks) t.drawLabel(ctx, t.x - cam.x, t.y - cam.y, t === live);
+    for (const t of this.tanks) t.drawLabel(ctx, cam.sx(t.x), cam.sya(t.y, LABEL_ANCHOR), t === live);
     this.drawHazardLabels(ctx, cam);
     this.particles.drawText(ctx, cam);
-    for (const t of this.tanks) t.drawSpeech(ctx, t.x - cam.x, t.y - cam.y);
+    for (const t of this.tanks) t.drawSpeech(ctx, cam.sx(t.x), cam.sya(t.y, LABEL_ANCHOR));
     // shells above the view
     ctx.fillStyle = '#ffffff';
     for (const p of this.projectiles) {
       if (p.y < cam.y) {
-        const x = clamp(p.x - cam.x, 10, VIEW_W - 10);
+        const x = clamp(cam.sx(p.x), 10, VIEW_W - 10);
         sq(ctx, x, 8, 6);
         sq(ctx, x, 16, 12);
       }
@@ -1791,7 +1819,7 @@ class Game {
     ctx.fillRect(x0 - 1, y0 + 2, 2, h - 4);
     ctx.fillRect(x0 + w - 1, y0 + 2, 2, h - 4);
     ctx.fillStyle = 'rgba(195,176,255,0.14)';
-    ctx.fillRect(mx(this.cam.x), y0 + 1, (w * VIEW_W) / WORLD_W, h - 2);
+    ctx.fillRect(mx(this.cam.x), y0 + 1, (w * this.cam.w) / WORLD_W, h - 2);
     for (const t of this.tanks) {
       if (!t.alive) continue;
       ctx.fillStyle = t.color;
@@ -1839,8 +1867,8 @@ class Game {
   }
 
   drawMarkLabel(ctx, t, info) {
-    const sx = t.mark.x - this.cam.x;
-    const sy = t.mark.y - this.cam.y;
+    const sx = this.cam.sx(t.mark.x);
+    const sy = this.cam.sy(t.mark.y);
     let txt;
     let col = HUD.fg;
     if (info.behind) txt = 'turn around';
