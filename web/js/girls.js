@@ -8,7 +8,7 @@
 // colour it touches), merged into boxes and cached.
 //
 // API
-//   GIRL_ART[id]            id in 'gwt' | 'obj' | 'int' | 'nxi'
+//   GIRL_ART[id]            id in 'gwt' | 'obj' | 'int' | 'nxi' | 'alb'
 //     .pivot  [lx, ly]      gun trunnion (world units, facing right, relative to the ground point)
 //     .barrel { size, twin, triple, n, step, start }  suggested barrel: n squares of `size`,
 //                           `step` apart starting `start` from the pivot (twin: two parallel lines,
@@ -437,6 +437,83 @@ const GIRL_DEFS = {
     sleeve: 'uUp',
     mount: [['R', -2, -1, 5, 3], ['g', -2, -1, 5, 1], ['a', -1, 1, 3, 1]],
   },
+
+  // Alban Eiler (Lymilark Future Sciences): a knight-academy look after Mabinogi. Long chestnut
+  // hair in a single braid down her back with a player-colour ribbon, green eyes, a forest-green
+  // beret with a white feather, a white tunic coat with green collar, gold buttons and a green hem,
+  // brown boots, one boot forward. A boxy rocket pod on her hip (tube mouths in a grid) with the
+  // launcher turret on top.
+  alb: {
+    pivot: [6, 9],
+    barrel: { size: 4, twin: true, n: 5, step: 4.5, start: 5 },
+    pal: {
+      h: '#8a4a2a', H: '#5e2e1a', L: '#c27c4a', I: '#2e8a4a', i: '#6fd08a',
+      c: '#2f6e4a', C: '#1e4a32', u: '#eef0e8', U: '#b8bfb2', z: '#ffffff',
+      x: '#4a3226', X: '#6a4a38', r: '#8a8f7a', R: '#5c604e', g: '#c4c8b0',
+    },
+    legs: 'step', legMap: { A: 's', T: 's', B: 'x', F: 'x' },
+    order: ['rig', 'tail', 'back', 'legs', 'body', 'arm', 'face', 'front', 'hat'],
+    rig: { at: 8, x0: 1, rows: [
+      '..ggg',
+      '.ggrrR',
+      '.gggggggg',
+      'grrrrrrrrR',
+      'grRgRgRgrR',
+      'grrrrrrrrR',
+      'grRgRgRgrR',
+      'grrrrrrrrR',
+      'grpppppprR',
+      'grPPPPPPrR',
+      'grrrrrrrrR',
+      '.RRRRRRRR',
+      '..gR',
+      '..gR',
+    ] },
+    tail: { at: 12, x0: 8, sway: [19, 23], rows: [
+      '...hhh',
+      '..hhLh',
+      '..hhhH',
+      '..hLhH',
+      '..hhH',
+      '..hLhH',
+      '..hhH',
+      '..hLH',
+      '..hhH',
+      '..ppP',
+      '..qpP',
+      '..hhH',
+      '...hH',
+      '...H',
+    ] },
+    back: { at: 5, x0: 11, rows: GIRL_HEAD_BACK },
+    hat: { at: 3, x0: 11, rows: [
+      '.........ww',
+      '....ccccccwW',
+      '..ccccccccccC',
+      '.cccccccccccCC',
+      '.CCyCCCCCCCCC',
+    ] },
+    front: { at: 8, x0: 11, rows: [
+      '.hhhhhhhhhhhhH',
+      'hhhhLhhhhhLhhH',
+      'hhhh.hhh.hh.hH',
+      '..hH', '..hH', '..hH', '..hH', '..hH', '..hH',
+      '...H',
+    ] },
+    body: { at: 17, x0: 14, rows: [
+      '...cyyc',
+      '..zuccuU',
+      '.szuyuuU',
+      '.szuyuuU',
+      '...uyuU',
+      '..zuyuuU',
+      '.cccccccc',
+      '.cUUcUUc',
+    ] },
+    arm: { at: 19, x0: 21, rows: ['.u', '..s', '.s', 's'] },
+    sleeve: 'uUc',
+    mount: [['R', -1, -1, 4, 3], ['g', -1, -1, 4, 1], ['p', 0, 1, 2, 1]],
+  },
 };
 
 const GIRL_ART = {};
@@ -452,7 +529,7 @@ for (const id in GIRL_DEFS) {
   };
 }
 
-const GIRL_PHASE = { gwt: 0, obj: 0.37, int: 0.71, nxi: 0.53 };
+const GIRL_PHASE = { gwt: 0, obj: 0.37, int: 0.71, nxi: 0.53, alb: 0.19 };
 const GIRL_POSE_LEN = { fire: 0.35, hit: 0.5 };
 
 // ---- composition (cached) ----

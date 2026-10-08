@@ -12,7 +12,7 @@ const RARITY = [null,
 
 // How hard the wind pushes a weapon's shells (1 = a normal shell). Fast, dense rounds (coilgun
 // slugs, the rail's titanium pillars) barely notice it; light airburst shells and acid blobs drift.
-const KIND_DRIFT = { shell: 1, gun: 0.45, laser: 0.7, acid: 1.3, flak: 1.15 };
+const KIND_DRIFT = { shell: 1, gun: 0.45, laser: 0.7, acid: 1.3, flak: 1.15, rocket: 0.6 };
 
 function weapon(id, name, kind, elevMin, elevMax, o) {
   return {
@@ -54,6 +54,16 @@ const VEHICLES = [
       dmg: 80, salvo: 2, disp: 2.1, maxCharge: 70, dmgR: 80, sat: true,
       short: 'An early prototype that utilised the MAIA Satellite System.', long: 'Starting weapon for Innocentia.' }),
   },
+  // Lymilark Future Sciences (after Mabinogi): guided rockets. A knight-academy girl from the
+  // Alban Eiler programme; lighter blows than a shell, but they find their way.
+  {
+    id: 'alb', name: 'Alban Eiler', hp: 120, armour: 140, blurb: 'The Lymilark rocketeer: her pod of seeker rockets finds whatever is nearest.',
+    traits: ['firecontrol', 'telemetry'],
+    weapon: weapon('lfs0', "LFS 'Eiler' 60mm Seeker Pod", 'rocket', 0, 35, {
+      salvo: 2, disp: 0.6, maxCharge: 50, dmg: 50, dmgR: 45, explR: 6,
+      guide: { arm: 6, burn: 55, turn: 4, range: 380, cone: 70, lift: 0.6 },
+      short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the pod, in very small letters.", long: 'Starting weapon for Alban Eiler.' }),
+  },
 ];
 
 // Character traits: two passives per girl, so they play differently beyond stats and starter gun.
@@ -69,9 +79,18 @@ const TRAITS = {
   gatekeeper: { name: 'Gatekeeper', desc: 'The Bulwark Barrier is hers from round one, at half price.' },
   uplink: { name: 'Priority uplink', desc: 'MAIA strikes she calls have a 30% bigger blast.' },
   retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA nudges its aim onto them.' },
+  firecontrol: { name: 'Lymilark fire control', desc: 'Her rockets’ seekers see 40% further and turn 30% faster.' },
+  telemetry: { name: 'Knight telemetry', desc: 'Her rockets lock onto rivals before drones or crates, when one is in sight.' },
 };
 const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
 const GATEKEEPER_DISCOUNT = 0.5;
+// a shooter's seeker settings: Alban Eiler's fire control extends and sharpens them, her telemetry
+// prefers rivals over drones and crates
+function guideFor(w, owner) {
+  if (!w.guide) return null;
+  return hasTrait(owner, 'firecontrol') ? { ...w.guide, range: w.guide.range * 1.4, turn: w.guide.turn * 1.3 } : w.guide;
+}
+function preferFor(owner) { return hasTrait(owner, 'telemetry') ? 'rival' : null; }
 const DRILL_QUALITY = 0.6; // a 'solid' hit or better (see HIT_TIERS) earns the drill's round back
 const RETARGET_RANGE = 160; // how far from the mark MAIA looks for a rival
 const RETARGET_SHIFT = 70; // and how far it will move its aim
@@ -146,6 +165,31 @@ const WEAPONS = [
     short: 'Opens a rift to the void between dimensions, briefly. Do not stand in it.', long: 'We advance slowly because we advance forever.' }),
   weapon('massdriver', '210mm Kinetic Mass Driver', 'laser', 0, 20, { drift: 0.15, clip: 2, maxCharge: 1000, disp: 0.001, explR: 80, dmg: 10000, dmgR: 400, sat: true, rarity: 7, cost: 195420,
     short: 'A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.', long: 'Holding two rounds, it was salvaged from KTNS Hatsuyuki.' }),
+  // Guided rockets (Lymilark Future Sciences). After `arm` frames in flight the seeker locks onto
+  // the nearest thing in a `cone` ahead within `range`: a rival, a drone, a supply crate, whatever
+  // is closest. It steers at up to `turn` degrees a frame for `burn` frames, with `lift` of gravity
+  // cancelled while the motor runs, then falls like a shell. Lighter damage, far better
+  // consistency. Long-tube launchers can barely elevate, so they skim terrain and rely on the
+  // seeker. Later models transform in flight: `carpet` drops a line of bomblets over the target,
+  // `split` breaks into seekers that each take a different target.
+  weapon('wren', "LFS 'Wren' 70mm Seeker", 'rocket', 0, 40, { salvo: 2, maxCharge: 55, disp: 0.5, dmg: 75, dmgR: 50, explR: 6, rarity: 1, cost: 1700,
+    guide: { arm: 6, burn: 60, turn: 4.5, range: 420, cone: 70, lift: 0.6 },
+    short: 'A pair of little seekers. They go for whatever is closest, which is usually what you wanted.', long: 'Lymilark Future Sciences, Tir Chonaill works.' }),
+  weapon('kestrel', "LFS 'Kestrel' Twin Launcher", 'rocket', 0, 30, { salvo: 2, clip: 2, maxCharge: 60, disp: 0.5, dmg: 80, dmgR: 55, explR: 7, rarity: 2, cost: 3300,
+    guide: { arm: 6, burn: 65, turn: 4.5, range: 450, cone: 70, lift: 0.6 },
+    short: 'Two pairs a turn. The Dunbarton militia swear by it.', long: 'Seekers lock on ten frames out of the tube.' }),
+  weapon('dunbarton', "LFS 'Dunbarton' Long-Tube Rocket", 'rocket', -3, 12, { clip: 2, maxCharge: 95, disp: 0.2, dmg: 230, dmgR: 70, explR: 10, rarity: 3, cost: 6200,
+    guide: { arm: 6, burn: 90, turn: 5, range: 600, cone: 60, lift: 1 },
+    short: 'A tube so long it can hardly elevate. It skims the ground and climbs at the last moment.', long: 'Flat-flying cruise rocket: find a gap in the terrain and let the seeker do the rest.' }),
+  weapon('tirchonaill', "LFS 'Tir Chonaill' Carpet Rocket", 'rocket', 5, 60, { maxCharge: 70, disp: 0.4, dmg: 150, dmgR: 70, explR: 8, rarity: 4, cost: 12500,
+    guide: { arm: 4, burn: 70, turn: 4, range: 480, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 0.8, r: 60 },
+    short: 'Over the target it opens like a flower and lays a carpet of bomblets.', long: 'Seven bomblets in a line. Cover will not save you.' }),
+  weapon('emain', "LFS 'Emain Macha' Split Rocket", 'rocket', 0, 50, { clip: 2, maxCharge: 75, disp: 0.4, dmg: 300, dmgR: 80, explR: 10, rarity: 5, cost: 22000,
+    guide: { arm: 4, burn: 75, turn: 4.5, range: 520, cone: 80, lift: 0.6 }, split: { n: 3, at: 40, near: 320, spread: 14 },
+    short: 'Breaks into three seekers mid-flight, and each picks a different target.', long: 'Good against crowds, drones and anyone hiding behind a friend.' }),
+  weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 0.3, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
+    guide: { arm: 4, burn: 85, turn: 5, range: 600, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 0.7, r: 75 },
+    short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Lay it across a ridge and nothing on it survives.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
@@ -171,6 +215,9 @@ const REBALANCE = {
   sanshiki: { dmg: 2115, cost: 30000 }, nxi105: { dmg: 110, cost: 1600 }, nxitv: { dmg: 105, cost: 3100 },
   nxisec9: { dmg: 135, cost: 5100 }, nxiarch7: { dmg: 740, cost: 10000 }, nxiintel3: { dmg: 1040, cost: 19000 },
   nxiaeria: { dmg: 510, cost: 30000 }, nxivoid: { dmg: 3000, cost: 48000 }, massdriver: { dmg: 2620, cost: 52000 },
+  // rockets: about 75% of a shell gun's worth for the price (the seeker makes up the rest)
+  lfs0: { dmg: 70 }, wren: { dmg: 85, cost: 1400 }, kestrel: { dmg: 90, cost: 2800 }, dunbarton: { dmg: 285, cost: 5200 },
+  tirchonaill: { dmg: 390, cost: 10500 }, emain: { dmg: 415, cost: 19000 }, avalon: { dmg: 440, cost: 32000 },
 };
 const ALL_WEAPONS = [...WEAPONS, ...VEHICLES.map((v) => v.weapon)];
 const CLASSIC = Object.fromEntries(ALL_WEAPONS.map((w) => [w.id, { dmg: w.dmg, clip: w.clip, cost: w.cost }]));
@@ -197,7 +244,7 @@ function applyBalance(mode) {
 applyBalance(BALANCE);
 
 // A3 shop badge: rarity initial + projectile-type initial, e.g. "Cs" (Common shell), "Gl" (Godly laser)
-const KIND_LETTER = { shell: 's', gun: 'g', laser: 'l', acid: 'a', flak: 'f' };
+const KIND_LETTER = { shell: 's', gun: 'g', laser: 'l', acid: 'a', flak: 'f', rocket: 'r' };
 // manufacturer, from the weapon's name: NXi (November Division) vs CLS-T and the rest
 function makerOf(w) {
   if (w.id.startsWith('nxi')) return 'NXi';
@@ -242,7 +289,12 @@ function weaponValue(w) {
   const spread = 1 / (1 + w.disp * (w.salvo > 1 ? 0.05 : 0.12));
   const acid = w.acid * 60 * shots;
   const sat = w.sat ? 110 * Math.min(w.clip, 3) : 0;
-  return (w.dmg * shots * radius * spread + acid + sat) * (1 + 0.12 * (w.rarity - 1));
+  // rockets: a split multiplies the warheads, a carpet adds bomblets (about half of them land
+  // close enough to count), and the seeker is worth some consistency on top
+  const heads = w.split ? w.split.n : 1;
+  const carpet = w.carpet ? w.carpet.n * w.carpet.frac * 0.45 : 0;
+  const guided = w.guide ? 1.2 : 1;
+  return (w.dmg * shots * (heads + carpet) * radius * spread * guided + acid + sat) * (1 + 0.12 * (w.rarity - 1));
 }
 
 // Wind on a shell, scaled by its drift (p.drift, 1 by default). Two parts: a steady push (A3's wind,
@@ -265,10 +317,59 @@ function windAccel(p, wind) {
 
 // Advance a ballistic body by one frame. `p` = {x, y, vx, vy, age}. Returns null while flying,
 // or {hit:'terrain'|'tree'|'tank'|'out', tank?}. Shared by real shots and the AI's simulations.
-function stepBallistic(p, terrain, wind, tanks, owner) {
+// Rocket seeker (p.guide, see the guided rockets above). Candidates are anything in `seek` with a
+// position: vehicles and mobs (center()) and crates. Locks once armed, re-checks every few frames
+// while it has nothing; steering turns the velocity, keeping its speed. Returns how much of gravity
+// the motor cancels this frame. Deterministic, so the CPU's simulations match the real flight.
+function seekCenter(c) { return c.center ? c.center() : { x: c.x, y: c.y - 9 }; }
+function findLock(p, seek, owner) {
+  const G = p.guide;
+  const sp = Math.hypot(p.vx, p.vy) || 1;
+  const cosCone = Math.cos(rad(G.cone));
+  let best = null, bd = G.range, bestRival = null, brd = G.range;
+  for (const c of seek) {
+    if (!c.alive || c === owner || (p.taken && p.taken.includes(c))) continue;
+    const q = seekCenter(c);
+    const dx = q.x - p.x, dy = q.y - p.y;
+    const d = Math.hypot(dx, dy);
+    if (d > G.range || (dx * p.vx + dy * p.vy) / (d * sp || 1) < cosCone) continue;
+    if (d < bd) { bd = d; best = c; }
+    if (c.vehicle && !c.isMob && d < brd) { brd = d; bestRival = c; }
+  }
+  return p.prefer === 'rival' && bestRival ? bestRival : best;
+}
+function guideStep(p, seek, owner) {
+  const G = p.guide;
+  if (!G || p.age < G.arm || p.age > G.arm + G.burn) return 0;
+  if (p.lock && !p.lock.alive) p.lock = null;
+  if (!p.lock && (p.age - G.arm) % 6 === 0) {
+    p.lock = findLock(p, seek, owner);
+    if (p.lock && p.taken) p.taken.push(p.lock);
+  }
+  if (p.lock) {
+    const q = seekCenter(p.lock);
+    // aim above the target by the drop it will see on the way (remaining gravity, flight time)
+    const sp = Math.hypot(p.vx, p.vy) || 1;
+    const T = Math.hypot(q.x - p.x, q.y - p.y) / sp;
+    const want = Math.atan2(q.y - p.y - 0.5 * GRAV * (1 - G.lift) * T * T, q.x - p.x);
+    const cur = Math.atan2(p.vy, p.vx);
+    let diff = want - cur;
+    while (diff > Math.PI) diff -= TAU;
+    while (diff < -Math.PI) diff += TAU;
+    const turn = clamp(diff, -rad(G.turn), rad(G.turn));
+    const c = Math.cos(turn), sn = Math.sin(turn);
+    const vx = p.vx * c - p.vy * sn;
+    p.vy = p.vx * sn + p.vy * c;
+    p.vx = vx;
+  }
+  return G.lift;
+}
+
+function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
+  const lift = p.guide ? guideStep(p, seek, owner) : 0;
   const a = windAccel(p, wind);
   p.vx += a.x;
-  p.vy += GRAV + a.y;
+  p.vy += GRAV * (1 - lift) + a.y;
   const speed = Math.hypot(p.vx, p.vy);
   const sub = Math.max(1, Math.ceil(speed / 6));
   const sx = p.vx / sub;
@@ -299,11 +400,11 @@ function stepBallistic(p, terrain, wind, tanks, owner) {
 
 // Fire a hypothetical (dispersion-free) shot and return where it lands, how far it fell from the
 // top of its arc and how fast it was going (for the altitude / kinetic damage bonuses).
-function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy, drift = 1) {
-  const p = { x: mx, y: my, vx, vy, age: 0, drift };
+function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy, drift = 1, w = null, seek = tanks) {
+  const p = { x: mx, y: my, vx, vy, age: 0, drift, guide: w && w.guide ? guideFor(w, owner) : null, prefer: w ? preferFor(owner) : null };
   let peak = my;
   for (let i = 0; i < 900; i++) {
-    const r = stepBallistic(p, terrain, wind, tanks, owner);
+    const r = stepBallistic(p, terrain, wind, tanks, owner, seek);
     if (p.y < peak) peak = p.y;
     if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null, drop: p.y - peak, speed: Math.hypot(p.vx, p.vy) };
   }

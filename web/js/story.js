@@ -20,7 +20,8 @@ const STORY = {
   ],
   boss: 'The Hatsuyuki carrier Shirayuki is through the gate. Queen Aeria Charlotte\'s order to every gun on the field: bring it down.',
   ending(champ) {
-    const maker = champ.vehicle.id === 'nxi' ? 'NXi' : 'CLS-T';
+    const maker = champ.vehicle.id === 'nxi' ? 'NXi' : champ.vehicle.id === 'alb' ? 'LFS' : 'CLS-T';
+    if (maker === 'LFS') return `${champ.name} takes the trials for Lymilark Future Sciences. The contract goes to Tir Chonaill, and the gate gets a guard of knights, as the old songs said it would.`;
     return maker === 'NXi'
       ? `${champ.name} takes the trials for NXi. The November Division keeps the gate, as it always meant to. We advance slowly because we advance forever.`
       : `${champ.name} takes the trials for CLS-T. The contract is signed in pink ink, with a cat drawn in the margin.`;

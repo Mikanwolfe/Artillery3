@@ -51,10 +51,11 @@ function solveShot(game, tank, w, target, wind = game.wind, arcScale = 1) {
   const arc = (DIFFICULTY[tank.type] || DIFFICULTY.normal).arc * arcScale;
   const kinR = Math.max(18, w.dmgR * KINETIC_RADIUS);
   const maxV = Math.min(w.maxCharge, 140); // beyond this everything leaves the map anyway
+  const seek = w.guide ? game.seekables() : null;
   const evalShot = (elev, v) => {
     const m = tank.muzzle(elev, facing);
     const u = tank.aimVec(elev, facing); // elevation is relative to the hull
-    const r = simulateShot(game.terrain, wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift);
+    const r = simulateShot(game.terrain, wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift, w, seek);
     let err;
     if (r.hit === 'tank' && r.tank === target) err = 0;
     else err = Math.max(0, dist(r.x, r.y, tc.x, tc.y) - w.dmgR * 0.25);
