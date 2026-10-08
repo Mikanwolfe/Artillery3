@@ -17,8 +17,12 @@
 // Anything missing from a personality falls back to TAUNTS.any.
 
 const PERSONA_BY_NAME = {
-  Ace: 'cocky', Major: 'polite', Rookie: 'nervous',
-  Sarge: 'deadpan', Byron: 'poet', 'Unit 7': 'robot',
+  Ace: 'cocky', Major: 'polite', Rookie: 'nervous', Sarge: 'deadpan', Byron: 'poet', 'Unit 7': 'robot',
+  Arisu: 'nervous', Saki: 'polite', Yayoi: 'poet', Keiko: 'deadpan', Mia: 'cocky',
+  Phos: 'nervous', Cinnabar: 'poet', Bort: 'deadpan', Antarc: 'polite', Kongo: 'deadpan',
+  Nao: 'polite', Tarlach: 'poet', Mari: 'cocky', Ruairi: 'cocky',
+  Fubuki: 'nervous', Shimakaze: 'cocky', Hibiki: 'deadpan',
+  'Dr. Bright': 'cocky', 'SCP-079': 'robot', Custodian: 'robot', 'The Shroud': 'poet',
 };
 const PERSONA_KEYS = ['cocky', 'polite', 'nervous', 'deadpan', 'poet', 'robot'];
 

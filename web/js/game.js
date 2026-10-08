@@ -6,6 +6,7 @@
 const CHATTINESS = 0.7; // scales every reaction probability in react(); lower = quieter CPUs
 const CAM_ZOOM_MIN = 0.5; // mouse-wheel zoom range (1: the standard 1600 x 900 view)
 const CAM_ZOOM_MAX = 1.8;
+const CAM_ZOOM_EASE = 6; // the wheel zoom closes 1/6 of the way to its target each frame
 const LABEL_ANCHOR = 60; // HUD labels hang this far (world units at zoom 1) above a vehicle's feet
 const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
 const SALVO_DELAY = 15;
@@ -79,6 +80,8 @@ class Camera {
     this.zoom = 1; // mouse wheel: >1 closer, <1 further out (CAM_ZOOM_MIN..CAM_ZOOM_MAX)
     this.rot = 0; // a roll, in radians, for set pieces (the HUD never turns)
     this.ceil = -1000; // how high the camera may go (set pieces lift it, into space)
+    this.wide = 0; // how far past the map's edges it may go (G.W.'s battery sits off the map)
+    this.zmin = 0; // set pieces may pull back further than the wheel can (0: CAM_ZOOM_MIN)
   }
 
   // the view in world units at this zoom, and world -> screen (HUD) coordinates
@@ -90,11 +93,12 @@ class Camera {
   sya(y, lift) { return this.sy(y - lift) + lift; }
 
   // zoom about the centre of the view
-  setZoom(z) {
-    z = clamp(z, CAM_ZOOM_MIN, CAM_ZOOM_MAX);
+  setZoom(z, ease = false) {
+    z = clamp(z, this.zmin || CAM_ZOOM_MIN, CAM_ZOOM_MAX);
+    if (!ease) this.zoomTo = z; // set pieces jump straight there; the wheel eases (update)
     const cx = this.x + this.w / 2, cy = this.y + this.h * 0.55;
     this.zoom = z;
-    this.x = clamp(cx - this.w / 2, 0, Math.max(0, WORLD_W - this.w));
+    this.x = clamp(cx - this.w / 2, -this.wide, Math.max(0, WORLD_W - this.w) + this.wide);
     this.y = clamp(cy - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h);
   }
 
@@ -104,12 +108,14 @@ class Camera {
     const f = this.manual || this.focus;
     if (!f) return null;
     return {
-      x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), 0, Math.max(0, WORLD_W - this.w)),
+      x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), -this.wide, Math.max(0, WORLD_W - this.w) + this.wide),
       y: clamp(f.y - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h),
     };
   }
 
   update() {
+    // the wheel's zoom closes on its target a fraction a frame (P control), like the camera's pan
+    if (this.zoomTo && Math.abs(this.zoomTo - this.zoom) > 0.001) this.setZoom(this.zoom + (this.zoomTo - this.zoom) / CAM_ZOOM_EASE, true);
     const t = this.target();
     if (!t) return;
     this.x += (t.x - this.x) / CAM_EASE;
@@ -226,7 +232,7 @@ class Game {
     c.addEventListener('wheel', (e) => {
       if (this.phase === 'menu') return;
       e.preventDefault();
-      this.cam.setZoom(this.cam.zoom * Math.exp(-e.deltaY * 0.0015));
+      this.cam.zoomTo = clamp((this.cam.zoomTo || this.cam.zoom) * Math.exp(-e.deltaY * 0.0015), CAM_ZOOM_MIN, CAM_ZOOM_MAX); // eased in by Camera.update
     }, { passive: false });
     c.addEventListener('pointerdown', (e) => {
       if (this.phase === 'menu') return;
@@ -447,6 +453,7 @@ class Game {
       this.particles.text(t.x, t.y - 40, `+${ar}`, '#8fe0a0');
     }
     this.fogDamage(t);
+    this.lavaDamage(t);
     this.infraTurn(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
@@ -484,7 +491,7 @@ class Game {
       this.cam.update();
       return;
     }
-    this.satellite.barrage = !!(this.satSeq && this.satSeq.barrage);
+    this.satellite.barrage = !!(this.satSeq && this.satSeq.barrage) || this.projectiles.some((p) => p.opensMaia); // the Hatsuyuki barrage (Yukikaze, Innocentia's Array)
     this.satellite.update();
     for (const t of this.tanks) {
       t.update(DT);
@@ -561,6 +568,11 @@ class Game {
 
   // fall damage, credited to whoever's shot knocked the ground away
   landed(t, drop) {
+    if (t.y >= WORLD_BOTTOM) { // down into a void (15X's Zero Point): gone
+      this.events.push(`${t.name} fell into the void.`);
+      this.damage(t, (t.hp + t.armour) * 10 + 1000, this.terrain.voidOwner && this.terrain.voidOwner !== t ? this.terrain.voidOwner : null);
+      return;
+    }
     if (drop <= FALL_SAFE || hasTrait(t, 'geschutz') || hasTrait(t, 'wings')) return;
     const sh = this.report && this.report.shooter;
     const owner = sh && sh !== t ? sh : null;
@@ -582,6 +594,7 @@ class Game {
       let moved = 0;
       for (let pass = 0; pass < 2; pass++) {
         for (let i = s.x0; i < s.x1; i++) {
+          if (h[i] >= WORLD_BOTTOM || h[i + 1] >= WORLD_BOTTOM) continue; // nothing slides into a void
           const d = h[i + 1] - h[i]; // > 0: column i stands higher than i+1
           const ex = Math.abs(d) - SLIDE_TALUS;
           if (ex <= 0) continue;
@@ -904,7 +917,7 @@ class Game {
       this.satTarget = null;
       return;
     }
-    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, constellation: this.satTarget.constellation || null, lock: this.satTarget.lock || null, w: this.satTarget.w || null };
+    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, lock: this.satTarget.lock || null, w: this.satTarget.w || null };
     this.retarget(this.satSeq);
     this.satTarget = null;
     this.satellite.lookAt(this.satSeq.target);
@@ -935,7 +948,6 @@ class Game {
     const sat = this.satellite;
     s.t++;
     if (s.barrage) { this.updateBarrage(s, sat); return; }
-    if (s.constellation) { this.updateConstellation(s, sat); return; }
     sat.charge = s.t < 75 ? clamp((s.t - 25) / 50, 0, 1) : 0;
     if (s.t === 75) {
       const tg = s.target;
@@ -990,6 +1002,10 @@ class Game {
       }
       if (w.kind === 'flak' || w.airburst) this.shrapnel(p);
       if (w.orbital) this.projectiles.push(new OrbitalStrike(this, p.owner, p, w.orbital)); // November's Verdict (finals.js)
+      if (w.naito) this.projectiles.push(new NaitoStrike(this, p.owner, p, w.naito)); // 15X's Zero Point
+      if (w.array) this.projectiles.push(new MaiaArray(this, p.owner, p, w.array)); // Innocentia's Constellation
+      if (w.battery) this.projectiles.push(new BatteryStrike(this, p.owner, p, w.battery)); // G.W. Tiger's Ragnarök
+      if (w.deity) this.projectiles.push(new DeitySummon(this, p.owner, p, w.deity)); // Alban's Morrighan
       if (w.incendiary && w.frag) { // a burning fragment: a small patch of fire that sticks and scorches
         for (let i = 0; i < 2; i++) this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 2, (rng.next() - 0.5) * 3, -1 - rng.next() * 2, w.incendiary, true));
       }
@@ -999,7 +1015,7 @@ class Game {
       // Yukikaze's barrage goes for whatever its rocket was locked onto, wherever the rocket landed
       const lock = w.maia && p.lastLock && p.lastLock.alive ? p.lastLock : null;
       const at = lock ? seekCenter(lock) : p;
-      this.satTarget = { x: at.x, y: at.y, owner: p.owner, barrage: w.maia || null, constellation: w.constellation || null, lock, w };
+      this.satTarget = { x: at.x, y: at.y, owner: p.owner, barrage: w.maia || null, lock, w };
     } // a laser's MAIA call follows its beam
   }
 
@@ -1148,7 +1164,7 @@ class Game {
       if (amt > 0) this.damage(t, amt, owner, false, def, hit);
     }
     this.startSlide(x, def.explR || 10);
-    this.particles.explosion(x, y, def.dmgR, palette);
+    this.particles.explosion(x, y, def.visR || def.dmgR, palette); // visR: set pieces look bigger than they hit
     this.sfx.explosion(Math.min(60, (def.explR || 10) + def.dmgR * 0.1));
     this.shake = Math.max(this.shake, Math.min(14, 2 + def.dmgR * 0.05));
   }
@@ -1673,6 +1689,7 @@ class Game {
     // very high up (the NXi fleet shot) the sky gives way to space
     const space = clamp((-cam.y - 900) / 1400, 0, 1);
     if (space > 0) drawSpace(ctx, space, this.time);
+    if (this.ascent > 0) drawAscent(ctx, this.ascent, this.time, this.ascentDir || 1); // a set piece's climb (or fall)
 
     // world
     const sx = this.shake > 0.5 ? (Math.random() - 0.5) * this.shake * 2 : 0;
@@ -1686,7 +1703,6 @@ class Game {
       ctx.transform(VIEW_SCALE * cam.zoom, 0, 0, VIEW_SCALE * cam.zoom, -(cam.x + sx) * VIEW_SCALE * cam.zoom, -(cam.y + sy) * VIEW_SCALE * cam.zoom);
     }
     this.satellite.draw(ctx);
-    if (this.satSeq && this.satSeq.extras) for (const e of this.satSeq.extras) e.draw(ctx); // Innocentia's Array
     this.bg.drawRidges(ctx, cam);
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);
@@ -1724,6 +1740,7 @@ class Game {
       ctx.fillRect(0, 0, W, H);
       this.screenFlash *= 0.82;
     }
+    for (const p of this.projectiles) if (p.drawScreen) p.drawScreen(ctx); // set pieces' full-screen scenes
 
     // HUD in the original's 1600x900 screen units
     ctx.setTransform(k * VIEW_SCALE, 0, 0, k * VIEW_SCALE, 0, 0); // the HUD never zooms

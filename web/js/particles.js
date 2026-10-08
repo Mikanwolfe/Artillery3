@@ -42,7 +42,7 @@ class Particles {
   // on is two rolls turning against each other (up the middle, out over the top, down the outside),
   // swelling as it climbs; the biggest also push a ring of dust out along the ground
   mushroom(x, y, size) {
-    const k = clamp(size / 160, 0.7, 2.6);
+    const k = clamp(size / 160, 0.7, 3.3);
     const n = Math.round(14 * k);
     for (let i = 0; i < n; i++) { // stem: smoke rising and drawn inward
       const ox = (Math.random() - 0.5) * 14 * k;

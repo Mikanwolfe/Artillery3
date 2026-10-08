@@ -55,12 +55,12 @@ const GUN_NOTES = {
   feuerlilie: ['Matches', 'A homing rocket that bursts like flak: shrapnel and double damage to drones. The easiest anti-air gun to land.'],
   ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling): a heavy beam that leaves a boiling pool, twice a turn.'],
   massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). Point and click, if it can see.'],
-  ragnarok: ['Final', 'G.W. Tiger only. She rides a mech with four 380mm guns: two four-gun barrages a turn, heavy and loose.'],
-  zeropoint: ['Final', 'Object 15X only. A flat, near-instant slug that goes through up to 240 of hill, fort or bridge before it stops.'],
+  ragnarok: ['Final', 'G.W. Tiger only. A marker round: the camera whips off the map to her platoon (four G.W. Tiger SPGs and a Karl-Gerät), which drop eight 290mm rounds across 300 either side of the mark, then the 60cm: a giant crater, and an earthquake that hits everyone on the ground within 900.'],
+  zeropoint: ['Final', 'Object 15X only. A railgun probe (400). Past the fleet, the belt and Jupiter, the Naito MAIA Containment Satellite takes annihilation orders: the ground 520 either side of the probe is deleted outright, down through the world, and anything that falls in is gone.'],
   verdict: ['Final', 'November only. The round is just a target dot: an NXi battlecruiser lines up overhead and fires a tachyon lance straight down.'],
-  constellation: ['Final', 'Innocentia only. Five MAIAs appear over the mark and fire one after another, 760 a beam.'],
-  morrighan: ['Final', 'Alban Eiler only. Breaks into ten strong seekers at the top of its climb; lob it, or it hits whole for half.'],
-  apollon: ['Final', 'Ikaros only. A laser like the others, and where it lands a meteorite follows a second later.'],
+  constellation: ['Final', 'Innocentia only. A laser dot. MAIA opens her eye and the sky fills with MAIAs, a vast one behind them; five waves of 40 shots (110 each) hit across 650 either side of the mark, then the vast MAIA\'s beam comes down: 2,600.'],
+  morrighan: ['Final', 'Alban Eiler only. A flare that summons the goddess Morrighan over the mark; she looses 26 seeking arrows of light at everything in reach.'],
+  apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 3,400 across 400, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
 };
 const GIRL_NOTES = {
   gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and she drives anywhere without fall or tree damage.' },

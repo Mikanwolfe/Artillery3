@@ -8,7 +8,8 @@
 const RARITY = [null,
   { word: 'Common', color: '#4682b4', ui: '#74aee0' }, { word: 'Uncommon', color: '#228b22', ui: '#52c45a' }, { word: 'Rare', color: '#ff4500', ui: '#ff7040' },
   { word: 'Epic', color: '#ff1493', ui: '#ff5aae' }, { word: 'Mythical', color: '#800080', ui: '#c070ff' }, { word: 'Legendary', color: '#008b8b', ui: '#30c8c8' },
-  { word: 'Godly', color: '#ffffff', ui: '#ffffff' }];
+  { word: 'Godly', color: '#ffffff', ui: '#ffffff' },
+  { word: 'Ascendant', color: '#ffc531', ui: '#ffd866' }]; // above Godly: each girl's final weapon
 
 // How hard the wind pushes a weapon's shells (1 = a normal shell). Fast, dense rounds (coilgun
 // slugs, the rail's titanium pillars) barely notice it; light airburst shells and acid blobs drift.
@@ -100,7 +101,7 @@ const GATEKEEPER_DISCOUNT = 0.5;
 // a shooter's seeker settings: Alban Eiler's fire control extends and sharpens them, her telemetry
 // prefers rivals over drones and crates
 // rocket fuel: frames of motor by rarity (a rocket's own burn is a ceiling); better rockets fly further
-const ROCKET_BURN = [30, 30, 36, 42, 50, 58, 66, 74];
+const ROCKET_BURN = [30, 30, 36, 42, 50, 58, 66, 74, 80];
 function guideFor(w, owner) {
   if (!w.guide) return null;
   if (w.guide.tumble) return w.guide;
@@ -230,24 +231,27 @@ const WEAPONS = [
   weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 1.6, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
     guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 3.5, range: 220, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 0.5, r: 75, at: 50, every: 2 },
     short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten bomblets in sequence, unguided and wind-blown.' }),
-  // Final weapons: one per girl, only in her own shop (sig), the price of the end game. Each has a
+  // Final weapons: one per girl, only in her own shop (sig), the price of the end game, and a tier
+  // of their own above Godly (Ascendant). Each has a
   // set piece of its own (finals.js).
-  weapon('ragnarok', "G.W. 'Ragnarök' Geschützwagen Mech", 'shell', -10, 85, { sig: 'gwt', mech: true, salvo: 4, clip: 2, maxCharge: 110, disp: 3, dmg: 700, dmgR: 140, explR: 22, rarity: 7, cost: 75000,
-    short: 'She climbs into the mech the G.W. trials were really for: four 380mm guns on legs.', long: 'Two four-gun barrages a turn. G.W. Tiger only.' }),
-  weapon('zeropoint', "KTS-T 'Zero Point' Railgun", 'gun', -5, 30, { sig: 'obj', drift: 0.05, pierce: 240, maxCharge: 170, disp: 0, dmg: 2600, dmgR: 60, explR: 8, rarity: 7, cost: 75000,
-    short: 'A KTS-T slug so fast it goes through hills: up to 240 of ground, forts and bridges before it stops.', long: 'Flat, fast and through cover. Object 15X only.' }),
-  weapon('verdict', "NXi 'Queen's Verdict' Tachyon Lance", 'shell', 0, 80, { sig: 'nxi', drift: 0.6, maxCharge: 120, disp: 0.3, dmg: 20, dmgR: 20, explR: 2, rarity: 7, cost: 75000,
+  weapon('ragnarok', "G.W. 'Ragnarök' Battery Fire", 'shell', 5, 75, { sig: 'gwt', maxCharge: 120, disp: 0.3, drift: 0.5, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
+    battery: { dmg: 520, r: 190, spread: 300, karl: { dmg: 3400, r: 230, explR: 70, quake: { r: 900, dmg: 320 } } },
+    short: 'A marker round for her platoon off the map: four G.W. Tiger SPGs and a Karl-Gerät 60cm siege mortar.', long: 'Eight 290mm rounds across 300 either side of the mark, then the Karl\'s: a giant crater, and an earthquake that hits everyone on the ground within 900. G.W. Tiger only.' }),
+  weapon('zeropoint', "KTS-T 'Zero Point' Probe", 'gun', -5, 30, { sig: 'obj', drift: 0.05, pierce: 240, maxCharge: 170, disp: 0, dmg: 400, dmgR: 60, explR: 8, rarity: 8, cost: 75000,
+    naito: { r: 520 },
+    short: 'A railgun probe for the Naito MAIA Containment Satellite, out past Jupiter.', long: 'Annihilation orders: the ground 520 either side of the probe is deleted, and anything that falls in is gone. Object 15X only.' }),
+  weapon('verdict', "NXi 'Queen's Verdict' Tachyon Lance", 'shell', 0, 80, { sig: 'nxi', drift: 0.6, maxCharge: 120, disp: 0.3, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
     orbital: { dmg: 3600, r: 180 },
     short: 'A target dot for the battlecruiser in orbit. It takes its time to line up, then it fires.', long: 'The November Division keeps the gate from above as well. November only.' }),
-  weapon('constellation', "Hatsuyuki 'Constellation' MAIA Array", 'shell', 0, 85, { sig: 'int', maxCharge: 90, disp: 0.5, dmg: 60, dmgR: 40, explR: 4, sat: true, rarity: 7, cost: 75000,
-    constellation: { n: 5, dmg: 760, r: 150, gap: 12 },
-    short: 'Not one MAIA but five. They take aim together and fire one after another.', long: 'Innocentia only.' }),
-  weapon('morrighan', "LFS 'Morrighan' Swarm Rocket", 'rocket', 0, 70, { sig: 'alb', maxCharge: 85, disp: 1.2, dmg: 420, dmgR: 70, explR: 8, rarity: 7, cost: 75000,
-    guide: { arm: 4, burn: 74, seek: 999, apex: true, turn: 6, range: 650, cone: 120, lift: 0.6 }, split: { n: 10, at: 26, spread: 10, boost: 1 },
-    short: 'Named for the phantom queen: it breaks into ten seekers that go for everything in reach.', long: 'Alban Eiler only.' }),
-  weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 7, cost: 75000,
-    meteor: { dmg: 3200, r: 240, time: 55 },
-    short: 'Where her arrow of light lands, the sky answers: a meteorite comes down on it.', long: 'Ikaros only.' }),
+  weapon('constellation', "Hatsuyuki 'Constellation' MAIA Array", 'shell', 0, 85, { sig: 'int', maxCharge: 90, disp: 0.5, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
+    array: { fore: 22, far: 40, waves: 5, spread: 650, dmg: 110, r: 80, final: { dmg: 2600, r: 280, explR: 90 } },
+    short: 'A laser dot. MAIA opens her eye, and the whole sky fills with MAIAs.', long: 'Innocentia only.' }),
+  weapon('morrighan', "LFS 'Morrighan' Invocation", 'shell', 0, 85, { sig: 'alb', maxCharge: 90, disp: 0.4, dmg: 30, dmgR: 30, explR: 2, rarity: 8, cost: 75000,
+    deity: { arrows: 26, dmg: 240, r: 45, reach: 950 },
+    short: 'A signal flare to the sky, and something answers: the war goddess of the old songs, on a cloud, with a quiver of light.', long: 'She looses a rain of seeking arrows on everything in reach. Alban Eiler only.' }),
+  weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 8, cost: 75000,
+    meteor: { dmg: 3400, r: 400, explR: 130, size: 170, lava: 640, splash: 20 },
+    short: 'Where her arrow of light lands, the sky answers: she marks an asteroid and brings it down.', long: 'Ikaros only.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
@@ -292,8 +296,8 @@ for (const v of VEHICLES) v.weapon.starter = true;
 // by rarity. Starters never reload, so there is always something to fire; a rack of guns fires a
 // big one every turn by rotating. Damage rises with tier to pay for the turns a gun spends
 // reloading and for the dearer misses (the 'firepower' multiplier, on top of REBALANCE).
-const RELOAD_BY_RARITY = [0, 0, 1, 1, 2, 2, 3, 3];
-const FIREPOWER_BY_RARITY = [1, 1.15, 1.27, 1.39, 1.51, 1.63, 1.75, 1.87];
+const RELOAD_BY_RARITY = [0, 0, 1, 1, 2, 2, 3, 3, 3];
+const FIREPOWER_BY_RARITY = [1, 1.15, 1.27, 1.39, 1.51, 1.63, 1.75, 1.87, 1.87];
 function reloadOf(w) { return BALANCE === 'rebalanced' && !w.starter ? RELOAD_BY_RARITY[w.rarity] : 0; }
 
 // switch the shared weapon objects between the classic and rebalanced numbers

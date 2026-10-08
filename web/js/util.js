@@ -28,6 +28,7 @@ function plateText(ctx, txt, x, y, color, align = 'center') {
 }
 const WORLD_W = 3600; // A3 Constants.TerrainWidth was 2400; widened for room to move and lob
 const WORLD_BOTTOM = 1800; // Constants.TerrainDepth
+const VOID_Y = WORLD_BOTTOM + 1200; // ground height where the ground is gone altogether (15X's Zero Point)
 const GRAV = 0.6; // Constants.Gravity, px / frame^2
 const DT = 1 / 60;
 const TAU = Math.PI * 2;

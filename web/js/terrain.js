@@ -63,6 +63,8 @@ class Terrain {
     this.lines = [];
     this.towers = [];
     this.soot = new Float32Array(WORLD_W); // 0..1 scorch per column, drawn along the surface
+    this.lava = new Float32Array(WORLD_W); // 0..1 molten ground per column (Ikaros' Apollon): permanent
+    this.voids = []; // [x0, x1] spans where the ground is gone altogether (15X's Zero Point)
     const peaks = Math.round(rng.int(g.peaks[0], g.peaks[1]) * WORLD_W / 2400); // the biome's count is per 2400 units
     for (let k = 0; k < peaks; k++) {
       const cx = rng.range(250, WORLD_W - 250);
@@ -102,13 +104,42 @@ class Terrain {
     }
   }
 
+  // the ground melted to lava within r of cx (strongest in the middle); it stays for the round
+  melt(cx, r) {
+    if (!this.lava) return;
+    for (let x = Math.max(0, Math.floor(cx - r)); x < Math.min(WORLD_W, cx + r); x++) {
+      const k = 1 - Math.abs(x - cx) / r;
+      this.lava[x] = Math.min(1, this.lava[x] + Math.min(1, k * 1.6) * (0.75 + 0.25 * hash2(x, 19)));
+    }
+  }
+  // the ground between x0 and x1 deleted outright, down through the bottom of the world: sheer
+  // cliffs either side with molten bits along their lips
+  erase(x0, x1) {
+    x0 = Math.max(0, Math.floor(x0)); x1 = Math.min(WORLD_W - 1, Math.ceil(x1));
+    for (let x = x0; x <= x1; x++) { this.height[x] = VOID_Y; if (this.soot) this.soot[x] = 0; if (this.lava) this.lava[x] = 0; }
+    for (const [e, dir] of [[x0 - 1, -1], [x1 + 1, 1]]) {
+      for (let d = 0; d < 70; d++) {
+        const x = e + dir * d;
+        if (x < 0 || x >= WORLD_W || this.height[x] >= WORLD_BOTTOM) continue;
+        if (hash2(x, 41) < 0.75 - d / 100) this.lava[x] = Math.max(this.lava[x], 0.9 - d / 80);
+      }
+    }
+    for (const t of this.trees) if (t.x >= x0 && t.x <= x1) t.alive = false;
+    this.forts = this.forts.filter((f) => f.x0 + f.cols * FORT_CELL < x0 || f.x0 > x1);
+    this.towers = (this.towers || []).filter((t) => t.x < x0 || t.x > x1);
+    this.voids.push([x0, x1]);
+  }
+  voidAt(x) { return this.height[clamp(Math.round(x), 0, WORLD_W - 1)] >= WORLD_BOTTOM; }
+
+  lavaAt(x) { return this.lava ? this.lava[clamp(Math.round(x), 0, WORLD_W - 1)] : 0; }
+
   crater(cx, explRad) {
     const width = Math.max(8, explRad * 8 - 1);
     for (let i = 0; i < width; i++) {
       const x = Math.round(cx - width / 2 + i);
       if (x < 0 || x >= WORLD_W) continue;
       const d = explRad * (1 - Math.cos((TAU * i) / width));
-      this.height[x] = Math.min(WORLD_BOTTOM - 10, this.height[x] + d);
+      if (this.height[x] < WORLD_BOTTOM) this.height[x] = Math.min(WORLD_BOTTOM - 10, this.height[x] + d); // (a void stays a void)
     }
   }
 
@@ -176,7 +207,7 @@ class Terrain {
 
   erode(x, amt) {
     const i = clamp(Math.round(x), 0, WORLD_W - 1);
-    this.height[i] = Math.min(WORLD_BOTTOM - 10, this.height[i] + amt);
+    if (this.height[i] < WORLD_BOTTOM) this.height[i] = Math.min(WORLD_BOTTOM - 10, this.height[i] + amt);
   }
 
   // draw the visible part as one stepped polygon (no seams between columns)
@@ -191,6 +222,8 @@ class Terrain {
       fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
     }
     for (const f of this.forts) f.draw(ctx);
+    if (this.lava) this.drawLava(ctx, x0, x1);
+    if (this.voids && this.voids.length) this.drawVoids(ctx, x0, x1);
     if (!this.soot) return;
     // soot: a brown band of squares along the surface, deeper and darker where it's heavier
     const step = TERRAIN_STEP;
@@ -203,6 +236,50 @@ class Terrain {
       if (s > 0.35 && hash2(x, 3) < s * 0.6) { // flecks thrown a little further down
         ctx.fillStyle = rgb(this.sootColor || SOOT_RGB, 0.35 * s);
         ctx.fillRect(x + 1, top + Math.round(5 + 14 * s), 3, 3);
+      }
+    }
+  }
+
+  // where the ground was deleted: darkness welling up from below, and the sheer cut faces in black
+  // glass either side, a faint violet sheen down their edges
+  drawVoids(ctx, x0, x1) {
+    for (const [a, b] of this.voids) {
+      if (b < x0 - 60 || a > x1 + 60) continue;
+      const la = this.height[Math.max(0, a - 1)], lb = this.height[Math.min(WORLD_W - 1, b + 1)];
+      const top = Math.min(la < WORLD_BOTTOM ? la : WORLD_BOTTOM, lb < WORLD_BOTTOM ? lb : WORLD_BOTTOM);
+      for (let i = 0; i < 8; i++) { // the abyss, black a little way below the lips
+        ctx.fillStyle = `rgba(6,4,10,${Math.min(1, 0.3 + i * 0.12)})`;
+        ctx.fillRect(a, Math.round(top + 40 + i * 30), b - a + 1, i === 7 ? VOID_Y : 30);
+      }
+      for (const [x, y, dir] of [[a, la, -1], [b, lb, 1]]) {
+        if (y >= WORLD_BOTTOM) continue;
+        const fx = dir < 0 ? x - 44 : x + 1;
+        ctx.fillStyle = '#07060b'; ctx.fillRect(fx, Math.round(y), 44, VOID_Y - y);
+        ctx.fillStyle = 'rgba(120,90,170,0.35)'; ctx.fillRect(dir < 0 ? x - 2 : x + 1, Math.round(y), 2, VOID_Y - y);
+      }
+    }
+  }
+
+  // lava: a dark crust over the surface with molten cracks that glow and flicker, thicker and
+  // brighter toward the middle, and embers rising off the hottest parts
+  drawLava(ctx, x0, x1) {
+    const step = TERRAIN_STEP, now = performance.now() / 1000; // flicker only: not game state
+    for (let x = Math.max(0, Math.floor(x0 / step) * step); x < Math.min(WORLD_W, x1 + step); x += step) {
+      const l = this.lava[Math.min(WORLD_W - 1, x + (step >> 1))];
+      if (l < 0.05) continue;
+      const top = Math.round(this.height[Math.min(WORLD_W - 1, x + (step >> 1))]);
+      const th = Math.round(6 + 26 * l);
+      ctx.fillStyle = `rgba(52,20,14,${0.5 + 0.5 * l})`;
+      ctx.fillRect(x, top - 1, step, th);
+      const glow = 0.55 + 0.45 * Math.sin(now * 3 + x * 0.07);
+      if (hash2(x, 23) < 0.35 + 0.6 * l) {
+        ctx.fillStyle = `rgba(255,${Math.round(90 + 110 * glow * l)},30,${(0.5 + 0.5 * l) * glow})`;
+        ctx.fillRect(x, top - 1 + Math.round(hash2(x, 29) * th * 0.5), step, Math.max(2, Math.round(th * 0.35)));
+      }
+      if (l > 0.5 && hash2(x, 31) < 0.25) { // embers
+        const e = (now * 0.8 + hash2(x, 37)) % 1;
+        ctx.fillStyle = `rgba(255,190,80,${1 - e})`;
+        ctx.fillRect(x + 2, top - 6 - Math.round(e * 40), 3, 3);
       }
     }
   }
@@ -224,4 +301,5 @@ function fillSteps(ctx, heights, x0, x1, step, ox, oy) {
   ctx.lineTo(Math.min(n, b) + step + ox, bottom);
   ctx.closePath();
   ctx.fill();
+
 }
