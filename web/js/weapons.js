@@ -63,7 +63,7 @@ const VEHICLES = [
     id: 'alb', name: 'Alban Eiler', hp: 120, armour: 140, blurb: 'The Lymilark rocketeer: her pod of seeker rockets finds whatever is nearest.',
     traits: ['firecontrol', 'telemetry'],
     weapon: weapon('lfs0', "LFS 'Eiler' 60mm Seeker Pod", 'rocket', 0, 60, {
-      salvo: 2, disp: 0.6, maxCharge: 50, dmg: 50, dmgR: 45, explR: 6,
+      salvo: 2, disp: 3.0, maxCharge: 50, dmg: 50, dmgR: 45, explR: 6,
       guide: { arm: 6, burn: 50, seek: 999, apex: true, turn: 4, range: 600, cone: 75, lift: 0.5 },
       short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the pod, in very small letters.", long: 'Starting weapon for Alban Eiler.' }),
   },
@@ -156,13 +156,13 @@ const WEAPONS = [
   weapon('sanshiki', "46cm 'Sanshikidan' Type 3 Shell", 'flak', 0, 80, { clip: 2, maxCharge: 110, disp: 1.5, dmg: 900, dmgR: 260, explR: 12, rarity: 6, cost: 52000,
     short: 'Incendiary shrapnel shells for the 46cm guns. Lights up the whole sky.', long: 'Enormous airbursts and a rain of burning fragments.' }),
   // Hybrids: two makers' ideas in one gun (w.maker names both; the shop has a Hybrid filter)
-  weapon('yukikaze', "Hatsuyuki 'Yukikaze' Uplink Seeker", 'rocket', 10, 80, { salvo: 2, maxCharge: 70, disp: 0.8, dmg: 40, dmgR: 45, explR: 5, rarity: 4, cost: 13000, sat: true,
+  weapon('yukikaze', "Hatsuyuki 'Yukikaze' Uplink Seeker", 'rocket', 10, 80, { salvo: 2, maxCharge: 70, disp: 3.2, dmg: 40, dmgR: 45, explR: 5, rarity: 4, cost: 13000, sat: true,
     maia: { pulses: 5, dmg: 120, r: 120, gap: 14 }, // the Hatsuyuki barrage (Game.updateSatellite)
     hybrid: true, maker: 'Hatsuyuki × Lymilark',
     kin: 6, // it comes in hot (no airbrake): six times the usual kinetic damage for a direct hit
     guide: { arm: 6, burn: 230, seek: 150, apex: true, brake: false, turn: 9, range: 1200, cone: 140, lift: 0.5 },
     short: 'A Hatsuyuki seeker that dives on the nearest target past the top of its arc, without braking. Its call opens MAIA all the way.', long: 'The warheads barely scratch, but a fast direct hit does six times the usual kinetic damage. The Hatsuyuki barrage does the rest: MAIA spreads its wings and antenna and strikes five times, at near full strength from round one.' }),
-  weapon('feuerlilie', "G.W.–LFS 'Feuerlilie' Seeker Flak", 'rocket', 10, 85, { salvo: 2, clip: 2, maxCharge: 75, disp: 0.6, dmg: 90, dmgR: 90, explR: 4, rarity: 3, cost: 7000,
+  weapon('feuerlilie', "G.W.–LFS 'Feuerlilie' Seeker Flak", 'rocket', 10, 85, { salvo: 2, clip: 2, maxCharge: 75, disp: 2.8, dmg: 90, dmgR: 90, explR: 4, rarity: 3, cost: 7000,
     hybrid: true, maker: 'G.W. × Lymilark', airburst: true,
     guide: { arm: 8, burn: 55, seek: 999, apex: true, turn: 4.5, range: 700, cone: 80, lift: 0.5 },
     short: 'A G.W. anti-air rocket with a Lymilark seeker: it homes, then bursts like flak.', long: 'Proximity-fused airbursts with shrapnel, double damage to drones. Feuerlilie: fire lily.' }),
@@ -198,25 +198,25 @@ const WEAPONS = [
   // consistency. Long-tube launchers can barely elevate, so they skim terrain and rely on the
   // seeker. Later models transform in flight: `carpet` drops seeking bomblets one after another,
   // `split` breaks into seekers that each go for the nearest target.
-  weapon('wren', "LFS 'Wren' 70mm Seeker", 'rocket', 0, 65, { salvo: 2, maxCharge: 55, disp: 0.5, dmg: 75, dmgR: 50, explR: 6, rarity: 1, cost: 1700,
+  weapon('wren', "LFS 'Wren' 70mm Seeker", 'rocket', 0, 65, { salvo: 2, maxCharge: 55, disp: 2.6, dmg: 75, dmgR: 50, explR: 6, rarity: 1, cost: 1700,
     guide: { arm: 6, burn: 55, seek: 999, apex: true, turn: 4.5, range: 650, cone: 75, lift: 0.5 },
     short: 'A pair of little seekers. They go for whatever is closest, which is usually what you wanted.', long: 'Lymilark Future Sciences, Tir Chonaill works.' }),
-  weapon('kestrel', "LFS 'Kestrel' Twin Launcher", 'rocket', 0, 55, { salvo: 2, clip: 2, maxCharge: 60, disp: 0.5, dmg: 80, dmgR: 55, explR: 7, rarity: 2, cost: 3300,
+  weapon('kestrel', "LFS 'Kestrel' Twin Launcher", 'rocket', 0, 55, { salvo: 2, clip: 2, maxCharge: 60, disp: 2.6, dmg: 80, dmgR: 55, explR: 7, rarity: 2, cost: 3300,
     guide: { arm: 6, burn: 60, seek: 999, apex: true, turn: 4.5, range: 700, cone: 75, lift: 0.5 },
     short: 'Two pairs a turn. The Dunbarton militia swear by it.', long: 'Seekers lock on ten frames out of the tube.' }),
-  weapon('dunbarton', "LFS 'Dunbarton' Long-Tube Rocket", 'rocket', -3, 12, { clip: 2, maxCharge: 95, disp: 0.2, dmg: 230, dmgR: 70, explR: 10, rarity: 3, cost: 6200,
+  weapon('dunbarton', "LFS 'Dunbarton' Long-Tube Rocket", 'rocket', -3, 12, { clip: 2, maxCharge: 95, disp: 1.0, dmg: 230, dmgR: 70, explR: 10, rarity: 3, cost: 6200,
     guide: { arm: 6, burn: 90, seek: 999, apex: true, turn: 5, range: 800, cone: 60, lift: 0.85, popup: { range: 240, frames: 16, angle: 60, height: 160 } },
     short: 'A tube so long it can hardly elevate. It skims the ground, then pops up over its target and dives.', long: 'Flat-flying cruise rocket: find a gap in the terrain. Within about 240 of a target ahead it pulls up hard and comes down on top.' }),
-  weapon('tirchonaill', "LFS 'Tir Chonaill' Carpet Rocket", 'rocket', 5, 60, { maxCharge: 70, disp: 0.4, dmg: 150, dmgR: 70, explR: 8, rarity: 4, cost: 12500,
+  weapon('tirchonaill', "LFS 'Tir Chonaill' Carpet Rocket", 'rocket', 5, 60, { maxCharge: 70, disp: 2.0, dmg: 150, dmgR: 70, explR: 8, rarity: 4, cost: 12500,
     guide: { arm: 4, burn: 70, seek: 999, apex: true, turn: 4, range: 480, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 1.1, r: 60, at: 40, every: 3 },
     short: 'Two-thirds of a second out it starts dropping seven seeking bomblets, one after another.', long: 'Let go high and they all bend onto one target; skim it low and they lay a line along its path.' }),
-  weapon('emain', "LFS 'Emain Macha' Split Rocket", 'rocket', 0, 50, { clip: 2, maxCharge: 75, disp: 0.4, dmg: 300, dmgR: 80, explR: 10, rarity: 5, cost: 22000,
+  weapon('emain', "LFS 'Emain Macha' Split Rocket", 'rocket', 0, 50, { clip: 2, maxCharge: 75, disp: 2.0, dmg: 300, dmgR: 80, explR: 10, rarity: 5, cost: 22000,
     guide: { arm: 4, burn: 75, seek: 999, apex: true, turn: 4.5, range: 520, cone: 80, lift: 0.6 }, split: { n: 3, at: 32, spread: 14, boost: 1.15 },
     short: 'Breaks into three seekers half a second out, each going for whatever is closest.', long: 'They can all pile onto one target, or spread over a crowd of drones.' }),
-  weapon('demigod', "LFS 'Demigod' Lance Rocket", 'rocket', 5, 70, { maxCharge: 80, disp: 0.3, dmg: 900, dmgR: 70, explR: 14, rarity: 7, cost: 160000,
+  weapon('demigod', "LFS 'Demigod' Lance Rocket", 'rocket', 5, 70, { maxCharge: 80, disp: 1.2, dmg: 900, dmgR: 70, explR: 14, rarity: 7, cost: 160000,
     guide: { arm: 4, burn: 40, seek: 999, turn: 2, range: 600, cone: 80, lift: 0.5 }, lance: { at: 45, hover: 20, speed: 75, range: 1800, kin: 2.5 },
     short: 'It arcs like any rocket. Then it stops dead in the air, becomes a lance of light, and charges.', long: 'Three-quarters of a second out it picks the nearest target in any direction and runs it through. Kinetic damage ×2.5.' }),
-  weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 0.3, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
+  weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 1.6, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
     guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 5, range: 600, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 1.0, r: 75, at: 50, every: 2 },
     short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten seeking bomblets in sequence: high for one target, low for a ridge.' }),
 ];
@@ -321,7 +321,8 @@ const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
 function weaponValue(w) {
   const shots = w.salvo * Math.min(w.clip, 4);
   const radius = Math.sqrt(w.dmgR / 80);
-  const spread = 1 / (1 + w.disp * (w.salvo > 1 ? 0.05 : 0.12));
+  // (a seeker takes out part of its launch spread, so a rocket's counts half)
+  const spread = 1 / (1 + w.disp * (w.guide ? 0.5 : 1) * (w.salvo > 1 ? 0.05 : 0.12));
   const acid = w.acid * 60 * shots;
   const sat = w.maia ? w.maia.pulses * w.maia.dmg * 0.6 * Math.min(w.clip, 3) : w.sat ? 110 * Math.min(w.clip, 3) : 0;
   // rockets: a split multiplies the warheads, a carpet adds bomblets (about half of them land
@@ -386,6 +387,7 @@ function findLock(p, seek, owner) {
 // carpet bomblets: unpowered, steering from the moment they drop, for whatever is in reach
 const BOMBLET_GUIDE = { arm: 2, burn: 0, seek: 0, turn: 2.5, range: 420, cone: 180, lift: 0, brake: false };
 const BOMBLET_FAN = 16; // each later bomblet aims this much further out from the target, alternating sides
+const SEEKER_SPREAD = 20; // world units of seeker aim error per point of a rocket's spread
 const FIN_GAIN = 0.05; // turn-rate change per frame per radian off the line
 const FIN_DAMP = 0.1; // how much of its turn rate it sheds a frame (low: it overshoots)
 const FIN_WOBBLE = 6.5; // buffeting in degrees a frame, at full strength (the same for every rocket)

@@ -390,7 +390,11 @@ class Projectile {
     this.trail = [];
     this.peak = y; // highest point reached (smallest y), for the altitude bonus
     this.guide = guideFor(w, owner); // rockets: seeker settings (null for shells)
-    if (this.guide) this.wseed = rng.int(0, 1e9); // its own fin quirks (see finFor)
+    if (this.guide) {
+      this.wseed = rng.int(0, 1e9); // its own fin quirks (see finFor)
+      // and its seeker's error: it homes on a point up to SEEKER_SPREAD x its spread off the target
+      this.aimOff = (rng.next() * 2 - 1) * (w.disp || 0) * SEEKER_SPREAD;
+    }
     this.prefer = preferFor(owner);
   }
 
