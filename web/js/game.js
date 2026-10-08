@@ -51,6 +51,8 @@ const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
 const KILL_BOUNTY = 250;
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs every turn
+const SAT_DOWN_ROTATIONS = 2; // shot down, MAIA stays offline this many turns of every vehicle left
+const SAT_REBOOT = 0.5; // and comes back with this share of its health
 // damage popup tiers by accuracy (share of the blast radius from dead centre)
 const HIT_TIERS = [
   { tag: 'GRAZE', color: '#c8c4d4' },
@@ -983,7 +985,9 @@ class Game {
     if (!sat.alive) {
       this.particles.explosion(c.x, c.y, 160, 'laser');
       this.shake = Math.max(this.shake, 8);
-      this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline. It will come back as it repairs.`);
+      // it stays down for SAT_DOWN_ROTATIONS full turns of everyone left, then reboots at half health
+      sat.downUntil = this.turnCount + SAT_DOWN_ROTATIONS * Math.max(1, this.tanks.filter((t) => t.alive).length);
+      this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline for ${SAT_DOWN_ROTATIONS} rounds of turns.`);
       this.events.push('MAIA is offline.');
     } else this.events.push(`${owner ? owner.name : 'Something'} hit MAIA (${reg.tag.toLowerCase()}): ${Math.round(sat.health * 100)}%.`);
   }
@@ -996,7 +1000,8 @@ class Game {
     if (!alive.length) return;
     const max = alive.reduce((a, t) => a + t.maxHp + t.maxArmour, 0) / alive.length;
     const was = sat.alive;
-    sat.hp = fresh ? max : clamp(sat.hp * (max / sat.maxHp) + max * SAT_HEAL, 0, max);
+    if (!fresh && !was && this.turnCount < (sat.downUntil || 0)) { sat.maxHp = max; return; } // still offline
+    sat.hp = fresh ? max : !was ? max * SAT_REBOOT : clamp(sat.hp * (max / sat.maxHp) + max * SAT_HEAL, 0, max);
     sat.maxHp = max;
     if (!was && sat.alive) this.ui.notice('MAIA is back online.');
   }
@@ -1741,7 +1746,7 @@ class Game {
       ctx.textAlign = 'left';
       ctx.fillStyle = '#ffffff';
       ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 4));
-      ctx.fillText(`Level: ${sat.level} · ${sat.alive ? Math.round(sat.health * 100) + '% power' : 'OFFLINE'}`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 26));
+      ctx.fillText(`Level: ${sat.level} · ${sat.alive ? Math.round(sat.health * 100) + '% power' : `OFFLINE (${Math.max(0, (sat.downUntil || 0) - this.turnCount)} turns)`}`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 26));
       // MAIA's health bar (its strike damage scales with it)
       const bx = Math.round(sat.x - cam.x + 120), by = Math.round(sat.y - cam.y + 34);
       ctx.fillStyle = HUD.plate;
