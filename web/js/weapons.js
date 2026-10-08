@@ -61,7 +61,7 @@ const VEHICLES = [
 // (discipline), damage (redundancy), the shop and useAbility (gatekeeper), startSatellite /
 // updateSatellite (uplink, retarget).
 const TRAITS = {
-  drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn hits a rival, she gets that round back.' },
+  drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn lands a solid hit on a rival, she gets that round back.' },
   geschutz: { name: 'Geschützwagen', desc: 'Never takes fall or tree damage.' },
   sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
   discipline: { name: 'Single-shot discipline', desc: '+25% damage from guns without an autoloader.' },
@@ -72,6 +72,7 @@ const TRAITS = {
 };
 const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
 const GATEKEEPER_DISCOUNT = 0.5;
+const DRILL_QUALITY = 0.6; // a 'solid' hit or better (see HIT_TIERS) earns the drill's round back
 const RETARGET_RANGE = 160; // how far from the mark MAIA looks for a rival
 const RETARGET_SHIFT = 70; // and how far it will move its aim
 
@@ -158,7 +159,7 @@ const WEAPONS = [
 //  - Acid guns lose a further 10%, since the acid drip comes on top.
 //  - Starting guns sit just under the cheapest Commons (worth 140-165 a turn).
 const REBALANCE = {
-  morser: { dmg: 130 }, d76: { dmg: 170 }, katis: { dmg: 30 }, nxi0: { dmg: 60 },
+  morser: { dmg: 110 }, d76: { dmg: 170 }, katis: { dmg: 30 }, nxi0: { dmg: 60 },
   howitzer: { dmg: 260, cost: 1200 }, claymore: { dmg: 85, cost: 1500 }, lensx2: { dmg: 225, cost: 1800 },
   lance: { dmg: 220, cost: 2500 }, coil: { dmg: 80, cost: 2900 }, obj261: { dmg: 515, cost: 3400 },
   type11: { dmg: 130, cost: 4400 }, lensae: { dmg: 335, cost: 4900 }, type91: { dmg: 515, cost: 5800 },

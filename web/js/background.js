@@ -33,20 +33,30 @@ class Background {
       s: sand ? 2 : p.kind === 'leaves' ? 3 + Math.floor(Math.random() * 2) : 2 + Math.floor(Math.random() * 3) * 2,
       v: sand ? 4 + Math.random() * 8 : p.kind === 'leaves' ? 12 + Math.random() * 14 : 10 + Math.random() * 25,
       ph: Math.random() * TAU, c: rgb(p.colors[Math.floor(Math.random() * p.colors.length)]),
+      k: 0.7 + Math.random() * 0.6, vx: 0, // weight: how fully it takes the wind's speed
     };
   }
 
   update(dt, wind) {
     this.t += dt;
     const kind = this.biome.particles.kind;
-    const gust = kind === 'sand' ? 2600 : kind === 'leaves' ? 1300 : 900;
+    // ambient particles ride the wind: n is -1..1 (full wind left .. right), each flake has its own
+    // weight (f.k) and eases toward the wind speed, and gusts come and go, so a strong wind drives
+    // snow nearly sideways and calm air lets it fall
+    const n = clamp(wind.x / WIND_FULL, -1, 1);
+    const gust = 1 + 0.35 * Math.sin(this.t * 0.7) + 0.15 * Math.sin(this.t * 2.3);
+    const top = (kind === 'sand' ? 340 : kind === 'leaves' ? 260 : 200) * gust;
     for (const f of this.flakes) {
-      f.y += f.v * dt;
-      f.x += (wind.x * gust + Math.sin(this.t * (kind === 'leaves' ? 2 : 1) + f.ph) * (kind === 'leaves' ? 18 : 6) + (kind === 'sand' ? 30 : 0) * Math.sign(wind.x || 1)) * dt;
+      const want = n * top * f.k + Math.sin(this.t * (kind === 'leaves' ? 2 : 1) + f.ph) * (kind === 'leaves' ? 18 : 6);
+      f.vx += (want - f.vx) * Math.min(1, dt * 2.5);
+      f.y += f.v * (1 - 0.35 * Math.abs(n)) * dt; // a hard wind keeps them aloft longer
+      f.x += f.vx * dt;
       if (f.y > H + 8 || f.x < -10 || f.x > W + 10) {
+        const vx = f.vx;
         Object.assign(f, this.newFlake(false));
-        if (wind.x > 0.01 && Math.random() < 0.4) f.x = -5;
-        else if (wind.x < -0.01 && Math.random() < 0.4) f.x = W + 5;
+        f.vx = vx;
+        // in a wind most flakes come in from the upwind edge
+        if (Math.random() < 0.15 + 0.8 * Math.abs(n)) { f.x = n > 0 ? -5 : W + 5; f.y = Math.random() * H; }
       }
     }
   }

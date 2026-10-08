@@ -88,6 +88,7 @@ class Tank {
     this.pose = 'idle';
     this.armed = { double: false, over: false };
     this.mark = null; // target marker (humans): the HUD shows the power needed to land on it
+    this.aimMemo = null; // CPUs: ranging-in memory per target (ai.js)
     this.cooldown = { double: 0, over: 0, shield: 0, barrier: 0 }; // own turns until each ability is ready again
     this.reload = {}; // weapon id -> own turns until it can fire again (every gun starts the round loaded)
     this.barrier = null; // Bulwark Barrier direction (unit vector), until the next turn
@@ -672,7 +673,7 @@ class Crate {
     this.t++;
     if (!this.landed) {
       this.y += 2.2;
-      this.x = clamp(this.x + game.wind.x * 12, 40, WORLD_W - 40);
+      this.x = clamp(this.x + game.wind.x * 30, 40, WORLD_W - 40);
       const gy = game.terrain.hAt(this.x);
       if (this.y >= gy) {
         this.y = gy;
