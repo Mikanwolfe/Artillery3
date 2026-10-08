@@ -169,7 +169,7 @@ const UI = {
         const fuel = Math.round(100 * (v.fuel || 1));
         return `<div class="veh" tabindex="0" data-v="${v.id}"><span class="key">${i + 1}</span>
           <div class="stage"><canvas class="girl" width="168" height="200" data-g="${v.id}"></canvas></div>
-          <div><span class="maker${v.id === 'nxi' ? ' nxi' : ''}">${v.id === 'nxi' ? 'NXi · November Division' : v.id === 'alb' ? 'Lymilark Future Sciences' : 'CLS-T trials'}</span><h3>${esc(v.name)}</h3></div>
+          <div><span class="maker${MAKER_CLASS[v.id] || ''}">${MAKERS[v.id] || ''}</span><h3>${esc(v.name)}</h3></div>
           <p>${esc(v.blurb)}</p>
           <ul class="traits">${(v.traits || []).map((id) => `<li><b>${esc(TRAITS[id].name)}</b> ${esc(TRAITS[id].desc)}</li>`).join('')}</ul>
           <div class="meters">${meter('Health', v.hp, 200, 'var(--cool)')}${meter('Armour', v.armour, 200, 'var(--accent)')}${meter('Fuel', fuel, 100, 'var(--gold)')}</div>

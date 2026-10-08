@@ -62,7 +62,11 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
   const evalShot = (elev, v) => {
     const m = tank.muzzle(elev, facing);
     const u = tank.aimVec(elev, facing); // elevation is relative to the hull
-    const r = simulateShot(game.terrain, wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift, w, seek);
+    let r = simulateShot(game.terrain, wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift, w, seek);
+    if (w.kind === 'laser' && r.hit !== 'out') { // the pointer only marks: the drone's beam is what lands
+      const b = droneShot(game.terrain, game.targets(), tank, w, r).end;
+      r = { ...r, x: b.x, y: b.y, hit: b.hit === 'spot' ? r.hit : b.hit, tank: b.hit === 'spot' ? r.tank : b.tank || null };
+    }
     let err;
     if (r.hit === 'tank' && r.tank === target) err = 0;
     else err = Math.max(0, dist(r.x, r.y, tc.x, tc.y) - w.dmgR * 0.25);
@@ -107,7 +111,7 @@ class CpuController {
     this.tank = tank;
     this.ctl = new Ctl();
     this.state = 'think';
-    this.timer = (tank.firedThisTurn ? 0.3 : 0.8) + Math.random() * 0.4;
+    this.timer = (tank.firedThisTurn ? 0.3 : 0.8) + rng.next() * 0.4;
     this.plan = null;
     this.moved = tank.firedThisTurn;
   }
@@ -219,6 +223,8 @@ class CpuController {
         break;
       }
       case 'plan': {
+        // the search runs a few milliseconds a frame; the game world holds still meanwhile (see
+        // Game.step), so a seeded match replays the same however long the search takes
         const t0 = performance.now();
         let r = this.planGen.next();
         while (!r.done && performance.now() - t0 < AI_BUDGET_MS) r = this.planGen.next();

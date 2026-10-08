@@ -25,7 +25,7 @@ class Mob {
     this.y = y; // bottom of the hitbox (like a vehicle's ground point)
     this.alive = true;
     this.dest = null;
-    this.t = Math.random() * 100;
+    this.t = rng.next() * 100;
     this.flash = 0;
     this.armour = 0;
     this.maxArmour = 0;

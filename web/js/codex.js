@@ -12,21 +12,21 @@ const GUN_NOTES = {
   katis: ['Matches', 'The shells barely scratch; every one calls MAIA, which does the work. Still the strongest starter per turn.'],
   howitzer: ['Matches', 'Biggest blast of the Commons at the shortest range. The cheapest real step up from any starter.'],
   claymore: ['Matches', 'Three small shots to walk onto a target. Weak per dollar, as a three-clip low-calibre piece should be.'],
-  lensx2: ['Matches', 'High damage, low consistency, as promised. Lasers get no altitude bonus, and the ±25° arc limits where it can reach.'],
+  lensx2: ['Matches', 'Duct-taped CLS-T drone with a 120 ceiling: brutal in direct fire, useless behind a ridge. No altitude bonus.'],
   lance: ['Matches', 'Spread 1 and two shots a turn. The most dependable Uncommon.'],
   coil: ['Matches', 'A machine gun as advertised: eight rounds a turn. Spread 3 means much of it misses at range.'],
   obj261: ['Undersells', 'One shot, but it is a heavy shell with a 130 radius at range 90. The best value below ¢4,000.'],
   type11: ['Matches', 'Flexible but light, as described: three accurate shells, each calling MAIA, with the full 0–90° arc.'],
-  lensae: ['Matches', 'Three accurate laser shots. A lot of damage for a Rare, if your target is inside ±30°.'],
+  lensae: ['Matches', 'Three accurate beams from a Kotona relic drone with a 150 ceiling. A lot of damage for a Rare when you can see them.'],
   type91: ['Matches', 'Acid pools keep burning after the hit. Trimmed 10% because the acid used to double its real damage.'],
   bc155: ['Matches', 'Five small punches a turn, exactly as written. Lowest Rare per dollar, because each autoloader shot costs value.'],
   typ67: ['Undersells', 'Two heavy shells with a 120 radius. The best Rare per dollar.'],
   gwt290: ['Matches', 'Radius 200 and range 100: forgiving and far-reaching. Deadly if it hits, and it usually does.'],
   cls220: ['Matches', 'Three by three, as the joke says. The classic table’s worst outlier, now on the line.'],
-  lfs75: ['Matches', 'Three beams twice a turn, spread 1. Bad accuracy for a laser, still a cute sting.'],
+  lfs75: ['Matches', 'Three beams twice a turn from a cat-eared drone (170 ceiling). Spread 1 is loose for a laser, still a cute sting.'],
   triple: ['Matches', 'Spread 4, as warned. The 160 radius makes up for most of it.'],
-  laser88: ['Matches', 'Six beams a turn. Small blasts, so a near miss does little.'],
-  laser15x: ['Matches', 'One huge beam twice a turn with spread 0.25. The best Legendary per dollar.'],
+  laser88: ['Matches', 'Six beams a turn, small blasts. The snake drone climbs to 180, so it needs a clear line more than a good arc.'],
+  laser15x: ['Matches', 'One huge beam twice a turn, spread 0.25, and the highest Legendary ceiling (220). Best per credit when there\'s a sightline.'],
   acid220: ['Matches', 'Two-shell acid salvos three times a turn. Strong, trimmed 10% for the acid.'],
   cls770: ['Oversells', 'Sixteen shells a turn, but spread 12 scatters them across the valley. Real hits fall well short of its worth figure.'],
   horizon: ['Matches', 'The heaviest acid in the game. Ground it hits stays lethal for turns.'],
@@ -39,9 +39,9 @@ const GUN_NOTES = {
   nxitv: ['Matches', 'Two tight three-round bursts a turn. Short range (45) is the price of checking every round.'],
   nxisec9: ['Matches', 'Point defence: flak with NXi’s tight grouping. Drones do not get a vote.'],
   nxiarch7: ['Matches', 'Spread 0.4 with a heavy shell, twice. Slow to load, slower to miss.'],
-  nxiintel3: ['Matches', 'Paired beams with spread 0.4. The most precise Mythical.'],
+  nxiintel3: ['Matches', 'Paired beams with spread 0.4 from a 200-ceiling drone. The most precise Mythical, if nothing is in the way.'],
   nxiaeria: ['Matches', 'Three triple turrets, nine shells a turn, radius 150. NXi’s answer to the Terminus Est.'],
-  nxivoid: ['Matches', 'Range 400 and no spread: anywhere on the map. Only 0–25° of elevation keeps it from being a click-to-win.'],
+  nxivoid: ['Matches', 'Lightning from a void drone (ceiling 240) that jumps four times to the nearest thing, a fifth weaker each time. Crowds hate it; trees and poles soak it.'],
   lfs0: ['Matches', 'Two little seekers that find whatever is nearest. Weak, but forgiving, and her traits make them sharper.'],
   wren: ['Matches', 'The first shop rocket: two seekers a turn. Close is good enough; the seeker does the last bit.'],
   kestrel: ['Matches', 'Two pairs of seekers a turn. Consistent, light, and happy to pick off drones.'],
@@ -51,17 +51,17 @@ const GUN_NOTES = {
   avalon: ['Matches', 'Ten seeking bomblets twice a turn. Lob high to stack them on one target, skim low for area denial.'],
   demigod: ['Matches', 'Arcs like a rocket, stops, and charges the nearest target as a lance with ×2.5 kinetic. Armour still takes the whole hit, so it is a death sentence only once armour is gone.'],
   kagutsuchi: ['Matches', 'Forty incendiary shells a turn with a wide spread. Small blasts, but every fragment leaves fire burning on the ground.'],
-  yukikaze: ['Matches', 'Weak warheads, as advertised: MAIA does the damage. The seeker wakes after two and a half seconds, so it wants a long, high lob.'],
+  yukikaze: ['Matches', 'Weak warheads, as advertised: the Hatsuyuki barrage does the damage (five MAIA pulses of 120, barely dependent on MAIA\'s level). The seeker wakes after two and a half seconds, so it wants a long, high lob.'],
   feuerlilie: ['Matches', 'A homing rocket that bursts like flak: shrapnel and double damage to drones. The easiest anti-air gun to land.'],
-  ichor: ['Matches', 'A Kotona laser that leaves a CLS-T acid pool where it strikes. Heavy, twice a turn.'],
-  massdriver: ['Matches', 'Range 1000 and zero spread: point and click. The most expensive gun, and the best.'],
+  ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling): a heavy beam that leaves a boiling pool, twice a turn.'],
+  massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). Point and click, if it can see.'],
 };
 const GIRL_NOTES = {
-  gwt: { maker: 'CLS-T trials', plays: 'A two round autoloader makes her forgiving and flexible. Paired with excellent damage and great flexibility, she is a solid all-rounder.' },
-  obj: { maker: 'CLS-T trials', plays: 'The glass cannon - thin hull, but thick, angled armour plating. Strongly suits single-shot weaponry but punishing when you miss.' },
-  nxi: { maker: 'NXi · November Division', plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
-  alb: { maker: 'Lymilark Future Sciences', plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },
-  int: { maker: 'CLS-T trials', plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
+  gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and she drives anywhere without fall or tree damage.' },
+  obj: { plays: 'The glass cannon: a thin hull behind thick, angled plating. Mark a target and her designator bends every shot a little onto it, so she rewards patient, deliberate sniping; but she can’t take many hits back when she misses.' },
+  nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
+  alb: { plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },
+  int: { plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
 };
 
 const RANGE_DIST = { near: 300, mid: 550, far: 850 }; // world units from the girl to the dummy
@@ -256,7 +256,7 @@ Object.assign(UI, {
     });
     $('cx-chars').querySelectorAll('button').forEach((b) => { b.onclick = () => { c.vid = b.dataset.v; this.renderCodex(); this.game.startRange(c.vid, c.wid); this.codexReadout(); b.blur(); }; });
     const note = GIRL_NOTES[v.id];
-    $('cx-char').innerHTML = `<p class="maker${v.id === 'nxi' ? ' nxi' : ''}">${esc(note ? note.maker : '')}</p><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
+    $('cx-char').innerHTML = `<p class="maker${MAKER_CLASS[v.id] || ''}">${esc(MAKERS[v.id] || '')}</p><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
       <div class="cx-stats"><span class="mgh">Health</span><b>${v.hp}</b><span class="mgh">Armour</span><b>${v.armour}</b><span class="mgh">Fuel</span><b>${Math.round((v.fuel || 1) * 100)}%</b></div>
       <ul class="traits">${(v.traits || []).map((id) => `<li><b>${esc(TRAITS[id].name)}</b> ${esc(TRAITS[id].desc)}</li>`).join('')}</ul>
       ${note ? `<p class="cx-meta">${esc(note.plays)}</p>` : ''}`;
