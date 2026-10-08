@@ -149,9 +149,9 @@ class AsteroidStrike {
 }
 
 // --------------------------------------------------------------------- the NXi battlecruiser
-// The November Division flagship as built in Avorion, pixelised from the side shot: a long
-// arrowhead hull in grey splinter camo, its bow drawn out flat and sharp, a row of turrets on the
-// raised deck, the bridge mast aft of them, red light strips down the flanks and swept red fins at
+// The November Division flagship as built in Avorion, pixelised from the side shot (its red accents
+// recoloured to the NXi's navy): a long arrowhead hull in grey splinter camo, its bow drawn out flat and sharp, a row of turrets on the
+// raised deck, the bridge mast aft of them, navy light strips down the flanks and swept navy fins at
 // the stern. The plate amidships (BC_WING) is its own piece: as the lance charges it lifts clear,
 // light gathers in the gap, and the beam comes down out of the belly under it (BC_EMIT).
 // Profile only, bow toward +x (facing d), centred on x, y.
@@ -198,7 +198,7 @@ const BC_SPRITE = [
   '.................eedcccXXTRRRRRRRLLLLLLLLLLLLLLJJJLJJJJJJJJJJQJJJJJJJJJJIIIIIIIIIIIIIIIIIIIIIIIIIIJQQQQQQJJJJJQQQQQLLOOLLLHHHKKKLLLLLOOOOOOOLLLRLLLLLLLLLOLOLOLLLLROOOOOOOOOOOSPSPPPPPPPPUUPUUUYYUUUYUUYYUUUUUUUUUUYVVUUUUWWWWWWWWWWWWZZXWZZabb.................................................................................',
   '........................................................................JJJJJJJIIIIIIIIIIIIIIIIIIIIIJ...........................................................................................................................................................................................................................',
 ];
-const BC_PAL = { A: '#f4c4af', B: '#a3a3a2', C: '#b57b70', D: '#7a7570', E: '#965e56', F: '#6b5953', G: '#515d55', H: '#4d5049', I: '#c2413b', J: '#783e37', K: '#504740', L: '#4c3b33', M: '#39423b', N: '#323731', O: '#31322b', P: '#22312b', Q: '#5e221c', R: '#2e241f', S: '#242b25', T: '#24211c', U: '#1d2c25', V: '#1d2721', W: '#1d241f', X: '#1c1e19', Y: '#162621', Z: '#151f1b', a: '#151d18', b: '#131c17', c: '#121714', d: '#0c1411', e: '#050a08', f: '#010403' };
+const BC_PAL = { A: '#69b0f4', B: '#a3a3a2', C: '#436fb5', D: '#7a7570', E: '#345596', F: '#6b5953', G: '#515d55', H: '#4d5049', I: '#233ac2', J: '#213878', K: '#504740', L: '#4c3b33', M: '#39423b', N: '#323731', O: '#31322b', P: '#22312b', Q: '#111f5e', R: '#2e241f', S: '#242b25', T: '#24211c', U: '#1d2c25', V: '#1d2721', W: '#1d241f', X: '#1c1e19', Y: '#162621', Z: '#151f1b', a: '#151d18', b: '#131c17', c: '#121714', d: '#0c1411', e: '#050a08', f: '#010403' };
 const BC_P = 1.6; // world units per sprite pixel
 const BC_EMIT = [225, 33]; // the emitter, under the wing, in line with the red block on the flank
 const BC_WING = (x, y) => y >= 11 && y <= 22 && x >= 123 && x <= 226 - (y - 11) * 0.9; // the plate that lifts, angled at its fore end
@@ -241,15 +241,15 @@ function drawBattlecruiser(ctx, x, y, d, time, down = false, charge = 0) {
   if (lift > 0.3) {
     const gx = d > 0 ? 123 : W - 226, gw = 104;
     ctx.fillStyle = '#121014'; ctx.fillRect(Math.round(x0 + gx * P), Math.round(y0 + 12 * P), Math.round(gw * P), Math.round(10 * P));
-    ctx.fillStyle = `rgba(255,70,90,${0.4 + 0.6 * charge})`; ctx.fillRect(Math.round(x0 + gx * P), Math.round(y0 + 16 * P), Math.round(gw * P), Math.round(3 * P));
+    ctx.fillStyle = `rgba(70,110,255,${0.4 + 0.6 * charge})`; ctx.fillRect(Math.round(x0 + gx * P), Math.round(y0 + 16 * P), Math.round(gw * P), Math.round(3 * P));
     const e = bcEmitter(x, y, d);
-    ctx.fillStyle = `rgba(255,200,215,${charge})`; ctx.fillRect(Math.round(e.x - 4 * P), Math.round(y0 + 13 * P), Math.round(8 * P), Math.round(e.y - y0 - 13 * P));
+    ctx.fillStyle = `rgba(200,220,255,${charge})`; ctx.fillRect(Math.round(e.x - 4 * P), Math.round(y0 + 13 * P), Math.round(8 * P), Math.round(e.y - y0 - 13 * P));
   }
   run(_bcWing, d * lift * 0.4, -lift);
   // the flank strips burning brighter as it charges; the emitter's glow under the belly
   if (charge > 0) {
     const e = bcEmitter(x, y, d);
-    ctx.fillStyle = `rgba(255,120,150,${0.4 + 0.6 * charge})`;
+    ctx.fillStyle = `rgba(120,160,255,${0.4 + 0.6 * charge})`;
     sq(ctx, e.x, e.y + 4, 6 + 14 * charge + Math.sin(time * 30) * 2);
   }
   // red running lights
@@ -385,7 +385,7 @@ class OrbitalStrike {
       g.explode(e.x, this.hitY, { dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 60, visR: 520, from: { x: 0, y: -1 } }, this.owner, 'laser');
       for (let i = 0; i < 90; i++) { // the shockwave, running out along the ground and up
         const a = -Math.PI * Math.random(), sp = 6 + Math.random() * 10;
-        g.particles.add({ x: e.x, y: this.hitY - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.5, g: 0.02, drag: 0.93, life: 0.9 + Math.random() * 0.6, size: 8 + Math.random() * 14, color: i % 3 ? [255, 200, 210] : [255, 255, 255] });
+        g.particles.add({ x: e.x, y: this.hitY - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.5, g: 0.02, drag: 0.93, life: 0.9 + Math.random() * 0.6, size: 8 + Math.random() * 14, color: i % 3 ? [200, 220, 255] : [255, 255, 255] });
       }
       g.shake = Math.max(g.shake, 34);
       g.screenFlash = Math.max(g.screenFlash || 0, 0.9);
@@ -398,7 +398,7 @@ class OrbitalStrike {
       if (s.at !== t) continue;
       const y = g.terrain.hAt(s.x), top = cam.y - 200;
       const sx = s.x + (s.sx - this.tx) * ((y - top) / ORB_ALT); // angled toward the ship that fired it
-      g.lasers.push(new Laser(sx, top, s.x, y, (t & 1) ? '#ff5a6a' : '#ffd0d8', 16, 26));
+      g.lasers.push(new Laser(sx, top, s.x, y, (t & 1) ? '#5a8aff' : '#d0e0ff', 16, 26));
       g.explode(s.x, y, { dmg: v.dmg, dmgR: v.r, explR: 8, from: { x: sx - s.x, y: top - y } }, this.owner, 'laser');
       if (t % 3 === 0) g.sfx.laser();
       g.shake = Math.max(g.shake, 7);
@@ -421,9 +421,9 @@ class OrbitalStrike {
     drawBattlecruiser(ctx, Math.round(x), Math.round(y), 1, time, false, this.charge);
     if (this.beam > 0) {
       const e = this.emit, w = 26 * this.beam + 6;
-      ctx.fillStyle = `rgba(255,90,120,${0.5 * this.beam})`;
+      ctx.fillStyle = `rgba(80,130,255,${0.5 * this.beam})`;
       ctx.fillRect(Math.round(e.x - w), Math.round(e.y), Math.round(w * 2), Math.round(this.hitY - e.y));
-      ctx.fillStyle = `rgba(255,240,245,${this.beam})`;
+      ctx.fillStyle = `rgba(235,242,255,${this.beam})`;
       ctx.fillRect(Math.round(e.x - w * 0.35), Math.round(e.y), Math.round(w * 0.7), Math.round(this.hitY - e.y));
     }
   }
