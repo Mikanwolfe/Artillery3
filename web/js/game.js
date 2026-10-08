@@ -871,7 +871,7 @@ class Game {
       this.satTarget = null;
       return;
     }
-    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, lock: this.satTarget.lock || null };
+    this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, lock: this.satTarget.lock || null, w: this.satTarget.w || null };
     this.retarget(this.satSeq);
     this.satTarget = null;
     this.satellite.lookAt(this.satSeq.target);
@@ -916,8 +916,8 @@ class Game {
   }
 
   // Yukikaze's Hatsuyuki barrage: MAIA opens its wings and antenna (about 40 frames), then fires
-  // b.pulses strikes b.gap frames apart at the target its rocket locked onto (or where it landed). Each does b.dmg, scaled by MAIA's health and
-  // only a little by its tier, so the call is worth making from round one.
+  // b.pulses strikes b.gap frames apart at the target its rocket locked onto (or where it landed). Each does b.mult x the rocket's damage, whatever MAIA's
+  // level or health, so the call is worth the same from round one.
   updateBarrage(s, sat) {
     const b = s.barrage;
     const start = 80;
@@ -930,7 +930,7 @@ class Game {
       this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, k % 2 ? '#bfe8ff' : '#fffff0', 14, 40));
       this.sfx.satFire();
       const r = b.r * (hasTrait(s.owner, 'uplink') ? 1.3 : 1);
-      const dmg = b.dmg * sat.health * (1 + 0.15 * (sat.tier - 1));
+      const dmg = b.mult * s.w.dmg; // a multiple of the rocket's own damage: the same whatever MAIA's level or health
       this.explode(tg.x, tg.y, { maia: true, dmg, dmgR: r, explR: 8, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
       this.cam.follow({ x: s.target.x, y: s.target.y });
     }
@@ -964,7 +964,7 @@ class Game {
       // Yukikaze's barrage goes for whatever its rocket was locked onto, wherever the rocket landed
       const lock = w.maia && p.lastLock && p.lastLock.alive ? p.lastLock : null;
       const at = lock ? seekCenter(lock) : p;
-      this.satTarget = { x: at.x, y: at.y, owner: p.owner, barrage: w.maia || null, lock };
+      this.satTarget = { x: at.x, y: at.y, owner: p.owner, barrage: w.maia || null, lock, w };
     } // a laser's MAIA call follows its beam
   }
 

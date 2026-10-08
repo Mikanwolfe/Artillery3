@@ -669,9 +669,9 @@ class Laser {
 // Every part is placed in the satellite's own frame, so the whole thing turns to face its target;
 // the squares themselves never rotate.
 const SAT_TIERS = [null,
-  { dmg: 70, dmgR: 130, explR: 12 },
-  { dmg: 120, dmgR: 165, explR: 16 },
-  { dmg: 190, dmgR: 210, explR: 22 },
+  { dmg: 91, dmgR: 130, explR: 12 }, // x1.3 of the first rebalance (70 / 120 / 190)
+  { dmg: 156, dmgR: 165, explR: 16 },
+  { dmg: 247, dmgR: 210, explR: 22 },
 ];
 const SAT_TURN_GAIN = 0.5; // A3 Constants.SatelliteDamageIncPerTurn
 
