@@ -26,10 +26,11 @@ const UI = {
     game.ui = this;
     this.players = [
       { name: 'P-Chan', type: 'human' },
-      { name: 'Ace', type: 'normal' },
-      { name: 'Rookie', type: 'easy' },
-      { name: 'Sarge', type: 'hard' },
+      { name: '', type: 'normal' },
+      { name: '', type: 'easy' },
+      { name: '', type: 'hard' },
     ];
+    for (const p of this.players) if (!p.name) p.name = cpuName(this.players.map((q) => q.name));
     // build stamp: the short git hash, written into js/version.js when the site is published
     const v = $('version');
     v.textContent = A3_VERSION === 'dev' ? 'dev build' : `build ${A3_VERSION}`;
@@ -37,7 +38,7 @@ const UI = {
     this.renderPlayers();
     $('add-player').onclick = () => {
       if (this.players.length >= 4) return;
-      this.players.push({ name: AI_NAMES[this.players.length % AI_NAMES.length], type: 'normal' });
+      this.players.push({ name: cpuName(this.players.map((q) => q.name)), type: 'normal' });
       this.renderPlayers();
     };
     // segmented controls for the match options
@@ -119,7 +120,7 @@ const UI = {
       row.querySelector('input').oninput = (e) => { p.name = e.target.value; };
       row.querySelector('select').onchange = (e) => {
         p.type = e.target.value;
-        if (p.type !== 'human' && /^Player \d$/.test(p.name)) { p.name = AI_NAMES[i % AI_NAMES.length]; this.renderPlayers(); }
+        if (p.type !== 'human' && /^Player \d$/.test(p.name)) { p.name = cpuName(this.players.map((q) => q.name)); this.renderPlayers(); }
       };
       box.appendChild(row);
     });

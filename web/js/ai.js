@@ -5,7 +5,22 @@
 //   - CpuController: drives a tank through virtual key presses (the same Ctl a human uses).
 // Banter lives in taunts.js; the game decides when to use it.
 
-const AI_NAMES = ['Ace', 'Major', 'Rookie', 'Sarge', 'Byron', 'Unit 7'];
+// CPU names, after everything the game borrows from: HapyMaher, Land of the Lustrous, Mabinogi,
+// KanColle, the SCP Foundation and Stellaris (personalities in taunts.js PERSONA_BY_NAME)
+const AI_NAMES = [
+  'Arisu', 'Saki', 'Yayoi', 'Keiko', 'Mia', // HapyMaher
+  'Phos', 'Cinnabar', 'Bort', 'Antarc', 'Kongo', // Land of the Lustrous
+  'Nao', 'Tarlach', 'Mari', 'Ruairi', // Mabinogi
+  'Fubuki', 'Shimakaze', 'Hibiki', // KanColle
+  'Dr. Bright', 'SCP-079', // SCP Foundation
+  'Custodian', 'The Shroud', // Stellaris
+];
+// a CPU name not already in use (the menu's pick; auto matches take AI_NAMES in order)
+function cpuName(taken = []) {
+  const free = AI_NAMES.filter((n) => !taken.includes(n));
+  const pool = free.length ? free : AI_NAMES;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 // Virtual controller state. Humans fill it from the keyboard, CPUs from code.
 class Ctl {
