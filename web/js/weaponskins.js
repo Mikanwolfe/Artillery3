@@ -58,13 +58,16 @@ function gunLength(w) {
 // charges (`charge` 0..1), flak fuse rings and the uplink beacon cycle with time `t`.
 function drawGun(ctx, w, p, v, facing, recoil, deep, t, charge = 0) {
   const s = gunSkin(w);
+  // recoil: the barrel slams back (the first fifth of the decay) then runs out again slowly; heavy
+  // guns travel further (3 world units for the lightest, up to 14)
+  const kick = clamp(3 + w.dmg / 120, 3, 14) * (recoil > 0.8 ? (1 - recoil) / 0.2 : recoil / 0.8);
   const body = s.color || deep;
   for (let b = 0; b < s.barrels; b++) {
     const off = (b - (s.barrels - 1) / 2) * s.gap;
     const ox = -v.y * off * facing;
     const oy = v.x * off * facing;
     for (let i = 0; i < s.n; i++) {
-      const d = s.start + i * s.step - recoil * 6;
+      const d = s.start + i * s.step - kick;
       const last = i === s.n - 1;
       let size = s.size;
       if (last && s.brake) size += 2;
@@ -79,7 +82,7 @@ function drawGun(ctx, w, p, v, facing, recoil, deep, t, charge = 0) {
     }
   }
   // the muzzle end: lens, acid tank, flak fuse ring, cat ears, a satellite antenna
-  const d = s.start + (s.n - 1) * s.step - recoil * 6;
+  const d = s.start + (s.n - 1) * s.step - kick;
   const mx = p.x + v.x * d;
   const my = p.y + v.y * d;
   if (s.tip === 'lens' || s.glow) {

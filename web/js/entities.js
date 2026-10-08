@@ -272,14 +272,18 @@ class Tank {
       ctx.fillText(`$${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 109 + LABEL_LIFT));
       ctx.font = `13px ${HUD_FONT}`;
     }
-    // armour | health bar | health  (A3 layout)
+    // A3 layout: an armour bar stacked on the health bar, armour number left, health right
     const bw = 100;
+    const by = Math.round(sy - 102 + LABEL_LIFT);
     ctx.fillStyle = HUD.plate;
-    ctx.fillRect(Math.round(sx - bw / 2), Math.round(sy - 100 + LABEL_LIFT), bw, 16);
+    ctx.fillRect(Math.round(sx - bw / 2), by, bw, 20);
     ctx.fillStyle = HUD.line;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 96 + LABEL_LIFT), bw - 12, 8);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 4, bw - 12, 5);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 11, bw - 12, 5);
+    ctx.fillStyle = HUD.accent;
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 4, Math.round((bw - 12) * clamp(this.armour / this.maxArmour, 0, 1)), 5);
     ctx.fillStyle = HUD.cool;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), Math.round(sy - 96 + LABEL_LIFT), Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 8);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 11, Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 5);
     ctx.font = `13px ${HUD_FONT}`;
     ctx.textAlign = 'right';
     plateText(ctx, Math.ceil(this.armour), Math.round(sx - bw / 2 - 2), Math.round(sy - 86 + LABEL_LIFT), HUD.accent, 'right');
@@ -366,10 +370,11 @@ class Projectile {
   update() {
     const g = this.game;
     if (this.delay > 0) { this.delay--; return true; } // waiting its turn in a burst
+    if (this.w.lance && this.lanceStep(g)) { this.age++; return true; }
     const r = stepBallistic(this, g.terrain, g.wind, g.targets(), this.owner, this.guide ? g.seekables() : undefined);
     g.frontCheck(this);
     if (!r && this.transform(g)) return false;
-    if (!r && this.w.kind === 'flak' && this.fuse(g)) { g.impact(this, { hit: 'air' }); return false; }
+    if (!r && (this.w.kind === 'flak' || this.w.airburst) && this.fuse(g)) { g.impact(this, { hit: 'air' }); return false; }
     if (this.y < this.peak) this.peak = this.y;
     g.trace(this, this.x, this.y);
     // soot flecks shed in flight: they fall away behind the shell and fade
@@ -395,13 +400,9 @@ class Projectile {
   // take a different target. Returns true when this projectile has been replaced.
   transform(g) {
     const w = this.w;
-    if (w.carpet && this.age > (w.guide ? w.guide.arm : 0) + 4) {
-      // open just short of the locked target (by about a frame and a half of travel), or once the
-      // motor is out and it is falling with nothing locked
-      const lock = this.lock && this.lock.alive ? seekCenter(this.lock) : null;
-      const over = lock && Math.abs(this.x - lock.x) < 40 + Math.abs(this.vx) * 1.5 && this.y < lock.y;
-      const spent = !lock && this.guide && this.age > this.guide.arm + this.guide.burn && this.vy > 0;
-      if (!over && !spent) return false;
+    // timed: so a rocket has to be lobbed long or high enough to open over its target; one that
+    // hits first does only half damage (see Game.bodyFactor)
+    if (w.carpet && this.age === w.carpet.at) {
       const c = w.carpet;
       const bomb = { id: w.id + '_b', name: 'Bomblet', kind: 'shell', dmg: w.dmg * c.frac, dmgR: c.r, explR: 4, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
         rarity: w.rarity, maxCharge: 10, bomblet: true, drift: 1.1 };
@@ -416,10 +417,9 @@ class Projectile {
       g.sfx.click();
       return true;
     }
-    const near = w.split && this.lock && this.lock.alive && dist(this.x, this.y, seekCenter(this.lock).x, seekCenter(this.lock).y) < w.split.near;
-    if (w.split && (near || this.age === w.split.at)) {
+    if (w.split && this.age === w.split.at) {
       const sp = w.split;
-      const child = { ...w, split: null };
+      const child = { ...w, split: null, dmg: w.dmg * (sp.boost || 1), guide: { ...w.guide, seek: 0, apex: false } }; // the children seek at once
       const taken = [];
       const speed = Math.hypot(this.vx, this.vy);
       const a0 = Math.atan2(this.vy, this.vx);
@@ -433,6 +433,46 @@ class Projectile {
         g.projectiles.push(c);
       }
       g.particles.explosion(this.x, this.y, 24, 'shell');
+      return true;
+    }
+    return false;
+  }
+
+  // the Demigod: at lance.at it stops dead and hovers, picks the nearest target in any direction
+  // (rivals first), then charges it in a straight line at lance.speed with no gravity or wind.
+  // Returns true while it is hovering (it doesn't move).
+  lanceStep(g) {
+    const L = this.w.lance;
+    if (this.hover > 0) {
+      this.hover--;
+      if (this.hover === 0) {
+        const lock = this.lance;
+        const q = lock && lock.alive ? seekCenter(lock) : { x: this.x + Math.sign(this.vx || 1) * 100, y: this.y + 100 };
+        const d = Math.hypot(q.x - this.x, q.y - this.y) || 1;
+        this.vx = ((q.x - this.x) / d) * L.speed;
+        this.vy = ((q.y - this.y) / d) * L.speed;
+        this.charging = true;
+        g.sfx.laser();
+      }
+      return true;
+    }
+    if (!this.charging && this.age === L.at) {
+      this.hover = L.hover;
+      this.guide = null;
+      this.noGrav = true;
+      this.drift = 0;
+      const seek = g.seekables();
+      let best = null, bd = L.range, rival = null, rd = L.range;
+      for (const c of seek) {
+        if (!c.alive || c === this.owner) continue;
+        const q = seekCenter(c);
+        const d = Math.hypot(q.x - this.x, q.y - this.y);
+        if (d < bd) { bd = d; best = c; }
+        if (c.vehicle && !c.isMob && d < rd) { rd = d; rival = c; }
+      }
+      this.lance = rival || best;
+      this.vx = this.vy = 0;
+      g.particles.explosion(this.x, this.y, 20, 'laser');
       return true;
     }
     return false;
@@ -463,6 +503,26 @@ class Projectile {
     const sp = Math.hypot(this.vx, this.vy) || 1;
     const nx = this.vx / sp;
     const ny = this.vy / sp;
+    if (this.w.lance && (this.hover > 0 || this.charging)) {
+      // the Demigod: hovering, a lance of light gathers (pointing at its target); charging, it is a
+      // white spear with a long fading tail
+      const L = this.w.lance;
+      const lock = this.lance && this.lance.alive ? seekCenter(this.lance) : null;
+      const dir = this.charging ? { x: this.vx / L.speed, y: this.vy / L.speed } : lock ? (() => { const d = Math.hypot(lock.x - this.x, lock.y - this.y) || 1; return { x: (lock.x - this.x) / d, y: (lock.y - this.y) / d }; })() : { x: 0, y: 1 };
+      const grow = this.charging ? 1 : 1 - this.hover / L.hover;
+      for (let k = -4; k <= 6; k++) {
+        ctx.fillStyle = k > 3 ? '#ffffff' : `rgba(255,240,200,${0.5 + 0.08 * k})`;
+        sq(ctx, this.x + dir.x * k * 5 * grow, this.y + dir.y * k * 5 * grow, k > 3 ? 7 : 5);
+      }
+      if (this.charging) for (let k = 1; k <= 10; k++) {
+        ctx.fillStyle = `rgba(255,230,160,${0.6 - k * 0.055})`;
+        sq(ctx, this.x - dir.x * k * 9, this.y - dir.y * k * 9, 6 - k * 0.4);
+      } else if (this.age % 4 < 2) {
+        ctx.fillStyle = 'rgba(255,250,220,0.5)';
+        sq(ctx, this.x, this.y, 18 + 10 * grow);
+      }
+      return;
+    }
     if (this.w.kind === 'rocket') {
       // a rocket: a longer body (three squares) and, while the motor burns, a flickering flame
       const G = this.guide;
@@ -491,12 +551,13 @@ class Projectile {
 }
 
 class AcidDrop {
-  constructor(game, owner, x, y, vx, vy, dmg) {
+  constructor(game, owner, x, y, vx, vy, dmg, fire = false) {
     this.game = game;
     this.owner = owner;
     this.x = x; this.y = y; this.vx = vx; this.vy = vy;
     this.dmg = dmg;
-    this.color = [[255, 165, 0], [240, 220, 40], [60, 160, 50]][Math.floor(Math.random() * 3)];
+    // acid is orange, yellow and green; fire (incendiary fragments) is red, orange and white-hot
+    this.color = (fire ? [[255, 90, 30], [255, 170, 40], [255, 236, 170]] : [[255, 165, 0], [240, 220, 40], [60, 160, 50]])[Math.floor(Math.random() * 3)];
     this.size = 5 + Math.random() * 5;
     this.stuck = false;
     this.life = 90 + Math.floor(Math.random() * 90);
@@ -590,6 +651,32 @@ class Satellite {
     this.charge = 0; // 0..1 while powering up for a strike
     this.t = 0;
     this.bob = 0;
+    // MAIA can be shot down: its strike damage scales with its health; it heals SAT_HEAL of its max
+    // every turn, and its max tracks the average toughness of the vehicles left (Game.satTurn)
+    this.isSat = true;
+    this.maxHp = 300;
+    this.hp = 300;
+    this.flash = 0;
+    this.hw = 50; // hitbox for shells: the body (100 x 100), so lobs passing near don't clip it
+    this.hh = 100;
+  }
+
+  get alive() { return this.hp > 0; }
+  get hitY() { return this.y + this.bob + 50; } // bottom of the hitbox (stepBallistic)
+  center() { return this.toWorld(0, 0); }
+  get health() { return clamp(this.hp / this.maxHp, 0, 1); }
+  // where a blast at (px, py) caught it, in its own frame (+x points down the emitter): the core
+  // and the antenna wings at the back take the most, the curled side arms the least
+  region(px, py) {
+    const c = this.center();
+    const dx = px - c.x, dy = py - c.y;
+    const co = Math.cos(this.angle), s = Math.sin(this.angle);
+    const lx = dx * co + dy * s, ly = -dx * s + dy * co;
+    const r = Math.hypot(lx, ly);
+    if (r < 44) return { mult: 1.25, tag: 'CORE' };
+    if (lx < -20 && r < 200) return { mult: 1.0, tag: 'WING' };
+    if (lx > 30 && Math.abs(ly) < 18) return { mult: 0.8, tag: 'EMITTER' };
+    return { mult: 0.5, tag: 'SIDE' };
   }
 
   setTier(tier) {
@@ -597,7 +684,7 @@ class Satellite {
     this.turns = 0;
   }
 
-  get damage() { return SAT_TIERS[this.tier].dmg + SAT_TURN_GAIN * this.turns; }
+  get damage() { return (SAT_TIERS[this.tier].dmg + SAT_TURN_GAIN * this.turns) * this.health; }
   get dmgR() { return SAT_TIERS[this.tier].dmgR; }
   get explR() { return SAT_TIERS[this.tier].explR; }
   get level() { return this.tier; }
@@ -605,6 +692,7 @@ class Satellite {
   lookAt(pt) { this.angleDest = Math.atan2(pt.y - this.y, pt.x - this.x); }
   update() {
     this.t++;
+    this.flash = Math.max(0, this.flash - 0.08);
     this.bob = Math.sin(this.t / 50) * 5;
     // turns toward its target, with a slow idle sway so it never sits perfectly still
     this.angle += (this.angleDest + 0.07 * Math.sin(this.t / 80) - this.angle) / 20;
@@ -704,6 +792,14 @@ class Satellite {
     ctx.fillStyle = `rgba(255,190,230,${0.45 + 0.35 * pulse + this.charge * 0.2})`;
     sq(ctx, c.x, c.y, 14 + this.charge * 16);
 
+    // battle damage: smoke and sparks below half health, a white flash when hit, dark when down
+    if (this.health < 0.5 && this.t % 6 < 3) {
+      ctx.fillStyle = this.alive ? 'rgba(60,50,60,0.7)' : 'rgba(30,26,34,0.85)';
+      for (let i = 0; i < 4; i++) sq(ctx, c.x - 20 + ((this.t * 3 + i * 17) % 40), c.y - 30 - ((this.t + i * 11) % 30), 6 + i);
+      ctx.fillStyle = '#ffb040';
+      sq(ctx, c.x + ((this.t * 7) % 50) - 25, c.y + ((this.t * 5) % 30) - 15, 3);
+    }
+    if (this.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.7})`; sq(ctx, c.x, c.y, 90); }
     // emitter barrel and lens (heavier at higher tiers)
     for (let i = 0; i < 6; i++) dot(40 + i * 11, 0, 16 - i + (tier - 1) * 2, accent);
     if (tier >= 2) { dot(60, -10, 5, light); dot(60, 10, 5, light); }

@@ -22,7 +22,9 @@ const RANGE_ERR_SCALE = 650;
 // the solver's miss distance, so it will take a somewhat worse shot to hit back.
 const RETALIATE = { easy: 180, normal: 260, hard: 320 };
 const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
+const AI_BUDGET_MS = 5; // planning time per frame, so a CPU's aim search never stalls a frame
 const MOB_DISLIKE = 90; // score penalty for going after a mob instead of a player (less for big bounties / with flak)
+const SAT_DISLIKE = 220; // score penalty for shooting at MAIA rather than a rival (less when it is healthy)
 
 // aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge.
 // arc: how much the solver values the altitude / kinetic damage bonuses, in miss-distance units per
@@ -45,7 +47,12 @@ const DIFFICULTY = {
 
 // Search for the best shot at `target`. Each candidate is scored by its miss distance minus a bonus
 // for the damage multiplier it would earn (bonusFactor), so among shots that land, high arcs win.
-function solveShot(game, tank, w, target, wind = game.wind, arcScale = 1) {
+// A generator: it yields after each row of the grid so the search can be spread over frames
+// (CpuController plans with a per-frame time budget, so the game never freezes while a CPU
+// thinks); solveShot runs it to the end in one go.
+function solveShot(...args) { return runGen(solveShotGen(...args)); }
+function runGen(gen) { let r = gen.next(); while (!r.done) r = gen.next(); return r.value; }
+function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
   const facing = target.x >= tank.x ? 1 : -1;
   const tc = target.center();
   const arc = (DIFFICULTY[tank.type] || DIFFICULTY.normal).arc * arcScale;
@@ -74,6 +81,7 @@ function solveShot(game, tank, w, target, wind = game.wind, arcScale = 1) {
       const r = evalShot(e, v);
       if (r.score < best.score) best = { ...r, elev: e, v, facing };
     }
+    yield;
   }
   for (const [de, dv, n] of [[0.5, vStep / 4, 6], [0.1, vStep / 20, 6]]) {
     const e0 = best.elev;
@@ -87,6 +95,7 @@ function solveShot(game, tank, w, target, wind = game.wind, arcScale = 1) {
         const r = evalShot(e, v);
         if (r.score < best.score) best = { ...r, elev: e, v, facing };
       }
+      if (i % 4 === 0) yield;
     }
   }
   return best;
@@ -103,11 +112,18 @@ class CpuController {
     this.moved = tank.firedThisTurn;
   }
 
-  makePlan() {
+  makePlan() { return runGen(this.makePlanGen()); }
+
+  *makePlanGen() {
     const g = this.game;
     const t = this.tank;
     // drones are fair game too, but a CPU would rather hit a rival
     const enemies = g.tanks.filter((x) => x.alive && x !== t).concat(g.mobs.filter((d) => d.alive));
+    // MAIA: worth shooting down when a rival can call it and this CPU can't
+    const sat = g.satellite;
+    const rivalsUplink = g.tanks.some((x) => x.alive && x !== t && x.weapons.some((id) => WEAPON_BY_ID[id].sat));
+    const ownUplink = t.weapons.some((id) => WEAPON_BY_ID[id].sat);
+    if (sat && sat.alive && rivalsUplink && !ownUplink && sat.health > 0.6 && rng.chance(0.3)) enemies.push(sat);
     const grudge = t.lastAttacker && t.lastAttacker.alive && t.lastAttacker !== t ? t.lastAttacker : null;
     // weapon is locked once the clip has started; otherwise pick by difficulty
     let options = t.firedThisTurn ? [t.weapon] : t.weapons.filter((id) => t.weaponReady(id)).map((id) => WEAPON_BY_ID[id]);
@@ -129,8 +145,9 @@ class CpuController {
         const m = learn(e);
         const k = Math.min(m.shots, LEARN.length - 1);
         const wf = 1 + m.werr * LEARN[k] / LEARN[0]; // the wind as it judges it, closer each shot
-        const s = solveShot(g, t, w, e, { x: g.wind.x * wf, y: g.wind.y * wf }, LOB_TRUST[k]);
-        let score = s.score - (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1 - (e.bounty || 0) * BOUNTY_PULL;
+        const s = yield* solveShotGen(g, t, w, e, { x: g.wind.x * wf, y: g.wind.y * wf }, LOB_TRUST[k]);
+        let score = s.score - (e.isSat ? 0 : (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1) - (e.bounty || 0) * BOUNTY_PULL;
+        if (e.isSat) score += SAT_DISLIKE - sat.health * 60;
         if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
         if (e.isMob) score += MOB_DISLIKE - Math.min(150, e.bounty * 0.03) - (w.kind === 'flak' ? 120 : 0);
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
@@ -196,7 +213,18 @@ class CpuController {
         }
         // Deflector when hurt (it doesn't cost the turn)
         if (t.abilityReady('shield') && !t.shield && t.hp < t.maxHp * 0.6 && rng.chance(t.type === 'easy' ? 0.3 : 0.7)) this.game.useAbility(t, 'shield');
-        this.plan = this.makePlan();
+        // plan over the next frames, a few milliseconds at a time (see AI_BUDGET_MS)
+        this.planGen = this.makePlanGen();
+        this.state = 'plan';
+        break;
+      }
+      case 'plan': {
+        const t0 = performance.now();
+        let r = this.planGen.next();
+        while (!r.done && performance.now() - t0 < AI_BUDGET_MS) r = this.planGen.next();
+        if (!r.done) return;
+        this.planGen = null;
+        this.plan = r.value;
         // a good firing solution is worth a Double Shot
         if (!t.armed.double && t.abilityReady('double') && this.plan.err < 40 && rng.chance(t.type === 'hard' ? 0.8 : t.type === 'normal' ? 0.5 : 0.25)) this.game.useAbility(t, 'double');
         // announce a grudge once per attacker

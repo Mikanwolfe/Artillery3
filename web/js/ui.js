@@ -7,7 +7,7 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const TYPE_LABELS = { human: 'Human', easy: 'CPU · Easy', normal: 'CPU · Normal', hard: 'CPU · Hard' };
 const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
 // match options picked on the menu's segmented controls, remembered between visits
-const OPT_DEFAULTS = { rounds: '5', balance: 'rebalanced', events: 'on', map: 'random' };
+const OPT_DEFAULTS = { rounds: '0', balance: 'rebalanced', events: 'on', map: 'random' };
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem('a3.' + k)); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem('a3.' + k, JSON.stringify(v)); } catch (e) { /* private mode */ } },
@@ -392,7 +392,7 @@ const UI = {
       const f = this.shopFilter;
       $('shop-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === f));
       const list = WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) =>
-        f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= w.cost : f === 'NXi' ? makerOf(w) === 'NXi' : w.kind === f);
+        f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= w.cost : f === 'NXi' ? makerOf(w) === 'NXi' : f === 'hybrid' ? w.hybrid : w.kind === f);
       $('shop-grid').innerHTML = list.map((w) => {
         const r = RARITY[w.rarity];
         const owned = tank.weapons.includes(w.id);
