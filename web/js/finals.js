@@ -149,77 +149,115 @@ class AsteroidStrike {
 }
 
 // --------------------------------------------------------------------- the NXi battlecruiser
-// After the November Division reference art. The ship is built around a spinal mount: one huge gun
-// barrel runs its whole length (the dark core, ringed with accelerator coils, glimpsed between the
-// pale armour plates) and the bow is the muzzle, held between two armour jaws. Around it: stepped
-// pale-lavender plates, a command tower aft with antenna masts and red tip lights, spike fins, small
-// turrets, violet thrusters at the stern. Parts are [x, y, w, h, colour] in a profile with the bow
-// at +x; drawn either in profile or turned a quarter nose-down (boxes stay axis-aligned either way).
-const NXI_HULL = { W: '#e6e8f6', S: '#b9bdd6', T: '#9298b6', D: '#1a1e34', R: '#283050', G: '#3c4560', g: '#8e98b8', K: '#262c40', L: '#7fb4ff', l: '#cfe6ff', V: '#b48cff', r: '#ff3a3a' };
-const BC_MUZZLE = 246; // the muzzle tip, along the length from the centre
-const BATTLECRUISER = [
-  // the spinal gun: one heavy gunmetal barrel the whole length of the ship, out past the bow
-  [-150, -11, 392, 22, 'G'], [-150, -11, 392, 2, 'g'], [-150, 9, 392, 2, 'K'],
-  // stern engine block and its hex panels
-  [-176, -28, 38, 52, 'R'], [-172, -22, 12, 10, 'D'], [-158, -22, 12, 10, 'D'], [-172, 12, 12, 10, 'D'], [-158, 12, 12, 10, 'D'],
-  // armour wrapped round the barrel's breech and midsection (the barrel shows in the slot between)
-  [-140, -30, 250, 18, 'W'], [-120, -38, 130, 8, 'W'], [10, -36, 70, 6, 'S'], [-140, -30, 250, 2, 'l'],
-  [-140, 12, 250, 16, 'S'], [-110, 28, 150, 6, 'T'], [-140, 26, 250, 2, 'T'],
-  [-90, -30, 2, 18, 'S'], [-30, -30, 2, 18, 'S'], [30, -30, 2, 18, 'S'], [80, -30, 2, 18, 'S'], [-60, 12, 2, 14, 'T'], [0, 12, 2, 14, 'T'], [60, 12, 2, 14, 'T'],
-  [-104, -44, 64, 6, 'S'], [-40, -44, 40, 6, 'W'], [80, -36, 32, 6, 'W'], [-150, 24, 14, 6, 'T'], [-104, -48, 30, 4, 'W'],
-  [-6, 12, 64, 12, 'R'],
-  // the bow: two armoured jaws clamping the barrel where it leaves the hull, swept back
-  [108, -40, 44, 28, 'W'], [104, -46, 34, 6, 'S'], [136, -34, 22, 22, 'W'], [150, -26, 14, 14, 'S'],
-  [108, 12, 44, 24, 'S'], [136, 12, 22, 18, 'S'], [150, 12, 14, 10, 'T'],
-  // the exposed barrel: thick reinforcing jackets, then a slotted muzzle brake
-  [170, -15, 14, 30, 'R'], [170, -15, 14, 2, 'g'], [200, -14, 12, 28, 'R'], [200, -14, 12, 2, 'g'],
-  [226, -18, 20, 36, 'G'], [226, -18, 20, 2, 'g'], [230, -18, 3, 10, 'D'], [236, -18, 3, 10, 'D'], [230, 8, 3, 10, 'D'], [236, 8, 3, 10, 'D'],
-  // spike fins, dorsal fin aft, ventral fins under the stern
-  [118, -70, 8, 30, 'W'], [120, -82, 4, 12, 'W'], [121, -88, 2, 6, 'S'],
-  [-128, -56, 6, 18, 'W'], [-127, -64, 3, 8, 'S'],
-  [-112, 34, 7, 20, 'S'], [-110, 54, 4, 10, 'T'], [-82, 34, 7, 16, 'S'], [-80, 50, 4, 8, 'T'],
-  // the command tower aft, with its antenna masts
-  [-80, -58, 44, 20, 'W'], [-72, -72, 28, 14, 'S'], [-66, -80, 16, 8, 'W'], [-74, -52, 36, 3, 'L'],
-  [-64, -102, 2, 22, 'T'], [-56, -96, 2, 16, 'T'], [-46, -92, 2, 12, 'T'],
-  // small turrets on top and under the keel
-  [0, -48, 18, 10, 'W'], [18, -46, 40, 3, 'T'], [58, -44, 14, 8, 'W'], [72, -42, 30, 3, 'T'],
-  [-40, 32, 16, 8, 'S'], [-56, 35, 40, 3, 'T'], [70, 28, 14, 7, 'S'], [84, 31, 26, 3, 'T'],
+// The November Division flagship as built in Avorion, pixelised from the side shot: a long
+// arrowhead hull in grey splinter camo, its bow drawn out flat and sharp, a row of turrets on the
+// raised deck, the bridge mast aft of them, red light strips down the flanks and swept red fins at
+// the stern. The plate amidships (BC_WING) is its own piece: as the lance charges it lifts clear,
+// light gathers in the gap, and the beam comes down out of the belly under it (BC_EMIT).
+// Profile only, bow toward +x (facing d), centred on x, y.
+const BC_SPRITE = [
+  '..........................................................................................................................................NNP...................................................................................................................................................................................',
+  '.....................................................................................................................................BBM......................MGM...............................................................................................................................................................',
+  '.....................................................................................................................................CCF......................NK................................................................................................................................................................',
+  '....................................................................................................................................FCBF......................NGBH..............................................................................................................................................................',
+  '....................................................................................................................................HLF........................MD...............................................................................................................................................................',
+  '....................................................................................................................................KKF.........................N...............................................................................................................................................................',
+  '...............................................................................................................................N...DBBAAAAAAAAAAAAAAABBB........................................................................................................................................................................',
+  '.C.................................................................................................................................F..F...............................NMDKLDKMN....FCFFFFFFFDFF.G.........NHDKKDKM......................................K.......................................................................',
+  '..................................................................................................................................MO..................................HHFKKFHFHF...FDFDFFFFDCCCBADKKHHDFDFHFFFFFFFD....................................KKK......................................................................',
+  '.................................................................................................................................FH...................................NN.....KH......NGFFFKDDDFKFDK......NM.....NFHK................................FFFFFFF........................F............................................',
+  '................................................................................................................................MDO..............UUUUUUUUUUUUUUUYYYYSNNNNNOOOOKMObbbbcWKHHKLKKFFFFMbZZWWOMNOLMLLOLFMaX.............................JFFFFFFJ............FFK......................................................',
+  '.......................................................................................................................DD.......DF........OYbOHUUUUUUUYYYYYUUUUUPPUMGGFGGGGGFFFDFMSSWNGHHHGGGFFFFFGMSWSHFFGGHGFFFFFFGOODBFFHONGFFFLLDBCEEJCCEEJJJJJJJJJJJJJJJJJJJJJJJJJFFFFKKLLLN...............................................',
+  '........................................................................................................AAABBBAAAAAAAAAAAAABBAAAACCBABAAABCDHFFcYUYVVPMUPPPNMMMHHHMMNPMHMMHMMMMNPMHMPNMUPPSWSOOSWWWVTWSTVWXXTTTTTTTTONLNLKKHKKKFFFFFEFEEEEEEEEEEECEEEEEEEEEEEJJJJJJJJJJJJJJJJLLLLLOOOOSSTTWWWZZZZZZZ............................',
+  '.................................................FFGGFFDDDDDDDDBBCBB.......................BBBBBBBBBBBBBBCCBBCCBBDDDDCDFFFFFFDFDFFFFDDDDDBBBBBBDHOONMGFHHMMMMMMMMMNNNUPPNPPPNPVWVWUVVWSVSSSTTSWWWTWTTXSSTTTSSSSSSSSSSONKFFFFFFFFFFFFECCCCCCCCCCCCCCCCCCAACCCCCCCCCCCCCCCEEEEJJJLOOOOORSSTTWWWWZZZZZZZZZZZZWWWW..................',
+  '..............................................VSOOOOOLLLLLLLJJJJJJJQLJJJJJJJJQJJJJJJJJJJJJJJEIJJJJJJJJJJQQQRRRRRRTXTTXXcaXXXTOSTTOOROOOTRFFFFFDDDDDFFFFFFDGHHHGGGGGGMMHHMHHHGHMHHHHHHMHHHHGGGHGGGDGGGGGGGGGGGGGGGGGGGGGGFFDBBBAABBBBBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCEEJKLOORSSSTWWWZZZabbbbbaaaZZZWWXXWTTRRRR........',
+  '......................ccccddccdddddcccXXTRRRRLQQQQQQQQQQQQQQJJQJJJJJJJJJJJJJJIIIIIIIIIIIIIIIIIIIIIIIIIIIIIJJJJJJJQQQQQLRRRRRROKLLLMKKFFDFFDDDDDCBBBDBBABBBDGDDDDGMMHMMHHMHHHGGHGGGGGGDDDDDDDDDDDDDDDDDDDDDDDDDDFDDDGDDDDGGDDFDDBBBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCEJJLLLKKMMHHHGHHMHGGGDGHGGGGGGGGGFBAAAAAAAAAAAAF',
+  'ffffffffeffeeeedeeeddddddddddddQJJJJJJIIIIIJJJJJJJJJJJJJJJJJJJJJJJJJJJIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIJLLLLOLLLLOOKKFFFFFHHHKMGFFFFFFHMMHHFHKMNPPNNNNPNNNNNNNMMMMMMMHHGGMHHHHHHHGHHGHGGGGHMHHHHHHHHHHGGGHHGGHGHHHHHHGDCCCCCCCCCCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCFHGHHHGGGGHHGDDDGDGGDDGDDDDDDBAAAAAAAAABDDK.',
+  'ffffffffffffeeedXXTTRRRRQQQQQQQJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIJJJJJJJJJKKKLLLLLDCCCCEEFFFDDCCCCFFFFDFFFFKNSPPPPNNPPUUVZbZZZZYZYZSDFJEIIIIIIIIIIIIIIIIIIIIIIIIJJJJJJJJOOONNMMMLKHFFCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABDFGGGGGGHHHGDDGHGGGDGGDDDDDDBAAABCCFLRc....',
+  'ffQIJIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIICCEDDCBBAAABDDDDCBCCDDDCDDMNNPPPPUUVVYZZbcbccbbaaXaRIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIRONNLLMMLKHHFCBCCCCCCCCCCCCCECCEEECCCEEECCCCCCECCCECCECCCCEEEEFKMKHHGGGGGFDGGDGHHHHGDDDDDGGFFFOTXc........',
+  'ffRRRRRTRTRQQQQQQQQQQQQQQJQQQQQQQQQRRRRLLLLLRRORRRRRRRRTRRRRRRRRRROOOOLLLOOORQQRRRRRRRRTTTTTTTXTLLLKLOLRORXTTTRRRRROOLLKFECCCCBCBBBBBABBBBBBBBBABBBBBBBBABBBDGDGGGGGGGGGGGGGGGGGGGGGGGGHGGGGGMHGGGGGGGGGHHHGGGGHHKHKKOLLOONNNMMKKKKFFDFFFFFEEECCEEEECCEEEEEECCCCCCCCCCCCEEEEEEEEFJFEFKHGFFGFGDGDCDDDDDDDGGHHHMPSWXcaX...........',
+  'ffffffffffffffffedddZYYUPYYZbbZdddddcdZPYYYYbbdddbcdWUUWVSOONNNNMMMLLLKLLLLKLLJJFEEEEFFFFFFKKKFFFFFFKKKKFFEEDCCCDDBBBDBAAAABBBBBBBBCBBBBBBBBBBAABDDCBCBDDDDBGGGGGGGGGGGHGGGGDDGGGGGGGGGGDDDGHGGGGGGGGGGHHHGGHHGGHHHHKLLKOOMMMMMKLKLKFDEEEEECCCCCECEEECCCEECCCCCCCCCCCEEEECEEEEEECCACCCFGGGHGDDGFFFDDDDGHPSWZZZWWW...............',
+  'ffffeeeeeeeeeeaMMMMMKMMMMMMMNNNOOOPSSSOMNMKKKKHFFHFDDDDDDDDDDDDCCDCDEEECCCCCCCAAACCCCCCACACCCCCBCCBAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBAABBBBBAAAABBCKKHHFFDDFFHHHHMHGMMMHMMHMMGGHHHHMMMHMMHGGGMNMNPPPSSSSSNNNOSRRROOSONONNNNMMMMMMMLLKDCCCCCCCCCCBCCCCCCAACCCCCCCCABCCCECCCCCCECCCCAAACACFGKMGGGDGHHHMPZccbZWWVV..................',
+  'fffffffeeeeeefOKKKKKKKKKKHHKMMMNMNNMKHHHFDDDDDDDFFDDDDDFFFDFFDDEEECEEFECCCEEECCCCEEEJEEEEEEEEFEEDDDCCCCCDDDBBDDDBBBDBBBBBBBBBAAAAAAAAAAAAAAAAAAAACFFHFFFFDDFHHHHMMHMHHGHHGHGGHMHGHMGGHHHGHGGGHMGHMMNNPONMNNNNOOSOOSNMONNMMNMMMMKMMMKFDCCCCEECCCCBCCCCCCBAABCCCCCCCCCCEEEEEECCCCCAAAAAAABDHGDDGGHOVZbaZZWWW......................',
+  'fffffffeeeeeeeNKLKLKKKKKKMMNNONOSSSWXZNMNNOSVZacaXacXcdXccacdcdeeecccccccXTRRRRRRRRRRRRRLOLLLLLLLLLLLOOONNOLLLLLLLOLDDBBBBBBBAAAAAAAAAAAAAAAAABAACFDFFFFFDFHNNMMMMHMHHHMHGHGGGMHHHMGGGGHGGHHGGGGHGHHHMMMNNOONNMNNOSNMNNNMMMNMMMKKMKKKKFECBCCCCCABCCCBACCAACBCCCCCCEEEEEEEECABBCAAAAAAAAAACDGMSWaZWWWWWX.........................',
+  'ffffffeeeeeeeeLKKKKKKKKKKKKMMNNOSSPUWXMHMMMNOOPOOONONNOMNNMMNNMNMMMKLLLKKKKFJJJJJJJJJJJJJJJJLEACCLEEEJRLLLRFCCCCCCDDFHHHGGGGHHMKHHKHHFHGGHHHHHHFFFKFFFFFFFFHSVPPSPNMMGHMHGGGGMMGGGMGGGGMHHGGGHMHMHGGGGGMMMNNNOMNNOONMNONMMMNNMMKKKKKKKKLFDCCCCCBCCCCBBCCCCCCCCCCEEFFFFFECCBAABBAAAAAAAAACKOWXWWWWWW.............................',
+  'fffffffffeffeeONNNNMNMMMNOONNMNNOOOSSVMHMMMMMMMMMMHMHHMHHHHHHHHGHHHKFKKFJJJJJJJJJJJJJJQQJJJJLJJJJLJLQLORRTXFCCEDCCDDDFNOOSSSSTMHHMMMHHHMMMMKKHFFFFFFFFFFFDFMONNMMOHFHNMMMMNMMMMMMHMMMHMMMMHHMMMMMMMMMMMMMMMNNONNNNNNNNNNMMMMMNMLLKLKKLKKKLFCCECCCDECCCCEEEECDEEEFFKFKFECEECABCCAAAACEFLTaWRSVWW.................................',
+  'ffffefcLRXWWSSSSSSOOOONNGGGGMHHGHHHKKMHGGGGGHHHHDFMNNOOSOSSSSSRRRRRRRRQQQQQQQQQQQQQQQQQQJJJJQJJJJJLLLLLORRTFEFFEDDFFDFKWNNOOOSSHHMMNMMLLLKFKFFFFFDDFNNNNNGHWSHNGFGHMSddcbZZZZYUYYYPPPPNPPPPPPPPPPPPPPPPPPPNNNNNNNMMMMNNNONLLLJJJJJJEJJFFFDDBBCCCCDDECCDEFFFFFFFFKLKKFFECCCBABBAAAEKRTTROOSSS....................................',
+  'fffeefdRTaXXXXWWZXRRWSPPDABBGMHHHHKHKMBDHHHHHHHKKKMNOOOSSSTTTTTTTTTRRRRRQQQQQQQQQQJJJJJJJJJJQJJJJLLJKKKKLLRFCCEEDFDBFAHBMOOOOOSNOONNLKKFKFFFFFFFFDCCDDFFFKONNPSVadeedddbZZZZYYYUPPPPPPPPPPPPPPPPPPPPMMMMMMMHHHHHHHMNXXTTTTRTJIIIIIIIICJKFFDCCFROOLLLLKKKFFFFFFFFFFFKFFFFFFJFKLLOTXROOOOOS.......................................',
+  'fffffeeffefeeedbXWVSONMMNNNPMKMMNNNOSSMMMNNNPPNOOOOTRTROXTOTcXcXXXXXTTRRQQQQQQIIIIIIIIIEJJJJJJJJJJJFFFFFFLLECEFFDFFBMBMBMNOOOONLLKFFFFFFFFFFFDDCCDDCCCCCCDHMMHDBBBTedecbZYVUPPUUPPPPPPPPPPPPNMMHGHMGGHHHMMHMHHHHMOcdcXXXTTTXJIIIIIIIIIJROODKRKDFKKKKFFFFFFFFFFFFFFFFFFFFFFLOSSSOOOOOO...........................................',
+  'fffffeeeeeeeedONNNNNNNNNMMNNNOSSSVVWXZSNMMMMMNONNNNROROLRRLRXXTXcccXXTTRQQQJQQCIICIIIIJJJJJJJJJJJJLJKKKKKLRECEKORSSRNOKLKMLLKHHFFFFFFFFFFDDDDDDDFFFEEEEFFFNSTTLLKKXcdebYZbZYYYUPYZYZZZZZZbUMMMNHHHMMMMMMMMMMMMMPZccXXXXXTTTXOQQJJJJJJJORNKFFFFDFFKFFFFFFFFFFFFFFFFFFFFFKNRSSOOOSSS..............................................',
+  'fffffeeeeeeeeeSOOOONNNNNMMMNNNOSSSTVXaOONNKHHMMMNNNRLLRJLOJLXTTTTRTRRRRQQQJJIIIIIIIIIIIIJJJJQJJJJJJQLLQQRRRECCFFFFFDDDDDDFFFDDDDDDDDFDFDDCCDDEDFFFFFFFFECERXccddddbacZVUYYYYYUPPBBBBBBBBBBBBBBBGPNPPPPPPPUPPPPUVUVWSSTSSTSTTWWWTSTSNRTRTHFKDCFBDFFFFFFFFFFFFFFFFFFFFKNSTSSSSSS..................................................',
+  'effffeeeeeeeeeXONNONNNNNMMNNNOOOOSSSVXNNNNNKMMMNNOZLEJRCJLEJTRRTRRRRRRQQQQQQQIIIIIIIIIJJJJJQQICCCJCCCEJIEJREBCCECCEDDDDDDDDDDDDDDDDDDCCCDDDFFFFKKLLJICCCIXXXccccaWZdcZZYYUYYZUMYAABBBBBBBBBBBBABPMPPPPUUUUUUUPPVVVVSSSSSTTTTTTTTcXTRRRRSOONLKFFFFKKKKFFFFFFFFKFFFKNSTTTSSSS.....................................................',
+  'eeffffeeeeeeeecSOPOOOOOOOOOSSSSWWXXXXcPMNNNOORRRTXdLCJRCJREJcXXTTTRRRRQQQQQQJICCIIIIIIIIIJJJQICCCJICCIQEJQTEBCCCCCCCCCDCCCCCDDDDDCCCCCCCDDDDFHHKMMJICCCJSNOSSSSPPUVVYbZYUYZZYUMUABDBDDDDDDDDDBABPNPPPPUUUUUUSSSVSSVSSTTSWWTXROORFRXRRRSSSSONLHFFFKFKKKKKKFFFFKKKOSSSSSS.........................................................',
+  'eeefffffffeeeeedcZZVSPPNNMNNNNNNPSPPUUOMNNOOORRRTTXRLOTLLRLLXTTTTTTRRRQQQQQQIICIIAIIIIIIIIQQQQQQJJFECCBCCCCCCCECCCCCCCDDDDDDDDFFDDDFFGGGGGHHMMMNOLOORRTRRSSWWSVVZcZWZdbVVZbZYUNYABDBDDDDDDDDDBABPMPPPPUUVVUUVVSSVWWSXOKHcXacOLKTDKXSSSRSSONLKFFFFKFFFFKFKFFFKNSSSSSS............................................................',
+  'eefffffffffeeeeeeeeeddcbYPPPPPUPUPPPUVSNNOOOOORRRRTTdccTTRTRRRRRRRRRRRQQQQQJIICIICIIIICIIIIQQQQQRRRQLFCBAAAACCCCCEDDDFFGGGGGGGHGHHMMMMMMMMLORRTTRRRRRRTTTXXXWWWacZWYYZYVZZZZYUNYAABBBBBBBBBBBBABUMPPPUUUVVUUUUSVWUSSXWWXXXXXXOSXcXTTSSTTSONLKKFFKKKFFFFFFFKOSSSS................................................................',
+  'eefffffffffffeeeeeeeeedeeedddddddddccccSOOOONMNMMLNMOSWNLNLLOOOOLLLLLLQQQQQJIICIICIIIICIAIIIQQQQQRRRRXTRQJEEJJJJLLOOOOOOOMMKKHHKKKKLLLLLLLLLLLRRQQROORSXXXWXWWWacaZaZZYYZZZYYUPPGBBBBBBBBBBBBBBGPPPUUPVVVSVSUSVVWWTSTVTTTXXXXXXTSSTSSSSSSOOLKLKFKKFFKKFKMSVVS...................................................................',
+  'fffffffffffffffffffeeeeededdddddeddeeeedccXXTTTTRRRRTccXRRTTTTTTTRRRRRQQQQQJIICIICIIIICICIICIAQQQRRRRQQQQQQQQRQTTRTXXcdccZaXSSSXRRRRORRRRRRRRRRRRRRRRRRRRTTRTRTTTTTTTTTcccccZYPPYYYYYYWXRRRRRSSNNOSRRRTRRRRRRRRRRRRRRRRRTTTTXXXWWSSOOOOOONLKHKKKKKFFKLOWW.......................................................................',
+  '.WefffffffffeeeeeeeedXXTTXTTTXXTTTTTXXXXcccdcccccccccccccccccccccXXLJJJJJEEEIIIIIAIICACIIIIIJCQQQRRRQQCACACACACAARRRTTXXVUBBGGCCVXTXXXXTTRRRRRRRRRRRRRRRRRRRRRTTTTTXcXcdddcbYYUPPPPPOOOONNNNNNNLLNRRRRRRRRRRRRRRRRRRRTTSSSVWWWWXWWWVSSSOOMKFFFFFFFFLS...........................................................................',
+  '.........fefRJJJJIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIJIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIQQQQQQQQRQIAAAAAAAAAAAQQRRRRRRSBBGGAAOTTXXXaacccXXXXTRTRRRRRRRRRRRTTTTXXcXcccbXZYVSSPRRRRRRRROOOOOOOOOOSTTTTTTTTTRTTSSVVUUVVUUUVWWWWWWWWWWWWWWWSSONLKKN..............................................................................',
+  '.................eedcccXXTRRRRRRRLLLLLLLLLLLLLLJJJLJJJJJJJJJJQJJJJJJJJJJIIIIIIIIIIIIIIIIIIIIIIIIIIJQQQQQQJJJJJQQQQQLLOOLLLHHHKKKLLLLLOOOOOOOLLLRLLLLLLLLLOLOLOLLLLROOOOOOOOOOOSPSPPPPPPPPUUPUUUYYUUUYUUYYUUUUUUUUUUYVVUUUUWWWWWWWWWWWWZZXWZZabb.................................................................................',
+  '........................................................................JJJJJJJIIIIIIIIIIIIIIIIIIIIIJ...........................................................................................................................................................................................................................',
 ];
-// the big accelerator rings round the barrel, breech to muzzle (they light in turn as it charges)
-const BC_RINGS = [-100, -30, 40, 110, 176, 206];
-// down: drawn turned nose-down (bow toward +y), centred on x, y; otherwise in profile facing d
-function drawBattlecruiser(ctx, x, y, d, time, down = false, charge = 0) {
-  const R = (px, py, pw, ph, col) => {
-    ctx.fillStyle = col;
-    if (down) ctx.fillRect(Math.round(x - py - ph), Math.round(y + px), ph, pw);
-    else ctx.fillRect(Math.round(x + (d > 0 ? px : -px - pw)), Math.round(y + py), pw, ph);
-  };
-  for (const [px, py, pw, ph, c] of BATTLECRUISER) R(px, py, pw, ph, NXI_HULL[c]);
-  BC_RINGS.forEach((px, i) => {
-    const lit = charge > 0 && charge * BC_RINGS.length > i;
-    R(px, -13, 5, 26, lit ? NXI_HULL.l : '#4a5a88');
-    if (lit) R(px - 2, -15, 9, 2, `rgba(200,235,255,${charge})`);
+const BC_PAL = { A: '#f4c4af', B: '#a3a3a2', C: '#b57b70', D: '#7a7570', E: '#965e56', F: '#6b5953', G: '#515d55', H: '#4d5049', I: '#c2413b', J: '#783e37', K: '#504740', L: '#4c3b33', M: '#39423b', N: '#323731', O: '#31322b', P: '#22312b', Q: '#5e221c', R: '#2e241f', S: '#242b25', T: '#24211c', U: '#1d2c25', V: '#1d2721', W: '#1d241f', X: '#1c1e19', Y: '#162621', Z: '#151f1b', a: '#151d18', b: '#131c17', c: '#121714', d: '#0c1411', e: '#050a08', f: '#010403' };
+const BC_P = 1.6; // world units per sprite pixel
+const BC_EMIT = [225, 33]; // the emitter, under the wing, in line with the red block on the flank
+const BC_WING = (x, y) => y >= 11 && y <= 22 && x >= 123 && x <= 226 - (y - 11) * 0.9; // the plate that lifts, angled at its fore end
+// the hull and the wing as runs of one colour, precomputed
+const [_bcBody, _bcWing] = (() => {
+  const body = [], wing = [];
+  BC_SPRITE.forEach((row, y) => {
+    let x = 0;
+    while (x < row.length) {
+      const k = row[x];
+      if (k === '.') { x++; continue; }
+      const w = BC_WING(x, y);
+      let e = x + 1;
+      while (e < row.length && row[e] === k && BC_WING(e, y) === w) e++;
+      (w ? wing : body).push([BC_PAL[k], x, y, e - x]);
+      x = e;
+    }
   });
-  // windows along the plates, a few flickering
-  for (let i = 0; i < 26; i++) {
-    const px = -134 + i * 9;
-    R(px, -26, 4, 3, (i * 7 + (time * 3 | 0)) % 11 === 0 ? NXI_HULL.l : NXI_HULL.L);
-    if (i % 3 === 0) R(px + 2, 18, 3, 2, NXI_HULL.L);
+  return [body, wing];
+})();
+// where the beam leaves the ship, in the world
+function bcEmitter(x, y, d) {
+  const W = BC_SPRITE[0].length, H = BC_SPRITE.length;
+  const ex = d > 0 ? BC_EMIT[0] : W - BC_EMIT[0];
+  return { x: x + (ex - W / 2) * BC_P, y: y + (BC_EMIT[1] - H / 2) * BC_P };
+}
+function drawBattlecruiser(ctx, x, y, d, time, down = false, charge = 0) {
+  const W = BC_SPRITE[0].length, H = BC_SPRITE.length, P = BC_P;
+  const x0 = x - (W / 2) * P, y0 = y - (H / 2) * P;
+  const run = (runs, ox, oy) => {
+    for (const [c, rx, ry, n] of runs) {
+      ctx.fillStyle = c;
+      const lx = d > 0 ? rx : W - rx - n;
+      ctx.fillRect(Math.round(x0 + (lx + ox) * P), Math.round(y0 + (ry + oy) * P), Math.ceil(n * P), Math.ceil(P));
+    }
+  };
+  run(_bcBody, 0, 0);
+  // the gap under the lifting wing: dark, then filling with the lance's light
+  const lift = 9 * Math.min(1, charge * 1.6);
+  if (lift > 0.3) {
+    const gx = d > 0 ? 123 : W - 226, gw = 104;
+    ctx.fillStyle = '#121014'; ctx.fillRect(Math.round(x0 + gx * P), Math.round(y0 + 12 * P), Math.round(gw * P), Math.round(10 * P));
+    ctx.fillStyle = `rgba(255,70,90,${0.4 + 0.6 * charge})`; ctx.fillRect(Math.round(x0 + gx * P), Math.round(y0 + 16 * P), Math.round(gw * P), Math.round(3 * P));
+    const e = bcEmitter(x, y, d);
+    ctx.fillStyle = `rgba(255,200,215,${charge})`; ctx.fillRect(Math.round(e.x - 4 * P), Math.round(y0 + 13 * P), Math.round(8 * P), Math.round(e.y - y0 - 13 * P));
   }
-  // the muzzle's bore glowing as it charges
-  R(244, -8, 4, 16, charge > 0 ? `rgba(200,235,255,${0.5 + 0.5 * charge})` : NXI_HULL.D);
-  // red tip lights, violet thrusters
-  const blink = (time * 2 | 0) % 2 ? NXI_HULL.r : '#7a2020';
-  for (const [px, py] of [[-64, -104], [-56, -98], [121, -90], [-127, -66]]) R(px, py, 2, 2, blink);
-  const flick = 0.6 + 0.4 * Math.sin(time * 30);
-  for (const py of [-20, -3, 14]) { R(-188, py, 12, 6, `rgba(180,140,255,${flick})`); R(-182, py + 2, 4, 2, 'rgba(255,255,255,0.8)'); }
-  // the NXi marking on the bow jaw
-  ctx.font = 'bold 9px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = NXI_HULL.T;
-  if (down) ctx.fillText('NXi', x + 30, y + 126); else ctx.fillText('NXi', x + d * 126, y - 18);
+  run(_bcWing, d * lift * 0.4, -lift);
+  // the flank strips burning brighter as it charges; the emitter's glow under the belly
+  if (charge > 0) {
+    const e = bcEmitter(x, y, d);
+    ctx.fillStyle = `rgba(255,120,150,${0.4 + 0.6 * charge})`;
+    sq(ctx, e.x, e.y + 4, 6 + 14 * charge + Math.sin(time * 30) * 2);
+  }
+  // red running lights
+  if ((time * 2 | 0) % 2) { ctx.fillStyle = '#ff3a3a'; ctx.fillRect(Math.round(x0 + (d > 0 ? W - 2 : 1) * P), Math.round(y0 + 16 * P), 3, 3); }
 }
 
+// the frigates and the fleet's palette (greys, red lights, violet thrusters)
+const NXI_HULL = { W: '#c4c0bc', S: '#a29e9a', T: '#7c7874', D: '#2a2828', R: '#4a4746', G: '#5e5a58', g: '#d8d4d0', K: '#363434', r: '#ff3a3a' };
 // a supporting frigate: a short wedge hull round a small gun, nose-down or in profile
 const FRIGATE = [
   [-60, -6, 130, 12, 'G'], [-60, -6, 130, 2, 'g'],
@@ -239,18 +277,20 @@ function drawFrigate(ctx, x, y, time, down = true) {
 // ------------------------------------------------------------------------- orbital strike
 // A fleet shot. The November Division holds station far above the battlefield (ORB_ALT up). Frames:
 // 0-80 the climb: the camera rushes up from the mark through streaks of light, the sky giving way
-// to space, rolling a quarter turn and pulling back on the way, so the fleet is revealed in
-// formation (escorts and frigates round the flagship, smaller, darker battlecruisers in layers
-// behind); 80-140 the flagship's spinal mount charges, ring by ring; 140 the tachyon lance fires;
-// 140-205 the camera rolls back and rides the beam down to the mark, which it hits at 205 with a
-// blast far bigger than its damage radius.
+// to space, rolling over and back on the way, and comes level on the fleet in formation (escorts
+// and frigates round the flagship, smaller, darker battlecruisers in layers behind); 80-140 the
+// flagship charges, the plate amidships lifting clear as light gathers under it; 140 the lance
+// comes down out of its belly; 140-205 the camera rides the beam down to the mark, which it hits
+// with a blast far bigger than its damage radius; then the rest of the fleet opens up, a rain of
+// laser fire across the area round it.
 const ORB_ALT = 9000;
-const ORB = { CLIMB: 80, FIRE: 140, HIT: 205, END: 280 };
+const ORB = { CLIMB: 80, FIRE: 140, HIT: 205, VOLLEY: 214, VOLLEY_LEN: 70, END: 330 };
+// [dx, dy, facing] from the flagship's centre, in profile
 const FLEET = {
-  escorts: [[-240, 90], [240, 60]],
-  frigates: [[-130, 280], [140, 320], [-350, 360], [360, 270]],
-  mid: [[-460, -140], [-170, -240], [170, -200], [470, -110], [-620, 40], [640, 10]],
-  far: [[-720, -320], [-520, -420], [-300, -380], [-60, -460], [200, -430], [420, -380], [620, -300], [800, -200], [-860, -150], [900, -60]],
+  escorts: [[-700, 170, 1], [660, -150, 1]],
+  frigates: [[-300, 300, 1], [320, 230, 1], [-860, -60, 1], [900, 120, 1]],
+  mid: [[-560, -330], [-80, -380], [420, -320], [-1000, -220], [980, -260]],
+  far: [[-820, -520], [-420, -560], [0, -600], [380, -540], [760, -500], [-1150, -430], [1150, -420]],
 };
 function drawScaled(ctx, x, y, sc, alpha, fn) {
   ctx.save();
@@ -288,83 +328,103 @@ class OrbitalStrike {
     this.owner = owner;
     this.cfg = cfg;
     this.tx = at.x;
-    this.x = at.x;
     this.ground = Math.min(game.terrain.hAt(at.x), at.y);
     this.y = this.ground - ORB_ALT; // the flagship's centre on station
+    this.x = this.tx - (bcEmitter(0, 0, 1).x); // placed so its emitter is right over the mark
     this.t = 0;
     this.charge = 0;
     this.beam = 0;
     this.zoom0 = game.cam.zoom;
     this.focus = { x: at.x, y: this.ground - 200 };
+    // the fleet's volley: every shot's mark and which ship fires it (seeded)
+    const v = cfg.volley, ships = [...FLEET.escorts, ...FLEET.frigates];
+    this.volley = [];
+    for (let i = 0; i < v.n; i++) {
+      const s = ships[i % ships.length];
+      this.volley.push({ x: clamp(this.tx + (rng.next() * 2 - 1) * v.spread, 4, WORLD_W - 4), at: ORB.VOLLEY + Math.round(rng.next() * ORB.VOLLEY_LEN), sx: this.x + s[0] });
+    }
     game.cam.ceil = this.y - 2500;
     game.cam.follow(this.focus);
     game.ui.notice('NXi November Division fleet on station.');
   }
 
-  get muzzleY() { return this.y + BC_MUZZLE; }
+  get emit() { return bcEmitter(this.x, this.y, 1); }
 
   update() {
     const g = this.game, cam = g.cam, t = ++this.t;
     const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
-    const f = this.focus;
-    if (t <= ORB.CLIMB) { // the climb, rolling and pulling back on the way up
+    const f = this.focus, e = this.emit;
+    if (t <= ORB.CLIMB) { // the climb, rolling over and back, pulling out to take in the fleet
       const u = ease(t / ORB.CLIMB);
       f.x = this.tx;
-      f.y = lerp(this.ground - 200, this.y + 60, u);
-      const r = ease((t - ORB.CLIMB * 0.35) / (ORB.CLIMB * 0.65));
-      cam.rot = -Math.PI / 2 * r;
-      cam.setZoom(lerp(this.zoom0, 0.5, r));
-      g.ascent = Math.sin(Math.PI * Math.min(1, t / ORB.CLIMB)); // streaks swell, then clear for the reveal
-    } else g.ascent = 0;
-    if (t > ORB.CLIMB && t <= ORB.FIRE) this.charge = (t - ORB.CLIMB) / (ORB.FIRE - ORB.CLIMB);
+      f.y = lerp(this.ground - 200, this.y + 120, u);
+      cam.rot = -Math.PI / 2 * Math.sin(Math.PI * u);
+      cam.setZoom(lerp(this.zoom0, 0.5, u));
+      g.ascent = Math.sin(Math.PI * Math.min(1, t / ORB.CLIMB)); g.ascentDir = 1; // streaks swell, then clear for the reveal
+    } else { g.ascent = 0; cam.rot = 0; }
+    if (t > ORB.CLIMB && t <= ORB.FIRE) { // in on the flagship as it charges
+      this.charge = (t - ORB.CLIMB) / (ORB.FIRE - ORB.CLIMB);
+      const u = ease((t - ORB.CLIMB) / 30);
+      cam.setZoom(lerp(0.5, 1.6, u));
+      f.x = lerp(this.tx, this.x, u); f.y = lerp(this.y + 120, this.y + 40, u);
+    }
     if (t === ORB.FIRE) {
-      this.hit = beamTrace(g.terrain, g.targets(), null, this.tx, this.muzzleY + 4, this.tx, WORLD_BOTTOM);
+      this.hit = beamTrace(g.terrain, g.targets(), null, e.x, e.y + 4, e.x, WORLD_BOTTOM);
       this.hitY = this.hit.y;
       this.beam = 1;
       g.screenFlash = Math.max(g.screenFlash || 0, 0.4);
       g.sfx.satFire();
     }
-    if (t > ORB.FIRE && t <= ORB.HIT) { // roll back and ride the beam down
+    if (t > ORB.FIRE && t <= ORB.HIT) { // ride the beam down
       const u = ease((t - ORB.FIRE) / (ORB.HIT - ORB.FIRE));
-      cam.rot = -Math.PI / 2 * (1 - Math.min(1, u * 1.6));
-      cam.setZoom(lerp(0.5, Math.min(this.zoom0, 0.6), u));
-      f.y = lerp(this.muzzleY, this.hitY - 220, u);
+      cam.setZoom(lerp(1.6, Math.min(this.zoom0, 0.6), Math.min(1, u * 2)));
+      f.x = lerp(this.x, e.x, Math.min(1, u * 3));
+      f.y = lerp(e.y + 40, this.hitY - 220, u);
     }
     if (t === ORB.HIT) {
-      cam.rot = 0;
-      g.explode(this.tx, this.hitY, { dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 60, visR: 520, from: { x: 0, y: -1 } }, this.owner, 'laser');
+      g.explode(e.x, this.hitY, { dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 60, visR: 520, from: { x: 0, y: -1 } }, this.owner, 'laser');
       for (let i = 0; i < 90; i++) { // the shockwave, running out along the ground and up
         const a = -Math.PI * Math.random(), sp = 6 + Math.random() * 10;
-        g.particles.add({ x: this.tx, y: this.hitY - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.5, g: 0.02, drag: 0.93, life: 0.9 + Math.random() * 0.6, size: 8 + Math.random() * 14, color: i % 3 ? [200, 230, 255] : [255, 255, 255] });
+        g.particles.add({ x: e.x, y: this.hitY - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.5, g: 0.02, drag: 0.93, life: 0.9 + Math.random() * 0.6, size: 8 + Math.random() * 14, color: i % 3 ? [255, 200, 210] : [255, 255, 255] });
       }
       g.shake = Math.max(g.shake, 34);
       g.screenFlash = Math.max(g.screenFlash || 0, 0.9);
       g.sfx.explosion(70);
     }
+    if (t === ORB.VOLLEY) g.ui.notice('The fleet opens fire.');
+    // the rest of the fleet: shots coming down from far overhead, in from where each ship is
+    const v = this.cfg.volley;
+    for (const s of this.volley) {
+      if (s.at !== t) continue;
+      const y = g.terrain.hAt(s.x), top = cam.y - 200;
+      const sx = s.x + (s.sx - this.tx) * ((y - top) / ORB_ALT); // angled toward the ship that fired it
+      g.lasers.push(new Laser(sx, top, s.x, y, (t & 1) ? '#ff5a6a' : '#ffd0d8', 16, 26));
+      g.explode(s.x, y, { dmg: v.dmg, dmgR: v.r, explR: 8, from: { x: sx - s.x, y: top - y } }, this.owner, 'laser');
+      if (t % 3 === 0) g.sfx.laser();
+      g.shake = Math.max(g.shake, 7);
+    }
     cam.follow(f);
     if (t < ORB.HIT) cam.snap(); // the set piece drives the camera itself
-    if (t > ORB.HIT && t <= ORB.HIT + 30) cam.setZoom(lerp(Math.min(this.zoom0, 0.6), this.zoom0, (t - ORB.HIT) / 30));
-    if (t > ORB.HIT + 10) { this.beam = Math.max(0, this.beam - 1 / 40); this.charge = this.beam; }
+    if (t > ORB.HIT && t <= ORB.HIT + 30) cam.setZoom(lerp(Math.min(this.zoom0, 0.6), Math.min(this.zoom0, 0.7), (t - ORB.HIT) / 30));
+    if (t > ORB.VOLLEY + ORB.VOLLEY_LEN && t <= ORB.VOLLEY + ORB.VOLLEY_LEN + 30) cam.setZoom(lerp(Math.min(this.zoom0, 0.7), this.zoom0, (t - ORB.VOLLEY - ORB.VOLLEY_LEN) / 30));
+    if (t > ORB.HIT + 10) { this.beam = Math.max(0, this.beam - 1 / 40); this.charge = Math.min(this.charge, this.beam); }
     if (t >= ORB.END) { cam.rot = 0; cam.ceil = -1000; g.ascent = 0; return false; }
     return true;
   }
 
   draw(ctx) {
     const time = this.game.time, x = this.x, y = this.y;
-    for (const [dx, dy] of FLEET.far) drawScaled(ctx, x + dx, y + dy, 0.3, 0.35, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx, true));
-    for (const [dx, dy] of FLEET.mid) drawScaled(ctx, x + dx, y + dy, 0.55, 0.6, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx, true));
-    for (const [dx, dy] of FLEET.frigates) drawFrigate(ctx, Math.round(x + dx), Math.round(y + dy), time + dx);
-    for (const [dx, dy] of FLEET.escorts) drawBattlecruiser(ctx, Math.round(x + dx), Math.round(y + dy), 1, time + dx, true, 0);
-    drawBattlecruiser(ctx, Math.round(x), Math.round(y), 1, time, true, this.charge);
-    const my = this.muzzleY;
-    const glow = Math.max(this.charge, this.beam);
-    if (glow > 0) { ctx.fillStyle = `rgba(160,220,255,${0.3 + 0.6 * glow})`; sq(ctx, x, my + 4, 12 + 26 * glow); }
+    for (const [dx, dy] of FLEET.far) drawScaled(ctx, x + dx, y + dy, 0.3, 0.35, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx));
+    for (const [dx, dy] of FLEET.mid) drawScaled(ctx, x + dx, y + dy, 0.55, 0.6, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx));
+    for (const [dx, dy, d] of FLEET.frigates) drawFrigate(ctx, Math.round(x + dx), Math.round(y + dy), time + dx, false);
+    for (const [dx, dy, d] of FLEET.escorts) drawBattlecruiser(ctx, Math.round(x + dx), Math.round(y + dy), d, time + dx, false, 0);
+    drawBattlecruiser(ctx, Math.round(x), Math.round(y), 1, time, false, this.charge);
     if (this.beam > 0) {
-      const w = 26 * this.beam + 6;
-      ctx.fillStyle = `rgba(150,210,255,${0.5 * this.beam})`;
-      ctx.fillRect(Math.round(x - w), Math.round(my), Math.round(w * 2), Math.round(this.hitY - my));
-      ctx.fillStyle = `rgba(255,255,255,${this.beam})`;
-      ctx.fillRect(Math.round(x - w * 0.35), Math.round(my), Math.round(w * 0.7), Math.round(this.hitY - my));
+      const e = this.emit, w = 26 * this.beam + 6;
+      ctx.fillStyle = `rgba(255,90,120,${0.5 * this.beam})`;
+      ctx.fillRect(Math.round(e.x - w), Math.round(e.y), Math.round(w * 2), Math.round(this.hitY - e.y));
+      ctx.fillStyle = `rgba(255,240,245,${this.beam})`;
+      ctx.fillRect(Math.round(e.x - w * 0.35), Math.round(e.y), Math.round(w * 0.7), Math.round(this.hitY - e.y));
     }
   }
 }
