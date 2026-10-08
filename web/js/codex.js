@@ -55,6 +55,12 @@ const GUN_NOTES = {
   feuerlilie: ['Matches', 'A homing rocket that bursts like flak: shrapnel and double damage to drones. The easiest anti-air gun to land.'],
   ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling): a heavy beam that leaves a boiling pool, twice a turn.'],
   massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). Point and click, if it can see.'],
+  ragnarok: ['Final', 'G.W. Tiger only. She rides a mech with four 380mm guns: two four-gun barrages a turn, heavy and loose.'],
+  zeropoint: ['Final', 'Object 15X only. A flat, near-instant slug that goes through up to 240 of hill, fort or bridge before it stops.'],
+  verdict: ['Final', 'November only. The round is just a target dot: an NXi battlecruiser lines up overhead and fires a tachyon lance straight down.'],
+  constellation: ['Final', 'Innocentia only. Five MAIAs appear over the mark and fire one after another, 760 a beam.'],
+  morrighan: ['Final', 'Alban Eiler only. Breaks into ten strong seekers at the top of its climb; lob it, or it hits whole for half.'],
+  apollon: ['Final', 'Ikaros only. A laser like the others, and where it lands a meteorite follows a second later.'],
 };
 const GIRL_NOTES = {
   gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and she drives anywhere without fall or tree damage.' },
@@ -82,7 +88,7 @@ function codexMeta(w) {
   const lines = [];
   const worth = codexWorth(w);
   if (!w.starter) {
-    const peers = WEAPONS.filter((x) => x.rarity === w.rarity);
+    const peers = WEAPONS.filter((x) => x.rarity === w.rarity && !x.sig);
     const per = (x) => codexWorth(x) / x.cost;
     const par = peers.reduce((a, x) => a + per(x), 0) / peers.length;
     const rank = peers.slice().sort((a, b) => per(b) - per(a)).indexOf(w) + 1;
@@ -262,7 +268,7 @@ Object.assign(UI, {
       <ul class="traits">${(v.traits || []).map((id) => `<li><b>${esc(TRAITS[id].name)}</b> ${esc(TRAITS[id].desc)}</li>`).join('')}</ul>
       ${note ? `<p class="cx-meta">${esc(note.plays)}</p>` : ''}`;
     // weapons: filter, list, then the chosen one
-    const list = [v.weapon].concat(WEAPONS.slice().sort((a, b) => a.cost - b.cost)).filter((w) =>
+    const list = [v.weapon].concat(WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) => forVehicle(w, v.id))).filter((w) =>
       c.filter === 'all' || (c.filter === 'hybrid' ? w.hybrid : c.filter === 'NXi' ? makerOf(w) === 'NXi' : w.kind === c.filter));
     $('cx-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === c.filter));
     $('cx-list').innerHTML = list.map((w) => `<button class="cx-w${w.id === c.wid ? ' on' : ''}" data-w="${w.id}">${this.badge(w, true)}<span>${esc(w.name)}</span><small>${w.starter ? 'starter' : money(w.cost)}</small></button>`).join('');

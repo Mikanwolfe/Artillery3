@@ -515,7 +515,7 @@ const GIRL_DEFS = {
     mount: [['R', -1, -1, 4, 3], ['g', -1, -1, 4, 1], ['p', 0, 1, 2, 1]],
   },
 
-  // Seraphine (secret, from beyond the gate): an angel. Pale gold hair to her waist, sky-blue
+  // Ikaros (secret, from beyond the gate): an angel. Pale gold hair to her waist, sky-blue
   // eyes, a floating gold halo, white feathered wings folded behind her (the laser pointer sits
   // in the wing joint), a white dress with gold trim and a player-colour sash, white boots.
   ang: {

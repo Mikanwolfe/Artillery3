@@ -407,7 +407,7 @@ const UI = {
       const full = tank.weapons.length >= 4;
       const f = this.shopFilter;
       $('shop-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === f));
-      const list = WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) =>
+      const list = WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) => forVehicle(w, tank.vehicle.id)).filter((w) =>
         f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= w.cost : f === 'NXi' ? makerOf(w) === 'NXi' : f === 'hybrid' ? w.hybrid : w.kind === f);
       $('shop-grid').innerHTML = list.map((w) => {
         const r = RARITY[w.rarity];

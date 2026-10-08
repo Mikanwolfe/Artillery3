@@ -88,10 +88,10 @@ class Background {
     for (const l of this.layers) {
       ctx.fillStyle = l.color;
       const ox = cam.x * (1 - l.parallax);
-      fillSteps(ctx, l.height, cam.x, cam.x + VIEW_W, 8, ox, 0);
+      fillSteps(ctx, l.height, cam.x, cam.x + (cam.w || VIEW_W), 8, ox, 0);
       for (const t of l.trees) {
         const tx = t.x + ox;
-        if (tx < cam.x - 40 || tx > cam.x + VIEW_W + 40) continue;
+        if (tx < cam.x - 40 || tx > cam.x + (cam.w || VIEW_W) + 40) continue;
         const base = Math.round(l.height[Math.min(WORLD_W - 1, t.x)]) + 2;
         ctx.fillRect(tx - 2, base - 6, 4, 6);
         if (broad) {

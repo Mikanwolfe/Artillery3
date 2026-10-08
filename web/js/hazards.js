@@ -351,22 +351,22 @@ Object.assign(Game.prototype, {
       const sd = this.biome.sudden;
       const y = Math.round(this.fogY);
       ctx.fillStyle = rgb(sd.color, sd.alpha);
-      ctx.fillRect(Math.round(cam.x) - 10, y, VIEW_W + 20, WORLD_BOTTOM + 1200 - y);
+      ctx.fillRect(Math.round(cam.x) - 10, y, cam.w + 20, WORLD_BOTTOM + 1200 - y);
       ctx.fillStyle = rgb(sd.color, sd.alpha * 0.8);
-      for (let x = Math.floor(cam.x / 24) * 24; x < cam.x + VIEW_W + 24; x += 24) {
+      for (let x = Math.floor(cam.x / 24) * 24; x < cam.x + cam.w + 24; x += 24) {
         sq(ctx, x, y - 4 + Math.sin(x * 0.05 + this.time * 1.5) * 4, 14);
       }
     }
   },
 
   drawHazardLabels(ctx, cam) {
-    for (const m of this.mobs) m.drawLabel(ctx, m.x - cam.x, m.y - cam.y);
+    for (const m of this.mobs) m.drawLabel(ctx, cam.sx(m.x), cam.sya(m.y, LABEL_ANCHOR));
     ctx.font = `12px ${HUD_FONT}`;
     ctx.textAlign = 'center';
     for (const f of this.fronts) {
-      const sx = f.x - cam.x;
+      const sx = cam.sx(f.x);
       if (sx < -60 || sx > VIEW_W + 60 || f.alpha < 0.3) continue;
-      const sy = clamp(this.terrain.hAt(f.x) - cam.y - 40, 260, VIEW_H - 160);
+      const sy = clamp(cam.sy(this.terrain.hAt(f.x)) - 40, 260, VIEW_H - 160);
       ctx.globalAlpha = f.alpha;
       ctx.fillStyle = 'rgba(32,32,74,0.85)';
       const label = `${this.frontName(f)}${f.kind === 'gale' ? (f.dir > 0 ? ' →' : ' ←') : ''}`;
