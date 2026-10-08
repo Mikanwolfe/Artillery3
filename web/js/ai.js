@@ -284,7 +284,7 @@ class CpuController {
       case 'move': {
         // other moves stop short of a live wire or a deck overhead (escaping one, it drives on)
         const g = this.game, nx = t.x + this.moveDir * TANK_SPEED * 6;
-        const into = !this.escaping && !t.falling && (g.liveWireAt(nx, g.groundAt(nx, t.y)) || g.coveredAt(nx, g.groundAt(nx, t.y)) || (g.terrain.lavaAt(nx) >= 0.1 && g.terrain.lavaAt(t.x) < 0.1));
+        const into = !this.escaping && !t.falling && (g.liveWireAt(nx, g.groundAt(nx, t.y)) || g.coveredAt(nx, g.groundAt(nx, t.y)) || (g.terrain.lavaAt(nx) >= 0.1 && g.terrain.lavaAt(t.x) < 0.1) || g.terrain.voidAt(nx + this.moveDir * 20));
         if (!into && this.moveFrames-- > 0 && t.fuel > 1) {
           if (this.moveDir < 0) c.left = true; else c.right = true;
           // stuck against a wall or fort for a moment: jump it, if there's the fuel

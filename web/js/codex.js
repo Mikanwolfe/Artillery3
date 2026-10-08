@@ -56,7 +56,7 @@ const GUN_NOTES = {
   ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling): a heavy beam that leaves a boiling pool, twice a turn.'],
   massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). Point and click, if it can see.'],
   ragnarok: ['Final', 'G.W. Tiger only. A marker round: the camera whips off the map to her platoon (four G.W. Tiger SPGs and a Karl-Gerät), which drop eight 290mm rounds across 300 either side of the mark, then the 60cm: a giant crater, and an earthquake that hits everyone on the ground within 900.'],
-  zeropoint: ['Final', 'Object 15X only. A flat, near-instant slug that goes through up to 240 of hill, fort or bridge before it stops.'],
+  zeropoint: ['Final', 'Object 15X only. A railgun probe (400). Past the fleet, the belt and Jupiter, the Naito MAIA Containment Satellite takes annihilation orders: the ground 520 either side of the probe is deleted outright, down through the world, and anything that falls in is gone.'],
   verdict: ['Final', 'November only. The round is just a target dot: an NXi battlecruiser lines up overhead and fires a tachyon lance straight down.'],
   constellation: ['Final', 'Innocentia only. A laser dot. MAIA opens her eye and the sky fills with MAIAs, a vast one behind them; five waves of 40 shots (110 each) hit across 650 either side of the mark, then the vast MAIA\'s beam comes down: 2,600.'],
   morrighan: ['Final', 'Alban Eiler only. A flare that summons the goddess Morrighan over the mark; she looses 26 seeking arrows of light at everything in reach.'],

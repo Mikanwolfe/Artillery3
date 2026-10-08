@@ -8,7 +8,8 @@
 //                          them, and the mark takes wave after wave of fire, then the vast one's beam (MaiaArray)
 //   G.W. Tiger's Ragnarök  a marker shell; the camera whips off the map to her platoon of G.W.
 //                          SPGs and a Karl-Gerät, which rain shells on the area (BatteryStrike)
-//   Object 15X's Railgun   the slug goes through up to w.pierce of ground and cover (stepBallistic)
+//   Object 15X's Zero Point a railgun probe; the Naito MAIA fires from the Great Red Spot and the
+//                          ground round the probe is deleted outright (NaitoStrike)
 //   Alban's Morrighan      a flare that summons the war goddess over the mark; she looses a rain of
 //                          seeking arrows of light (DeitySummon)
 
@@ -544,6 +545,266 @@ class MaiaArray {
       ctx.fillRect(Math.round(c.x - 26), Math.round(c.y + 16 * o - 1), 52, 2);
       ctx.globalAlpha = 1;
     }
+  }
+}
+
+// ------------------------------------------------------------------------ the Naito MAIA
+// Object 15X's Zero Point. The slug is a probe. The camera goes to MAIA and rushes up past the NXi
+// fleet and the asteroid belt into the dark; the scene fades to Jupiter, vast on the left, and
+// something stirs in the Great Red Spot. The view climbs and bleeds to red: the Naito MAIA
+// Containment Satellite (Hatsuyuki's own MAIA is their attempt at one) slides down from above,
+// a battery of barrels pointing down. "Annihilation orders received." It charges; cut to Jupiter
+// further off, a beam leaving the spot; the camera plunges back to the whole map, and the ground
+// around the probe is simply deleted: no explosion, sheer black cliffs, molten lips, the beam
+// thinning to mist. Anything that falls in is gone (Terrain.erase, Game.landed).
+// Screen-space scenes (Jupiter, the satellite) are drawn over everything by drawScreen.
+const NAITO = { TO_MAIA: 20, UP: 50, SPACE: 150, FADE: 168, JUP: 172, STIR: 205, RISE: 262, RED: 290, SAT: 300, ORDERS: 352, CHARGE: 372, CUT: 432, DIVE: 476, HIT: 512, ERASE: 14, END: 650 };
+const NAITO_SKY = 9000; // how far the climb goes before the fade
+let _jupiter = null;
+// Jupiter, painted once into a small offscreen canvas of chunky pixels: banded, limb-darkened,
+// the Great Red Spot below the equator
+function jupiterCanvas() {
+  if (_jupiter) return _jupiter;
+  const N = 220, c = document.createElement('canvas');
+  c.width = c.height = N;
+  const x = c.getContext('2d');
+  const bands = [[232, 214, 186], [196, 150, 110], [238, 226, 204], [170, 118, 84], [226, 200, 160], [150, 104, 78], [236, 220, 190], [204, 160, 120], [180, 132, 96], [228, 210, 178]];
+  const r = N / 2;
+  for (let py = 0; py < N; py += 2) {
+    for (let px = 0; px < N; px += 2) {
+      const dx = (px - r + 1) / r, dy = (py - r + 1) / r, d2 = dx * dx + dy * dy;
+      if (d2 > 1) continue;
+      const lat = dy + 0.04 * Math.sin(dx * 9 + dy * 4) + 0.02 * Math.sin(dx * 23);
+      const b = bands[clamp(Math.floor(((lat + 1) / 2) * bands.length * 1.6), 0, 1e3) % bands.length];
+      let col = b;
+      const sx = (dx - 0.32) / 0.2, sy = (dy - 0.36) / 0.11, s2 = sx * sx + sy * sy; // the spot
+      if (s2 < 1) col = s2 < 0.25 ? [196, 70, 48] : s2 < 0.6 ? [214, 104, 70] : [230, 150, 110];
+      const lim = 0.35 + 0.65 * Math.sqrt(1 - d2);
+      x.fillStyle = `rgb(${Math.round(col[0] * lim)},${Math.round(col[1] * lim)},${Math.round(col[2] * lim)})`;
+      x.fillRect(px, py, 2, 2);
+    }
+  }
+  return (_jupiter = c);
+}
+// where the spot sits on that canvas, as a fraction of its size
+const JUP_SPOT = [0.5 + 0.32 / 2, 0.5 + 0.36 / 2];
+
+// the Naito MAIA: a vast containment frame round a MAIA-like core, clamps gripping it, radiator
+// wings off both sides and a deck of long barrels pointing straight down. Screen units, centred on
+// the core; `charge` lights the rings and muzzles, `eye` its red eye.
+const NAITO_BARRELS = [[-300, 360], [-200, 470], [-100, 560], [0, 620], [100, 560], [200, 470], [300, 360]]; // [x, length]
+function drawNaito(ctx, cx, cy, charge, time) {
+  const R = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(cx + x), Math.round(cy + y), Math.round(w), Math.round(h)); };
+  const dark = '#1e1a24', plate = '#3a3242', edge = '#5e5270', red = '#ff2f4a';
+  // radiator wings, off the edges of the screen
+  for (const s of [-1, 1]) {
+    for (let i = 0; i < 9; i++) {
+      const x = s * (360 + i * 90);
+      R(s > 0 ? x : x - 80, -160 + i * 6, 80, 220 - i * 12, i % 2 ? '#2a2432' : '#322a3c');
+      R(s > 0 ? x : x - 80, -160 + i * 6, 80, 4, edge);
+    }
+    R(s > 0 ? 300 : -1200, -40, 900, 22, plate); // the spar
+  }
+  // the containment frame
+  R(-340, -330, 680, 40, plate); R(-340, 250, 680, 50, plate);
+  R(-340, -330, 40, 620, plate); R(300, -330, 40, 620, plate);
+  for (let i = 0; i < 6; i++) { R(-300 + i * 120, -330, 6, 40, edge); R(-300 + i * 120, 250, 6, 50, edge); }
+  // the antenna spire above
+  R(-14, -620, 28, 300, dark); R(-60, -520, 120, 10, edge); R(-90, -440, 180, 10, edge);
+  if ((time * 2 | 0) % 2) R(-6, -640, 12, 12, red);
+  // the core, a MAIA's stepped discs grown huge
+  const disc = (r, col) => { ctx.fillStyle = col; for (let y = -r; y < r; y += 10) { const w = 2 * Math.sqrt(Math.max(0, r * r - (y + 5) * (y + 5))); ctx.fillRect(Math.round(cx - w / 2), Math.round(cy + y), Math.round(w), 10); } };
+  disc(240, '#4a1636'); disc(205, '#17172f'); disc(160, '#5a1c42'); disc(110, '#2a0e22');
+  // its eye: red, slit, staring down
+  const o = 0.3 + 0.7 * charge;
+  for (let y = -40; y < 40; y += 4) { const v = (y + 2) / 40; if (Math.abs(v) > o) continue; const w = 90 * Math.sqrt(1 - v * v); R(-w, y, w * 2, 4, '#ffe6ea'); }
+  for (let y = -34; y < 34; y += 4) { if (Math.abs((y + 2) / 40) > o) continue; const w = Math.sqrt(Math.max(0, 34 * 34 - (y + 2) * (y + 2))); R(-w, y, w * 2, 4, Math.abs(y) < 14 ? '#ff3a52' : '#a01028'); }
+  R(-4, -30 * o, 8, 60 * o, '#12020a');
+  // the clamps gripping it from the corners, with their chains
+  for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    for (let k = 0; k < 7; k++) R(sx * (300 - k * 22) - 14, sy * (290 - k * 20) - 14, 28, 28, k % 2 ? dark : plate);
+    R(sx * 158 - 30, sy * 150 - 30, 60, 60, edge);
+  }
+  // the barrel deck and the barrels, pointing down
+  R(-380, 300, 760, 60, dark); R(-380, 300, 760, 6, edge);
+  NAITO_BARRELS.forEach(([x, L], i) => {
+    R(x - 26, 360, 52, 40, plate); // breech housing
+    R(x - 16, 400, 32, L - 40, '#2c2634'); // tube
+    R(x - 16, 400, 6, L - 40, edge);
+    for (let k = 0; k < 5; k++) {
+      const y = 430 + k * (L - 90) / 4, lit = charge * 5 > k;
+      R(x - 22, y, 44, 12, lit ? '#ff3a8a' : plate); // accelerator rings, lighting in turn
+    }
+    R(x - 24, 360 + L, 48, 22, plate); // muzzle
+    if (charge > 0) { const g = charge * (0.6 + 0.4 * Math.sin(time * 20 + i)); R(x - 14, 360 + L + 16, 28, 20 + 40 * g, `rgba(255,80,160,${g})`); R(x - 6, 360 + L + 20, 12, 30 + 70 * g, `rgba(255,230,245,${g})`); }
+  });
+  // warning lights along the frame
+  for (let i = 0; i < 12; i++) if (((time * 3 | 0) + i) % 4 === 0) R(-330 + i * 58, -322, 8, 8, red);
+}
+
+class NaitoStrike {
+  constructor(game, owner, at, cfg) {
+    this.game = game;
+    this.owner = owner;
+    this.cfg = cfg;
+    this.tx = at.x;
+    this.ground = Math.min(game.terrain.hAt(at.x), at.y);
+    this.t = 0;
+    this.zoom0 = game.cam.zoom;
+    const sc = game.satellite.center();
+    this.sat = { x: sc.x, y: sc.y };
+    this.focus = { x: this.tx, y: this.ground - 200 };
+    this.cut = 0; // the half-width deleted so far
+    this.beam = 0;
+    this.mist = [];
+    game.cam.ceil = this.sat.y - NAITO_SKY - 2000;
+    game.cam.follow(this.focus);
+  }
+
+  update() {
+    const g = this.game, cam = g.cam, t = ++this.t, f = this.focus, N = NAITO;
+    const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
+    if (t > N.TO_MAIA && t <= N.UP) { // over to MAIA
+      const u = ease((t - N.TO_MAIA) / (N.UP - N.TO_MAIA));
+      f.x = lerp(this.tx, this.sat.x, u); f.y = lerp(this.ground - 200, this.sat.y + 60, u);
+    }
+    if (t > N.UP && t <= N.FADE) { // and straight up, past the fleet and the belt, into the dark
+      const u = Math.pow((t - N.UP) / (N.FADE - N.UP), 1.6);
+      f.x = this.sat.x; f.y = lerp(this.sat.y + 60, this.sat.y - NAITO_SKY, u);
+      g.ascent = Math.min(1, (t - N.UP) / 20); g.ascentDir = 1;
+    }
+    if (t === N.FADE) g.ascent = 0;
+    if (t === N.JUP) g.ui.notice('A signal from the Great Red Spot.');
+    if (t === N.SAT) g.ui.notice('Naito MAIA Containment Satellite.');
+    if (t === N.ORDERS) { g.ui.notice('Annihilation orders received.'); g.events.push('Annihilation orders received.'); g.sfx.satPrep(); }
+    if (t === N.CUT) g.sfx.satFire();
+    if (t === N.DIVE) { // back down to the battlefield, the whole of it
+      cam.zmin = 0.36; cam.wide = 700;
+      cam.setZoom(0.36);
+      f.x = WORLD_W / 2; f.y = this.ground - 4000;
+    }
+    if (t > N.DIVE && t <= N.HIT) {
+      const u = ease((t - N.DIVE) / (N.HIT - N.DIVE));
+      f.x = WORLD_W / 2; f.y = lerp(this.ground - 4000, WORLD_BOTTOM * 0.45, u);
+      g.ascent = 1 - u; g.ascentDir = -1;
+    }
+    if (t === N.HIT) { g.ascent = 0; this.beam = 1; g.screenFlash = Math.max(g.screenFlash || 0, 0.5); g.terrain.voidOwner = this.owner; }
+    // the deletion: no blast, just gone, the cut widening over a few frames
+    if (t > N.HIT && t <= N.HIT + N.ERASE) {
+      const r = this.cfg.r * ((t - N.HIT) / N.ERASE);
+      g.terrain.erase(this.tx - r, this.tx + r);
+      for (const l of g.bg.layers || []) for (let x = Math.max(0, Math.floor(this.tx - r)); x <= Math.min(WORLD_W - 1, this.tx + r); x++) l.height[x] = VOID_Y; // the background too
+      this.cut = r;
+      for (const c of g.crates) if (c.alive && Math.abs(c.x - this.tx) < r) c.alive = false;
+      g.shake = Math.max(g.shake, 6);
+    }
+    if (t === N.HIT + N.ERASE) {
+      g.events.push('The ground is gone.');
+      for (let i = 0; i < 40; i++) { // molten flecks off the lips
+        const side = i % 2 ? 1 : -1, x = this.tx + side * (this.cut + 4);
+        const a = -Math.PI / 2 + side * (0.2 + rng.next() * 0.6), sp = 1 + rng.next() * 4;
+        g.drops.push(new AcidDrop(g, this.owner, x, g.terrain.hAt(x) - 4, Math.cos(a) * sp, Math.sin(a) * sp, 6, true));
+      }
+    }
+    if (t > N.HIT + N.ERASE) {
+      this.beam = Math.max(0, this.beam - 1 / 90);
+      if (t % 2 === 0 && this.beam > 0) { // thinning to mist
+        g.particles.add({ x: this.tx + (Math.random() * 2 - 1) * this.cut, y: lerp(cam.y, this.ground, Math.random()), vx: (Math.random() - 0.5) * 0.6, vy: -0.2 - Math.random() * 0.4, g: 0, drag: 0.99, life: 1.5 + Math.random(), size: 30 + Math.random() * 50, color: Math.random() < 0.5 ? [230, 220, 255] : [255, 200, 230] });
+      }
+    }
+    if (t > N.HIT + 90 && t <= N.HIT + 130) cam.setZoom(lerp(0.36, this.zoom0, ease((t - N.HIT - 90) / 40)));
+    if (t === N.HIT + 90) f.x = this.tx, f.y = this.ground - 200;
+    cam.follow(f);
+    if (t <= N.HIT + 90) cam.snap();
+    if (t >= N.END) { cam.zmin = 0; cam.wide = 0; cam.ceil = -1000; g.ascent = 0; g.ascentDir = 1; return false; }
+    return true;
+  }
+
+  // in the world: the fleet and the belt passed on the way up, and the beam over the cut
+  draw(ctx) {
+    const time = this.game.time, x = this.sat.x;
+    const fy = this.sat.y - NAITO_SKY * 0.45, by = this.sat.y - NAITO_SKY * 0.8;
+    drawBattlecruiser(ctx, Math.round(x + 480), Math.round(fy), -1, time);
+    drawBattlecruiser(ctx, Math.round(x - 420), Math.round(fy + 300), 1, time + 1);
+    drawFrigate(ctx, Math.round(x + 60), Math.round(fy - 220), time, false);
+    for (let i = 0; i < 14; i++) {
+      const R = 20 + hash2(i, 3) * 70;
+      ctx.fillStyle = i % 3 ? '#5a5048' : '#6e645a';
+      const rx = x + (hash2(i, 7) - 0.5) * 2200, ry = by + (hash2(i, 9) - 0.5) * 900;
+      for (let y = -R; y < R; y += 10) { const w = 2 * Math.sqrt(R * R - (y + 5) * (y + 5)) * (0.8 + 0.2 * hash2(i, y)); ctx.fillRect(Math.round(rx - w / 2), Math.round(ry + y), Math.round(w), 10); }
+    }
+    if (this.beam > 0) {
+      const cam = this.game.cam, w = Math.max(this.cut, this.cfg.r * 0.2) * (0.6 + 0.4 * this.beam);
+      ctx.fillStyle = `rgba(255,120,190,${0.25 * this.beam})`; ctx.fillRect(Math.round(this.tx - w * 1.15), cam.y - 100, Math.round(w * 2.3), this.ground - cam.y + 300);
+      ctx.fillStyle = `rgba(255,236,250,${0.55 * this.beam})`; ctx.fillRect(Math.round(this.tx - w * 0.7), cam.y - 100, Math.round(w * 1.4), this.ground - cam.y + 300);
+    }
+  }
+
+  // over everything, in screen units (W x H): the scenes out past the belt
+  drawScreen(ctx) {
+    const t = this.t, N = NAITO, time = this.game.time;
+    if (t < N.SPACE || t > N.DIVE + 10) return;
+    const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
+    const black = (a) => { ctx.fillStyle = `rgba(0,0,0,${a})`; ctx.fillRect(0, 0, W, H); };
+    if (t < N.JUP) { black(clamp((t - N.SPACE) / (N.FADE - N.SPACE), 0, 1)); return; }
+    const stars = (tint) => { for (let i = 0; i < 90; i++) { ctx.fillStyle = tint; ctx.fillRect(Math.round(hash2(i, 1) * W), Math.round(hash2(i, 2) * H), 2, 2); } };
+    ctx.imageSmoothingEnabled = false;
+    if (t < N.SAT) {
+      // Jupiter, bigger than the screen, the view drifting up off it and bleeding to red
+      const rise = ease((t - N.RISE) / (N.RED - N.RISE)) * 500;
+      ctx.fillStyle = '#04030a'; ctx.fillRect(0, 0, W, H);
+      stars('rgba(255,255,255,0.7)');
+      const S = 900, jx = -380, jy = -120 + rise;
+      ctx.drawImage(jupiterCanvas(), jx, jy, S, S);
+      const spx = jx + JUP_SPOT[0] * S, spy = jy + JUP_SPOT[1] * S;
+      if (t > N.STIR) { // something coming up out of the spot
+        const u = ease((t - N.STIR) / (N.RISE - N.STIR));
+        ctx.fillStyle = `rgba(20,8,16,${u})`; ctx.fillRect(Math.round(spx - 4 - 8 * u), Math.round(spy - 30 * u - 4), Math.round(8 + 16 * u), Math.round(8 + 10 * u));
+        ctx.fillStyle = `rgba(255,60,90,${u * (0.5 + 0.5 * Math.sin(time * 8))})`; ctx.fillRect(Math.round(spx - 2), Math.round(spy - 30 * u - 2), 4, 4);
+      }
+      if (t < N.JUP + 16) black(1 - (t - N.JUP) / 16);
+      if (t > N.RISE) { ctx.fillStyle = `rgba(120,0,16,${ease((t - N.RISE) / (N.RED - N.RISE))})`; ctx.fillRect(0, 0, W, H); }
+      return;
+    }
+    if (t < N.CUT) {
+      // the red: the Naito MAIA sliding down from above, then charging
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#2a0008'); g.addColorStop(1, '#6a0014');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      stars('rgba(255,140,150,0.5)');
+      const u = ease((t - N.SAT) / (N.ORDERS - N.SAT));
+      const charge = clamp((t - N.CHARGE) / (N.CUT - N.CHARGE - 8), 0, 1);
+      const shake = charge > 0.6 ? (Math.random() - 0.5) * 8 * charge : 0;
+      ctx.save();
+      ctx.translate(W / 2 + shake, 0);
+      ctx.scale(0.62, 0.62);
+      drawNaito(ctx, 0, lerp(-1500, 300, u), charge, time);
+      ctx.restore();
+      ctx.font = 'bold 13px monospace'; ctx.textAlign = 'left';
+      if (t > N.SAT + 20) { ctx.fillStyle = `rgba(255,200,205,${clamp((t - N.SAT - 20) / 20, 0, 1)})`; ctx.fillText('NAITO MAIA  //  CONTAINMENT SATELLITE', 24, H - 40); }
+      if (t > N.ORDERS) {
+        ctx.font = 'bold 26px monospace'; ctx.textAlign = 'center';
+        ctx.fillStyle = (time * 4 | 0) % 2 ? '#ff4060' : '#ffd0d8';
+        ctx.fillText('ANNIHILATION ORDERS RECEIVED', W / 2, H / 2 + 200 * 0 + 20);
+      }
+      if (t < N.SAT + 10) { ctx.fillStyle = `rgba(120,0,16,${1 - (t - N.SAT) / 10})`; ctx.fillRect(0, 0, W, H); }
+      if (charge > 0.95) { ctx.fillStyle = 'rgba(255,230,240,0.8)'; ctx.fillRect(0, 0, W, H); }
+      return;
+    }
+    // cut: Jupiter from further off, the beam leaving the spot
+    ctx.fillStyle = '#04030a'; ctx.fillRect(0, 0, W, H);
+    stars('rgba(255,255,255,0.7)');
+    const S = 360, jx = 70, jy = 110;
+    ctx.drawImage(jupiterCanvas(), jx, jy, S, S);
+    const spx = jx + JUP_SPOT[0] * S, spy = jy + JUP_SPOT[1] * S;
+    const u = ease((t - N.CUT) / 24);
+    for (let i = 0; i < 40; i++) { // a beam toward us, widening as it comes
+      const k = i / 40 * u, bx = lerp(spx, W + 200, k), by = lerp(spy, H + 120, k), w = 4 + 120 * k * k;
+      ctx.fillStyle = `rgba(255,90,170,${0.6})`; ctx.fillRect(Math.round(bx - w), Math.round(by - w), Math.round(w * 2), Math.round(w * 2));
+      ctx.fillStyle = 'rgba(255,240,250,0.8)'; ctx.fillRect(Math.round(bx - w * 0.4), Math.round(by - w * 0.4), Math.round(w * 0.8), Math.round(w * 0.8));
+    }
+    if (t > N.DIVE - 14) black(clamp((t - N.DIVE + 14) / 14, 0, 1)); // and out, to the dive
+    if (t > N.DIVE) { ctx.fillStyle = `rgba(0,0,0,${1 - (t - N.DIVE) / 10})`; ctx.fillRect(0, 0, W, H); }
   }
 }
 

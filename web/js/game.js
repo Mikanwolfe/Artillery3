@@ -568,6 +568,11 @@ class Game {
 
   // fall damage, credited to whoever's shot knocked the ground away
   landed(t, drop) {
+    if (t.y >= WORLD_BOTTOM) { // down into a void (15X's Zero Point): gone
+      this.events.push(`${t.name} fell into the void.`);
+      this.damage(t, (t.hp + t.armour) * 10 + 1000, this.terrain.voidOwner && this.terrain.voidOwner !== t ? this.terrain.voidOwner : null);
+      return;
+    }
     if (drop <= FALL_SAFE || hasTrait(t, 'geschutz') || hasTrait(t, 'wings')) return;
     const sh = this.report && this.report.shooter;
     const owner = sh && sh !== t ? sh : null;
@@ -589,6 +594,7 @@ class Game {
       let moved = 0;
       for (let pass = 0; pass < 2; pass++) {
         for (let i = s.x0; i < s.x1; i++) {
+          if (h[i] >= WORLD_BOTTOM || h[i + 1] >= WORLD_BOTTOM) continue; // nothing slides into a void
           const d = h[i + 1] - h[i]; // > 0: column i stands higher than i+1
           const ex = Math.abs(d) - SLIDE_TALUS;
           if (ex <= 0) continue;
@@ -996,6 +1002,7 @@ class Game {
       }
       if (w.kind === 'flak' || w.airburst) this.shrapnel(p);
       if (w.orbital) this.projectiles.push(new OrbitalStrike(this, p.owner, p, w.orbital)); // November's Verdict (finals.js)
+      if (w.naito) this.projectiles.push(new NaitoStrike(this, p.owner, p, w.naito)); // 15X's Zero Point
       if (w.array) this.projectiles.push(new MaiaArray(this, p.owner, p, w.array)); // Innocentia's Constellation
       if (w.battery) this.projectiles.push(new BatteryStrike(this, p.owner, p, w.battery)); // G.W. Tiger's Ragnarök
       if (w.deity) this.projectiles.push(new DeitySummon(this, p.owner, p, w.deity)); // Alban's Morrighan
@@ -1733,6 +1740,7 @@ class Game {
       ctx.fillRect(0, 0, W, H);
       this.screenFlash *= 0.82;
     }
+    for (const p of this.projectiles) if (p.drawScreen) p.drawScreen(ctx); // set pieces' full-screen scenes
 
     // HUD in the original's 1600x900 screen units
     ctx.setTransform(k * VIEW_SCALE, 0, 0, k * VIEW_SCALE, 0, 0); // the HUD never zooms
