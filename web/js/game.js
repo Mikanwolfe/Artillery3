@@ -50,7 +50,10 @@ const SLIDE_RATE = 0.25;
 const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
 const KILL_BOUNTY = 250;
+const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs every turn
+const SAT_DOWN_TURNS = 2; // shot down, MAIA stays offline this many turns
+const SAT_REBOOT = 0.5; // and comes back with this share of its health
 // damage popup tiers by accuracy (share of the blast radius from dead centre)
 const HIT_TIERS = [
   { tag: 'GRAZE', color: '#c8c4d4' },
@@ -431,7 +434,6 @@ class Game {
     this.input.ctl.reset();
     this.input.queue.length = 0;
     this.charging = false;
-    this.sfx.chargeStop();
     this.phase = 'aim';
     this.cpu = t.isCpu ? new CpuController(this, t) : null;
     this.cam.follow(this.range ? this.rangeFocus() : t);
@@ -715,7 +717,6 @@ class Game {
         } else if (a.ability) {
           this.useAbility(t, a.ability);
         } else if (a.endTurn) {
-          this.sfx.chargeStop();
           this.charging = false;
           this.finishTurnEarly();
           return;
@@ -734,12 +735,10 @@ class Game {
       this.sfx.deny();
     }
     if (c.charge) {
-      if (!this.charging) { this.charging = true; this.sfx.chargeStart(); }
+      this.charging = true;
       t.charge = Math.min(t.chargeCap(), t.charge + w.maxCharge * 0.005); // A3 Weapon.Update
-      this.sfx.chargeUpdate((100 * t.charge) / t.chargeCap());
     } else if (this.charging) {
       this.charging = false;
-      this.sfx.chargeStop();
       if (t.charge >= w.maxCharge * 0.03) this.fire(t);
       else t.charge = 0;
     }
@@ -987,7 +986,9 @@ class Game {
     if (!sat.alive) {
       this.particles.explosion(c.x, c.y, 160, 'laser');
       this.shake = Math.max(this.shake, 8);
-      this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline. It will come back as it repairs.`);
+      // it stays down for SAT_DOWN_TURNS turns, then reboots at half health
+      sat.downUntil = this.turnCount + SAT_DOWN_TURNS;
+      this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline for ${SAT_DOWN_TURNS} turns.`);
       this.events.push('MAIA is offline.');
     } else this.events.push(`${owner ? owner.name : 'Something'} hit MAIA (${reg.tag.toLowerCase()}): ${Math.round(sat.health * 100)}%.`);
   }
@@ -1000,7 +1001,8 @@ class Game {
     if (!alive.length) return;
     const max = alive.reduce((a, t) => a + t.maxHp + t.maxArmour, 0) / alive.length;
     const was = sat.alive;
-    sat.hp = fresh ? max : clamp(sat.hp * (max / sat.maxHp) + max * SAT_HEAL, 0, max);
+    if (!fresh && !was && this.turnCount < (sat.downUntil || 0)) { sat.maxHp = max; return; } // still offline
+    sat.hp = fresh ? max : !was ? max * SAT_REBOOT : clamp(sat.hp * (max / sat.maxHp) + max * SAT_HEAL, 0, max);
     sat.maxHp = max;
     if (!was && sat.alive) this.ui.notice('MAIA is back online.');
   }
@@ -1280,7 +1282,6 @@ class Game {
   // ------------------------------------------------------------ round / shop flow
   endRound() {
     this.phase = 'roundEnd';
-    this.sfx.chargeStop();
     const winner = this.tanks.find((t) => t.alive) || null;
     if (winner) {
       winner.wins++;
@@ -1314,7 +1315,6 @@ class Game {
 
   endMatch() {
     this.clearSave();
-    this.sfx.chargeStop();
     this.charging = false;
     this.paused = false;
     this.ui.showPause(false);
@@ -1418,6 +1418,9 @@ class Game {
       const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id)).sort((a, b) => weaponValue(b) - weaponValue(a));
       let pick = shop.find((w) => w.cost <= budget);
       if (!pick) break;
+      // not too clinical: any affordable gun within CPU_PICK_SPREAD of the best one's worth will do
+      const close = shop.filter((w) => w.cost <= budget && weaponValue(w) >= weaponValue(pick) * CPU_PICK_SPREAD);
+      pick = rng.pick(close);
       if (t.type === 'easy' && rng.chance(0.4)) pick = rng.pick(shop.filter((w) => w.cost <= budget));
       else {
         const later = shop.find((w) => w.cost <= budget + horizon);
@@ -1525,7 +1528,6 @@ class Game {
     this.events.push(`${t.name} used a repair kit (+${hp} health, +${ar} armour).`);
     if (t.isCpu && Math.random() < 0.6) this.banter(t, 'repair');
     // using the kit is the turn
-    this.sfx.chargeStop();
     this.charging = false;
     t.charge = 0;
     t.shotsLeft = 0;
@@ -1748,7 +1750,7 @@ class Game {
       ctx.textAlign = 'left';
       ctx.fillStyle = '#ffffff';
       ctx.fillText(`${sat.name}-Class Low Orbit Ion Cannon`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 4));
-      ctx.fillText(`Level: ${sat.level} · ${sat.alive ? Math.round(sat.health * 100) + '% power' : 'OFFLINE'}`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 26));
+      ctx.fillText(`Level: ${sat.level} · ${sat.alive ? Math.round(sat.health * 100) + '% power' : `OFFLINE (${Math.max(0, (sat.downUntil || 0) - this.turnCount)} turns)`}`, Math.round(sat.x - cam.x + 120), Math.round(sat.y - cam.y + 26));
       // MAIA's health bar (its strike damage scales with it)
       const bx = Math.round(sat.x - cam.x + 120), by = Math.round(sat.y - cam.y + 34);
       ctx.fillStyle = HUD.plate;

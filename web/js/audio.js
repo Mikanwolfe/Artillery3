@@ -1,7 +1,7 @@
 'use strict';
 // Sound: the original A3 samples (web/sounds, transcoded from Resources/sounds) for everything
 // the original had a sound for, mapped as in Artillery3R.cs; a tiny WebAudio synth for the rest
-// (firing, hits, the charge hum, repairs) and as a fallback until a sample has loaded.
+// (firing, hits, repairs) and as a fallback until a sample has loaded.
 // Nothing plays until the first user gesture (autoplay rules).
 
 // name -> gain. Gains even out the originals (e.g. the combat music is ~19 dB quieter than the shop's).
@@ -21,7 +21,6 @@ class Sfx {
     this.muted = false;
     this.musicOn = true;
     this.noiseBuf = null;
-    this.chargeOsc = null;
     this.buf = {}; // decoded samples (Web Audio)
     this.el = {}; // <audio> fallbacks when fetch is blocked (opened from file://)
     this.voices = 0;
@@ -222,25 +221,5 @@ class Sfx {
   win() {
     if (this.play('win')) return;
     [523, 659, 784, 1047].forEach((f, i) => this.tone('triangle', f, f, 0.22, 0.2, i * 0.11));
-  }
-
-  chargeStart() {
-    if (!this.ctx || this.chargeOsc) return;
-    const o = this.ctx.createOscillator();
-    const g = this.ctx.createGain();
-    o.type = 'triangle';
-    o.frequency.value = 110;
-    g.gain.value = 0.05;
-    o.connect(g).connect(this.master);
-    o.start();
-    this.chargeOsc = { o, g };
-  }
-  chargeUpdate(power) {
-    if (this.chargeOsc) this.chargeOsc.o.frequency.value = 110 + power * 5;
-  }
-  chargeStop() {
-    if (!this.chargeOsc) return;
-    try { this.chargeOsc.o.stop(); } catch (e) { /* ignore */ }
-    this.chargeOsc = null;
   }
 }
