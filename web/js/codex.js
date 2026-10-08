@@ -208,7 +208,6 @@ Object.assign(Game.prototype, {
     this.range = null;
     this.cam.bias = 0;
     this.projectiles = []; this.drops = []; this.lasers = []; this.salvo = this.satSeq = null;
-    this.sfx.chargeStop();
     this.charging = false;
     this.phase = 'menu';
     this.tanks = [];

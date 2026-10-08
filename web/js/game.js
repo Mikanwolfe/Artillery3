@@ -431,7 +431,6 @@ class Game {
     this.input.ctl.reset();
     this.input.queue.length = 0;
     this.charging = false;
-    this.sfx.chargeStop();
     this.phase = 'aim';
     this.cpu = t.isCpu ? new CpuController(this, t) : null;
     this.cam.follow(this.range ? this.rangeFocus() : t);
@@ -715,7 +714,6 @@ class Game {
         } else if (a.ability) {
           this.useAbility(t, a.ability);
         } else if (a.endTurn) {
-          this.sfx.chargeStop();
           this.charging = false;
           this.finishTurnEarly();
           return;
@@ -734,12 +732,10 @@ class Game {
       this.sfx.deny();
     }
     if (c.charge) {
-      if (!this.charging) { this.charging = true; this.sfx.chargeStart(); }
+      this.charging = true;
       t.charge = Math.min(t.chargeCap(), t.charge + w.maxCharge * 0.005); // A3 Weapon.Update
-      this.sfx.chargeUpdate((100 * t.charge) / t.chargeCap());
     } else if (this.charging) {
       this.charging = false;
-      this.sfx.chargeStop();
       if (t.charge >= w.maxCharge * 0.03) this.fire(t);
       else t.charge = 0;
     }
@@ -1280,7 +1276,6 @@ class Game {
   // ------------------------------------------------------------ round / shop flow
   endRound() {
     this.phase = 'roundEnd';
-    this.sfx.chargeStop();
     const winner = this.tanks.find((t) => t.alive) || null;
     if (winner) {
       winner.wins++;
@@ -1314,7 +1309,6 @@ class Game {
 
   endMatch() {
     this.clearSave();
-    this.sfx.chargeStop();
     this.charging = false;
     this.paused = false;
     this.ui.showPause(false);
@@ -1525,7 +1519,6 @@ class Game {
     this.events.push(`${t.name} used a repair kit (+${hp} health, +${ar} armour).`);
     if (t.isCpu && Math.random() < 0.6) this.banter(t, 'repair');
     // using the kit is the turn
-    this.sfx.chargeStop();
     this.charging = false;
     t.charge = 0;
     t.shotsLeft = 0;

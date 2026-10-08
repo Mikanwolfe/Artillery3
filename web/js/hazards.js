@@ -261,7 +261,6 @@ Object.assign(Game.prototype, {
     const lead = this.mobs.find((m) => m.alive && m.kind === 'mothership') || this.mobs.find((m) => m.alive && m.dest);
     if (lead) this.cam.follow(lead);
     this.charging = false;
-    this.sfx.chargeStop();
     this.ui.turn({ name: 'Hostiles', color: '#5a5a6a', isCpu: true });
     return true;
   },
