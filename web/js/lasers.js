@@ -95,6 +95,12 @@ class DroneBeam {
     const d = t.drone;
     d.busy = 30;
     if (!this.fired) {
+      // one drone, one beam at a time: a salvo's later beams wait their turn (each would otherwise
+      // pull the drone toward its own height every frame, and a tug-of-war never settles)
+      for (const p of g.projectiles) {
+        if (p === this) break;
+        if (p instanceof DroneBeam && p.owner === t && !p.fired) return true;
+      }
       if (!this.stage) { // a later beam in the same volley skips the wind-up
         this.stage = 'move';
         this.charge = d.primed ? 4 : DRONE_CHARGE;
