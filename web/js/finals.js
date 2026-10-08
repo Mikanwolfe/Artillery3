@@ -152,9 +152,8 @@ class AsteroidStrike {
 // The November Division flagship as built in Avorion, pixelised from the side shot (its red accents
 // recoloured to the NXi's navy): a long arrowhead hull in grey splinter camo, its bow drawn out flat and sharp, a row of turrets on the
 // raised deck, the bridge mast aft of them, navy light strips down the flanks and swept navy fins at
-// the stern. The plate amidships (BC_WING) is its own piece: as the lance charges it lifts clear,
-// light gathers in the gap, and the beam comes down out of the belly under it (BC_EMIT).
-// Profile only, bow toward +x (facing d), centred on x, y.
+// the stern. The lance is spinal: it leaves from under the fore end of the plate amidships (BC_EMIT)
+// and fires forward along the ship's axis. Drawn in profile (bow toward facing d) or turned nose-down.
 const BC_SPRITE = [
   '..........................................................................................................................................NNP...................................................................................................................................................................................',
   '.....................................................................................................................................BBM......................MGM...............................................................................................................................................................',
@@ -200,60 +199,53 @@ const BC_SPRITE = [
 ];
 const BC_PAL = { A: '#69b0f4', B: '#a3a3a2', C: '#436fb5', D: '#7a7570', E: '#345596', F: '#6b5953', G: '#515d55', H: '#4d5049', I: '#233ac2', J: '#213878', K: '#504740', L: '#4c3b33', M: '#39423b', N: '#323731', O: '#31322b', P: '#22312b', Q: '#111f5e', R: '#2e241f', S: '#242b25', T: '#24211c', U: '#1d2c25', V: '#1d2721', W: '#1d241f', X: '#1c1e19', Y: '#162621', Z: '#151f1b', a: '#151d18', b: '#131c17', c: '#121714', d: '#0c1411', e: '#050a08', f: '#010403' };
 const BC_P = 1.6; // world units per sprite pixel
-const BC_EMIT = [225, 33]; // the emitter, under the wing, in line with the red block on the flank
-const BC_WING = (x, y) => y >= 11 && y <= 22 && x >= 123 && x <= 226 - (y - 11) * 0.9; // the plate that lifts, angled at its fore end
-// the hull and the wing as runs of one colour, precomputed
-const [_bcBody, _bcWing] = (() => {
-  const body = [], wing = [];
+const BC_EMIT = [226, 20]; // where the lance leaves: under the fore end of the plate amidships, on the ship's axis
+// the hull as runs of one colour, precomputed
+const _bcRuns = (() => {
+  const out = [];
   BC_SPRITE.forEach((row, y) => {
     let x = 0;
     while (x < row.length) {
       const k = row[x];
       if (k === '.') { x++; continue; }
-      const w = BC_WING(x, y);
       let e = x + 1;
-      while (e < row.length && row[e] === k && BC_WING(e, y) === w) e++;
-      (w ? wing : body).push([BC_PAL[k], x, y, e - x]);
+      while (e < row.length && row[e] === k) e++;
+      out.push([BC_PAL[k], x, y, e - x]);
       x = e;
     }
   });
-  return [body, wing];
+  return out;
 })();
-// where the beam leaves the ship, in the world
-function bcEmitter(x, y, d) {
+// where the lance leaves the ship, in the world. down: the ship turned nose-down (bow toward +y),
+// so the spinal lance fires straight down; otherwise in profile, bow toward facing d.
+function bcEmitter(x, y, d, down = false) {
   const W = BC_SPRITE[0].length, H = BC_SPRITE.length;
-  const ex = d > 0 ? BC_EMIT[0] : W - BC_EMIT[0];
-  return { x: x + (ex - W / 2) * BC_P, y: y + (BC_EMIT[1] - H / 2) * BC_P };
+  const ox = (BC_EMIT[0] - W / 2) * BC_P, oy = (BC_EMIT[1] - H / 2) * BC_P;
+  return down ? { x: x - oy, y: y + ox } : { x: x + d * ox, y: y + oy };
 }
 function drawBattlecruiser(ctx, x, y, d, time, down = false, charge = 0) {
   const W = BC_SPRITE[0].length, H = BC_SPRITE.length, P = BC_P;
-  const x0 = x - (W / 2) * P, y0 = y - (H / 2) * P;
-  const run = (runs, ox, oy) => {
-    for (const [c, rx, ry, n] of runs) {
-      ctx.fillStyle = c;
-      const lx = d > 0 ? rx : W - rx - n;
-      ctx.fillRect(Math.round(x0 + (lx + ox) * P), Math.round(y0 + (ry + oy) * P), Math.ceil(n * P), Math.ceil(P));
-    }
-  };
-  run(_bcBody, 0, 0);
-  // the gap under the lifting wing: dark, then filling with the lance's light
-  const lift = 9 * Math.min(1, charge * 1.6);
-  if (lift > 0.3) {
-    const gx = d > 0 ? 123 : W - 226, gw = 104;
-    ctx.fillStyle = '#121014'; ctx.fillRect(Math.round(x0 + gx * P), Math.round(y0 + 12 * P), Math.round(gw * P), Math.round(10 * P));
-    ctx.fillStyle = `rgba(70,110,255,${0.4 + 0.6 * charge})`; ctx.fillRect(Math.round(x0 + gx * P), Math.round(y0 + 16 * P), Math.round(gw * P), Math.round(3 * P));
-    const e = bcEmitter(x, y, d);
-    ctx.fillStyle = `rgba(200,220,255,${charge})`; ctx.fillRect(Math.round(e.x - 4 * P), Math.round(y0 + 13 * P), Math.round(8 * P), Math.round(e.y - y0 - 13 * P));
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  if (down) ctx.rotate(Math.PI / 2);
+  else if (d < 0) ctx.scale(-1, 1);
+  const x0 = -(W / 2) * P, y0 = -(H / 2) * P;
+  for (const [c, rx, ry, n] of _bcRuns) {
+    ctx.fillStyle = c;
+    ctx.fillRect(Math.round(x0 + rx * P), Math.round(y0 + ry * P), Math.ceil(n * P), Math.ceil(P));
   }
-  run(_bcWing, d * lift * 0.4, -lift);
-  // the flank strips burning brighter as it charges; the emitter's glow under the belly
+  // charging: light gathers under the fore end of the plate and runs out along the axis to the bow
   if (charge > 0) {
-    const e = bcEmitter(x, y, d);
-    ctx.fillStyle = `rgba(120,160,255,${0.4 + 0.6 * charge})`;
-    sq(ctx, e.x, e.y + 4, 6 + 14 * charge + Math.sin(time * 30) * 2);
+    const ex = x0 + BC_EMIT[0] * P, ey = y0 + BC_EMIT[1] * P;
+    ctx.fillStyle = `rgba(90,130,255,${0.25 + 0.5 * charge})`;
+    ctx.fillRect(Math.round(ex), Math.round(ey - 3), Math.round((W - BC_EMIT[0]) * P * Math.min(1, charge * 1.5)), 6);
+    ctx.fillStyle = `rgba(200,220,255,${charge})`;
+    const g = 6 + 16 * charge + Math.sin(time * 30) * 2;
+    ctx.fillRect(Math.round(ex - g / 2), Math.round(ey - g / 2), Math.round(g), Math.round(g));
   }
-  // red running lights
-  if ((time * 2 | 0) % 2) { ctx.fillStyle = '#ff3a3a'; ctx.fillRect(Math.round(x0 + (d > 0 ? W - 2 : 1) * P), Math.round(y0 + 16 * P), 3, 3); }
+  // red running lights at the bow
+  if ((time * 2 | 0) % 2) { ctx.fillStyle = '#ff3a3a'; ctx.fillRect(Math.round(x0 + (W - 2) * P), Math.round(y0 + 16 * P), 3, 3); }
+  ctx.restore();
 }
 
 // the frigates and the fleet's palette (greys, red lights, violet thrusters)
@@ -277,15 +269,18 @@ function drawFrigate(ctx, x, y, time, down = true) {
 // ------------------------------------------------------------------------- orbital strike
 // A fleet shot. The November Division holds station far above the battlefield (ORB_ALT up). Frames:
 // 0-80 the climb: the camera rushes up from the mark through streaks of light, the sky giving way
-// to space, rolling over and back on the way, and comes level on the fleet in formation (escorts
-// and frigates round the flagship, smaller, darker battlecruisers in layers behind); 80-140 the
-// flagship charges, the plate amidships lifting clear as light gathers under it; 140 the lance
-// comes down out of its belly; 140-205 the camera rides the beam down to the mark, which it hits
+// to space, rolling a quarter turn on the way, so the fleet (hanging nose-down over the battlefield)
+// comes in side-on, in formation: escorts and frigates round the flagship, smaller, darker
+// battlecruisers in layers behind; 80-140 the camera closes on the flagship as light gathers under
+// the plate amidships; 140 the spinal lance fires (to the right, on screen: straight down, in the
+// world); 140-205 the camera rolls back level and rides the beam down to the mark, which it hits
 // with a blast far bigger than its damage radius; then the rest of the fleet opens up, a rain of
 // laser fire across the area round it.
 const ORB_ALT = 9000;
 const ORB = { CLIMB: 80, FIRE: 140, HIT: 205, VOLLEY: 214, VOLLEY_LEN: 70, END: 330 };
-// [dx, dy, facing] from the flagship's centre, in profile
+// [dx, dy] from the flagship's centre as the formation appears on screen with the camera rolled a
+// quarter turn (the ships themselves hang nose-down over the battlefield: fleetAt turns it into the world)
+const fleetAt = (sx, sy) => [-sy, sx];
 const FLEET = {
   escorts: [[-700, 170, 1], [660, -150, 1]],
   frigates: [[-300, 300, 1], [320, 230, 1], [-860, -60, 1], [900, 120, 1]],
@@ -330,7 +325,7 @@ class OrbitalStrike {
     this.tx = at.x;
     this.ground = Math.min(game.terrain.hAt(at.x), at.y);
     this.y = this.ground - ORB_ALT; // the flagship's centre on station
-    this.x = this.tx - (bcEmitter(0, 0, 1).x); // placed so its emitter is right over the mark
+    this.x = this.tx - bcEmitter(0, 0, 1, true).x; // nose-down, placed so its lance is right over the mark
     this.t = 0;
     this.charge = 0;
     this.beam = 0;
@@ -341,32 +336,33 @@ class OrbitalStrike {
     this.volley = [];
     for (let i = 0; i < v.n; i++) {
       const s = ships[i % ships.length];
-      this.volley.push({ x: clamp(this.tx + (rng.next() * 2 - 1) * v.spread, 4, WORLD_W - 4), at: ORB.VOLLEY + Math.round(rng.next() * ORB.VOLLEY_LEN), sx: this.x + s[0] });
+      this.volley.push({ x: clamp(this.tx + (rng.next() * 2 - 1) * v.spread, 4, WORLD_W - 4), at: ORB.VOLLEY + Math.round(rng.next() * ORB.VOLLEY_LEN), sx: this.x + fleetAt(s[0], s[1])[0] });
     }
     game.cam.ceil = this.y - 2500;
     game.cam.follow(this.focus);
     game.ui.notice('NXi November Division fleet on station.');
   }
 
-  get emit() { return bcEmitter(this.x, this.y, 1); }
+  get emit() { return bcEmitter(this.x, this.y, 1, true); }
 
   update() {
     const g = this.game, cam = g.cam, t = ++this.t;
     const ease = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
     const f = this.focus, e = this.emit;
-    if (t <= ORB.CLIMB) { // the climb, rolling over and back, pulling out to take in the fleet
+    if (t <= ORB.CLIMB) { // the climb, rolling a quarter turn and pulling out: the fleet comes in side-on
       const u = ease(t / ORB.CLIMB);
       f.x = this.tx;
-      f.y = lerp(this.ground - 200, this.y + 120, u);
-      cam.rot = -Math.PI / 2 * Math.sin(Math.PI * u);
-      cam.setZoom(lerp(this.zoom0, 0.5, u));
+      f.y = lerp(this.ground - 200, this.y, u);
+      const r = ease((t - ORB.CLIMB * 0.35) / (ORB.CLIMB * 0.65));
+      cam.rot = -Math.PI / 2 * r;
+      cam.setZoom(lerp(this.zoom0, 0.5, r));
       g.ascent = Math.sin(Math.PI * Math.min(1, t / ORB.CLIMB)); g.ascentDir = 1; // streaks swell, then clear for the reveal
-    } else { g.ascent = 0; cam.rot = 0; }
+    } else g.ascent = 0;
     if (t > ORB.CLIMB && t <= ORB.FIRE) { // in on the flagship as it charges
       this.charge = (t - ORB.CLIMB) / (ORB.FIRE - ORB.CLIMB);
       const u = ease((t - ORB.CLIMB) / 30);
-      cam.setZoom(lerp(0.5, 1.6, u));
-      f.x = lerp(this.tx, this.x, u); f.y = lerp(this.y + 120, this.y + 40, u);
+      cam.setZoom(lerp(0.5, 1.4, u));
+      f.x = lerp(this.tx, this.x, u); f.y = this.y + 60 * u; // a little toward the bow
     }
     if (t === ORB.FIRE) {
       this.hit = beamTrace(g.terrain, g.targets(), null, e.x, e.y + 4, e.x, WORLD_BOTTOM);
@@ -375,13 +371,15 @@ class OrbitalStrike {
       g.screenFlash = Math.max(g.screenFlash || 0, 0.4);
       g.sfx.satFire();
     }
-    if (t > ORB.FIRE && t <= ORB.HIT) { // ride the beam down
+    if (t > ORB.FIRE && t <= ORB.HIT) { // roll back level and ride the beam down
       const u = ease((t - ORB.FIRE) / (ORB.HIT - ORB.FIRE));
-      cam.setZoom(lerp(1.6, Math.min(this.zoom0, 0.6), Math.min(1, u * 2)));
+      cam.rot = -Math.PI / 2 * (1 - Math.min(1, u * 1.6));
+      cam.setZoom(lerp(1.4, Math.min(this.zoom0, 0.6), Math.min(1, u * 2)));
       f.x = lerp(this.x, e.x, Math.min(1, u * 3));
-      f.y = lerp(e.y + 40, this.hitY - 220, u);
+      f.y = lerp(e.y, this.hitY - 220, u);
     }
     if (t === ORB.HIT) {
+      cam.rot = 0;
       g.explode(e.x, this.hitY, { dmg: this.cfg.dmg, dmgR: this.cfg.r, explR: 60, visR: 520, from: { x: 0, y: -1 } }, this.owner, 'laser');
       for (let i = 0; i < 90; i++) { // the shockwave, running out along the ground and up
         const a = -Math.PI * Math.random(), sp = 6 + Math.random() * 10;
@@ -414,11 +412,12 @@ class OrbitalStrike {
 
   draw(ctx) {
     const time = this.game.time, x = this.x, y = this.y;
-    for (const [dx, dy] of FLEET.far) drawScaled(ctx, x + dx, y + dy, 0.3, 0.35, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx));
-    for (const [dx, dy] of FLEET.mid) drawScaled(ctx, x + dx, y + dy, 0.55, 0.6, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx));
-    for (const [dx, dy, d] of FLEET.frigates) drawFrigate(ctx, Math.round(x + dx), Math.round(y + dy), time + dx, false);
-    for (const [dx, dy, d] of FLEET.escorts) drawBattlecruiser(ctx, Math.round(x + dx), Math.round(y + dy), d, time + dx, false, 0);
-    drawBattlecruiser(ctx, Math.round(x), Math.round(y), 1, time, false, this.charge);
+    const at = (p) => fleetAt(p[0], p[1]);
+    for (const p of FLEET.far) { const [dx, dy] = at(p); drawScaled(ctx, x + dx, y + dy, 0.3, 0.35, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx, true)); }
+    for (const p of FLEET.mid) { const [dx, dy] = at(p); drawScaled(ctx, x + dx, y + dy, 0.55, 0.6, () => drawBattlecruiser(ctx, 0, 0, 1, time + dx, true)); }
+    for (const p of FLEET.frigates) { const [dx, dy] = at(p); drawFrigate(ctx, Math.round(x + dx), Math.round(y + dy), time + dx, true); }
+    for (const p of FLEET.escorts) { const [dx, dy] = at(p); drawBattlecruiser(ctx, x + dx, y + dy, 1, time + dx, true, 0); }
+    drawBattlecruiser(ctx, x, y, 1, time, true, this.charge);
     if (this.beam > 0) {
       const e = this.emit, w = 26 * this.beam + 6;
       ctx.fillStyle = `rgba(80,130,255,${0.5 * this.beam})`;

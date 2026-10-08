@@ -56,11 +56,11 @@ const GUN_NOTES = {
   ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling): a heavy beam that leaves a boiling pool, twice a turn.'],
   massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). Point and click, if it can see.'],
   ragnarok: ['Final', 'G.W. Tiger only. A marker round for her platoon 22 km back (four G.W. Tigers, a Karl-Gerät, and the batteries along the ridge): two dozen rounds across the area, then the 60cm: an enormous crater, and an earthquake that hits everyone on the ground within 1,000.'],
-  zeropoint: ['Final', 'Object 15X only. A railgun probe (400). Past the fleet, the belt and Jupiter, the Naito MAIA Containment Satellite takes annihilation orders: the ground 520 either side of the probe is deleted outright, down through the world, and anything that falls in is gone.'],
-  verdict: ['Final', 'November only. A target dot. The fleet takes station overhead; the flagship\'s lance comes down on the mark (3,600), then the rest of the fleet rains 48 laser shots (150 each) across 620 either side of it.'],
-  constellation: ['Final', 'Innocentia only. A laser dot. MAIA opens her eye and the sky fills with MAIAs, a vast one behind them; five waves of 40 shots (110 each) hit across 650 either side of the mark, then the vast MAIA\'s beam comes down: 2,600.'],
-  morrighan: ['Final', 'Alban Eiler only. A flare that summons the goddess Morrighan over the mark; she looses 26 seeking arrows of light at everything in reach.'],
-  apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 3,400 across 400, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
+  zeropoint: ['Final', 'Object 15X only. A railgun probe (1,200). Past the fleet, the belt and Jupiter, the Naito MAIA Containment Satellite takes annihilation orders: the ground 520 either side of the probe is deleted outright, down through the world, and anything that falls in is gone.'],
+  verdict: ['Final', 'November only. A target dot. The fleet takes station overhead; the flagship\'s lance comes down on the mark (6,000), then the rest of the fleet rains 60 laser shots (450 each) across 600 either side of it.'],
+  constellation: ['Final', 'Innocentia only. A laser dot. MAIA opens her eye and the sky fills with MAIAs, a vast one behind them; five waves of 40 shots (320 each) hit across 650 either side of the mark, then the vast MAIA\'s beam comes down: 6,000.'],
+  morrighan: ['Final', 'Alban Eiler only. A flare that summons the goddess Morrighan over the mark; she looses 30 seeking arrows (600 each) of light at everything in reach.'],
+  apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 6,000 across 520, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
 };
 const GIRL_NOTES = {
   gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and she drives anywhere without fall or tree damage.' },
