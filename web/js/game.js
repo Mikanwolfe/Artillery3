@@ -80,6 +80,7 @@ class Camera {
     this.zoom = 1; // mouse wheel: >1 closer, <1 further out (CAM_ZOOM_MIN..CAM_ZOOM_MAX)
     this.rot = 0; // a roll, in radians, for set pieces (the HUD never turns)
     this.ceil = -1000; // how high the camera may go (set pieces lift it, into space)
+    this.wide = 0; // how far past the map's edges it may go (G.W.'s battery sits off the map)
   }
 
   // the view in world units at this zoom, and world -> screen (HUD) coordinates
@@ -96,7 +97,7 @@ class Camera {
     if (!ease) this.zoomTo = z; // set pieces jump straight there; the wheel eases (update)
     const cx = this.x + this.w / 2, cy = this.y + this.h * 0.55;
     this.zoom = z;
-    this.x = clamp(cx - this.w / 2, 0, Math.max(0, WORLD_W - this.w));
+    this.x = clamp(cx - this.w / 2, -this.wide, Math.max(0, WORLD_W - this.w) + this.wide);
     this.y = clamp(cy - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h);
   }
 
@@ -106,7 +107,7 @@ class Camera {
     const f = this.manual || this.focus;
     if (!f) return null;
     return {
-      x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), 0, Math.max(0, WORLD_W - this.w)),
+      x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), -this.wide, Math.max(0, WORLD_W - this.w) + this.wide),
       y: clamp(f.y - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h),
     };
   }
@@ -488,7 +489,7 @@ class Game {
       this.cam.update();
       return;
     }
-    this.satellite.barrage = !!(this.satSeq && this.satSeq.barrage);
+    this.satellite.barrage = !!(this.satSeq && (this.satSeq.barrage || this.satSeq.constellation)); // the Hatsuyuki barrage (Yukikaze, Innocentia's Array)
     this.satellite.update();
     for (const t of this.tanks) {
       t.update(DT);
@@ -845,7 +846,6 @@ class Game {
       this.cam.follow(p);
     }
     this.particles.muzzle(m.x, m.y, t.aimVec(), s.w);
-    if (s.w.mech) this.siegeBlast(t, m); // the 80cm going off
     t.recoil = 1; // every round kicks the barrel back
     if (!s.first) this.sfx.shot(s.w);
     s.first = false;
@@ -995,7 +995,7 @@ class Game {
       }
       if (w.kind === 'flak' || w.airburst) this.shrapnel(p);
       if (w.orbital) this.projectiles.push(new OrbitalStrike(this, p.owner, p, w.orbital)); // November's Verdict (finals.js)
-      if (w.quake) this.quake(p.x, p.y, w.quake, p.owner); // G.W. Tiger's Ragnarök
+      if (w.battery) this.projectiles.push(new BatteryStrike(this, p.owner, p, w.battery)); // G.W. Tiger's Ragnarök
       if (w.deity) this.projectiles.push(new DeitySummon(this, p.owner, p, w.deity)); // Alban's Morrighan
       if (w.incendiary && w.frag) { // a burning fragment: a small patch of fire that sticks and scorches
         for (let i = 0; i < 2; i++) this.drops.push(new AcidDrop(this, p.owner, p.x, p.y - 2, (rng.next() - 0.5) * 3, -1 - rng.next() * 2, w.incendiary, true));

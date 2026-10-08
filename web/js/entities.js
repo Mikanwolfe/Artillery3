@@ -161,7 +161,7 @@ class Tank {
   // still pitches the elevation range, see aimVec)
   pivot(facing = this.facing) {
     const a = GIRL_ART[this.vehicle.id] || GIRL_ART.gwt;
-    return { x: this.x + facing * a.pivot[0] * GIRL_SCALE, y: this.y + a.pivot[1] * GIRL_SCALE - (this.weapon && this.weapon.mech ? MECH_LIFT : 0) };
+    return { x: this.x + facing * a.pivot[0] * GIRL_SCALE, y: this.y + a.pivot[1] * GIRL_SCALE };
   }
 
   // hull pitch in degrees for the given facing (+ = nose up), from the ground-slope tilt
@@ -208,10 +208,7 @@ class Tank {
     const o = { id: this.vehicle.id, x, y, facing: f, color: this.color, state, t: this.blink || 0, walking: this.walking > 0, flash: this.flash, pose: this.pose || 'idle', poseT: this.poseT || 0 };
     // a turret girl (girls.js) with her rigging; the gun is the equipped weapon's skin (weaponskins.js)
     // drawn at full size in girls.js units, scaled down about her feet
-    const mech = this.alive && this.weapon.mech; // G.W. Tiger's Ragnarök: she rides the mech
-    if (mech) drawMech(ctx, this);
     ctx.save();
-    if (mech) ctx.translate(0, -MECH_LIFT);
     ctx.translate(x, y);
     ctx.scale(GIRL_SCALE, GIRL_SCALE);
     ctx.translate(-x, -y);

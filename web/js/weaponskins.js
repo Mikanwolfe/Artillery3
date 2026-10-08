@@ -6,7 +6,7 @@
 
 const SKIN_OVERRIDES = {
   terminus: { barrels: 4, size: 5, n: 9, gap: 5, color: '#e8e8f4', band: '#4a6aff', glow: '#9ab4ff' }, // white-haired, blue-eyed holy sword
-  ragnarok: { barrels: 1, size: 9, n: 12, gap: 6, color: '#4e5464', band: '#ffffff', brake: true }, // the 80cm siege gun
+  ragnarok: { barrels: 1, size: 7, n: 10, gap: 6, color: '#4e5464', band: '#ff4a3a', brake: true }, // her gun, with a red marker band
   massdriver: { barrels: 2, size: 4, n: 11, gap: 6, color: '#8a90a0', band: '#ffffff', rail: true, glow: '#c8f0ff' }, // a rail
   cls220: { color: '#c86494', band: '#ffd0e4' }, // Doki-Doki pink
   cls770: { color: '#b45ab4', band: '#ff9ad8', size: 6 }, // Natsuki: pink and purple cupcakes
@@ -137,7 +137,7 @@ function drawGun(ctx, w, p, v, facing, recoil, deep, t, charge = 0) {
 function shellSkin(w) {
   const size = clamp(5 + w.dmg / 140, 5, 12);
   if (w.frag) return { size: 3, body: [70, 60, 50], nose: [140, 110, 80] };
-  if (w.id === 'ragnarok') return { size: 16, body: [70, 74, 86], nose: [200, 60, 50] }; // an 80cm shell
+  if (w.id === 'ragnarok') return { size: 8, body: [70, 74, 86], nose: [255, 70, 50] }; // a marker round
   if (w.arrow) return { size: 4, body: [255, 240, 200], nose: [255, 255, 255] }; // Morrighan's arrows of light
   if (w.bomblet) return { size: 5, body: [64, 70, 56], nose: [230, 200, 90] };
   if (w.kind === 'rocket') return { size: clamp(5 + w.dmg / 120, 5, 9), body: [214, 216, 202], nose: [200, 60, 50] };

@@ -234,17 +234,17 @@ const WEAPONS = [
   // Final weapons: one per girl, only in her own shop (sig), the price of the end game, and a tier
   // of their own above Godly (Ascendant). Each has a
   // set piece of its own (finals.js).
-  weapon('ragnarok', "G.W. 'Ragnarök' 80cm Siege Mech", 'shell', 5, 75, { sig: 'gwt', mech: true, maxCharge: 120, disp: 0.8, drift: 0.5, dmg: 3400, dmgR: 230, explR: 70, rarity: 8, cost: 75000,
-    quake: { r: 900, dmg: 320 },
-    short: 'The mech the G.W. trials were really for: it braces its legs and fires one 80cm shell, after the Dora railway gun.', long: 'A giant crater, and an earthquake that hits everyone on the ground within 900. G.W. Tiger only.' }),
+  weapon('ragnarok', "G.W. 'Ragnarök' Battery Fire", 'shell', 5, 75, { sig: 'gwt', maxCharge: 120, disp: 0.3, drift: 0.5, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
+    battery: { dmg: 520, r: 190, spread: 300, karl: { dmg: 3400, r: 230, explR: 70, quake: { r: 900, dmg: 320 } } },
+    short: 'A marker round for her platoon off the map: four G.W. Tiger SPGs and a Karl-Gerät 60cm siege mortar.', long: 'Eight 290mm rounds across 300 either side of the mark, then the Karl\'s: a giant crater, and an earthquake that hits everyone on the ground within 900. G.W. Tiger only.' }),
   weapon('zeropoint', "KTS-T 'Zero Point' Railgun", 'gun', -5, 30, { sig: 'obj', drift: 0.05, pierce: 240, maxCharge: 170, disp: 0, dmg: 2600, dmgR: 60, explR: 8, rarity: 8, cost: 75000,
     short: 'A KTS-T slug so fast it goes through hills: up to 240 of ground, forts and bridges before it stops.', long: 'Flat, fast and through cover. Object 15X only.' }),
   weapon('verdict', "NXi 'Queen's Verdict' Tachyon Lance", 'shell', 0, 80, { sig: 'nxi', drift: 0.6, maxCharge: 120, disp: 0.3, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
     orbital: { dmg: 3600, r: 180 },
     short: 'A target dot for the battlecruiser in orbit. It takes its time to line up, then it fires.', long: 'The November Division keeps the gate from above as well. November only.' }),
   weapon('constellation', "Hatsuyuki 'Constellation' MAIA Array", 'shell', 0, 85, { sig: 'int', maxCharge: 90, disp: 0.5, dmg: 60, dmgR: 40, explR: 4, sat: true, rarity: 8, cost: 75000,
-    constellation: { n: 5, dmg: 760, r: 150, gap: 12 },
-    short: 'Not one MAIA but five. They take aim together and fire one after another.', long: 'Innocentia only.' }),
+    constellation: { n: 5, pulses: 4, dmg: 400, r: 130, gap: 14, pgap: 10 },
+    short: 'Not one MAIA but five, each opening up for a Hatsuyuki barrage, the volleys rolling over one another.', long: 'Innocentia only.' }),
   weapon('morrighan', "LFS 'Morrighan' Invocation", 'shell', 0, 85, { sig: 'alb', maxCharge: 90, disp: 0.4, dmg: 30, dmgR: 30, explR: 2, rarity: 8, cost: 75000,
     deity: { arrows: 26, dmg: 240, r: 45, reach: 950 },
     short: 'A signal flare to the sky, and something answers: the war goddess of the old songs, on a cloud, with a quiver of light.', long: 'She looses a rain of seeking arrows on everything in reach. Alban Eiler only.' }),

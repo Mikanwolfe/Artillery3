@@ -55,10 +55,10 @@ const GUN_NOTES = {
   feuerlilie: ['Matches', 'A homing rocket that bursts like flak: shrapnel and double damage to drones. The easiest anti-air gun to land.'],
   ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling): a heavy beam that leaves a boiling pool, twice a turn.'],
   massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). Point and click, if it can see.'],
-  ragnarok: ['Final', 'G.W. Tiger only. The mech braces and fires one 80cm shell: a giant crater, and an earthquake that hits everyone on the ground within 900.'],
+  ragnarok: ['Final', 'G.W. Tiger only. A marker round: the camera whips off the map to her platoon (four G.W. Tiger SPGs and a Karl-Gerät), which drop eight 290mm rounds across 300 either side of the mark, then the 60cm: a giant crater, and an earthquake that hits everyone on the ground within 900.'],
   zeropoint: ['Final', 'Object 15X only. A flat, near-instant slug that goes through up to 240 of hill, fort or bridge before it stops.'],
   verdict: ['Final', 'November only. The round is just a target dot: an NXi battlecruiser lines up overhead and fires a tachyon lance straight down.'],
-  constellation: ['Final', 'Innocentia only. Five MAIAs appear over the mark and fire one after another, 760 a beam.'],
+  constellation: ['Final', 'Innocentia only. Five MAIAs appear over the mark, open their wings and antennae like Yukikaze\'s barrage, and each fires four pulses of 400, the volleys rolling over one another.'],
   morrighan: ['Final', 'Alban Eiler only. A flare that summons the goddess Morrighan over the mark; she looses 26 seeking arrows of light at everything in reach.'],
   apollon: ['Final', 'Ikaros only. A laser like the others, and where it lands a meteorite follows a second later.'],
 };
