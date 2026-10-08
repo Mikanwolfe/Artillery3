@@ -93,7 +93,7 @@ function codexMeta(w) {
   const el = Math.min(45, w.elevMax);
   const reach = (w.maxCharge * w.maxCharge * Math.sin(2 * rad(el))) / GRAV;
   lines.push(['Reach', `${Math.round(reach).toLocaleString('en-US')} units at ${el}° (the map is ${WORLD_W.toLocaleString('en-US')})`]);
-  const cons = w.guide ? `Seeks from the top of its arc but fishtails, and its seeker aims up to ${Math.round(w.disp * SEEKER_SPREAD)} off` : w.disp <= 0.6 ? 'Pinpoint' : w.disp <= 1.5 ? 'Tight' : w.disp <= 3 ? 'Loose' : 'Wild';
+  const cons = w.guide ? `Seeks only what is within ${w.guide.range} once past the top of its arc (otherwise flies on as a shell), fishtails, and aims up to ${Math.round(w.disp * SEEKER_SPREAD)} off` : w.disp <= 0.6 ? 'Pinpoint' : w.disp <= 1.5 ? 'Tight' : w.disp <= 3 ? 'Loose' : 'Wild';
   lines.push(['Consistency', `${cons}; spread ${w.disp}, wind ${Math.round(w.drift * 100)}%`]);
   return lines;
 }
