@@ -464,7 +464,7 @@ class MaiaArray {
     this.giant.tier = 3;
     this.giantAt = { x: this.tx, y: sky + 80, sc: 3.4 }; // high over the mark, in frame for the last wave
     game.cam.ceil = sky - 1600; // the camera may climb to see it all
-    game.cam.wide = 700; // and pull back wider than the map
+    // (it pulls back to the whole width of the map, never past its edges: CAM_FULL)
     // the barrage: every shot's mark, from the seeded rng
     this.shots = [];
     for (let w = 0; w < cfg.waves; w++) {
@@ -493,8 +493,8 @@ class MaiaArray {
     if (t > ARRAY.EYE && t <= ARRAY.FILL) { // pulling back as the sky fills
       const u = ease((t - ARRAY.EYE) / (ARRAY.FILL - ARRAY.EYE));
       f.x = lerp(sc.x, this.tx, u); f.y = lerp(sc.y + 120, this.ground - 1100, u);
-      cam.zmin = 0.36;
-      cam.setZoom(lerp(1.15, 0.36, u));
+      cam.zmin = CAM_FULL;
+      cam.setZoom(lerp(1.15, CAM_FULL, u));
     }
     if (ARRAY_BURSTS.includes(t)) { g.screenFlash = Math.max(g.screenFlash || 0, 0.55); g.sfx.satPrep(); }
     if (t === ARRAY.FILL) g.ui.notice('Constellation online.');
@@ -510,7 +510,7 @@ class MaiaArray {
     if (t > ARRAY.CHARGE && t <= ARRAY.WAVES) { // down to the mark, the array still overhead
       const u = ease((t - ARRAY.CHARGE) / (ARRAY.WAVES - ARRAY.CHARGE));
       f.x = this.tx; f.y = lerp(this.ground - 1100, this.ground - 650, u);
-      cam.setZoom(lerp(0.36, 0.42, u));
+      cam.setZoom(lerp(CAM_FULL, 0.48, u));
     }
     // the barrage
     for (const s of this.shots) {
@@ -526,7 +526,7 @@ class MaiaArray {
     if (t > ARRAY.BIG_CHARGE && t <= ARRAY.BIG_FIRE) {
       this.big = (t - ARRAY.BIG_CHARGE) / (ARRAY.BIG_FIRE - ARRAY.BIG_CHARGE);
       this.giant.charge = this.big;
-      cam.setZoom(lerp(0.42, 0.36, ease(this.big)));
+      cam.setZoom(lerp(0.48, CAM_FULL, ease(this.big)));
       f.y = lerp(this.ground - 650, this.ground - 900, ease(this.big));
       if (t === ARRAY.BIG_CHARGE + 1) g.sfx.satPrep();
     }
@@ -542,7 +542,7 @@ class MaiaArray {
       g.sfx.satFire(); g.sfx.explosion(70);
       this.giant.charge = 0;
     }
-    if (t > ARRAY.BIG_FIRE + 40 && t <= ARRAY.BIG_FIRE + 80) cam.setZoom(lerp(0.36, this.zoom0, ease((t - ARRAY.BIG_FIRE - 40) / 40)));
+    if (t > ARRAY.BIG_FIRE + 40 && t <= ARRAY.BIG_FIRE + 80) cam.setZoom(lerp(CAM_FULL, this.zoom0, ease((t - ARRAY.BIG_FIRE - 40) / 40)));
     cam.follow(f);
     if (t <= ARRAY.BIG_FIRE + 40) cam.snap();
     if (t >= ARRAY.END) { this.opensMaia = false; cam.zmin = 0; cam.ceil = -1000; cam.wide = 0; return false; }
@@ -649,57 +649,57 @@ function jupiterCanvas() {
 // where the spot sits on that canvas, as a fraction of its size
 const JUP_SPOT = [0.5 + 0.32 / 2, 0.5 + 0.36 / 2];
 
-// the Naito MAIA: a vast containment frame round a MAIA-like core, clamps gripping it, radiator
-// wings off both sides and a deck of long barrels pointing straight down. Screen units, centred on
-// the core; `charge` lights the rings and muzzles, `eye` its red eye.
-const NAITO_BARRELS = [[-300, 360], [-200, 470], [-100, 560], [0, 620], [100, 560], [200, 470], [300, 360]]; // [x, length]
+// the Naito MAIA: a satellite built around one gun. A bus at the top (radiators, solar wings off both
+// sides, dishes, an antenna mast) sits on the breech of an enormous barrel pointing straight down,
+// sheathed in accelerator rings, with a heavy muzzle at the bottom. Screen units, centred on the
+// breech; `charge` lights the rings toward the muzzle and fills the bore.
 function drawNaito(ctx, cx, cy, charge, time) {
   const R = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(cx + x), Math.round(cy + y), Math.round(w), Math.round(h)); };
-  const dark = '#1e1a24', plate = '#3a3242', edge = '#5e5270', red = '#ff2f4a';
-  // radiator wings, off the edges of the screen
+  const dark = '#1c1a22', plate = '#3a3644', edge = '#5c5670', light = '#857c98', red = '#ff2f4a';
+  // solar wings, off the edges of the screen, on long trusses
   for (const s of [-1, 1]) {
-    for (let i = 0; i < 9; i++) {
-      const x = s * (360 + i * 90);
-      R(s > 0 ? x : x - 80, -160 + i * 6, 80, 220 - i * 12, i % 2 ? '#2a2432' : '#322a3c');
-      R(s > 0 ? x : x - 80, -160 + i * 6, 80, 4, edge);
+    R(s > 0 ? 160 : -1300, -330, 1140, 14, plate); // truss
+    for (let i = 0; i < 12; i++) {
+      const x = s * (220 + i * 92);
+      R(s > 0 ? x : x - 84, -470, 84, 120, i % 2 ? '#1e2846' : '#24305a'); // cells, above the truss
+      R(s > 0 ? x : x - 84, -310, 84, 120, i % 2 ? '#24305a' : '#1e2846'); // and below
+      R(s > 0 ? x : x - 84, -470, 84, 3, edge); R(s > 0 ? x : x - 84, -193, 84, 3, edge);
     }
-    R(s > 0 ? 300 : -1200, -40, 900, 22, plate); // the spar
   }
-  // the containment frame
-  R(-340, -330, 680, 40, plate); R(-340, 250, 680, 50, plate);
-  R(-340, -330, 40, 620, plate); R(300, -330, 40, 620, plate);
-  for (let i = 0; i < 6; i++) { R(-300 + i * 120, -330, 6, 40, edge); R(-300 + i * 120, 250, 6, 50, edge); }
-  // the antenna spire above
-  R(-14, -620, 28, 300, dark); R(-60, -520, 120, 10, edge); R(-90, -440, 180, 10, edge);
-  if ((time * 2 | 0) % 2) R(-6, -640, 12, 12, red);
-  // the core, a MAIA's stepped discs grown huge
-  const disc = (r, col) => { ctx.fillStyle = col; for (let y = -r; y < r; y += 10) { const w = 2 * Math.sqrt(Math.max(0, r * r - (y + 5) * (y + 5))); ctx.fillRect(Math.round(cx - w / 2), Math.round(cy + y), Math.round(w), 10); } };
-  disc(240, '#4a1636'); disc(205, '#17172f'); disc(160, '#5a1c42'); disc(110, '#2a0e22');
-  // its eye: red, slit, staring down
-  const o = 0.3 + 0.7 * charge;
-  for (let y = -40; y < 40; y += 4) { const v = (y + 2) / 40; if (Math.abs(v) > o) continue; const w = 90 * Math.sqrt(1 - v * v); R(-w, y, w * 2, 4, '#ffe6ea'); }
-  for (let y = -34; y < 34; y += 4) { if (Math.abs((y + 2) / 40) > o) continue; const w = Math.sqrt(Math.max(0, 34 * 34 - (y + 2) * (y + 2))); R(-w, y, w * 2, 4, Math.abs(y) < 14 ? '#ff3a52' : '#a01028'); }
-  R(-4, -30 * o, 8, 60 * o, '#12020a');
-  // the clamps gripping it from the corners, with their chains
-  for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-    for (let k = 0; k < 7; k++) R(sx * (300 - k * 22) - 14, sy * (290 - k * 20) - 14, 28, 28, k % 2 ? dark : plate);
-    R(sx * 158 - 30, sy * 150 - 30, 60, 60, edge);
+  // the bus: a stack of armoured blocks, radiator fins, dishes, the mast
+  R(-170, -520, 340, 260, plate); R(-170, -520, 340, 6, light); R(-170, -266, 340, 6, dark);
+  for (let i = 0; i < 7; i++) R(-150 + i * 46, -490, 30, 200, i % 2 ? dark : '#2c2934'); // panel seams
+  R(-120, -620, 240, 100, plate); R(-120, -620, 240, 5, light);
+  for (let i = 0; i < 9; i++) R(-110 + i * 26, -700, 14, 80, edge); // radiator fins
+  R(-8, -900, 16, 200, dark); R(-50, -820, 100, 8, edge); R(-80, -760, 160, 8, edge); // antenna mast
+  if ((time * 2 | 0) % 2) R(-6, -916, 12, 12, red);
+  for (const s of [-1, 1]) { // dishes
+    R(s * 210 - 40, -610, 80, 14, light); R(s * 210 - 26, -624, 52, 14, edge); R(s * 210 - 4, -596, 8, 40, dark);
   }
-  // the barrel deck and the barrels, pointing down
-  R(-380, 300, 760, 60, dark); R(-380, 300, 760, 6, edge);
-  NAITO_BARRELS.forEach(([x, L], i) => {
-    R(x - 26, 360, 52, 40, plate); // breech housing
-    R(x - 16, 400, 32, L - 40, '#2c2634'); // tube
-    R(x - 16, 400, 6, L - 40, edge);
-    for (let k = 0; k < 5; k++) {
-      const y = 430 + k * (L - 90) / 4, lit = charge * 5 > k;
-      R(x - 22, y, 44, 12, lit ? '#ff3a8a' : plate); // accelerator rings, lighting in turn
-    }
-    R(x - 24, 360 + L, 48, 22, plate); // muzzle
-    if (charge > 0) { const g = charge * (0.6 + 0.4 * Math.sin(time * 20 + i)); R(x - 14, 360 + L + 16, 28, 20 + 40 * g, `rgba(255,80,160,${g})`); R(x - 6, 360 + L + 20, 12, 30 + 70 * g, `rgba(255,230,245,${g})`); }
-  });
-  // warning lights along the frame
-  for (let i = 0; i < 12; i++) if (((time * 3 | 0) + i) % 4 === 0) R(-330 + i * 58, -322, 8, 8, red);
+  // the breech: the gun's heavy end, wider than the bus, gripped by clamps
+  R(-300, -260, 600, 180, dark); R(-300, -260, 600, 8, edge);
+  for (let i = 0; i < 6; i++) R(-280 + i * 96, -240, 56, 140, plate);
+  for (const s of [-1, 1]) { R(s * 310 - 34, -280, 68, 240, plate); R(s * 310 - 34, -280, 68, 6, light); }
+  // the barrel: long, banded with accelerator rings that light in turn as it charges
+  const L = 1250, bw = 320;
+  R(-bw / 2, -80, bw, L, '#2a2632'); R(-bw / 2, -80, 30, L, edge); R(bw / 2 - 26, -80, 26, L, dark); R(-bw / 2 + 60, -80, 8, L, '#34303e');
+  const n = 9;
+  for (let k = 0; k < n; k++) {
+    const y = -40 + k * (L - 140) / (n - 1), lit = charge * n > k;
+    R(-bw / 2 - 26, y, bw + 52, 38, lit ? '#ff3a6a' : plate);
+    R(-bw / 2 - 26, y, bw + 52, 5, lit ? '#ffd0dc' : light);
+    if (lit) R(-bw / 2 - 40, y + 10, bw + 80, 18, 'rgba(255,60,110,0.35)');
+  }
+  // the muzzle, and the bore filling with light
+  R(-bw / 2 - 50, L - 120, bw + 100, 70, plate); R(-bw / 2 - 50, L - 120, bw + 100, 6, light);
+  R(-120, L - 50, 240, 20, dark);
+  if (charge > 0) {
+    const g = charge * (0.7 + 0.3 * Math.sin(time * 24));
+    R(-110, L - 52, 220, 30 + 120 * g, `rgba(255,70,130,${g})`);
+    R(-50, L - 48, 100, 40 + 160 * g, `rgba(255,235,245,${g})`);
+  }
+  // warning lights down the barrel
+  for (let i = 0; i < 10; i++) if (((time * 3 | 0) + i) % 3 === 0) R(-bw / 2 - 8, i * 140, 8, 8, red);
 }
 
 class NaitoStrike {
@@ -739,8 +739,8 @@ class NaitoStrike {
     if (t === N.ORDERS) { g.ui.notice('Annihilation orders received.'); g.events.push('Annihilation orders received.'); g.sfx.satPrep(); }
     if (t === N.CUT) g.sfx.satFire();
     if (t === N.DIVE) { // back down to the battlefield, the whole of it
-      cam.zmin = 0.36; cam.wide = 700;
-      cam.setZoom(0.36);
+      cam.zmin = CAM_FULL;
+      cam.setZoom(CAM_FULL);
       f.x = WORLD_W / 2; f.y = this.ground - 4000;
     }
     if (t > N.DIVE && t <= N.HIT) {
@@ -772,7 +772,7 @@ class NaitoStrike {
         g.particles.add({ x: this.tx + (Math.random() * 2 - 1) * this.cut, y: lerp(cam.y, this.ground, Math.random()), vx: (Math.random() - 0.5) * 0.6, vy: -0.2 - Math.random() * 0.4, g: 0, drag: 0.99, life: 1.5 + Math.random(), size: 30 + Math.random() * 50, color: Math.random() < 0.5 ? [230, 220, 255] : [255, 200, 230] });
       }
     }
-    if (t > N.HIT + 90 && t <= N.HIT + 130) cam.setZoom(lerp(0.36, this.zoom0, ease((t - N.HIT - 90) / 40)));
+    if (t > N.HIT + 90 && t <= N.HIT + 130) cam.setZoom(lerp(CAM_FULL, this.zoom0, ease((t - N.HIT - 90) / 40)));
     if (t === N.HIT + 90) f.x = this.tx, f.y = this.ground - 200;
     cam.follow(f);
     if (t <= N.HIT + 90) cam.snap();
@@ -837,11 +837,11 @@ class NaitoStrike {
       const shake = charge > 0.6 ? (Math.random() - 0.5) * 8 * charge : 0;
       ctx.save();
       ctx.translate(W / 2 + shake, 0);
-      ctx.scale(0.62, 0.62);
-      drawNaito(ctx, 0, lerp(-1500, 300, u), charge, time);
+      ctx.scale(0.3, 0.3);
+      drawNaito(ctx, 0, lerp(-1500, 620, u), charge, time); // sliding down from above, the whole length of it in view
       ctx.restore();
       ctx.font = 'bold 13px monospace'; ctx.textAlign = 'left';
-      if (t > N.SAT + 20) { ctx.fillStyle = `rgba(255,200,205,${clamp((t - N.SAT - 20) / 20, 0, 1)})`; ctx.fillText('NAITO MAIA  //  CONTAINMENT SATELLITE', 24, H - 40); }
+      if (t > N.SAT + 20) { ctx.textAlign = 'center'; ctx.fillStyle = `rgba(255,200,205,${clamp((t - N.SAT - 20) / 20, 0, 1)})`; ctx.fillText('NAITO MAIA  //  CONTAINMENT SATELLITE', W / 2, Math.round(H * 0.17)); }
       if (t > N.ORDERS) {
         ctx.font = 'bold 26px monospace'; ctx.textAlign = 'center';
         ctx.fillStyle = (time * 4 | 0) % 2 ? '#ff4060' : '#ffd0d8';

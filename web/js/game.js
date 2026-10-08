@@ -6,6 +6,7 @@
 const CHATTINESS = 0.7; // scales every reaction probability in react(); lower = quieter CPUs
 const CAM_ZOOM_MIN = 0.5; // mouse-wheel zoom range (1: the standard 1600 x 900 view)
 const CAM_ZOOM_MAX = 1.8;
+const CAM_FULL = VIEW_W / WORLD_W; // the furthest a set piece pulls back: the map's whole width, edge to edge
 const CAM_ZOOM_EASE = 6; // the wheel zoom closes 1/6 of the way to its target each frame
 const LABEL_ANCHOR = 60; // HUD labels hang this far (world units at zoom 1) above a vehicle's feet
 const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
