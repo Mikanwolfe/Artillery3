@@ -37,7 +37,8 @@ const RANGE_ERR_SCALE = 650;
 // the solver's miss distance, so it will take a somewhat worse shot to hit back.
 const RETALIATE = { easy: 180, normal: 260, hard: 320 };
 const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
-const AI_BUDGET_MS = 5; // planning time per frame, so a CPU's aim search never stalls a frame
+const AI_MOBS = 2; // mobs (drones, motherships) a CPU weighs as targets: the nearest few
+const AI_BUDGET_MS = 8; // planning time per frame, so a CPU's aim search never stalls a frame
 const MOB_DISLIKE = 90; // score penalty for going after a mob instead of a player (less for big bounties / with flak)
 const SAT_DISLIKE = 220; // score penalty for shooting at MAIA rather than a rival (less when it is healthy)
 
@@ -95,15 +96,15 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
     return { err, score: err - arc * (f - 1), f };
   };
   let best = { err: Infinity, score: Infinity, f: 1, elev: (w.elevMin + w.elevMax) / 2, v: maxV / 2, facing };
-  const vStep = maxV / 40;
-  for (let e = w.elevMin; e <= w.elevMax; e += 3) {
+  const vStep = maxV / 28; // a coarse pass (the refinement below closes in)
+  for (let e = w.elevMin; e <= w.elevMax; e += 5) {
     for (let v = maxV * 0.08; v <= maxV; v += vStep) {
       const r = evalShot(e, v);
       if (r.score < best.score) best = { ...r, elev: e, v, facing };
     }
     yield;
   }
-  for (const [de, dv, n] of [[0.5, vStep / 4, 6], [0.1, vStep / 20, 6]]) {
+  for (const [de, dv, n] of [[1, vStep / 4, 6], [0.2, vStep / 20, 6]]) {
     const e0 = best.elev;
     const v0 = best.v;
     for (let i = -n; i <= n; i++) {
@@ -138,7 +139,13 @@ class CpuController {
     const g = this.game;
     const t = this.tank;
     // drones are fair game too, but a CPU would rather hit a rival
-    const enemies = g.tanks.filter((x) => x.alive && x !== t).concat(g.mobs.filter((d) => d.alive));
+    // (only the nearest few: every target multiplies the search, and with a mothership's swarm
+    // overhead a full search could hold the world still for many seconds)
+    const mobs = g.mobs.filter((d) => d.alive).sort((a, b) => Math.abs(a.x - t.x) - Math.abs(b.x - t.x));
+    let enemies = g.tanks.filter((x) => x.alive && x !== t).concat(mobs.slice(0, AI_MOBS));
+    if (t.lastAttacker && t.lastAttacker.isMob && t.lastAttacker.alive && !enemies.includes(t.lastAttacker)) enemies.push(t.lastAttacker);
+    // the rest of an autoloader's clip goes at the same target, if it still stands
+    if (t.firedThisTurn && t.planTarget && t.planTarget.alive && t.planTarget !== t) enemies = [t.planTarget];
     // MAIA: worth shooting down when a rival can call it and this CPU can't
     const sat = g.satellite;
     const rivalsUplink = g.tanks.some((x) => x.alive && x !== t && x.weapons.some((id) => WEAPON_BY_ID[id].sat));
@@ -184,6 +191,7 @@ class CpuController {
     best.elev = clamp(best.elev + rng.gauss() * k.se * f, w.elevMin, w.elevMax);
     best.v = clamp(best.v * (1 + rng.gauss() * k.sc * f), w.maxCharge * 0.05, w.maxCharge);
     best.revenge = best.target === grudge;
+    t.planTarget = best.target;
     return best;
   }
 
@@ -318,7 +326,7 @@ class CpuController {
       case 'charge':
         this.timer -= dt;
         if (this.timer > 0) return;
-        if (t.charge < this.plan.v) c.charge = true;
+        if (t.charge < Math.min(this.plan.v, t.chargeCap())) c.charge = true; // (a plan past the cap would hold the trigger forever)
         else this.state = 'done';
         break;
       default:
