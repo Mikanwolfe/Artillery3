@@ -132,7 +132,7 @@ option { background: var(--bg); color: var(--fg); }
 
 /* ---------------------------------------------------------------- character select */
 .who { display: flex; align-items: center; color: var(--fg); letter-spacing: 0.1em; }
-#veh-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8em; }
+#veh-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.7em; }
 .veh { background: var(--bg2); border: 1px solid var(--line); padding: 0 0 1em; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 0.55em; position: relative; transition: border-color .12s, background .12s; }
 .veh:hover, .veh:focus-visible { border-color: var(--accent); background: var(--bg3); outline: none; }
 .veh .key { position: absolute; top: 0.5em; left: 0.6em; color: var(--ash); font-size: 0.8em; }

@@ -266,7 +266,7 @@ class Game {
     }
     const v = hi;
     // does terrain or a tree get in the way?
-    const hit = simulateShot(this.terrain, wind, this.targets(), t, m.x, m.y, u.x * v, u.y * v, t.weapon.drift);
+    const hit = simulateShot(this.terrain, wind, this.targets(), t, m.x, m.y, u.x * v, u.y * v, t.weapon.drift, t.weapon, this.seekables());
     return { v, frac: v / cap, blocked: dist(hit.x, hit.y, tg.x, tg.y) > 45 };
   }
 
@@ -422,7 +422,7 @@ class Game {
   // ------------------------------------------------------------ main loop
   step() {
     this.time += DT;
-    this.bg.update(DT, this.wind);
+    this.bg.update(DT, this.wind, this.cam);
     this.particles.update(DT, this.wind);
     this.satellite.update();
     for (const t of this.tanks) {
@@ -1523,7 +1523,8 @@ class Game {
       return;
     }
     // predicted arc for the current charge (gravity, terrain and trees; no dispersion)
-    const p = { x: m.x, y: m.y, vx: v.x * t.charge, vy: v.y * t.charge, age: 0, drift: t.weapon.drift };
+    const p = { x: m.x, y: m.y, vx: v.x * t.charge, vy: v.y * t.charge, age: 0, drift: t.weapon.drift, guide: guideFor(t.weapon, t), prefer: preferFor(t) };
+    const seek = this.seekables();
     const wind = AIM_GUIDE_WIND || t.upgrades.computer ? this.wind : { x: 0, y: 0 };
     let travelled = 0;
     let next = 8;
@@ -1531,7 +1532,7 @@ class Game {
     let py = p.y;
     const arcLen = AIM_ARC_LEN * (t.upgrades.computer ? 1.6 : 1);
     for (let i = 0; i < 600 && next < arcLen; i++) {
-      const r = stepBallistic(p, this.terrain, wind, this.targets(), t);
+      const r = stepBallistic(p, this.terrain, wind, this.targets(), t, seek);
       const seg = dist(px, py, p.x, p.y);
       while (seg > 0 && next <= travelled + seg && next < arcLen) {
         const f = (next - travelled) / seg;

@@ -37,7 +37,19 @@ class Background {
     };
   }
 
-  update(dt, wind) {
+  update(dt, wind, cam) {
+    // the particles live in the world: when the camera pans, they stay put (scrolling past at the
+    // terrain's speed) and wrap around the screen edges so the field stays full
+    if (cam && this.lastCam) {
+      const dx = (cam.x - this.lastCam.x) * VIEW_SCALE, dy = (cam.y - this.lastCam.y) * VIEW_SCALE;
+      if (dx || dy) for (const f of this.flakes) {
+        f.x -= dx;
+        f.y -= dy;
+        if (f.x < -10) f.x += W + 20; else if (f.x > W + 10) f.x -= W + 20;
+        if (f.y < -10) f.y += H + 20; else if (f.y > H + 10) f.y -= H + 20;
+      }
+    }
+    if (cam) this.lastCam = { x: cam.x, y: cam.y };
     this.t += dt;
     const kind = this.biome.particles.kind;
     // ambient particles ride the wind: n is -1..1 (full wind left .. right), each flake has its own

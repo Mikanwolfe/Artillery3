@@ -19,7 +19,7 @@ const SKIN_OVERRIDES = {
   katis: { band: 'rgb(255,120,200)' },
 };
 
-const KIND_TINT = { shell: null, gun: '#4a4f5a', laser: '#33404e', acid: '#3c5a34', flak: '#5c5c4c' };
+const KIND_TINT = { shell: null, gun: '#4a4f5a', laser: '#33404e', acid: '#3c5a34', flak: '#5c5c4c', rocket: '#5a6450' };
 
 const skinCache = new Map();
 function gunSkin(w) {
@@ -35,11 +35,12 @@ function gunSkin(w) {
     color: KIND_TINT[w.kind],
     band: RARITY[w.rarity].color,
     brake: w.dmgR >= 120,
-    tip: w.kind === 'laser' ? 'lens' : w.kind === 'acid' ? 'acid' : w.kind === 'flak' ? 'flak' : null,
+    tip: w.kind === 'laser' ? 'lens' : w.kind === 'acid' ? 'acid' : w.kind === 'flak' ? 'flak' : w.kind === 'rocket' ? 'tube' : null,
     sat: w.sat,
     gap: 0,
     ...o,
   };
+  if (w.kind === 'rocket') skin.size = Math.max(skin.size, 6); // fat launcher tubes
   skin.step = skin.size * 0.8 + 1;
   if (!skin.gap) skin.gap = skin.size * 0.75 + 1;
   skinCache.set(key, skin);
@@ -105,6 +106,15 @@ function drawGun(ctx, w, p, v, facing, recoil, deep, t, charge = 0) {
     const shift = ((t * 3) % 1) * 0.12; // the rings tick along the barrel
     for (const k of [0.3 + shift, 0.62 + shift]) sq(ctx, p.x + v.x * d * k, p.y + v.y * d * k, s.size + 2);
   }
+  if (s.tip === 'tube') { // launcher tubes: a dark mouth at each muzzle, and a fin band at the breech
+    for (let b = 0; b < s.barrels; b++) {
+      const off = (b - (s.barrels - 1) / 2) * s.gap;
+      ctx.fillStyle = '#1c1a20';
+      sq(ctx, mx - v.y * off * facing + v.x * 2, my + v.x * off * facing + v.y * 2, Math.max(2, s.size - 2));
+    }
+    ctx.fillStyle = '#c4c8b0';
+    sq(ctx, p.x + v.x * (s.start + s.step), p.y + v.y * (s.start + s.step), s.size + 2);
+  }
   if (s.ears) {
     ctx.fillStyle = s.band;
     sq(ctx, mx - v.y * 4 * facing + v.x * 2, my + v.x * 4 * facing + v.y * 2 - 3, 3);
@@ -122,6 +132,8 @@ function drawGun(ctx, w, p, v, facing, recoil, deep, t, charge = 0) {
 function shellSkin(w) {
   const size = clamp(5 + w.dmg / 140, 5, 12);
   if (w.frag) return { size: 3, body: [70, 60, 50], nose: [140, 110, 80] };
+  if (w.bomblet) return { size: 5, body: [64, 70, 56], nose: [230, 200, 90] };
+  if (w.kind === 'rocket') return { size: clamp(5 + w.dmg / 120, 5, 9), body: [214, 216, 202], nose: [200, 60, 50] };
   if (w.id && w.id.startsWith('mob') || w.id === 'shipbomb') return { size, body: [80, 40, 50], nose: [255, 90, 90] };
   if (w.kind === 'laser') return { size, body: [0, 200, 220], nose: hexToRgb(RARITY[w.rarity].color === '#ffffff' ? '#e0e0ff' : RARITY[w.rarity].color) };
   if (w.kind === 'acid') return { size, body: [70, 160, 50], nose: [200, 255, 140] };

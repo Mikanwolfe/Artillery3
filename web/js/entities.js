@@ -359,13 +359,16 @@ class Projectile {
     this.main = main;
     this.trail = [];
     this.peak = y; // highest point reached (smallest y), for the altitude bonus
+    this.guide = guideFor(w, owner); // rockets: seeker settings (null for shells)
+    this.prefer = preferFor(owner);
   }
 
   update() {
     const g = this.game;
     if (this.delay > 0) { this.delay--; return true; } // waiting its turn in a burst
-    const r = stepBallistic(this, g.terrain, g.wind, g.targets(), this.owner);
+    const r = stepBallistic(this, g.terrain, g.wind, g.targets(), this.owner, this.guide ? g.seekables() : undefined);
     g.frontCheck(this);
+    if (!r && this.transform(g)) return false;
     if (!r && this.w.kind === 'flak' && this.fuse(g)) { g.impact(this, { hit: 'air' }); return false; }
     if (this.y < this.peak) this.peak = this.y;
     g.trace(this, this.x, this.y);
@@ -384,6 +387,54 @@ class Projectile {
     }
     if (!r) return true;
     if (r.hit !== 'out') g.impact(this, r);
+    return false;
+  }
+
+  // rockets that change in flight: a carpet rocket opens over its target (or once its motor is out
+  // and it starts to fall) into a line of bomblets; a split rocket breaks into seekers that each
+  // take a different target. Returns true when this projectile has been replaced.
+  transform(g) {
+    const w = this.w;
+    if (w.carpet && this.age > (w.guide ? w.guide.arm : 0) + 4) {
+      // open just short of the locked target (by about a frame and a half of travel), or once the
+      // motor is out and it is falling with nothing locked
+      const lock = this.lock && this.lock.alive ? seekCenter(this.lock) : null;
+      const over = lock && Math.abs(this.x - lock.x) < 40 + Math.abs(this.vx) * 1.5 && this.y < lock.y;
+      const spent = !lock && this.guide && this.age > this.guide.arm + this.guide.burn && this.vy > 0;
+      if (!over && !spent) return false;
+      const c = w.carpet;
+      const bomb = { id: w.id + '_b', name: 'Bomblet', kind: 'shell', dmg: w.dmg * c.frac, dmgR: c.r, explR: 4, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
+        rarity: w.rarity, maxCharge: 10, bomblet: true, drift: 1.1 };
+      for (let i = 0; i < c.n; i++) {
+        const k = i - (c.n - 1) / 2;
+        const b = new Projectile(g, bomb, this.owner, this.x + k * 3, this.y, this.vx * 0.25 + k * 0.9, Math.max(this.vy, 0) * 0.3 + 1 + Math.abs(k) * 0.08, this.main && i === 0);
+        b.peak = this.peak;
+        b.launch = this.launch;
+        g.projectiles.push(b);
+      }
+      g.particles.explosion(this.x, this.y, 30, 'shell');
+      g.sfx.click();
+      return true;
+    }
+    const near = w.split && this.lock && this.lock.alive && dist(this.x, this.y, seekCenter(this.lock).x, seekCenter(this.lock).y) < w.split.near;
+    if (w.split && (near || this.age === w.split.at)) {
+      const sp = w.split;
+      const child = { ...w, split: null };
+      const taken = [];
+      const speed = Math.hypot(this.vx, this.vy);
+      const a0 = Math.atan2(this.vy, this.vx);
+      for (let i = 0; i < sp.n; i++) {
+        const a = a0 + rad((i - (sp.n - 1) / 2) * sp.spread);
+        const c = new Projectile(g, child, this.owner, this.x, this.y, Math.cos(a) * speed, Math.sin(a) * speed, this.main && i === 0);
+        c.age = this.age;
+        c.peak = this.peak;
+        c.launch = this.launch;
+        c.taken = taken; // siblings lock onto different targets
+        g.projectiles.push(c);
+      }
+      g.particles.explosion(this.x, this.y, 24, 'shell');
+      return true;
+    }
     return false;
   }
 
@@ -412,6 +463,26 @@ class Projectile {
     const sp = Math.hypot(this.vx, this.vy) || 1;
     const nx = this.vx / sp;
     const ny = this.vy / sp;
+    if (this.w.kind === 'rocket') {
+      // a rocket: a longer body (three squares) and, while the motor burns, a flickering flame
+      const G = this.guide;
+      const burning = G && this.age <= G.arm + G.burn;
+      if (burning) {
+        for (let k = 0; k < 3; k++) {
+          ctx.fillStyle = k ? `rgba(255,${140 + k * 40},60,${0.8 - k * 0.2})` : 'rgba(255,250,200,0.95)';
+          sq(ctx, this.x - nx * (sk.size * 1.6 + k * 4) + (Math.random() - 0.5) * 2, this.y - ny * (sk.size * 1.6 + k * 4) + (Math.random() - 0.5) * 2, sk.size * (0.8 - k * 0.15) + Math.random() * 2);
+        }
+      }
+      ctx.fillStyle = rgb(col);
+      for (const d of [-sk.size * 0.9, 0]) sq(ctx, this.x + nx * d, this.y + ny * d, sk.size * 0.8);
+      ctx.fillStyle = rgb(sk.nose);
+      sq(ctx, this.x + nx * (sk.size * 0.8), this.y + ny * (sk.size * 0.8), Math.max(2, sk.size * 0.55));
+      if (this.lock && burning && this.age % 10 < 5) { // a blinking seeker light when locked
+        ctx.fillStyle = '#ff4a4a';
+        sq(ctx, this.x, this.y, 2);
+      }
+      return;
+    }
     ctx.fillStyle = rgb(col);
     sq(ctx, this.x - nx * 3, this.y - ny * 3, sk.size);
     ctx.fillStyle = rgb(sk.nose);

@@ -3,6 +3,7 @@
 //   ?seed=N   deterministic gameplay RNG
 //   ?auto=N   skip the menu and run an N-tank all-CPU match
 //   ?speed=X  simulation speed multiplier
+//   ?vehicles=alb,gwt,...  the auto match's vehicles, in seat order
 (function () {
   const params = new URLSearchParams(location.search);
   if (params.has('seed')) rng.seed(+params.get('seed'));
@@ -20,7 +21,8 @@
     const types = (params.get('types') || 'normal,hard,easy,hard').split(',');
     const n = clamp(+params.get('auto') || 3, 2, 4);
     const cfgs = [];
-    for (let i = 0; i < n; i++) cfgs.push({ name: AI_NAMES[i], type: types[i % types.length], vehicle: VEHICLES[i % VEHICLES.length].id });
+    const vs = params.has('vehicles') ? params.get('vehicles').split(',') : VEHICLES.map((v) => v.id);
+    for (let i = 0; i < n; i++) cfgs.push({ name: AI_NAMES[i], type: types[i % types.length], vehicle: vs[i % vs.length] });
     game.startMatch(cfgs, params.has('rounds') ? +params.get('rounds') : 3, { balance: params.get('balance') || 'rebalanced', events: params.get('events') !== 'off', map: params.get('map') || 'random' });
   }
 

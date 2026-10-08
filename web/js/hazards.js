@@ -37,6 +37,8 @@ Object.assign(Game.prototype, {
 
   // everything a shell can hit
   targets() { return this.mobs.length ? this.tanks.concat(this.mobs) : this.tanks; },
+  // what a rocket's seeker can lock onto: vehicles, mobs and supply crates
+  seekables() { return this.targets().concat(this.crates.filter((c) => c.alive)); },
 
   // ------------------------------------------------------------ round setup
   setupHazards() {

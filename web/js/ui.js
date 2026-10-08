@@ -85,7 +85,7 @@ const UI = {
     this.rackClicks();
     window.addEventListener('keydown', (e) => {
       // character select: 1-4 picks a card
-      if (this.pick && !$('vehicles').hidden && /^Digit[1-4]$/.test(e.code)) {
+      if (this.pick && !$('vehicles').hidden && /^Digit[1-5]$/.test(e.code)) {
         const el = $('veh-grid').children[+e.code.slice(5) - 1];
         if (el) { el.click(); e.preventDefault(); }
         return;
@@ -168,7 +168,7 @@ const UI = {
         const fuel = Math.round(100 * (v.fuel || 1));
         return `<div class="veh" tabindex="0" data-v="${v.id}"><span class="key">${i + 1}</span>
           <div class="stage"><canvas class="girl" width="168" height="200" data-g="${v.id}"></canvas></div>
-          <div><span class="maker${v.id === 'nxi' ? ' nxi' : ''}">${v.id === 'nxi' ? 'NXi · November Division' : 'CLS-T trials'}</span><h3>${esc(v.name)}</h3></div>
+          <div><span class="maker${v.id === 'nxi' ? ' nxi' : ''}">${v.id === 'nxi' ? 'NXi · November Division' : v.id === 'alb' ? 'Lymilark Future Sciences' : 'CLS-T trials'}</span><h3>${esc(v.name)}</h3></div>
           <p>${esc(v.blurb)}</p>
           <ul class="traits">${(v.traits || []).map((id) => `<li><b>${esc(TRAITS[id].name)}</b> ${esc(TRAITS[id].desc)}</li>`).join('')}</ul>
           <div class="meters">${meter('Health', v.hp, 200, 'var(--cool)')}${meter('Armour', v.armour, 200, 'var(--accent)')}${meter('Fuel', fuel, 100, 'var(--gold)')}</div>
@@ -206,6 +206,9 @@ const UI = {
     if (w.clip > 1) rows.push(['Load', `${w.clip}/turn`]);
     if (reloadOf(w)) rows.push(['Rld', `${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''}`]);
     if (w.drift !== 1) rows.push(['Wind', `${Math.round(w.drift * 100)}%`]);
+    if (w.guide) rows.push(['Seek', w.guide.range]);
+    if (w.carpet) rows.push(['Carpet', `${w.carpet.n} bomblets`]);
+    if (w.split) rows.push(['Split', `${w.split.n} seekers`]);
     if (w.sat) rows.push(['Sat', 'MAIA']);
     if (w.kind !== 'shell') rows.push(['Type', w.kind]);
     return rows.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
