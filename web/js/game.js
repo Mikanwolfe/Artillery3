@@ -939,7 +939,7 @@ class Game {
     if (t.armed.over) t.cooldown.over = ABILITY_BY_ID.over.cd;
     t.lastCharge = t.charge / t.chargeCap();
     t.armed = { double: false, over: false };
-    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo * (dbl ? 2 : 1), timer: 0, first: true, uplink: linked, designate: this.designation(t) };
+    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: (w.salvo + (w.kind === 'rocket' && hasTrait(t, 'telemetry') ? 1 : 0)) * (dbl ? 2 : 1), timer: 0, first: true, uplink: linked, designate: this.designation(t) };
     t.uplink = false;
     t.charge = 0;
     t.recoil = 1;
@@ -1229,6 +1229,7 @@ class Game {
     if (h.shield) chips.push(['DEFLECTOR ½', '#96d2ff']);
     if (h.capped) chips.push(['REDUNDANCY CAP', '#c3b0ff']);
     if (h.flak) chips.push(['FLAK ×2', '#78d8c4']);
+    if (h.shieldHit) chips.push(['SHIELDING', '#9ae0ff']);
     if (h.aa) chips.push(['AA', '#e8d8a0']);
     if (h.pd) chips.push(['POINT DEFENCE', '#9ae0ff']);
     if (h.armour) chips.push(['ARMOUR', '#c8d2e4']);

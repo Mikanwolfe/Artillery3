@@ -60,6 +60,7 @@ const AA_BY_ID = Object.fromEntries(AA_WEAPONS.concat(AA_STARTERS).map((a) => [a
 const PD_STOP = { aegis: 0.5, ciws: 0.6, kotonapd: 0.75, gatewatch: 0.85, aa_alb: 0.35, aa_obj: 0.45, aa_nxi1: 0.5 };
 for (const a of Object.values(AA_BY_ID)) a.stop = PD_STOP[a.id] || Math.min(0.2, a.pk * 1.5);
 const AA_SHOT_DOWN = 0.2; // a missile left with this little of its damage is shot down in the air
+const DRONE_ZAP_EVERY = 15; // frames between a hostile's discharges (see stepAA)
 const AA_GRAZE = 0.25; // an anti-air burst that misses still grazes for this much
 function aaMaker(a) { return a.name.startsWith('NXi') ? 'NXi' : a.name.startsWith('LFS') ? 'Lymilark' : a.name.startsWith('Kotona') ? 'Kotona' : 'Sengoku Inc.'; }
 const AA_ROUND_SPEED = { air: 26, missile: 60 }; // world units a frame (point defence is near enough hitscan)
@@ -149,6 +150,7 @@ Object.assign(Game.prototype, {
   // every mount's rounds against aircraft come back each turn
   aaNewTurn() {
     for (const t of this.tanks) t.aaGuns = (t.aa || []).map((id) => ({ cd: 0, budget: id ? AA_BY_ID[id].perTurn : 0 }));
+    for (const m of this.mobs || []) if (m.aaMount) m.aaGun = { cd: 0, budget: m.aaMount.perTurn };
   },
 
   // each frame while shots play out: mounts pick something in range and shoot
@@ -188,6 +190,36 @@ Object.assign(Game.prototype, {
         this.aaFire(t, A, air, 'air');
       });
     }
+    // the hostiles' air defence: an AA tank's flak at the players' planes, and every flying
+    // hostile's static discharge field, which zaps any plane that comes close
+    for (const m of this.mobs || []) {
+      if (!m.alive) continue;
+      if (m.aaMount) {
+        const A = m.aaMount, gun = m.aaGun || (m.aaGun = { cd: 0, budget: A.perTurn });
+        if (gun.cd-- <= 0 && gun.budget > 0) {
+          const c = m.center();
+          let air = null, bs = Infinity;
+          for (const p of this.planes || []) {
+            if (!p.targetable) continue;
+            const q = p.center(), d = dist(q.x, q.y, c.x, c.y);
+            if (d >= A.range) continue;
+            const sc = p.hp + p.armour + d * 0.05;
+            if (sc < bs) { bs = sc; air = p; }
+          }
+          if (air) { gun.budget--; gun.cd = A.rof; this.aaFire(m, A, air, 'air'); }
+        }
+      }
+      if (m.flying && this.planes && this.planes.length && (m.zap = (m.zap || 0) + 1) % DRONE_ZAP_EVERY === 0) {
+        const c = m.center(), R = DRONE_FIELD + m.hw;
+        for (const p of this.planes) {
+          if (!p.targetable) continue;
+          const q = p.center();
+          if (dist(q.x, q.y, c.x, c.y) > R) continue;
+          this.lasers.push(new Laser(c.x + (Math.random() - 0.5) * m.hw, c.y, q.x, q.y, '#9ae0ff', 1, 6));
+          this.damage(p, DRONE_FIELD_DMG + m.stage, null, { aa: true, field: true });
+        }
+      }
+    }
   },
 
   aaAircraft(t) {
@@ -201,7 +233,8 @@ Object.assign(Game.prototype, {
   aaFire(t, A, target, kind) {
     const c = t.center(), from = { x: c.x, y: c.y - 14 };
     const q = target.center ? target.center() : { x: target.x, y: target.y };
-    const slot = t.aa.indexOf(A.id); // (its barrels swing onto it, and kick)
+    const slot = t.isMob ? -1 : t.aa.indexOf(A.id); // (its barrels swing onto it, and kick)
+    if (t.isMob) { t.aaAng = Math.atan2(q.y - from.y, q.x - from.x); t.aaKick = 1; }
     if (slot >= 0) { (t.aaAim || (t.aaAim = []))[slot] = Math.atan2(q.y - from.y, q.x - from.x); (t.aaKick || (t.aaKick = []))[slot] = 1; }
     const speed = AA_ROUND_SPEED[A.role];
     let k = Math.max(1, Math.round(dist(q.x, q.y, from.x, from.y) / speed));
