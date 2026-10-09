@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['cc86f17', 'Plane squads are ammo: one early, up to four late. A shot sends a squad, or with none in reserve redirects one already out to the new dot. Lost or spent squads rearm and come back.'],
   ['32b1e58', 'Planes hunt like drones: a squad locks onto the nearest rival and strikes on each of your turns until its loadout is spent (bombers three, torpedo jets one, fighters six), then flies home to rearm. Zuihou gets a deck gun for meanwhile.'],
   ['0e28912', 'Planes fly smooth curves and bank as they turn; all jets but the starter. Each type waits on its own approach line and attacks down it, dive bombers steep and fast enough for a kinetic bonus.'],
   ['0e28912', 'Launching no longer holds up the turn: the squad flies out while play goes on.'],

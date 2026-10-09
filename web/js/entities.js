@@ -80,7 +80,13 @@ class Tank {
   // reloads (rebalanced): own turns until a gun can fire again; 0 = ready
   reloadLeft(id) { return this.reload[id] | 0; }
   // planes: not while its squad is out (planes.js), nor while it rearms after
-  weaponReady(id = this.weapon.id) { return !(this.reload[id] > 0) && !this.deployed[id]; }
+  weaponReady(id = this.weapon.id) {
+    const w = WEAPON_BY_ID[id];
+    if (w.air) { const g = this.wing(w); return g.reserve > 0 || g.out > 0; } // a squad to send, or one to redirect
+    return !(this.reload[id] > 0);
+  }
+  // a plane weapon's squads: in reserve, out (planes.js), and rearming (own turns left, each)
+  wing(w) { return this.wings[w.id] || (this.wings[w.id] = { reserve: w.air.squads || 1, out: 0, rearm: [] }); }
   shotsFor(w) { return w.clip; }
   chargeCap() { return this.weapon.maxCharge * (this.armed.over ? OVERCHARGE : 1); }
 
@@ -110,7 +116,7 @@ class Tank {
     this.aimMemo = null; // CPUs: ranging-in memory per target (ai.js)
     this.cooldown = { double: 0, over: 0, shield: 0, barrier: 0 }; // own turns until each ability is ready again
     this.reload = {}; // weapon id -> own turns until it can fire again (every gun starts the round loaded)
-    this.deployed = {}; // plane weapon id -> its squad is out (planes.js)
+    this.wings = {}; // plane weapon id -> its squads (wing())
     this.turnsTaken = 0; // own turns this round (a squad strikes on a later one)
     this.aaGuns = null;
     this.barrier = null; // Bulwark Barrier direction (unit vector), until the next turn
@@ -148,6 +154,12 @@ class Tank {
   // best loaded one (the starter never reloads, but a sold starter or an old save might leave none)
   tickReloads() {
     for (const id in this.reload) if (this.reload[id] > 0) this.reload[id]--;
+    for (const id in this.wings) { // squads rearming come back into reserve
+      const g = this.wings[id];
+      g.rearm = g.rearm.map((n) => n - 1);
+      g.reserve += g.rearm.filter((n) => n <= 0).length;
+      g.rearm = g.rearm.filter((n) => n > 0);
+    }
     // (planes never skip their rearming: a carrier with nothing else may have a turn with nothing to fly)
     const guns = this.weapons.filter((id) => !WEAPON_BY_ID[id].air);
     if (!this.weapons.some((id) => this.weaponReady(id)) && guns.length) {
