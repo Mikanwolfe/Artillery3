@@ -15,7 +15,7 @@ const PLANE_S = 1.35; // drawing scale (the boxes below are in unscaled units)
 const PLANE_HW = 22; // hitbox half-width
 const PLANE_HH = 16;
 const PLANE_STAGGER = 14; // frames between take-offs
-const PLANE_HOVER = 280; // how high a squad waits over the ground near its mark (above the short-range AA)
+const PLANE_HOVER = 420; // how high a squad waits over the ground near its mark (above the short-range AA)
 const PLANE_GAP = 44; // between planes in a squad's line
 const AIR_ANGLE = { dive: 80, heavy: 75, fighter: 50, rocket: 40, torpedo: 25 }; // approach angle over the horizon, by type
 const TORPEDO_SPEED = 7;
@@ -461,7 +461,7 @@ Object.assign(Game.prototype, {
     o.kinds.forEach((k, i) => { (byKind[k] || (byKind[k] = [])).push(i); });
     G.slot = (i) => {
       const kind = o.kinds[i], list = byKind[kind], k = list.indexOf(i), n2 = list.length;
-      const a = rad(AIR_ANGLE[kind] || 60), R = clamp(PLANE_HOVER / Math.sin(a), 300, 680);
+      const a = rad(AIR_ANGLE[kind] || 60), R = clamp(PLANE_HOVER / Math.sin(a), 450, 1000);
       const row = Math.floor(k / 8), m = Math.min(8, n2 - row * 8), kk = k % 8;
       const x = clamp(mark.x - side * Math.cos(a) * R + (kk - (m - 1) / 2) * PLANE_GAP, 20, WORLD_W - 20);
       let y = Math.min(mark.y, top) - Math.sin(a) * R - row * 34 - (kk % 2) * 14;
