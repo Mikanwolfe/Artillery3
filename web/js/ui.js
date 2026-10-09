@@ -384,7 +384,7 @@ const UI = {
     ab.push(`<button class="slot a" data-jump="1" title="Jump: hop the way you face, for ${Math.round(JUMP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= jumpCost && !t.falling ? '' : 'disabled'}><span class="kb">W</span><span class="txt"><span class="nm">Jump</span><span class="st">${Math.round(JUMP_FUEL * 100)}% fuel</span></span></button>`);
     const leapCost = Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1));
     ab.push(`<button class="slot a" data-jump="leap" title="Leap: bound far the way you face and land softly, for ${Math.round(LEAP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= leapCost && !t.falling && !t.upgrades.deck ? '' : 'disabled'}><span class="kb">L</span><span class="txt"><span class="nm">Leap</span><span class="st">${Math.round(LEAP_FUEL * 100)}% fuel</span></span></button>`);
-    if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% health and armour, takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
+    if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% of health and armour together (health first), takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
     for (const id of t.aa || []) {
       const a = AA_BY_ID[id];
       if (a) ab.push(`<span class="slot a passive" title="${esc(a.name)}: ${esc(a.long)}"><span class="kb">AA</span><span class="txt"><span class="nm">${esc(a.name.replace(/^(SI|NXi|LFS|Kotona) /, ''))}</span><span class="st">${a.role === 'missile' ? 'point defence' : 'anti-air'} · auto</span></span></span>`);
@@ -517,7 +517,7 @@ const UI = {
       $('shop-owned').querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { g.sell(tank, b.dataset.s); render(); }; });
       $('shop-upg').querySelectorAll('[data-u]').forEach((b) => { b.onclick = () => { g.buy(tank, 'upgrade', b.dataset.u); render(); }; });
       $('shop-kits').innerHTML = `<div class="upg"><span>Repair kit <small class="lvl">${'■'.repeat(tank.kits)}${'□'.repeat(Math.max(0, REPAIR_MAX - tank.kits))}</small><br>
-        <small>Restores ${Math.round(REPAIR_FRAC * 100)}% health and armour. Using one (R) takes your turn.</small></span>
+        <small>Restores ${Math.round(REPAIR_FRAC * 100)}% of health and armour together, health first. Using one (R) takes your turn.</small></span>
         <button data-k="1" ${tank.kits < REPAIR_MAX && tank.money >= REPAIR_COST ? '' : 'disabled'}>${money(REPAIR_COST)}</button></div>`;
       $('shop-kits').querySelector('[data-k]').onclick = () => { g.buy(tank, 'kit'); render(); };
       $('shop-abil').innerHTML = ABILITIES.map((a) => {

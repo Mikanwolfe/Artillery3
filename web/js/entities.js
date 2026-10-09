@@ -70,6 +70,15 @@ class Tank {
   get isCpu() { return this.type !== 'human'; }
   // A3 shop: Health++ / Armour++ multiply by 1.3 per level
   get maxHp() { return Math.round(this.vehicle.hp * Math.pow(1.3, this.upgrades.hp)); }
+  // a heal: health first, then armour with what's left over; returns how much it restored
+  heal(amt) {
+    const hp = Math.min(this.maxHp - this.hp, Math.max(0, amt));
+    this.hp += hp;
+    const ar = Math.max(0, Math.min(this.maxArmour - this.armour, amt - hp));
+    this.armour += ar;
+    return Math.round(hp + ar);
+  }
+
   get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)); }
   get maxFuel() { return Math.round(TANK_FUEL * (this.vehicle.fuel || 1) * (1 + 0.4 * this.upgrades.engine) * (this.upgrades.deck ? DECK_FUEL : 1)); }
   get climb() { return TANK_CLIMB + 0.5 * this.upgrades.engine; }
@@ -308,21 +317,23 @@ class Tank {
       plateText(ctx, 'TRAINING DUMMY', Math.round(sx), Math.round(fy + 22), HUD.dim, 'center');
       return;
     }
-    // A3 layout: an armour bar stacked on the health bar, armour number left, health right
-    const bw = 100;
+    // one bar: health, with the armour laid over it (armour goes first, uncovering the health under
+    // it), and one number, armour and health together, in armour's colour while there is any
+    const bw = 100, iw = bw - 12;
     const by = Math.round(fy + 6);
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(Math.round(sx - bw / 2), by, bw, 20);
     ctx.fillStyle = HUD.line;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 4, bw - 12, 5);
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 11, bw - 12, 5);
-    ctx.fillStyle = HUD.accent;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 4, Math.round((bw - 12) * clamp(this.armour / this.maxArmour, 0, 1)), 5);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 5, iw, 10);
     ctx.fillStyle = HUD.cool;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 11, Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 5);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 5, Math.round(iw * clamp(this.hp / this.maxHp, 0, 1)), 10);
+    if (this.armour > 0) {
+      ctx.fillStyle = HUD.accent;
+      ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 5, Math.round(iw * clamp(this.armour / this.maxArmour, 0, 1)), 10);
+      if (this.armour > this.maxArmour) { ctx.fillStyle = HUD.bright; ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 3, Math.round(iw * clamp(this.armour / this.maxArmour - 1, 0, 1)), 2); } // (plating over the top)
+    }
     ctx.font = `13px ${HUD_FONT}`;
-    plateText(ctx, Math.ceil(this.armour), Math.round(sx - bw / 2 - 2), by + 16, HUD.accent, 'right');
-    plateText(ctx, Math.ceil(this.hp), Math.round(sx + bw / 2 + 2), by + 16, HUD.cool, 'left');
+    plateText(ctx, Math.ceil(this.armour + this.hp), Math.round(sx + bw / 2 + 2), by + 16, this.armour > 0 ? HUD.accent : HUD.cool, 'left');
     ctx.textAlign = 'center';
     ctx.font = `13px ${HUD_FONT}`;
     const title = this.name;

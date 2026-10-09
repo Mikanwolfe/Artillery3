@@ -329,9 +329,9 @@ class Plane {
     ctx.restore();
     if (this.targetable) { // its health (and a fortress's armour) under every plane in the sky
       const x = Math.round(this.sx), y = Math.round(this.sy + 12), bw = this.kind === 'fortress' || this.kind === 'heavy' ? 40 : 28;
-      ctx.fillStyle = 'rgba(14,12,22,0.75)'; ctx.fillRect(x - bw / 2 - 1, y - 1, bw + 2, this.maxArmour ? 9 : 6);
+      ctx.fillStyle = 'rgba(14,12,22,0.75)'; ctx.fillRect(x - bw / 2 - 1, y - 1, bw + 2, 6);
       ctx.fillStyle = this.owner.color; ctx.fillRect(x - bw / 2, y, Math.round(bw * clamp(this.hp / this.maxHp, 0, 1)), 4);
-      if (this.maxArmour) { ctx.fillStyle = '#c8d2e4'; ctx.fillRect(x - bw / 2, y + 5, Math.round(bw * clamp(this.armour / this.maxArmour, 0, 1)), 2); }
+      if (this.armour > 0) { ctx.fillStyle = '#c8d2e4'; ctx.fillRect(x - bw / 2, y, Math.round(bw * clamp(this.armour / this.maxArmour, 0, 1)), 4); } // (armour over health: it goes first)
     }
   }
 }
