@@ -406,15 +406,15 @@ Object.assign(UI, {
     $('cx-list').querySelectorAll('button').forEach((b) => { b.onclick = () => { c.aa = b.dataset.a; this.renderCodex(); this.codexRange(); b.blur(); }; });
     const a = AA_BY_ID[c.aa], r = RARITY[a.rarity];
     const vsAir = (x) => Math.round(x.perTurn * x.dmg * (x.acc + (1 - x.acc) * AA_GRAZE));
-    const rows = mounts.map((x) => `<tr class="${x.id === a.id ? 'on' : ''}"><td>${esc(x.name.replace(/^(SI|NXi|LFS|Kotona|KTS-T|G\.W\.) /, ''))}</td><td>${x.role === 'missile' ? 'PD' : 'AA'}</td><td>${x.range}</td><td>${vsAir(x)}${x.splash ? '+' : ''}</td><td>${Math.round(x.pk * 100)}%</td><td>${tag(x)}</td></tr>`).join('');
+    const rows = mounts.map((x) => `<tr class="${x.id === a.id ? 'on' : ''}"><td>${esc(x.name.replace(/^(SI|NXi|LFS|Kotona|KTS-T|G\.W\.) /, ''))}</td><td>${x.role === 'missile' ? 'PD' : 'AA'}</td><td>${x.range}</td><td>${vsAir(x)}${x.splash ? '+' : ''}</td><td>${Math.round(x.stop * 100)}%</td><td>${tag(x)}</td></tr>`).join('');
     $('cx-wpn').innerHTML = `<div class="cx-whead">${this.badge(a)}<div><p class="maker">${esc(aaMaker(a))} · ${a.role === 'missile' ? 'point defence' : 'anti-air'}</p><h3 style="color:${r.ui}">${esc(a.name)}</h3><p class="cost">${a.starter ? `${esc(v.name)}’s own` : money(a.cost)}</p></div></div>
       <p>${esc(a.short)} <i>${esc(a.long)}</i></p>
       <div class="stats">${this.weaponStats(a)}</div>
       <dl class="cx-dl"><dt>Vs aircraft</dt><dd>about ${vsAir(a)} a turn at most (${a.perTurn} bursts of ${a.dmg}, ${Math.round(a.acc * 100)}% to hit, a miss grazes for ${Math.round(AA_GRAZE * 100)}%${a.splash ? `; each burst hits everything within ${a.splash}` : ''}), out to ${a.range}</dd>
-      <dt>Vs missiles</dt><dd>${Math.round(a.pk * 100)}% to destroy each rocket or bomb it engages${a.cut ? `, and one that gets through hits ${Math.round(a.cut * 100)}% softer` : ''}</dd></dl>
+      <dt>Vs missiles</dt><dd>engages every rocket or bomb that comes within ${a.range} and takes about ${Math.round(a.stop * 100)}% off a 100-damage warhead (anywhere from half to one and a half times that; less off heavier ones, more off lighter; two mounts multiply); one left with ${Math.round(AA_SHOT_DOWN * 100)}% or less is shot down</dd></dl>
       <p class="mgh">Test it: a squad of three ${esc(shortName(WEAPON_BY_ID[DRILL_PLANE]))} (${WEAPON_BY_ID[DRILL_PLANE].air.hp} health each) flies over her without attacking, or ${DRILL_MISSILES} rockets come in at her</p>
       <div class="seg" id="cx-drill"><button data-k="low">Low pass</button><button data-k="high">High pass</button><button data-k="missiles">Rocket salvo</button></div>
-      <table class="cx-aa"><tr><th>Mount</th><th></th><th>Range</th><th>Air/turn</th><th>Kill</th><th>¢</th></tr>${rows}</table>`;
+      <table class="cx-aa"><tr><th>Mount</th><th></th><th>Range</th><th>Air/turn</th><th>Stops</th><th>¢</th></tr>${rows}</table>`;
     $('cx-drill').querySelectorAll('button').forEach((b) => { b.onclick = () => { this.game.rangeDrill(b.dataset.k); b.blur(); }; });
   },
 

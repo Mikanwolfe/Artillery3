@@ -237,8 +237,8 @@ const UI = {
     }
     if (w.role) { // an air-defence mount
       const rows = [['Role', w.role === 'missile' ? 'point defence' : 'anti-air'], ['Range', w.range]];
-      if (w.role === 'missile') rows.push(['Kill', `${Math.round(w.pk * 100)}%`], ['Dent', `−${Math.round(w.cut * 100)}%`], ['vs air', `${w.dmg}×${w.perTurn}`]);
-      else rows.push(['Burst', w.dmg], ['Hit', `${Math.round(w.acc * 100)}%`], ['Bursts', `${w.perTurn}/turn`], ['vs missiles', `${Math.round(w.pk * 100)}%`]);
+      if (w.role === 'missile') rows.push(['Stops', `${Math.round(w.stop * 100)}%`], ['vs air', `${w.dmg}×${w.perTurn}`]);
+      else rows.push(['Burst', w.dmg], ['Hit', `${Math.round(w.acc * 100)}%`], ['Bursts', `${w.perTurn}/turn`], ['vs missiles', `${Math.round(w.stop * 100)}%`]);
       if (w.splash) rows.push(['Splash', w.splash]);
       return rows.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
     }

@@ -1143,7 +1143,7 @@ class Game {
       if (r && r.hit !== 'out') this.projectiles.push(new DroneBeam(this, w, p.owner, p));
     } else {
       const bonus = this.shotBonus(p);
-      if (p.aaCut) bonus.dmg *= p.aaCut; // got through the point defence, damaged
+      if (p.aaCut) { bonus.dmg *= p.aaCut; bonus.visR = (bonus.visR || bonus.dmgR) * (0.4 + 0.6 * p.aaCut); } // got through the point defence, damaged (and a smaller bang)
       this.explode(p.x, p.y, { ...bonus, from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
         for (let i = 0; i < 30; i++) {

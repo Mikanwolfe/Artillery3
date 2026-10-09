@@ -119,10 +119,12 @@ const spreadOf = (w, t) => (w.disp || 0) * (hasTrait(t, 'geschutz') ? 0.5 : 1);
 // prefers rivals over drones and crates
 // rocket fuel: frames of motor by rarity (a rocket's own burn is a ceiling); better rockets fly further
 const ROCKET_BURN = [30, 30, 36, 42, 50, 58, 66, 74, 80];
+const SEEK_RANGE_MULT = 1.3, SEEK_TURN_MULT = 1.25;
 function guideFor(w, owner) {
   if (!w.guide) return null;
   if (w.guide.tumble) return w.guide;
   const G = { ...w.guide, burn: Math.min(w.guide.burn, ROCKET_BURN[w.rarity] || 30) };
+  G.range *= SEEK_RANGE_MULT; G.turn *= SEEK_TURN_MULT; // (every seeker: point defence takes its share, so they find their mark)
   if (hasTrait(owner, 'firecontrol')) { G.range *= 1.4; G.turn *= 1.3; }
   return G;
 }
