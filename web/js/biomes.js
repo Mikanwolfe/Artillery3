@@ -63,6 +63,7 @@ const BIOMES = {
     ],
     ground: 'rgb(110,150,90)', cap: 'rgb(150,196,112)', soot: [70, 50, 40],
     tree: 'lily', trees: 2.6, ridgeTrees: false,
+    rail: true, // a Melbourne-style skyrail across the near ridge, with a train now and then (background.js)
     particles: { kind: 'leaves', n: 50, colors: [[246, 150, 186], [252, 176, 96], [255, 222, 120], [255, 244, 250]] },
     terrain: { rough: 0.48, disp: 280, peaks: [2, 3], h: [220, 440], w: [360, 560] },
     fronts: ['force', 'storm', 'gale', 'rain'],
