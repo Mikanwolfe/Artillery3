@@ -235,3 +235,22 @@ function drawFixture(ctx, kind, x, base, h, v) {
     ctx.fillStyle = 'rgb(240,240,236)'; ctx.fillRect(x - 3, base - 12, 2, 3); ctx.fillRect(x + 1, base - 12, 3, 3);
   }
 }
+
+// frost on a tree (the Warm Meadows after its AHU is destroyed): the colour drains out of the
+// petals and leaves, rime settles on top, and the lilies' heads droop
+function frostTree(ctx, kind, x, base, h, frost) {
+  const top = base - treeHeight(kind, h);
+  ctx.fillStyle = `rgba(214,224,240,${(0.55 * frost).toFixed(2)})`; // the colour drains out
+  if (kind === 'lily') {
+    ctx.fillRect(x - 7, top - 3, 15, 13);
+    ctx.fillStyle = `rgba(246,250,255,${(0.9 * frost).toFixed(2)})`; // rime on the petals
+    ctx.fillRect(x - 7, top + 2, 6, 2); ctx.fillRect(x + 2, top + 2, 6, 2); ctx.fillRect(x - 3, top - 3, 7, 2);
+    ctx.fillRect(x - 6, base - 12, 5, 1); ctx.fillRect(x + 2, base - 18, 5, 1); // and on the leaves
+    if (frost > 0.6) { ctx.fillStyle = `rgba(150,140,140,${((frost - 0.6) * 1.5).toFixed(2)})`; ctx.fillRect(x - 5, top + 9, 10, 3); } // a drooping, browning head
+  } else {
+    const w = 18 + h * 4;
+    ctx.fillRect(x - w / 2, top, w, base - top - 6);
+    ctx.fillStyle = `rgba(246,250,255,${(0.9 * frost).toFixed(2)})`;
+    ctx.fillRect(x - w / 2 + 2, top, w - 4, 2);
+  }
+}

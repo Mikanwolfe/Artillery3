@@ -215,6 +215,7 @@ class Terrain {
         continue;
       }
       drawTree(ctx, this.treeKind, t.x, base, t.h, t.autumn);
+      if (this.frost > 0.05) frostTree(ctx, this.treeKind, t.x, base, t.h, this.frost); // the Warm Meadows gone cold
     }
   }
 
