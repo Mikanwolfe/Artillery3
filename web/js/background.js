@@ -6,6 +6,8 @@
 // line; and on maps with `rail`, an elevated railway (Melbourne's skyrail) that a blue and yellow
 // suburban train rocks along every so often.
 
+const BG_STATIC = 1, BG_LIVE = 2; // the two passes over a ridge: into its cached strip, and each frame
+
 class Background {
   constructor(biome = BIOMES.snow) {
     this.biome = biome;
@@ -295,80 +297,170 @@ class Background {
       const g = ctx.createLinearGradient(0, H * 0.12, 0, H * 0.4);
       g.addColorStop(0, 'rgba(255,150,80,0.22)'); g.addColorStop(1, 'rgba(255,150,80,0)');
       ctx.fillStyle = g; ctx.fillRect(0, Math.round(H * 0.12), W, Math.round(H * 0.3));
-      for (let x = -((ox * 30) % 40) - 40; x < W + 40; x += 40) {
-        const k = Math.round((x + ox * 30) / 40);
-        const d = Math.round(H * (0.08 + 0.08 * hash2(k, 21)));
-        ctx.fillStyle = 'rgb(38,36,44)'; ctx.fillRect(Math.round(x), 0, 41, d);
-        ctx.fillStyle = 'rgb(56,52,60)'; ctx.fillRect(Math.round(x), d - 4, 41, 4);
-        for (let wy = 8; wy < d - 8; wy += 9) for (let wx = 4; wx < 36; wx += 8) {
-          if (hash2(k * 7 + wx, wy) > 0.3) continue;
-          ctx.fillStyle = hash2(k, wy + wx) > 0.5 ? 'rgb(255,196,120)' : 'rgb(255,160,90)';
-          ctx.fillRect(Math.round(x + wx), wy, 3, 3);
-        }
-      }
+      // the mass itself, pre-rendered 16 columns to a chunk (screen space, scrolling at 30x ox)
+      const sx = ox * 30, CW = 40 * 16;
+      for (let n = Math.floor(sx / CW); n * CW - sx < W; n++) ctx.drawImage(this.undersideChunk(n), Math.round(n * CW - sx), 0);
     }
   }
 
-  // ridges: called with the world transform; each layer follows the camera by `parallax`
+  undersideChunk(n) {
+    const m = this.undersideChunks || (this.undersideChunks = new Map());
+    let c = m.get(n);
+    if (c) return c;
+    if (m.size > 24) m.delete(m.keys().next().value); // (the oldest)
+    c = document.createElement('canvas');
+    c.width = 40 * 16 + 1;
+    c.height = Math.ceil(H * 0.16) + 1;
+    const g = c.getContext('2d');
+    for (let i = 0; i < 16; i++) {
+      const k = n * 16 + i, x = i * 40;
+      const d = Math.round(H * (0.08 + 0.08 * hash2(k, 21)));
+      g.fillStyle = 'rgb(38,36,44)'; g.fillRect(x, 0, 41, d);
+      g.fillStyle = 'rgb(56,52,60)'; g.fillRect(x, d - 4, 41, 4);
+      for (let wy = 8; wy < d - 8; wy += 9) for (let wx = 4; wx < 36; wx += 8) {
+        if (hash2(k * 7 + wx, wy) > 0.3) continue;
+        g.fillStyle = hash2(k, wy + wx) > 0.5 ? 'rgb(255,196,120)' : 'rgb(255,160,90)';
+        g.fillRect(x + wx, wy, 3, 3);
+      }
+    }
+    m.set(n, c);
+    return c;
+  }
+
+  // ridges: called with the world transform; each layer follows the camera by `parallax`. Each is
+  // pre-rendered once (silhouette, skyline, props, trees: everything that holds still) into a strip
+  // the map's width, so a frame is one image per layer plus the few things that move or blink
   drawRidges(ctx, cam) {
-    const broad = this.biome.tree === 'broadleaf';
+    const x0 = cam.x, x1 = cam.x + (cam.w || VIEW_W);
     for (const l of this.layers) {
-      ctx.fillStyle = l.color;
       const ox = cam.x * (1 - l.parallax);
-      fillSteps(ctx, l.height, cam.x, cam.x + (cam.w || VIEW_W), 8, ox, 0);
+      const rc = this.ridgeCache(l);
+      if (rc) {
+        const a = clamp(Math.floor(x0 - ox), 0, rc.c.width), b = clamp(Math.ceil(x1 - ox) + 1, 0, rc.c.width);
+        if (b > a) {
+          ctx.drawImage(rc.c, a, 0, b - a, rc.c.height, a + ox, rc.top, b - a, rc.c.height);
+          // below the strip the ridge is solid (bar where Zero Point cut it)
+          ctx.fillStyle = l.color;
+          const y = rc.top + rc.c.height, h = WORLD_BOTTOM + 1200 - y;
+          let from = a;
+          for (const [va, vb] of [...(l.voids || [])].sort((p, q) => p[0] - q[0]).concat([[Infinity, Infinity]])) {
+            const to = Math.min(b, va);
+            if (to > from) ctx.fillRect(from + ox, y, to - from, h);
+            from = Math.max(from, vb + 1);
+          }
+        }
+      } else {
+        ctx.fillStyle = l.color;
+        fillSteps(ctx, l.height, x0, x1, 8, ox, 0);
+      }
       if (l.voids && l.voids.length) this.drawLayerVoids(ctx, l, ox); // cut by 15X's Zero Point
-      if (l.bldg || l.stilts) this.drawLayerArt(ctx, l, ox, cam);
-      if (l.props || l.rail) this.drawProps(ctx, l, ox, cam);
-      ctx.fillStyle = l.color;
-      for (const t of l.trees) {
-        const tx = t.x + ox;
-        if (tx < cam.x - 40 || tx > cam.x + (cam.w || VIEW_W) + 40) continue;
-        const base = Math.round(l.height[Math.min(WORLD_W - 1, t.x)]) + 2;
-        ctx.fillRect(tx - 2, base - 6, 4, 6);
-        if (broad) {
-          const w = 10 + t.h * 3;
-          ctx.fillRect(tx - w / 2, base - 8 - t.h * 7, w, t.h * 7);
-          ctx.fillRect(tx - w / 2 + 3, base - 12 - t.h * 7, w - 6, 4);
-          continue;
-        }
-        for (let i = 0; i < t.h; i++) {
-          const w = (t.h - i) * 5 + 2;
-          ctx.fillRect(tx - w / 2, base - 6 - (i + 1) * 7, w, 7);
-        }
+      this.drawLayerBits(ctx, l, ox, cam, rc ? BG_LIVE : BG_STATIC | BG_LIVE);
+    }
+  }
+
+  dispose() {
+    for (const l of this.layers) if (l.cache) { l.cache.c.width = l.cache.c.height = 0; l.cache = null; }
+    if (this.undersideChunks) this.undersideChunks.clear();
+    if (this.ringCache) { this.ringCache.width = this.ringCache.height = 0; this.ringCache = null; }
+  }
+
+  // a layer's cached strip; while Zero Point is cutting it the layer is drawn live, and cached again
+  // once the cut has held still a moment
+  ridgeCache(l) {
+    const key = (l.voids || []).map((v) => v.join('-')).join(',');
+    if (l.cache && l.cache.key === key) return l.cache;
+    if (l.cacheWant !== key) { l.cacheWant = key; l.cacheWait = 20; l.cache = null; }
+    if (key && l.cacheWait-- > 0) return null;
+    let top = Infinity, bot = -Infinity;
+    for (const h of l.height) if (h < VOID_Y) { top = Math.min(top, h); bot = Math.max(bot, h); }
+    if (top > bot) top = bot = 0;
+    top = Math.floor(top - 260); // up to the tower tips, masts and the skyrail's wire
+    bot = Math.ceil(bot + 240); // down past the lowest windows and rack lights
+    const c = document.createElement('canvas');
+    c.width = WORLD_W + 16;
+    c.height = bot - top;
+    const g = c.getContext('2d');
+    g.translate(0, -top);
+    g.fillStyle = l.color;
+    fillSteps(g, l.height, 0, WORLD_W + 16, 8, 0, 0);
+    this.drawLayerBits(g, l, 0, { x: -200, y: top, w: WORLD_W + 400 }, BG_STATIC);
+    l.cache = { c, top, key };
+    return l.cache;
+  }
+
+  // what stands on a ridge, in two passes: BG_STATIC (into the cache) and BG_LIVE (each frame)
+  drawLayerBits(ctx, l, ox, cam, pass) {
+    if (l.bldg || l.stilts) this.drawLayerArt(ctx, l, ox, cam, pass);
+    if (l.props || l.rail) this.drawProps(ctx, l, ox, cam, pass);
+    if (!(pass & BG_STATIC)) return;
+    const broad = this.biome.tree === 'broadleaf';
+    ctx.fillStyle = l.color;
+    for (const t of l.trees) {
+      const tx = t.x + ox;
+      if (tx < cam.x - 40 || tx > cam.x + (cam.w || VIEW_W) + 40) continue;
+      const base = Math.round(l.height[Math.min(WORLD_W - 1, t.x)]) + 2;
+      ctx.fillRect(tx - 2, base - 6, 4, 6);
+      if (broad) {
+        const w = 10 + t.h * 3;
+        ctx.fillRect(tx - w / 2, base - 8 - t.h * 7, w, t.h * 7);
+        ctx.fillRect(tx - w / 2 + 3, base - 12 - t.h * 7, w - 6, 4);
+        continue;
+      }
+      for (let i = 0; i < t.h; i++) {
+        const w = (t.h - i) * 5 + 2;
+        ctx.fillRect(tx - w / 2, base - 6 - (i + 1) * 7, w, 7);
       }
     }
   }
 
   // what stands on a ridge: lit windows in the stilt-rows, rack lights in the datacentre halls,
   // ruins' broken tops, or (under the stilt-cities) the stilts themselves, up out of sight
-  drawLayerArt(ctx, l, ox, cam) {
+  drawLayerArt(ctx, l, ox, cam, pass) {
     const x0 = cam.x - 60, x1 = cam.x + (cam.w || VIEW_W) + 60;
     const c = l.color.match(/\d+/g).map(Number);
+    const still = pass & BG_STATIC, live = pass & BG_LIVE;
     if (l.bldg) for (const b of l.bldg) {
       const sx = b.x + ox;
       if (sx + b.w < x0 || sx > x1) continue;
       if (l.windows) { // warm windows; the heat goes where the exchangers send it
         const [r, g2, bl] = l.windows;
-        for (let y = b.top + 8; y < b.top + 200; y += 12) for (let x = 6; x < b.w - 6; x += 10) {
+        if (still) for (let y = b.top + 8; y < b.top + 200; y += 12) for (let x = 6; x < b.w - 6; x += 10) {
           const h = hash2(b.x + x, y - b.top);
           if (h > 0.42) continue;
           ctx.fillStyle = `rgba(${r},${g2},${bl},${(0.45 + h).toFixed(2)})`;
           ctx.fillRect(Math.round(sx + x), Math.round(y), 4, 5);
         }
-        if (b.w > 60 && hash2(b.x, 3) > 0.6) { ctx.fillStyle = `rgb(${c.map((v) => v - 10).join(',')})`; ctx.fillRect(Math.round(sx + b.w / 2), Math.round(b.top - 24), 2, 24); ctx.fillStyle = (this.t * 2 + b.seed | 0) % 2 ? '#ff4a3a' : '#5a2020'; ctx.fillRect(Math.round(sx + b.w / 2 - 1), Math.round(b.top - 27), 4, 4); } // a relay mast
-      }
-      if (l.racks) { // a datacentre hall: rows of status lights; some halls de-listed and dark, but drawing load
-        const dead = hash2(b.x, 11) > 0.6;
-        for (let y = b.top + 10; y < b.top + 220; y += 10) for (let x = 4; x < b.w - 4; x += 6) {
-          const h = hash2(b.x + x, y - b.top);
-          if (h > 0.5) continue;
-          const blink = Math.sin(this.t * (2 + h * 6) + h * 50) > (dead ? 0.85 : -0.2);
-          if (!blink) continue;
-          ctx.fillStyle = dead ? 'rgba(255,90,70,0.8)' : h > 0.4 ? 'rgba(255,190,90,0.9)' : 'rgba(110,240,200,0.85)';
-          ctx.fillRect(Math.round(sx + x), Math.round(y), 2, 2);
+        if (b.w > 60 && hash2(b.x, 3) > 0.6) { // a relay mast
+          if (still) { ctx.fillStyle = `rgb(${c.map((v) => v - 10).join(',')})`; ctx.fillRect(Math.round(sx + b.w / 2), Math.round(b.top - 24), 2, 24); }
+          if (live) { ctx.fillStyle = (this.t * 2 + b.seed | 0) % 2 ? '#ff4a3a' : '#5a2020'; ctx.fillRect(Math.round(sx + b.w / 2 - 1), Math.round(b.top - 27), 4, 4); }
         }
       }
-      if (l.ruins) { // older than anyone's records: stepped crowns and a dark doorway
+      if (l.racks) { // a datacentre hall: rows of status lights; some halls de-listed and dark, but drawing load
+        // most lights hold steady (cached); about one in three blinks, and every light in a dead hall
+        const dead = hash2(b.x, 11) > 0.6;
+        if (still && !dead) for (let y = b.top + 10; y < b.top + 220; y += 10) for (let x = 4; x < b.w - 4; x += 6) {
+          const h = hash2(b.x + x, y - b.top);
+          if (h > 0.5 || h < 0.15) continue;
+          ctx.fillStyle = h > 0.4 ? 'rgba(255,190,90,0.9)' : 'rgba(110,240,200,0.85)';
+          ctx.fillRect(Math.round(sx + x), Math.round(y), 2, 2);
+        }
+        if (live) {
+          if (!b.blink) { // [x, y, h] of each blinking light, found once
+            b.blink = [];
+            for (let y = b.top + 10; y < b.top + 220; y += 10) for (let x = 4; x < b.w - 4; x += 6) {
+              const h = hash2(b.x + x, y - b.top);
+              if (h < (dead ? 0.5 : 0.15)) b.blink.push(x, y, h);
+            }
+          }
+          for (let i = 0; i < b.blink.length; i += 3) {
+            const h = b.blink[i + 2];
+            if (Math.sin(this.t * (2 + h * 6) + h * 50) <= (dead ? 0.85 : -0.2)) continue;
+            ctx.fillStyle = dead ? 'rgba(255,90,70,0.8)' : h > 0.4 ? 'rgba(255,190,90,0.9)' : 'rgba(110,240,200,0.85)';
+            ctx.fillRect(Math.round(sx + b.blink[i]), Math.round(b.blink[i + 1]), 2, 2);
+          }
+        }
+      }
+      if (l.ruins && still) { // older than anyone's records: stepped crowns and a dark doorway
         ctx.fillStyle = `rgb(${c.join(',')})`;
         ctx.fillRect(Math.round(sx + b.w * 0.2), Math.round(b.top - 14), Math.round(b.w * 0.6), 14);
         ctx.fillRect(Math.round(sx + b.w * 0.38), Math.round(b.top - 26), Math.round(b.w * 0.24), 12);
@@ -377,7 +469,7 @@ class Background {
         if (hash2(b.x, 13) > 0.7) { ctx.fillStyle = 'rgba(120,200,255,0.35)'; ctx.fillRect(Math.round(sx + b.w * 0.47), Math.round(b.top + 12), 4, 4); } // something still lit inside
       }
     }
-    if (l.stilts) { // the stilt-cities' legs: drilled into bedrock, braced, rising out of sight
+    if (l.stilts && live) { // the stilt-cities' legs: drilled into bedrock, braced, rising out of sight (live: they reach the top of the view)
       const [s0, s1] = l.stilts;
       const w = l.parallax > 0.7 ? 18 : l.parallax > 0.55 ? 11 : 6;
       const top = cam.y - 40;
@@ -397,27 +489,31 @@ class Background {
 
   // the near ridge's furniture: radio towers and a power line in silhouette (a shade darker than the
   // ridge), and the skyrail with its train in colour, softened by the distance
-  drawProps(ctx, l, ox, cam) {
+  drawProps(ctx, l, ox, cam, pass) {
     const c = l.color.match(/\d+/g).map(Number);
     const dark = `rgb(${c.map((v) => Math.round(v * 0.72)).join(',')})`;
     const x0 = cam.x - 60, x1 = cam.x + (cam.w || VIEW_W) + 60;
     const hAt = (x) => l.height[clamp(Math.round(x), 0, WORLD_W - 1)];
-    ctx.fillStyle = dark;
     for (const t of l.props ? l.props.towers : []) {
       const x = t.x + ox;
       if (x < x0 || x > x1) continue;
       const g = hAt(t.x);
-      for (let y = 0; y < t.h; y += 3) { const w = lerp(8, 2, y / t.h); sq(ctx, x - w, g - y, 2); sq(ctx, x + w, g - y, 2); }
-      for (let y = 0; y < t.h - 20; y += 20) for (let f = 0; f <= 1; f += 0.2) { const w0 = lerp(8, 2, y / t.h), w1 = lerp(8, 2, (y + 20) / t.h); sq(ctx, lerp(x - w0, x + w1, f), g - y - f * 20, 2); }
-      ctx.fillRect(Math.round(x - 1), Math.round(g - t.h - 22), 2, 22);
-      ctx.fillStyle = (this.t * 1.5 | 0) % 2 ? '#ff4a3a' : '#7a2a26';
-      sq(ctx, x, g - t.h - 24, 4);
-      ctx.fillStyle = dark;
+      if (pass & BG_STATIC) {
+        ctx.fillStyle = dark;
+        for (let y = 0; y < t.h; y += 3) { const w = lerp(8, 2, y / t.h); sq(ctx, x - w, g - y, 2); sq(ctx, x + w, g - y, 2); }
+        for (let y = 0; y < t.h - 20; y += 20) for (let f = 0; f <= 1; f += 0.2) { const w0 = lerp(8, 2, y / t.h), w1 = lerp(8, 2, (y + 20) / t.h); sq(ctx, lerp(x - w0, x + w1, f), g - y - f * 20, 2); }
+        ctx.fillRect(Math.round(x - 1), Math.round(g - t.h - 22), 2, 22);
+      }
+      if (pass & BG_LIVE) {
+        ctx.fillStyle = (this.t * 1.5 | 0) % 2 ? '#ff4a3a' : '#7a2a26';
+        sq(ctx, x, g - t.h - 24, 4);
+      }
     }
     const poles = l.props ? l.props.poles : [];
-    for (let i = 0; i < poles.length; i++) {
+    if (pass & BG_STATIC) for (let i = 0; i < poles.length; i++) {
       const x = poles[i] + ox, g = hAt(poles[i]);
       if (x < x0 - 150 || x > x1 + 150) continue;
+      ctx.fillStyle = dark;
       ctx.fillRect(Math.round(x - 1), Math.round(g - 40), 3, 40);
       ctx.fillRect(Math.round(x - 7), Math.round(g - 40), 15, 2);
       if (i + 1 < poles.length) { // sagging wire to the next pole
@@ -425,15 +521,16 @@ class Background {
         for (let f = 0; f <= 1; f += 0.04) sq(ctx, lerp(x, xb, f), lerp(g - 39, gb - 39, f) + 14 * 4 * f * (1 - f), 1);
       }
     }
-    if (l.props && l.props.spots && this.biome.props) this.drawSpots(ctx, l, ox, x0, x1, hAt, c, dark);
-    if (l.rail) this.drawRail(ctx, l, ox, x0, x1, hAt, c);
+    if (l.props && l.props.spots && this.biome.props) this.drawSpots(ctx, l, ox, x0, x1, hAt, c, dark, cam, pass);
+    if (l.rail) this.drawRail(ctx, l, ox, x0, x1, hAt, c, pass);
   }
 
   // per map: the deck's radiator fields, exchangers and heat main; the roots' risers, ground mains
   // and AHUs; the range's bunkers and target frames
-  drawSpots(ctx, l, ox, x0, x1, hAt, c, dark) {
+  drawSpots(ctx, l, ox, x0, x1, hAt, c, dark, cam, pass) {
     const kind = this.biome.props;
-    if (kind === 'deck') { // the heat main along the ridge, from exchanger to exchanger
+    const still = pass & BG_STATIC, live = pass & BG_LIVE;
+    if (kind === 'deck' && still) { // the heat main along the ridge, from exchanger to exchanger
       ctx.fillStyle = dark;
       for (let x = Math.max(0, Math.floor((x0 - ox) / 6) * 6); x < Math.min(WORLD_W, x1 - ox); x += 6) ctx.fillRect(Math.round(x + ox), Math.round(hAt(x) - 22), 6, 8);
       ctx.fillStyle = 'rgba(255,150,80,0.35)';
@@ -444,6 +541,7 @@ class Background {
       if (sx < x0 - 120 || sx > x1 + 120) continue;
       const g = hAt(s.x);
       if (kind === 'deck') {
+        if (!still) continue;
         if (s.k === 0) { // a radiator field: rows of fins shedding the deck's heat into the sky
           for (let i = 0; i < 9; i++) { ctx.fillStyle = dark; ctx.fillRect(Math.round(sx + i * 9), Math.round(g - 46), 4, 46); ctx.fillStyle = 'rgba(255,140,90,0.25)'; ctx.fillRect(Math.round(sx + i * 9), Math.round(g - 46), 4, 3); }
         } else { // an exchanger: HX-n, a squat drum with its pipes
@@ -452,10 +550,20 @@ class Background {
           ctx.fillStyle = 'rgba(230,226,240,0.8)'; ctx.font = `9px ${HUD_FONT}`; ctx.textAlign = 'left'; ctx.fillText(`HX-${1 + Math.floor(s.s * 12)}`, Math.round(sx + 8), Math.round(g - 34));
         }
       } else if (kind === 'roots') {
-        if (s.k === 0) { // a riser: a shaft up into the dark, with its cage ladder
+        if (s.k === 2) { // a ground main: a fat pipe on saddles, running along the ridge
+          if (!still) continue;
+          ctx.fillStyle = dark;
+          ctx.fillRect(Math.round(sx - 40), Math.round(g - 30), 200, 18);
+          for (let i = 0; i < 4; i++) ctx.fillRect(Math.round(sx - 30 + i * 55), Math.round(g - 14), 8, 14);
+          ctx.fillStyle = `rgb(${c.map((v) => v + 20).join(',')})`; ctx.fillRect(Math.round(sx - 40), Math.round(g - 30), 200, 3);
+          continue;
+        }
+        if (!live) continue; // (risers reach up out of the strip, and the AHUs breathe: both live)
+        if (s.k === 0) { // a riser: a shaft up into the dark, with its cage ladder (rungs only where seen)
           ctx.fillStyle = dark; ctx.fillRect(Math.round(sx), Math.round(g - 2000), 26, 2000);
           ctx.fillStyle = `rgb(${c.map((v) => v + 14).join(',')})`;
-          for (let y = g - 12; y > g - 2000; y -= 10) ctx.fillRect(Math.round(sx + 4), Math.round(y), 18, 2);
+          const yTop = Math.max(g - 2000, cam.y - 20), yBot = Math.min(g - 12, cam.y + (cam.h || H) + 20);
+          for (let y = g - 12 - Math.max(0, Math.ceil((g - 12 - yBot) / 10)) * 10; y > yTop; y -= 10) ctx.fillRect(Math.round(sx + 4), Math.round(y), 18, 2);
           ctx.fillStyle = (this.t * 1.2 + s.s * 9 | 0) % 2 ? 'rgba(255,200,80,0.9)' : 'rgba(120,90,40,0.9)'; ctx.fillRect(Math.round(sx + 10), Math.round(g - 40), 6, 6);
         } else if (s.k === 1) { // an AHU: a box with a fan grille, warm, and older than the halls
           const glow = 0.18 + 0.08 * Math.sin(this.t * 0.8 + s.s * 6); // it breathes
@@ -463,54 +571,55 @@ class Background {
           ctx.fillStyle = dark; ctx.fillRect(Math.round(sx), Math.round(g - 44), 50, 44);
           ctx.fillStyle = 'rgba(255,170,90,0.6)';
           for (let i = 0; i < 4; i++) ctx.fillRect(Math.round(sx + 8), Math.round(g - 38 + i * 8), 34, 2);
-        } else { // a ground main: a fat pipe on saddles, running along the ridge
-          ctx.fillStyle = dark;
-          ctx.fillRect(Math.round(sx - 40), Math.round(g - 30), 200, 18);
-          for (let i = 0; i < 4; i++) ctx.fillRect(Math.round(sx - 30 + i * 55), Math.round(g - 14), 8, 14);
-          ctx.fillStyle = `rgb(${c.map((v) => v + 20).join(',')})`; ctx.fillRect(Math.round(sx - 40), Math.round(g - 30), 200, 3);
         }
       } else if (kind === 'range') {
         if (s.k === 0) { // a range bunker with its slit
+          if (!still) continue;
           ctx.fillStyle = dark; ctx.fillRect(Math.round(sx), Math.round(g - 20), 60, 22); ctx.fillRect(Math.round(sx + 6), Math.round(g - 26), 48, 6);
           ctx.fillStyle = 'rgba(255,200,120,0.7)'; ctx.fillRect(Math.round(sx + 14), Math.round(g - 14), 32, 3);
         } else if (s.k === 1) { // a target frame, shot through
+          if (!still) continue;
           ctx.fillStyle = dark; ctx.fillRect(Math.round(sx), Math.round(g - 50), 4, 50); ctx.fillRect(Math.round(sx + 40), Math.round(g - 50), 4, 50); ctx.fillRect(Math.round(sx), Math.round(g - 50), 44, 4);
           ctx.fillStyle = 'rgba(220,70,50,0.7)'; ctx.fillRect(Math.round(sx + 10), Math.round(g - 40), 24, 24);
           ctx.fillStyle = `rgb(${c.join(',')})`; ctx.fillRect(Math.round(sx + 16), Math.round(g - 34), 5, 5); ctx.fillRect(Math.round(sx + 25), Math.round(g - 26), 4, 4);
         } else { // a fresh test crater, still smoking
-          ctx.fillStyle = dark; ctx.fillRect(Math.round(sx - 30), Math.round(g - 4), 60, 6);
-          ctx.fillStyle = `rgba(80,74,70,${(0.3 + 0.2 * Math.sin(this.t + s.s * 5)).toFixed(2)})`;
-          for (let i = 0; i < 4; i++) sq(ctx, sx + Math.sin(this.t * 0.5 + i) * 6, g - 14 - i * 16 - ((this.t * 12) % 16), 10 + i * 4);
+          if (still) { ctx.fillStyle = dark; ctx.fillRect(Math.round(sx - 30), Math.round(g - 4), 60, 6); }
+          if (live) {
+            ctx.fillStyle = `rgba(80,74,70,${(0.3 + 0.2 * Math.sin(this.t + s.s * 5)).toFixed(2)})`;
+            for (let i = 0; i < 4; i++) sq(ctx, sx + Math.sin(this.t * 0.5 + i) * 6, g - 14 - i * 16 - ((this.t * 12) % 16), 10 + i * 4);
+          }
         }
       }
     }
   }
 
-  drawRail(ctx, l, ox, x0, x1, hAt, c) {
+  drawRail(ctx, l, ox, x0, x1, hAt, c, pass) {
     const r = l.rail, y = r.y;
     const haze = (col, k = 0.3) => { const m = col.match(/\d+/g).map(Number); return `rgb(${m.map((v, i) => Math.round(lerp(v, c[i], k))).join(',')})`; };
-    // piers down to the ridge, the deck, catenary masts and the wire
-    ctx.fillStyle = haze('rgb(176,170,178)', 0.4);
-    for (let x = 60; x < WORLD_W; x += 140) {
-      const sx = x + ox;
-      if (sx < x0 || sx > x1) continue;
-      ctx.fillRect(Math.round(sx - 5), y + 8, 10, Math.round(hAt(x) - y - 6));
-      ctx.fillRect(Math.round(sx - 9), y + 8, 18, 4); // pier head
+    if (pass & BG_STATIC) {
+      // piers down to the ridge, the deck, catenary masts and the wire
+      ctx.fillStyle = haze('rgb(176,170,178)', 0.4);
+      for (let x = 60; x < WORLD_W; x += 140) {
+        const sx = x + ox;
+        if (sx < x0 || sx > x1) continue;
+        ctx.fillRect(Math.round(sx - 5), y + 8, 10, Math.round(hAt(x) - y - 6));
+        ctx.fillRect(Math.round(sx - 9), y + 8, 18, 4); // pier head
+      }
+      ctx.fillStyle = haze('rgb(200,196,204)', 0.3);
+      ctx.fillRect(Math.round(Math.max(x0, ox)), y, Math.round(Math.min(x1, WORLD_W + ox) - Math.max(x0, ox)), 9); // the deck
+      ctx.fillStyle = haze('rgb(120,116,126)', 0.3);
+      ctx.fillRect(Math.round(Math.max(x0, ox)), y + 6, Math.round(Math.min(x1, WORLD_W + ox) - Math.max(x0, ox)), 3);
+      for (let x = 130; x < WORLD_W; x += 140) { // masts and their arms
+        const sx = x + ox;
+        if (sx < x0 || sx > x1) continue;
+        ctx.fillRect(Math.round(sx), y - 30, 2, 30);
+        ctx.fillRect(Math.round(sx - 10), y - 30, 12, 2);
+      }
+      ctx.fillRect(Math.round(Math.max(x0, ox)), y - 27, Math.round(Math.min(x1, WORLD_W + ox) - Math.max(x0, ox)), 1); // the wire
     }
-    ctx.fillStyle = haze('rgb(200,196,204)', 0.3);
-    ctx.fillRect(Math.round(Math.max(x0, ox)), y, Math.round(Math.min(x1, WORLD_W + ox) - Math.max(x0, ox)), 9); // the deck
-    ctx.fillStyle = haze('rgb(120,116,126)', 0.3);
-    ctx.fillRect(Math.round(Math.max(x0, ox)), y + 6, Math.round(Math.min(x1, WORLD_W + ox) - Math.max(x0, ox)), 3);
-    for (let x = 130; x < WORLD_W; x += 140) { // masts and their arms
-      const sx = x + ox;
-      if (sx < x0 || sx > x1) continue;
-      ctx.fillRect(Math.round(sx), y - 30, 2, 30);
-      ctx.fillRect(Math.round(sx - 10), y - 30, 12, 2);
-    }
-    ctx.fillRect(Math.round(Math.max(x0, ox)), y - 27, Math.round(Math.min(x1, WORLD_W + ox) - Math.max(x0, ox)), 1); // the wire
     // the train: six cars, blue with a yellow band and a yellow nose, windows, doors, pantographs up
     const tr = r.train;
-    if (!tr) return;
+    if (!tr || !(pass & BG_LIVE)) return;
     const L = 66, gap = 3;
     for (let k = 0; k < tr.cars; k++) {
       const cx = tr.x - tr.dir * k * (L + gap) + ox; // its nose end

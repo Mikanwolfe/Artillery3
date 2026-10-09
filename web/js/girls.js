@@ -913,6 +913,36 @@ function girlSpec(o, id) {
   return f;
 }
 
+// a frame's pixels in one palette (beacon on or off), drawn into a little canvas R px per sprite
+// pixel; kept per frame, palette, beacon and R (the few zoom levels in play)
+const _girlSprites = new WeakMap();
+function girlSprite(frame, pal, beaconOn, R) {
+  let m = _girlSprites.get(frame);
+  if (!m) _girlSprites.set(frame, (m = new Map()));
+  let byPal = m.get(pal);
+  if (!byPal) m.set(pal, (byPal = new Map()));
+  const key = R * 2 + (beaconOn ? 1 : 0);
+  let sp = byPal.get(key);
+  if (sp) return sp;
+  let c0 = Infinity, r0 = Infinity, c1 = -Infinity, r1 = -Infinity;
+  for (const [, runs] of frame.keys) for (let i = 0; i < runs.length; i += 4) {
+    c0 = Math.min(c0, runs[i]); r0 = Math.min(r0, runs[i + 1]);
+    c1 = Math.max(c1, runs[i] + runs[i + 2]); r1 = Math.max(r1, runs[i + 1] + runs[i + 3]);
+  }
+  if (c0 > c1) { c0 = r0 = 0; c1 = r1 = 1; }
+  const c = document.createElement('canvas');
+  c.width = (c1 - c0) * R;
+  c.height = (r1 - r0) * R;
+  const g = c.getContext('2d');
+  for (const [k, runs] of frame.keys) {
+    g.fillStyle = k === 'B' && beaconOn ? GIRL_BEACON : pal[k];
+    for (let i = 0; i < runs.length; i += 4) g.fillRect((runs[i] - c0) * R, (runs[i + 1] - r0) * R, runs[i + 2] * R, runs[i + 3] * R);
+  }
+  sp = { c, c0, r0 };
+  byPal.set(key, sp);
+  return sp;
+}
+
 function drawGirl(ctx, o) {
   const id = GIRL_DEFS[o.id] ? o.id : 'gwt';
   const state = o.state === 'wreck' || o.state === 'damaged' ? o.state : 'ok';
@@ -921,10 +951,17 @@ function drawGirl(ctx, o) {
   const frame = girlFrame(id, state, state === 'wreck' ? null : girlSpec(o, id));
   const pal = girlPalette(id, o.color || '#3d6fa8', state);
   const beaconOn = state !== 'wreck' && Math.floor(t * 2) % 2 === 0;
-  for (const [k, runs] of frame.keys) {
-    ctx.fillStyle = k === 'B' && beaconOn ? GIRL_BEACON : pal[k];
-    for (let i = 0; i < runs.length; i += 4) girlFill(ctx, p, runs[i], runs[i + 1], runs[i + 2], runs[i + 3]);
-  }
+  // one image, not a few hundred rects: the frame pre-rendered at about the screen's own resolution
+  const a = ctx.getTransform(), R = clamp(Math.ceil(Math.hypot(a.a, a.b) * GIRL_P), 1, 8);
+  const sp = girlSprite(frame, pal, beaconOn, R);
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = true;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  if (p.facing < 0) ctx.scale(-1, 1);
+  ctx.drawImage(sp.c, (sp.c0 - GIRL_AX) * GIRL_P, (sp.r0 - GIRL_GH) * GIRL_P, sp.c.width / R * GIRL_P, sp.c.height / R * GIRL_P);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = smooth;
   if (o.flash > 0) {
     ctx.fillStyle = `rgba(255,255,255,${clamp(o.flash, 0, 1) * 0.85})`;
     const m = frame.mask;
