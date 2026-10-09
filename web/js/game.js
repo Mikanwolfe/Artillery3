@@ -63,6 +63,7 @@ const SLIDE_FRAMES = 75;
 const KILL_BOUNTY = 250;
 const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
 const AA_SHARE = 0.2; // most of its money a CPU puts into one air-defence mount
+const AA_SHARE_BURNED = 0.4; // ... once planes have killed it
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs once a turn cycle (every n turns)
 const SAT_DOWN_CYCLES = 2; // shot down, MAIA stays offline this many turn cycles (2n turns for n players)
 const SAT_REBOOT = 0.5; // and comes back with this share of its health
@@ -428,7 +429,6 @@ class Game {
     this.planes = [];
     this.airGroups = [];
     this.aaRounds = [];
-    this.strikeResolve = false;
     this.goldenRound = false;
     this.slides = [];
     this.salvo = null;
@@ -531,7 +531,6 @@ class Game {
     t.drill = hasTrait(t, 'drill');
     t.shotsLeft = t.shotsFor(t.weapon); // autoloaders reload every turn (planes: the squads she has left)
     t.firedThisTurn = false;
-    if (this.startStrikes(t)) return; // her planes from last turn hit first
     this.startAim();
   }
 
@@ -1035,20 +1034,6 @@ class Game {
       else this.nextTurn();
       return;
     }
-    if (this.strikeResolve) { // her planes have hit: now her turn proper
-      this.strikeResolve = false;
-      const alive = this.tanks.filter((x) => x.alive).length;
-      for (const G of this.airGroups) { // a squad that struck comes again on her next turn
-        G.striking = false;
-        if (G.struck) { G.struck = false; G.due = (G.owner.turnsTaken || 0) + 1; G.dueTurn = this.turnCount + alive; }
-      }
-      this.react(this.report);
-      this.report = null;
-      if (this.tanks.filter((x) => x.alive).length <= 1) this.endRound();
-      else if (t.alive) this.startAim();
-      else this.nextTurn();
-      return;
-    }
     if (this.events.length > 40) this.events.splice(0, this.events.length - 40);
     // G.W. Tiger's drill: the first shot of her turn hit a rival, so she gets the round back
     const drilled = t && t.drill && this.report && (this.report.bestQ || 0) >= DRILL_QUALITY;
@@ -1417,6 +1402,7 @@ class Game {
       for (let i = 0; i < 16; i++) this.particles.add({ x: t.x + (Math.random() - 0.5) * 30, y: t.y - 20 - Math.random() * 30, vx: (Math.random() - 0.5) * 2, vy: -1 - Math.random() * 2, g: -0.02, drag: 0.97, life: 1.2, size: 3 + Math.random() * 3, color: i % 2 ? [255, 236, 160] : [255, 255, 255] });
       this.events.push(`${t.name} is saved by grace.`);
     }
+    if (t.hp <= 0 && def && def.ord) t.airDowned = (t.airDowned || 0) + 1; // (a CPU remembers: see autoBuy)
     if (t.hp <= 0) this.kill(t, owner);
   }
 
@@ -1671,14 +1657,27 @@ class Game {
     const horizon = (this.lastAward || 500) * (t.type === 'hard' ? 2 : 1); // how far ahead it saves
     let reserve = 0;
     // air defence first (not Easy), from a share of its money: point defence if rivals carry rockets
-    // or planes, else anti-air (from round 2, when drones come); one of each role for a second slot
+    // or planes, else anti-air (from round 2, when drones come); one of each role for a second slot.
+    // Once planes have killed it (any CPU, Easy too), anti-air comes first, from a bigger share, and
+    // a lesser mount is traded in for the best anti-air gun it can afford
+    const burned = (t.airDowned || 0) > 0;
+    if (burned) {
+      const share = t.money * AA_SHARE_BURNED;
+      const best = AA_WEAPONS.filter((a) => a.role === 'air' && !t.aa.includes(a.id)).filter((a) => a.cost <= share).sort((a, b) => b.cost - a.cost)[0];
+      const air = t.aa.map((id) => AA_BY_ID[id]).filter((a) => a && a.role === 'air');
+      const worst = t.aa.map((id) => AA_BY_ID[id]).filter(Boolean).sort((a, b) => a.cost - b.cost)[0];
+      const trade = air.length ? air[0] : !t.aa.includes(null) && worst; // (its anti-air gun, else with no slot free its cheapest mount)
+      if (best && trade && this.canSellAA(t, trade.id) && best.cost > trade.cost * 1.5) { t.aa[t.aa.indexOf(trade.id)] = null; t.money += trade.cost; }
+      const slot = t.aa.indexOf(null);
+      if (best && slot >= 0 && !t.aa.some((id) => AA_BY_ID[id] && AA_BY_ID[id].role === 'air') && best.cost <= t.money) { t.money -= best.cost; t.aa[slot] = best.id; }
+    }
     if (t.type !== 'easy') {
       const rivals = this.tanks.filter((x) => x !== t).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
       const missiles = rivals.some((w) => w.kind === 'rocket' || w.carpet);
       const air = rivals.some((w) => w.air) || this.round >= 2;
       for (let slot = t.aa.indexOf(null); slot >= 0; slot = t.aa.indexOf(null)) {
         const have = t.aa.map((id) => AA_BY_ID[id]).filter(Boolean);
-        const role = have.length ? (have[0].role === 'missile' ? 'air' : 'missile') : missiles ? 'missile' : air ? 'air' : null;
+        const role = have.length ? (have[0].role === 'missile' ? 'air' : 'missile') : burned ? 'air' : missiles ? 'missile' : air ? 'air' : null;
         if (!role) break;
         const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost <= t.money * AA_SHARE).sort((a, b) => b.cost - a.cost)[0];
         if (!pick) break;

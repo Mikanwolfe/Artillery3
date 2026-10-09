@@ -229,7 +229,7 @@ const UI = {
     if (w.air) { // planes: what a squad is, and how often it flies
       const A = w.air, F = w.fleet;
       const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : A.planes], ['Squads', A.squads || 1], ['Passes', F ? '1–6' : AIR_PASSES[A.type]],
-        ['Rearm', `${reloadOf(w)} turns`], ['Type', F ? 'fleet' : A.type], ['Zone', airZone(w)], ['Strike', `in ${A.delay || 1} turn${(A.delay || 1) > 1 ? 's' : ''}`], ['Plane HP', A.hp]];
+        ['Rearm', `${reloadOf(w)} turns`], ['Type', F ? 'fleet' : A.type], ['Zone', airZone(w)], ['Plane HP', A.hp]];
       if (A.armour) rows.push(['Armour', A.armour]);
       if (A.jet) rows.push(['Jet', 'AA ½']);
       if (w.guide) rows.push(['Seek', w.guide.range]);
@@ -387,7 +387,7 @@ const UI = {
     if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% health and armour, takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
     for (const id of t.aa || []) {
       const a = AA_BY_ID[id];
-      if (a) ab.push(`<span class="slot a passive" title="${esc(a.name)}: ${esc(a.long)}"><span class="kb">AA</span><span class="txt"><span class="nm">${esc(a.name.replace(/^(Sengoku|NXi|LFS|Kotona) /, ''))}</span><span class="st">${a.role === 'missile' ? 'point defence' : 'anti-air'} · auto</span></span></span>`);
+      if (a) ab.push(`<span class="slot a passive" title="${esc(a.name)}: ${esc(a.long)}"><span class="kb">AA</span><span class="txt"><span class="nm">${esc(a.name.replace(/^(SI|NXi|LFS|Kotona) /, ''))}</span><span class="st">${a.role === 'missile' ? 'point defence' : 'anti-air'} · auto</span></span></span>`);
     }
     if (t.uplinkTurns > 0) ab.push(`<span class="slot a armed uplink" title="Golden uplink: the first shot of each turn calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">${t.uplinkTurns} turn${t.uplinkTurns > 1 ? 's' : ''}</span></span></span>`);
     else if (t.uplink) ab.push(`<span class="slot a armed uplink" title="Satellite uplink: your next shot calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">next shot</span></span></span>`);
