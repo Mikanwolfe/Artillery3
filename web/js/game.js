@@ -72,6 +72,7 @@ const HIT_TIERS = [
   { tag: 'SOLID', color: '#ff9a4a' },
   { tag: 'DIRECT HIT', color: '#fff27a' },
 ];
+const HIT_POPUP_LIFE = 4; // seconds a damage popup stays up (more for a good hit and its chips); further hits add to it
 const LEADER_BOUNTY = 400; // per round-win of lead over the runner-up
 // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
 
@@ -1147,7 +1148,7 @@ class Game {
     sat.hp = Math.max(0, sat.hp - amt);
     sat.flash = 1;
     const c = sat.center();
-    if (hit) { hit.region = reg.tag; this.hitPopup(c.x, c.y - 70, amt, hit); }
+    if (hit) { hit.region = reg.tag; this.hitPopup(c.x, c.y - 70, amt, hit, sat); }
     if (owner) { owner.stats.dealt += amt * 0.25; }
     this.sfx.hit();
     if (!sat.alive) {
@@ -1177,11 +1178,15 @@ class Game {
   }
 
   // A damage popup that reads the hit: the number grows and heats up the closer to dead centre it
-  // landed (and with the size of the hit), with a quality tag and a chip per modifier underneath
-  hitPopup(x, y, amt, h) {
-    const tier = h.q > 0.85 ? 3 : h.q > 0.6 ? 2 : h.q > 0.3 ? 1 : 0;
+  // landed (and with the size of the hit), with a quality tag and a chip per modifier underneath.
+  // It rides on its target (`on`), and while it lasts further hits add to it instead of stacking
+  // another on top: the total, the best hit's tier, a hit count and the latest hit's chips
+  hitPopup(x, y, amt, h, on = null) {
+    const live = on && this.particles.list.find((p) => p.type === 'hit' && p.follow === on && p.kind !== 'acid' && p.age < p.life - 0.3);
+    const q = live ? Math.max(live.q, h.q) : h.q, total = (live ? live.total : 0) + amt, n = live ? live.n + 1 : 1;
+    const tier = q > 0.85 ? 3 : q > 0.6 ? 2 : q > 0.3 ? 1 : 0;
     const color = HIT_TIERS[tier].color;
-    const size = Math.round(18 + 22 * h.q + Math.min(18, Math.sqrt(amt) * 0.9));
+    const size = Math.round(18 + 22 * q + Math.min(18, Math.sqrt(total) * 0.9));
     const chips = [];
     if (h.alt >= 0.05) chips.push([`ALT +${Math.round(h.alt * 100)}%`, '#f2c45a']);
     if (h.kin >= 0.05) chips.push([`KIN +${Math.round(h.kin * 100)}%`, '#ff9a5a']);
@@ -1194,9 +1199,29 @@ class Game {
     if (h.shield) chips.push(['DEFLECTOR ½', '#96d2ff']);
     if (h.capped) chips.push(['REDUNDANCY CAP', '#c3b0ff']);
     if (h.flak) chips.push(['FLAK ×2', '#78d8c4']);
-    this.particles.add({ type: 'hit', x, y, vx: (Math.random() - 0.5) * 0.3, vy: -0.6, g: 0, drag: 0.98, life: 1.5 + 0.5 * h.q + chips.length * 0.12,
-      str: String(Math.round(amt)), color, size, tag: HIT_TIERS[tier].tag, chips });
-    if (tier === 3) this.shake = Math.max(this.shake, 5);
+    const tag = n > 1 ? `${HIT_TIERS[tier].tag} · ${n} HITS` : HIT_TIERS[tier].tag;
+    const life = HIT_POPUP_LIFE + h.q + chips.length * 0.15;
+    if (live) Object.assign(live, { q, total, n, str: String(Math.round(total)), color, size, tag, chips, punchAt: live.age, life: Math.max(live.life, live.age + life) });
+    else this.particles.add({ type: 'hit', x, y, vx: 0, vy: -0.6, g: 0, drag: 0.98, life, q, total, n, punchAt: 0,
+      str: String(Math.round(amt)), color, size, tag, chips, ...this.popupAnchor(on, x, y) });
+    if (h.q > 0.85) this.shake = Math.max(this.shake, 5);
+  }
+
+  // where a popup rides: its offset from the target it follows (see Particles.update)
+  popupAnchor(on, x, y) { return on ? { follow: on, ox: x - on.x, oy: y - on.y } : {}; }
+
+  // acid's slow damage: one running total per target, above the hit popup, kept up while it burns
+  acidPopup(t, amt) {
+    const live = this.particles.list.find((p) => p.type === 'hit' && p.follow === t && p.kind === 'acid' && p.age < p.life - 0.3);
+    if (live) {
+      live.total += amt;
+      live.str = String(Math.round(live.total));
+      live.hidden = live.total < 1;
+      live.life = Math.max(live.life, live.age + HIT_POPUP_LIFE);
+      return;
+    }
+    this.particles.add({ type: 'hit', kind: 'acid', x: t.x, y: t.y - 125, vx: 0, vy: -0.6, g: 0, drag: 0.98, life: HIT_POPUP_LIFE, total: amt, n: 1, punchAt: 0,
+      str: String(Math.round(amt)), hidden: amt < 1, color: '#c8f0a0', size: 20, tag: 'ACID', chips: [], ...this.popupAnchor(t, t.x, t.y - 125) });
   }
 
   // a rocket that transforms in flight but hits before it does: half damage (the payload is the point)
@@ -1326,13 +1351,9 @@ class Game {
       owner.roundDealt += taken;
     }
     if (quiet) {
-      t.dmgAcc += amt;
-      if (t.dmgAcc >= 5) {
-        this.particles.text(t.x, t.y - 40, String(Math.round(t.dmgAcc)), '#c8f0a0');
-        t.dmgAcc = 0;
-      }
+      this.acidPopup(t, amt);
     } else if (amt > 3) {
-      if (hit) this.hitPopup(t.x + (Math.random() - 0.5) * 16, t.y - 46, amt, hit);
+      if (hit) this.hitPopup(t.x, t.y - 46, amt, hit, t);
       else this.particles.text(t.x + (Math.random() - 0.5) * 20, t.y - 40, String(Math.round(amt)), '#ffffff', amt > 100);
       this.sfx.hit();
       if (owner && owner !== t) this.events.push(`${owner.name} hit ${t.name} for ${Math.round(amt)}.`);

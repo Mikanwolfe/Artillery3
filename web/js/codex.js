@@ -218,7 +218,7 @@ Object.assign(Game.prototype, {
     r.best = Math.max(r.best, r.last);
     t.flash = 1;
     t.setPose('hit');
-    if (hit) this.hitPopup(t.x + (Math.random() - 0.5) * 16, t.y - 46, amt, hit);
+    if (hit) this.hitPopup(t.x, t.y - 46, amt, hit, t);
     else this.particles.text(t.x, t.y - 40, String(Math.round(amt)), '#c8f0a0');
     this.sfx.hit();
     this.ui.codexReadout();
