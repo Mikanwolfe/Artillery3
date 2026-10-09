@@ -1807,7 +1807,7 @@ class Game {
     const s = k * VIEW_SCALE * cam.zoom;
     ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    this.bg.drawSky(ctx);
+    this.bg.drawSky(ctx, cam);
     // very high up (the NXi fleet shot) the sky gives way to space
     const space = clamp((-cam.y - 900) / 1400, 0, 1);
     if (space > 0) drawSpace(ctx, space, this.time);

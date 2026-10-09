@@ -1,6 +1,6 @@
 'use strict';
 // Giants: one or two huge growths on every map that you can hide under. Each biome has its own:
-// a great snow pine or a dead tree on Snowy Day, a great oak or a giant toadstool in the Autumn
+// a great snow pine or a dead tree in the Far Territories, a great oak or a giant toadstool in the Autumn
 // Forest, a bleached dead tree in the Dune Sea, and a pastel toadstool or an oak in Alstroemeria.
 // Shells, beams and hostile fire stop on the canopy (or cap) and burst there, so whoever is under
 // it is covered. Blasts wear down the canopy and the stem: shoot the canopy away and the cover is
@@ -8,7 +8,7 @@
 // stays). Hooks: stepBallistic / beamTrace / lineOfSight (giantAt), Game.explode (blastGiants),
 // Game.step (stepGiants), the world draw (drawGiants), placeInfra (placeGiants).
 
-const GIANT_KINDS = { snow: ['pine', 'dead'], forest: ['oak', 'mushroom'], desert: ['dead'], alstroemeria: ['mushroom', 'oak'] };
+const GIANT_KINDS = { snow: ['pine', 'dead'], forest: ['oak', 'mushroom'], desert: ['dead'], alstroemeria: ['mushroom', 'oak'], aesru: ['hx'], aesrl: ['pillar'], astmg: ['stilt', 'dead'] };
 const GIANT_STEM_HP = 260; // blast damage a stem takes before it snaps
 const GIANT_CAP_HP = 420; // and a canopy before it is shot away
 const GIANT_CRUSH = 110; // to everything under a falling top
@@ -58,7 +58,7 @@ Object.assign(Game.prototype, {
       T.giants.push({
         x: best, kind, autumn: rng.int(0, 2), seed: rng.int(0, 1e6),
         stemH: kind === 'mushroom' ? rng.range(130, 170) : rng.range(170, 220),
-        stemW: kind === 'mushroom' ? 28 : kind === 'dead' ? 18 : 22,
+        stemW: { mushroom: 28, dead: 18, hx: 30, pillar: 34, stilt: 14 }[kind] || 22,
         capW, capH: kind === 'mushroom' ? 56 : kind === 'dead' ? 70 : 90,
         stemHp: GIANT_STEM_HP, capHp: GIANT_CAP_HP, state: 'up', dy: 0, vy: 0,
         desert: this.biome.id === 'desert', pastel: this.biome.id === 'alstroemeria',
@@ -134,10 +134,13 @@ Object.assign(Game.prototype, {
   },
 });
 
-function giantName(G) { return { pine: 'great pine', oak: 'great oak', dead: 'dead tree', mushroom: 'giant toadstool' }[G.kind]; }
+function giantName(G) { return { pine: 'great pine', oak: 'great oak', dead: 'dead tree', mushroom: 'giant toadstool', hx: 'exchanger tower', pillar: 'hall pillar', stilt: 'stilt-house' }[G.kind]; }
 
 // colours by kind and biome
 function giantCols(G) {
+  if (G.kind === 'hx') return { stem: [96, 100, 118], cap: [120, 124, 142], glow: [255, 150, 80] };
+  if (G.kind === 'pillar') return { stem: [60, 56, 60], cap: [44, 46, 56], glow: [110, 240, 200] };
+  if (G.kind === 'stilt') return { stem: [86, 90, 104], cap: [70, 72, 86], glow: [255, 190, 110] };
   if (G.kind === 'pine') return { stem: [74, 56, 44], cap: [38, 70, 66], snow: [238, 242, 248] };
   if (G.kind === 'dead') return G.desert ? { stem: [190, 176, 150], cap: [170, 154, 128] } : { stem: [96, 86, 80], cap: [86, 76, 70] };
   if (G.kind === 'oak') return { stem: [96, 66, 44], cap: G.pastel ? [140, 196, 110] : [[214, 110, 40], [196, 72, 40], [222, 160, 60]][G.autumn] };
@@ -180,6 +183,22 @@ function drawGiant(ctx, G, T) {
 function drawGiantTop(ctx, G, C, x0, y0, w, h) {
   const R = (fx, fy, fw, fh, col) => { ctx.fillStyle = rgbStr(col); ctx.fillRect(Math.round(x0 + fx * w), Math.round(y0 + fy * h), Math.max(1, Math.round(fw * w)), Math.max(1, Math.round(fh * h))); };
   const dark = (c, k) => c.map((v) => v * k);
+  if (G.kind === 'hx') { // an exchanger's crown: a drum of radiator fins with a warm band
+    R(0.1, 0, 0.8, 0.12, C.cap); R(0, 0.12, 1, 0.7, dark(C.cap, 0.85)); R(0.08, 0.82, 0.84, 0.18, C.cap);
+    for (let f = 0.04; f < 0.96; f += 0.08) R(f, 0.16, 0.03, 0.6, C.cap);
+    R(0, 0.46, 1, 0.05, C.glow);
+    return;
+  }
+  if (G.kind === 'pillar') { // a hall pillar's head: cable trays and a row of status lights
+    R(0, 0.2, 1, 0.5, C.cap); R(0.04, 0.1, 0.92, 0.12, dark(C.cap, 1.3)); R(0.04, 0.7, 0.92, 0.12, dark(C.cap, 1.3));
+    for (let f = 0.08; f < 0.92; f += 0.07) R(f, 0.42, 0.025, 0.06, hash2(Math.round(f * 100), G.seed % 97) > 0.3 ? C.glow : [60, 60, 70]);
+    return;
+  }
+  if (G.kind === 'stilt') { // a stilt-house: a boxy home up on its leg, warm windows, a little roof
+    R(0.08, 0.22, 0.84, 0.66, C.cap); R(0, 0.08, 1, 0.16, dark(C.cap, 0.8)); R(0.04, 0.86, 0.92, 0.14, dark(C.cap, 0.7));
+    for (const fx of [0.16, 0.36, 0.56, 0.76]) R(fx, 0.38, 0.1, 0.2, hash2(Math.round(fx * 10), G.seed % 89) > 0.25 ? C.glow : [40, 40, 50]);
+    return;
+  }
   if (G.kind === 'mushroom') { // a domed cap: narrow at the top, its spots, the gills under it
     R(0.3, 0, 0.4, 0.2, C.cap); R(0.14, 0.18, 0.72, 0.22, C.cap); R(0.04, 0.38, 0.92, 0.3, C.cap); R(0, 0.66, 1, 0.18, C.cap);
     R(0.02, 0.84, 0.96, 0.16, dark(C.stem, 0.8));
