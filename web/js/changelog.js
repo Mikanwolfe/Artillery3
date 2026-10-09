@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['fc7ba51', 'Planes strike the turn you call them: each dot sends a squad (or redirects one already out) and it attacks there and then; between dots it hovers over its zone, a target. No more waiting a turn, the Kidō Butai included. A squad whose girl is destroyed flies off.'],
   ['88c4b7c', 'Planes swing through turns on a damped spring instead of pivoting. A squad’s label is its badge and a pip a pass left. Badges say what a plane carries (Cb bombs, Ct torpedoes, Cf fighters, Cr rockets; flak is now Ck). CPUs killed by planes buy anti-air first. Sengoku weapons are SI, the planes have VTuber-homage nicknames, and the final tier is Parallel Night.'],
   ['13296ec', 'Kidō Butai is one 21-plane squad: it strikes on each of her turns until its loadouts run out, each dot redirects the whole fleet, and the carriers won’t launch again until it is gone. The sea is far out past a proper coastline now (no more hills clipping into it).'],
   ['d2f5c27', 'Plane squads work like autoloader rounds: each dot of a turn takes the next squad (launch, or redirect one already out), one squad per strike zone, pips on the rack. Squads only hit what is inside their zone. Fixed extra squads in the Codex range.'],
