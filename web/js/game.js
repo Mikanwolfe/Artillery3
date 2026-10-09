@@ -525,7 +525,7 @@ class Game {
     this.infraTurn(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
-    if (this.range) { t.reload = {}; t.deployed = {}; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting
+    if (this.range) { t.reload = {}; t.wings = {}; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting
     t.tickReloads();
     t.drill = hasTrait(t, 'drill');
     t.shotsLeft = t.shotsFor(t.weapon); // autoloaders reload every turn (planes: the squads she has left)
@@ -928,8 +928,7 @@ class Game {
   fire(t) {
     const w = t.weapon;
     if (this.range) { this.range.shots++; this.range.last = 0; }
-    if (w.air) t.deployed[w.id] = true; // its squad is out until it comes home (then it rearms: planes.js)
-    else if (!t.firedThisTurn && reloadOf(w)) t.reload[w.id] = reloadOf(w) + 1; // sits out reloadOf(w) of its owner's turns
+    if (!w.air && !t.firedThisTurn && reloadOf(w)) t.reload[w.id] = reloadOf(w) + 1; // sits out reloadOf(w) of its owner's turns
     // a golden crate's long uplink: the first shot of each of her next few turns calls MAIA
     const linked = !!t.uplink || (t.uplinkTurns > 0 && !t.firedThisTurn);
     if (t.uplinkTurns > 0 && !t.firedThisTurn) t.uplinkTurns--;
@@ -1145,7 +1144,7 @@ class Game {
     }
     if (w.kind === 'air') { // the designator's dot has landed: a squad (or a whole fleet) is coming
       if (r && r.hit !== 'out') {
-        if (w.fleet) this.projectiles.push(new FleetStrike(this, p.owner, p, w));
+        if (w.fleet && p.owner.wing(w).reserve > 0) this.projectiles.push(new FleetStrike(this, p.owner, p, w));
         else this.launchSquad(p);
       }
       return;

@@ -287,7 +287,7 @@ class AirStrike {
         }
         G.target = best;
       }
-      if (G.target) G.mark = { x: G.target.x, y: G.target.y };
+      if (G.target) { G.mark = { x: G.target.x, y: G.target.y }; G.side = G.owner.x <= G.mark.x ? 1 : -1; }
       for (const p of G.planes) if (p.alive && p.state !== 'attack' && p.state !== 'leave') { p.strikeDone = false; this.queue.push(p); } // (any still on the way join when they arrive)
     }
     this.queue.forEach((p, i) => { p.go = i * PLANE_STAGGER; });
@@ -427,16 +427,44 @@ function startAttack(g, p) {
 Object.assign(Game.prototype, {
   // the dot has landed: a squad takes off from the shooter
   launchSquad(p) {
-    const t = p.owner, w = p.w, A = w.air;
+    const t = p.owner, w = p.w, A = w.air, wing = t.wing(w);
+    const at = { x: clamp(p.x, 20, WORLD_W - 20), y: Math.min(p.y, this.terrain.hAt(clamp(p.x, 0, WORLD_W - 1))) };
+    if (wing.reserve <= 0) return this.redirectSquad(t, w, at, p);
+    wing.reserve--;
+    wing.out++;
     const deck = hasTrait(t, 'flightdeck') || (t.upgrades && t.upgrades.deck > 0);
     const n = A.planes + (hasTrait(t, 'flightdeck') ? 1 : 0);
     const mark = { x: clamp(p.x, 20, WORLD_W - 20), y: Math.min(p.y, this.terrain.hAt(clamp(p.x, 0, WORLD_W - 1))) };
     const G = this.makeGroup(t, w, mark, { deck, kinds: Array(n).fill(A.type), delay: A.delay || 1 });
+    G.orders = this.airOrders = (this.airOrders || 0) + 1;
     const muzzle = t.muzzle();
     this.lasers.push(new Laser(muzzle.x, muzzle.y, p.x, p.y, '#ff3a4a', 2, 26));
     this.particles.text(mark.x, mark.y - 30, `${n} ${A.type === 'fighter' ? 'fighters' : 'planes'} inbound`, '#ffd0d4');
     this.events.push(`${t.name} calls a squad of ${n} onto the mark.`);
     // (the squad flies out in the background: the turn moves on as soon as the dot is down)
+    return G;
+  },
+
+  // no squad left in reserve: the dot redirects the one out longest without new orders (not one
+  // mid-attack); it re-forms over the new mark and strikes there on her next turn
+  redirectSquad(t, w, at, p) {
+    const out = this.airGroups.filter((G) => G.owner === t && G.w === w && !G.striking && G.planes.some((q) => q.alive && q.state !== 'leave'));
+    if (!out.length) return null;
+    const G = out.sort((a, b) => (a.orders || 0) - (b.orders || 0))[0];
+    G.orders = this.airOrders = (this.airOrders || 0) + 1;
+    G.mark = at;
+    G.target = null;
+    G.side = t.x <= at.x ? 1 : -1;
+    for (const q of G.planes) {
+      if (!q.alive || q.state === 'leave' || q.state === 'attack' || q.state === 'wait' || q.state === 'launch' || q.state === 'out') continue;
+      const s = G.slot(q.i);
+      q.state = 'inbound';
+      q.fly({ x: q.x + (s.x - q.x) * 0.3, y: Math.min(q.y, s.y) - 120 }, { x: s.x - G.side * 200, y: s.y - 80 }, s, 8, 2.5, () => { q.state = 'hover'; q.t = 0; q.dir = Math.sign(G.mark.x - s.x) || G.side; });
+    }
+    const muzzle = t.muzzle();
+    this.lasers.push(new Laser(muzzle.x, muzzle.y, p.x, p.y, '#ff3a4a', 2, 26));
+    this.particles.text(at.x, at.y - 30, 'squad redirected', '#ffd0d4');
+    this.events.push(`${t.name} redirects a squad.`);
     return G;
   },
 
@@ -459,12 +487,15 @@ Object.assign(Game.prototype, {
     // and shallow; a squad in a line across it, a fleet in rows by type
     const byKind = {};
     o.kinds.forEach((k, i) => { (byKind[k] || (byKind[k] = [])).push(i); });
+    // (from wherever its mark is now: it follows its target, and can be redirected)
     G.slot = (i) => {
+      const mk = G.mark, sd = G.side;
+      if (G.topAt !== mk.x) { G.topAt = mk.x; G.top = Infinity; for (let dx = -160; dx <= 160; dx += 20) G.top = Math.min(G.top, this.terrain.hAt(clamp(mk.x + dx, 0, WORLD_W - 1))); }
       const kind = o.kinds[i], list = byKind[kind], k = list.indexOf(i), n2 = list.length;
       const a = rad(AIR_ANGLE[kind] || 60), R = clamp(PLANE_HOVER / Math.sin(a), 450, 1000);
       const row = Math.floor(k / 8), m = Math.min(8, n2 - row * 8), kk = k % 8;
-      const x = clamp(mark.x - side * Math.cos(a) * R + (kk - (m - 1) / 2) * PLANE_GAP, 20, WORLD_W - 20);
-      let y = Math.min(mark.y, top) - Math.sin(a) * R - row * 34 - (kk % 2) * 14;
+      const x = clamp(mk.x - sd * Math.cos(a) * R + (kk - (m - 1) / 2) * PLANE_GAP, 20, WORLD_W - 20);
+      let y = Math.min(mk.y, G.top) - Math.sin(a) * R - row * 34 - (kk % 2) * 14;
       y = Math.max(ceil + 120, Math.min(y, this.terrain.hAt(x) - 170)); // clear of the ground under it
       return { x, y };
     };
@@ -484,10 +515,10 @@ Object.assign(Game.prototype, {
     this.planes = this.planes.filter((p) => p.alive || p.falling);
     this.airGroups = this.airGroups.filter((G) => {
       if (G.planes.some((p) => p.alive)) return true;
-      // all home (or shot down): the weapon rearms for its turns
-      const o = G.owner;
-      o.deployed[G.w.id] = false;
-      if (o.alive) o.reload[G.w.id] = reloadOf(G.w) + 1;
+      // all home (or shot down): the squad rearms, and is back in reserve after its turns
+      const g = G.owner.wing(G.w);
+      g.out = Math.max(0, g.out - 1);
+      g.rearm.push(reloadOf(G.w));
       return false;
     });
   },
@@ -605,6 +636,9 @@ class FleetStrike {
         pl.x = pl.from.x; pl.y = pl.from.y;
       },
     });
+    const wing = owner.wing(w); // (the fleet is her one squad of it)
+    wing.reserve--; wing.out++;
+    this.group.orders = game.airOrders = (game.airOrders || 0) + 1;
     this.zoom0 = game.cam.zoom;
     this.focus = { x: mark.x, y: mark.y - 160 };
     this.view = { x: this.ships[1 % this.ships.length].x, y: this.seaY - 300 };

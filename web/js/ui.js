@@ -228,7 +228,7 @@ const UI = {
   weaponStats(w) {
     if (w.air) { // planes: what a squad is, and how often it flies
       const A = w.air, F = w.fleet;
-      const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : A.planes], ['Passes', F ? 1 : AIR_PASSES[A.type]],
+      const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : A.planes], ['Squads', A.squads || 1], ['Passes', F ? 1 : AIR_PASSES[A.type]],
         ['Rearm', `${reloadOf(w)} turns`], ['Type', F ? 'fleet' : A.type], ['Strike', `in ${A.delay || 1} turn${(A.delay || 1) > 1 ? 's' : ''}`], ['Plane HP', A.hp]];
       if (A.jet) rows.push(['Jet', 'AA ½']);
       if (w.guide || A.seek) rows.push(['Seek', A.seek || w.guide.range]);
@@ -344,7 +344,7 @@ const UI = {
   renderRack(g) {
     const t = g.active;
     const show = t && t.alive && (g.phase === 'aim' || g.phase === 'resolve');
-    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.deployed, t.aa, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, t.uplinkTurns || 0, !!g.cpu, g.phase, BALANCE, t.fuel >= Math.ceil(t.maxFuel * JUMP_FUEL), t.fuel >= Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)), !!t.falling]) : '';
+    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.wings, t.aa, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, t.uplinkTurns || 0, !!g.cpu, g.phase, BALANCE, t.fuel >= Math.ceil(t.maxFuel * JUMP_FUEL), t.fuel >= Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)), !!t.falling]) : '';
     if (sig === this.last.rack) return;
     this.last.rack = sig;
     $('rack').hidden = !show;
@@ -359,11 +359,11 @@ const UI = {
       let st;
       if (on && t.firedThisTurn && t.shotsLeft > 0) st = `${t.shotsLeft} left`;
       else if (left > 0) st = `↻ ${left} turn${left > 1 ? 's' : ''}`;
-      else if (w.air && t.deployed[w.id]) st = 'squad out';
+      else if (w.air) { const g = t.wing(w); st = `${g.reserve} ready${g.out ? ` · ${g.out} out` : ''}${g.rearm.length ? ` · ${g.rearm.length} rearming` : ''}`; }
       else st = on ? (w.clip > 1 ? `${w.clip} shots` : 'in hand') : 'loaded';
-      const reloadNote = w.air ? `One squad: out until its loadout is spent, then rearms for ${reloadOf(w)} turns` : reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
+      const reloadNote = w.air ? `${w.air.squads} squad${w.air.squads > 1 ? 's' : ''}: a shot sends one, or redirects one already out; each back or lost rearms for ${reloadOf(w)} turns` : reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
       const pips = on && w.clip > 1 ? `<span class="pips">${Array.from({ length: w.clip }, (_, k) => `<i class="${k < (t.firedThisTurn || w.air ? t.shotsLeft : w.clip) ? 'f' : ''}"></i>`).join('')}</span>` : '';
-      return `<button class="slot w${on ? ' on' : ''}${left > 0 ? ' rl' : ''}" data-i="${i}" title="${esc(w.name)} · ${reloadNote}" ${left > 0 || t.deployed[id] || (t.firedThisTurn && !on) ? 'disabled' : ''}>
+      return `<button class="slot w${on ? ' on' : ''}${left > 0 ? ' rl' : ''}" data-i="${i}" title="${esc(w.name)} · ${reloadNote}" ${left > 0 || !t.weaponReady(id) || (t.firedThisTurn && !on) ? 'disabled' : ''}>
         ${this.badge(w, true)}<span class="txt"><span class="nm">${esc(w.name)}</span><span class="st">${st}</span></span>${pips}
         ${left > 0 ? `<span class="rlbar"><i style="width:${Math.round(100 * (1 - left / total))}%"></i></span>` : ''}</button>`;
     }).join('');
