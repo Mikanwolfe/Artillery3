@@ -87,15 +87,19 @@ const GIRL_NOTES = {
 
 const RANGE_DIST = { near: 300, mid: 550, far: 850 }; // world units from the girl to the dummy
 const RANGE_X = 1000; // where she stands
+const DRILL_PLANE = 'suisei'; // the AA drill's target squad: three dive jets (90 health each)
+const DRILL_MISSILES = 6; // and its rocket salvo
 
 // worth on a turn the gun fires: damage over the clip and salvo, scaled by blast radius and spread,
-// plus acid and MAIA (the armoury's measure)
+// plus acid and MAIA (the armoury's measure). The blast radius counts as (radius / 80) to the power
+// of its weight (the Codex slider; 0.5, a square root, by default): 0 ignores it, 1 is linear.
+const CODEX_RADIUS_WEIGHT = 0.5;
 function codexWorth(w) {
   if (w.air) return airValue(w);
   const shots = w.salvo * Math.min(w.clip, 4);
   const heads = w.split ? w.split.n : 1;
   const carpet = w.carpet ? w.carpet.n * w.carpet.frac * 0.45 : 0;
-  return w.dmg * shots * (heads + carpet) * Math.sqrt(w.dmgR / 80) / (1 + w.disp * (w.salvo > 1 ? 0.05 : 0.12)) + w.acid * 60 * shots + (w.sat ? 110 * Math.min(w.clip, 3) : 0);
+  return w.dmg * shots * (heads + carpet) * Math.pow(w.dmgR / 80, UI.codex.radiusWeight) / (1 + w.disp * (w.salvo > 1 ? 0.05 : 0.12)) + w.acid * 60 * shots + (w.sat ? 110 * Math.min(w.clip, 3) : 0);
 }
 
 // a short read on a gun: value against its tier, consistency, reach, tempo
@@ -156,10 +160,10 @@ function codexChart(sel) {
 
 // ---------------------------------------------------------------- the range (game side)
 Object.assign(Game.prototype, {
-  startRange(vid, wid) {
+  startRange(vid, wid, aa) {
     const prev = this.range;
     this.setOptions({ balance: UI.opts.balance, events: false, map: UI.opts.map });
-    this.range = { vid, wid, dist: prev ? prev.dist : 'mid', calm: prev ? prev.calm : false, last: 0, total: 0, shots: 0, best: 0 };
+    this.range = { vid, wid, aa, dist: prev ? prev.dist : 'mid', calm: prev ? prev.calm : false, last: 0, total: 0, shots: 0, best: 0, drill: null };
     this.sfx.unlock();
     this.turnSerial = 0;
     this.report = null;
@@ -169,6 +173,7 @@ Object.assign(Game.prototype, {
     const dummy = new Tank(1, { name: 'Training dummy', type: 'dummy', vehicle: 'gwt' });
     dummy.dummy = true;
     you.weapons = [wid];
+    if (aa) you.aa = you.aa.map((_, i) => (i ? null : aa)); // (the mount on test, alone)
     for (const a of ABILITIES) you.abilities[a.id] = 1; // try the abilities too
     this.tanks = [you, dummy];
     this.rounds = 0;
@@ -207,7 +212,7 @@ Object.assign(Game.prototype, {
     const r = this.range;
     if (!r) return;
     this.newEnvironment();
-    this.startRange(r.vid, r.wid);
+    this.startRange(r.vid, r.wid, r.aa);
   },
 
   // the camera frames the girl and the dummy together, in the part of the screen right of the panel
@@ -226,9 +231,62 @@ Object.assign(Game.prototype, {
     you.facing = 1;
   },
 
+  // AA drills: a target squad flies over her without attacking (low, as on an attack run, or high,
+  // where squads hover), or a salvo of rockets comes in at her; her mount does what it can and the
+  // tally shows it. The targets can't be destroyed: a plane that has taken its health counts as
+  // downed and flies on.
+  rangeDrill(kind) {
+    const r = this.range;
+    if (!r || this.phase !== 'aim') return;
+    const [you, dummy] = this.tanks;
+    this.planes = []; this.airGroups = []; this.aaRounds = [];
+    this.aaNewTurn();
+    Object.assign(r, { drill: kind, last: 0, downs: 0, sent: 0, stopped: 0, through: 0 });
+    r.shots++;
+    this.phase = 'resolve'; this.resolveSteps = 0; this.quiet = 0; this.salvo = null;
+    this.report = { shooter: you, blasts: [], dmg: new Map(), fall: new Map(), kills: [] };
+    const gy = this.terrain.hAt(you.x);
+    if (kind === 'missiles') {
+      const w = { ...WEAPON_BY_ID.lfs0, salvo: 1 }; // (Alban Eiler's seekers: they find her)
+      for (let i = 0; i < DRILL_MISSILES; i++) {
+        const x = you.x + 760 + i * 30, y = gy - 420 - (i % 2) * 40, T = 64 + i * 2;
+        const p = new Projectile(this, w, dummy, x, y, (you.x - x) / T, (gy - 12 - y - 0.5 * GRAV * T * T) / T, i === 0);
+        p.delay = i * 10;
+        this.projectiles.push(p);
+      }
+      r.sent = DRILL_MISSILES;
+      this.cam.follow({ x: you.x + 300, y: gy - 260 });
+    } else {
+      const w = WEAPON_BY_ID[DRILL_PLANE], alt = kind === 'high' ? PLANE_HOVER : 170;
+      const G = this.makeGroup(dummy, w, { x: you.x, y: gy }, { deck: true, kinds: [w.air.type, w.air.type, w.air.type] });
+      G.planes.forEach((p, i) => {
+        p.drill = true; p.state = 'inbound'; p.delay = 0; p.passes = 0;
+        p.x = you.x + 1000 + i * 80; p.y = gy - alt - (i % 2) * 24; p.snap = true;
+        p.sp = p.fl.cruise; p.hd = Math.PI; p.face = -1; p.dir = -1;
+        p.go({ x: you.x - 1000 - i * 80, y: p.y }, { v: p.fl.cruise, r: 60, clear: 0 }, () => { p.alive = false; });
+      });
+      r.sent = G.planes.length;
+      this.projectiles.push({ update: () => G.planes.some((p) => p.alive), draw() {} }); // (the drill lasts while they're over the range)
+      this.cam.follow({ x: you.x, y: gy - alt * 0.6 });
+    }
+    this.ui.codexReadout();
+  },
+
+  // a drill target took a hit: tally it, and keep it flying
+  drillHit(p, amt) {
+    const r = this.range;
+    r.last += amt; r.total += amt; r.best = Math.max(r.best, r.last);
+    p.flash = 1;
+    p.taken = (p.taken || 0) + amt;
+    this.particles.text(p.sx, p.sy - 26, String(Math.round(amt)), '#ffffff');
+    if (!p.downed && p.taken >= p.maxHp) { p.downed = true; r.downs++; this.particles.text(p.sx, p.sy - 44, 'DOWNED', '#ffd84a', true); }
+    this.ui.codexReadout();
+  },
+
   // the dummy soaks everything and keeps score
   rangeHit(t, amt, hit) {
     const r = this.range;
+    r.drill = null;
     r.last += amt;
     r.total += amt;
     r.best = Math.max(r.best, r.last);
@@ -254,7 +312,14 @@ Object.assign(Game.prototype, {
 
 // ---------------------------------------------------------------- the panel (UI side)
 Object.assign(UI, {
-  codex: { vid: 'gwt', wid: null, filter: 'all' },
+  codex: { vid: 'gwt', wid: null, aa: null, filter: 'all', radiusWeight: CODEX_RADIUS_WEIGHT },
+
+  // (re)start the range with what is picked: the gun, and the AA mount when that list is open
+  codexRange() {
+    const c = this.codex;
+    this.game.startRange(c.vid, c.wid, c.filter === 'aa' ? c.aa : null);
+    this.codexReadout();
+  },
 
   openCodex() {
     const c = this.codex;
@@ -262,8 +327,7 @@ Object.assign(UI, {
     $('menu').hidden = true;
     $('codex').hidden = false;
     this.renderCodex();
-    this.game.startRange(c.vid, c.wid);
-    this.codexReadout();
+    this.codexRange();
   },
 
   closeCodex() {
@@ -275,6 +339,8 @@ Object.assign(UI, {
   codexReadout() {
     const r = this.game.range;
     if (!r) return;
+    if (r.drill === 'missiles') { $('cx-readout').innerHTML = `<span class="mgh">Intercepted</span><b>${r.stopped}/${r.sent}</b><span class="mgh">Got through</span><b>${Math.round(r.through)}</b><span class="mgh">Drills</span><b>${r.shots}</b>`; return; }
+    if (r.drill) { $('cx-readout').innerHTML = `<span class="mgh">This pass</span><b>${Math.round(r.last)}</b><span class="mgh">Downed</span><b>${r.downs}/${r.sent}</b><span class="mgh">Best</span><b>${Math.round(r.best)}</b><span class="mgh">Drills</span><b>${r.shots}</b>`; return; }
     $('cx-readout').innerHTML = `<span class="mgh">Last shot</span><b>${Math.round(r.last)}</b><span class="mgh">Best</span><b>${Math.round(r.best)}</b><span class="mgh">Total</span><b>${Math.round(r.total)}</b><span class="mgh">Shots</span><b>${r.shots}</b>`;
   },
 
@@ -291,39 +357,73 @@ Object.assign(UI, {
       drawGirl(g, o);
       drawGirlMount(g, o);
     });
-    $('cx-chars').querySelectorAll('button').forEach((b) => { b.onclick = () => { c.vid = b.dataset.v; this.renderCodex(); this.game.startRange(c.vid, c.wid); this.codexReadout(); b.blur(); }; });
+    $('cx-chars').querySelectorAll('button').forEach((b) => { b.onclick = () => { c.vid = b.dataset.v; this.renderCodex(); this.codexRange(); b.blur(); }; });
     const note = GIRL_NOTES[v.id];
     $('cx-char').innerHTML = `<p class="maker${MAKER_CLASS[v.id] || ''}">${esc(MAKERS[v.id] || '')}</p><h3>${esc(v.name)}</h3><p>${esc(v.blurb)}</p>
       <div class="cx-stats"><span class="mgh">Health</span><b>${v.hp}</b><span class="mgh">Armour</span><b>${v.armour}</b><span class="mgh">Fuel</span><b>${Math.round((v.fuel || 1) * 100)}%</b></div>
       <ul class="traits">${(v.traits || []).map((id) => `<li><b>${esc(TRAITS[id].name)}</b> ${esc(TRAITS[id].desc)}</li>`).join('')}</ul>
       ${note ? `<p class="cx-meta">${esc(note.plays)}</p>` : ''}`;
-    // weapons: filter, list, then the chosen one
+    // weapons: filter, list, then the chosen one (the AA filter lists the mounts: hers, then the shop's)
+    $('cx-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === c.filter));
+    if (c.filter === 'aa') this.renderCodexAA(v);
+    else {
     const list = [v.weapon, ...(v.extra || [])].concat(WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) => forVehicle(w, v.id))).filter((w) =>
       c.filter === 'all' || (c.filter === 'hybrid' ? w.hybrid : c.filter === 'NXi' ? makerOf(w) === 'NXi' : w.kind === c.filter));
-    $('cx-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === c.filter));
     $('cx-list').innerHTML = list.map((w) => `<button class="cx-w${w.id === c.wid ? ' on' : ''}" data-w="${w.id}">${this.badge(w, true)}<span>${esc(w.name)}</span><small>${w.starter ? 'starter' : money(w.cost)}</small></button>`).join('');
-    $('cx-list').querySelectorAll('button').forEach((b) => { b.onclick = () => { c.wid = b.dataset.w; this.renderCodex(); this.game.startRange(c.vid, c.wid); this.codexReadout(); b.blur(); }; });
+    $('cx-list').querySelectorAll('button').forEach((b) => { b.onclick = () => { c.wid = b.dataset.w; this.renderCodex(); this.codexRange(); b.blur(); }; });
     const w = WEAPON_BY_ID[c.wid];
     const gn = GUN_NOTES[w.id];
     const maker = makerOf(w);
     $('cx-wpn').innerHTML = `<div class="cx-whead">${this.badge(w)}<div><p class="maker${maker === 'NXi' ? ' nxi' : ''}">${esc(maker || RARITY[w.rarity].word)}</p><h3 style="color:${RARITY[w.rarity].ui}">${esc(w.name)}</h3><p class="cost">${w.starter ? 'Starting gun' : money(w.cost)}</p></div></div>
       <p>${esc(w.short)} <i>${esc(w.long)}</i></p>
       <div class="stats">${this.weaponStats(w)}</div>
-      <dl class="cx-dl">${codexMeta(w).map(([k, val]) => `<dt>${k}</dt><dd>${esc(val)}</dd>`).join('')}</dl>
+      <dl class="cx-dl" id="cx-wmeta"></dl>
       ${gn ? `<p class="cx-meta"><span class="chip ${gn[0]}">${gn[0]}</span> ${esc(gn[1])}</p>` : ''}
-      ${w.sig ? '' : `<p class="mgh">Price against worth per firing turn (log) · click a dot</p>${codexChart(w)}`}`;
-    $('cx-wpn').querySelectorAll('rect[data-w]').forEach((r) => { r.onclick = () => { c.wid = r.dataset.w; this.renderCodex(); this.game.startRange(c.vid, c.wid); this.codexReadout(); }; });
+      ${w.sig || w.air ? '' : `<label class="cx-slider" title="How much a bigger blast is worth: 0 ignores the radius, 0.5 (the default) counts its square root, 1 counts it in full, 1.5 more than that"><span class="mgh">Blast radius weight</span><input type="range" id="cx-rw" min="0" max="1.5" step="0.05" value="${c.radiusWeight}"><b id="cx-rwv">${c.radiusWeight.toFixed(2)}</b></label>`}
+      <div id="cx-wchart"></div>`;
+    const worth = () => {
+      $('cx-wmeta').innerHTML = codexMeta(w).map(([k, val]) => `<dt>${k}</dt><dd>${esc(val)}</dd>`).join('');
+      $('cx-wchart').innerHTML = w.sig ? '' : `<p class="mgh">Price against worth per firing turn (log) · click a dot</p>${codexChart(w)}`;
+      $('cx-wchart').querySelectorAll('rect[data-w]').forEach((r) => { r.onclick = () => { c.wid = r.dataset.w; this.renderCodex(); this.codexRange(); }; });
+    };
+    worth();
+    const rw = $('cx-rw');
+    if (rw) rw.oninput = () => { c.radiusWeight = +rw.value; $('cx-rwv').textContent = c.radiusWeight.toFixed(2); worth(); }; // (the meta and chart only: the slider keeps its drag)
+    }
     const r = this.game.range;
     $('cx-dist').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.d === (r ? r.dist : 'mid')));
     $('cx-wind').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.w === (r && r.calm ? 'calm' : 'live')));
   },
 
+  // the AA mounts: her own first, then the shop's; the chosen one's card, the drills to test it on
+  // the range, and every mount side by side
+  renderCodexAA(v) {
+    const c = this.codex;
+    const mounts = (v.aa || []).map((id) => AA_BY_ID[id]).filter((a) => a && a.starter).concat(AA_WEAPONS);
+    if (!c.aa || !AA_BY_ID[c.aa] || (AA_BY_ID[c.aa].starter && !(v.aa || []).includes(c.aa))) c.aa = mounts[0].id;
+    const tag = (a) => (a.starter ? 'hers' : money(a.cost));
+    $('cx-list').innerHTML = mounts.map((a) => `<button class="cx-w${a.id === c.aa ? ' on' : ''}" data-a="${a.id}">${this.badge(a, true)}<span>${esc(a.name)}</span><small>${tag(a)}</small></button>`).join('');
+    $('cx-list').querySelectorAll('button').forEach((b) => { b.onclick = () => { c.aa = b.dataset.a; this.renderCodex(); this.codexRange(); b.blur(); }; });
+    const a = AA_BY_ID[c.aa], r = RARITY[a.rarity];
+    const vsAir = (x) => Math.round(x.perTurn * x.dmg * (x.acc + (1 - x.acc) * AA_GRAZE));
+    const rows = mounts.map((x) => `<tr class="${x.id === a.id ? 'on' : ''}"><td>${esc(x.name.replace(/^(SI|NXi|LFS|Kotona|KTS-T|G\.W\.) /, ''))}</td><td>${x.role === 'missile' ? 'PD' : 'AA'}</td><td>${x.range}</td><td>${vsAir(x)}${x.splash ? '+' : ''}</td><td>${Math.round(x.pk * 100)}%</td><td>${tag(x)}</td></tr>`).join('');
+    $('cx-wpn').innerHTML = `<div class="cx-whead">${this.badge(a)}<div><p class="maker">${esc(aaMaker(a))} · ${a.role === 'missile' ? 'point defence' : 'anti-air'}</p><h3 style="color:${r.ui}">${esc(a.name)}</h3><p class="cost">${a.starter ? `${esc(v.name)}’s own` : money(a.cost)}</p></div></div>
+      <p>${esc(a.short)} <i>${esc(a.long)}</i></p>
+      <div class="stats">${this.weaponStats(a)}</div>
+      <dl class="cx-dl"><dt>Vs aircraft</dt><dd>about ${vsAir(a)} a turn at most (${a.perTurn} bursts of ${a.dmg}, ${Math.round(a.acc * 100)}% to hit, a miss grazes for ${Math.round(AA_GRAZE * 100)}%${a.splash ? `; each burst hits everything within ${a.splash}` : ''}), out to ${a.range}</dd>
+      <dt>Vs missiles</dt><dd>${Math.round(a.pk * 100)}% to destroy each rocket or bomb it engages${a.cut ? `, and one that gets through hits ${Math.round(a.cut * 100)}% softer` : ''}</dd></dl>
+      <p class="mgh">Test it: a squad of three ${esc(shortName(WEAPON_BY_ID[DRILL_PLANE]))} (${WEAPON_BY_ID[DRILL_PLANE].air.hp} health each) flies over her without attacking, or ${DRILL_MISSILES} rockets come in at her</p>
+      <div class="seg" id="cx-drill"><button data-k="low">Low pass</button><button data-k="high">High pass</button><button data-k="missiles">Rocket salvo</button></div>
+      <table class="cx-aa"><tr><th>Mount</th><th></th><th>Range</th><th>Air/turn</th><th>Kill</th><th>¢</th></tr>${rows}</table>`;
+    $('cx-drill').querySelectorAll('button').forEach((b) => { b.onclick = () => { this.game.rangeDrill(b.dataset.k); b.blur(); }; });
+  },
+
   initCodex() {
     $('codex-open').onclick = () => this.openCodex();
     $('codex-close').onclick = () => this.closeCodex();
-    $('cx-filter').querySelectorAll('button').forEach((b) => { b.onclick = () => { this.codex.filter = b.dataset.f; this.renderCodex(); b.blur(); }; });
-    $('cx-dist').querySelectorAll('button').forEach((b) => { b.onclick = () => { const g = this.game; if (g.range) { g.range.dist = b.dataset.d; g.startRange(this.codex.vid, this.codex.wid); } this.renderCodex(); this.codexReadout(); b.blur(); }; });
-    $('cx-wind').querySelectorAll('button').forEach((b) => { b.onclick = () => { const g = this.game; if (g.range) { g.range.calm = b.dataset.w === 'calm'; g.startRange(this.codex.vid, this.codex.wid); } this.renderCodex(); this.codexReadout(); b.blur(); }; });
+    $('cx-filter').querySelectorAll('button').forEach((b) => { b.onclick = () => { const was = this.codex.filter === 'aa'; this.codex.filter = b.dataset.f; this.renderCodex(); if (was !== (b.dataset.f === 'aa')) this.codexRange(); b.blur(); }; });
+    $('cx-dist').querySelectorAll('button').forEach((b) => { b.onclick = () => { const g = this.game; if (g.range) { g.range.dist = b.dataset.d; this.codexRange(); } this.renderCodex(); this.codexReadout(); b.blur(); }; });
+    $('cx-wind').querySelectorAll('button').forEach((b) => { b.onclick = () => { const g = this.game; if (g.range) { g.range.calm = b.dataset.w === 'calm'; this.codexRange(); } this.renderCodex(); this.codexReadout(); b.blur(); }; });
     $('cx-regen').onclick = (e) => { this.game.resetRange(); this.codexReadout(); e.currentTarget.blur(); }; // new ground, everyone back on their feet
     $('cx-reset').onclick = (e) => { const r = this.game.range; if (r) { r.last = r.total = r.best = r.shots = 0; this.codexReadout(); } e.currentTarget.blur(); };
   },

@@ -382,3 +382,11 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 #rotate .phone { width: 44px; height: 76px; border: 3px solid var(--accent); animation: tilt 2.4s ease-in-out infinite; }
 @keyframes tilt { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
 @media (pointer: coarse) and (orientation: portrait) { body:not(.portrait-ok) #rotate { display: flex; } }
+.cx-slider { display: grid; grid-template-columns: auto 1fr 2.6em; gap: 0.6em; align-items: center; }
+.cx-slider input { width: 100%; accent-color: var(--accent); }
+.cx-slider b { font-weight: 400; color: var(--fg); text-align: right; }
+.cx-aa { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+.cx-aa th { color: var(--ash); font-weight: 400; text-align: left; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85em; }
+.cx-aa td, .cx-aa th { padding: 0.15em 0.3em; border-bottom: 1px solid var(--line); }
+.cx-aa td:nth-child(n+3), .cx-aa th:nth-child(n+3) { text-align: right; }
+.cx-aa tr.on td { color: var(--bright); background: var(--bg3); }

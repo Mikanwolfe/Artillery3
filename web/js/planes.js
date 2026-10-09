@@ -690,6 +690,7 @@ Object.assign(Game.prototype, {
   damagePlane(p, amt, owner, def, hit) {
     if (!p.alive || p.owner === owner) return;
     if (def && (def.kind === 'flak' || def.airburst)) { amt *= FLAK_MOB_MULT; if (hit) hit.flak = true; }
+    if (p.drill && this.range) { this.drillHit(p, amt); return; } // (the Codex's AA drill: tallied, not destroyed)
     p.flash = 1;
     if (p.armour > 0) { // a fortress's armour takes a whole hit, however big, like a girl's
       const a = Math.min(amt, p.armour);
