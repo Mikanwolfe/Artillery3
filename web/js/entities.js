@@ -447,6 +447,7 @@ class Projectile {
   update() {
     const g = this.game;
     if (this.dead) return false; // shot down by a point-defence mount (aa.js)
+    if (this.aaHit && this.age % 3 === 0) this.game.particles.add({ x: this.x, y: this.y, vx: 0, vy: -0.3, g: 0, drag: 0.95, life: 0.8, size: 4 + Math.random() * 3, color: [70, 66, 72] }); // hit by point defence: it smokes
     if (this.delay > 0) { this.delay--; return true; } // waiting its turn in a burst
     if (this.w.lance && this.lanceStep(g)) { this.age++; return true; }
     // proximity fuse against aircraft: flak and rockets go off short of a drone or plane they are

@@ -4,8 +4,11 @@
 // mount's `range` of its owner (aimed at her or at anyone near her) it shoots: rockets, carpet
 // bomblets, plane bombs and drone bombs as they fly in, and aircraft (planes, drones) while shots
 // play out. Rounds burst at the target or at the edge of their range, whichever comes first.
-//   role 'missile'  point defence: a good chance (pk) to destroy a missile or bomb outright, and
-//                   one that gets through is damaged (its blast cut by `cut`); weak against aircraft
+//   role 'missile'  point defence: every missile or bomb that comes within range is engaged, and
+//                   each engagement takes about `stop` of its damage off, more or less (half to one
+//                   and a half times), less for a tough one (aaTough: heavy warheads); one left with
+//                   little is shot down outright, so light rockets mostly never land while a big
+//                   one gets through, damaged. Weak against aircraft
 //   role 'air'      anti-aircraft: bursts that hurt planes and drones (dmg, acc), but very little
 //                   chance against anything as small and fast as a missile
 // Each mount engages each missile once, and gets `perTurn` rounds a turn against aircraft.
@@ -52,6 +55,11 @@ const AA_STARTERS = [
     short: 'The other half of the Defensive Suite: proximity flak, twin-mounted, never jams.', long: 'Anti-aircraft: November’s own.' },
 ];
 const AA_BY_ID = Object.fromEntries(AA_WEAPONS.concat(AA_STARTERS).map((a) => [a.id, a]));
+// what share of a missile's damage each engagement takes off: point defence a lot, anti-air guns a
+// little (their pk). Two mounts multiply: 50% and 60% leave 20%.
+const PD_STOP = { aegis: 0.5, ciws: 0.6, kotonapd: 0.75, gatewatch: 0.85, aa_alb: 0.35, aa_obj: 0.45, aa_nxi1: 0.5 };
+for (const a of Object.values(AA_BY_ID)) a.stop = PD_STOP[a.id] || Math.min(0.2, a.pk * 1.5);
+const AA_SHOT_DOWN = 0.2; // a missile left with this little of its damage is shot down in the air
 const AA_GRAZE = 0.25; // an anti-air burst that misses still grazes for this much
 function aaMaker(a) { return a.name.startsWith('NXi') ? 'NXi' : a.name.startsWith('LFS') ? 'Lymilark' : a.name.startsWith('Kotona') ? 'Kotona' : 'Sengoku Inc.'; }
 const AA_ROUND_SPEED = { air: 26, missile: 60 }; // world units a frame (point defence is near enough hitscan)
@@ -60,7 +68,7 @@ const VTOL_MULT = 0.7; // planes launched straight up (no flight deck) hit this 
 // how many mounts she can carry
 function aaSlots(t) { return hasTrait(t, 'twinaa') || hasTrait(t, 'defsuite') ? 2 : 1; }
 // roughly what a mount is worth a turn, to compare like with unlike
-function aaPower(A) { return A.role === 'air' ? A.dmg * A.acc * A.perTurn * (A.splash ? 1.5 : 1) : A.pk * A.perTurn * 60 + A.range * 0.05; }
+function aaPower(A) { return A.role === 'air' ? A.dmg * A.acc * A.perTurn * (A.splash ? 1.5 : 1) : A.stop * 100 + A.range * 0.05; }
 // where a mount she buys goes: a free slot, else the slot her own starter mount sits in
 // (a starter of the same role first)
 function aaSlotFor(t, role) {
@@ -75,7 +83,11 @@ function aaInterceptable(p) {
   return !!w && (w.kind === 'rocket' || w.bomblet || w.ord || w.id === 'mobbomb' || w.id === 'shipbomb');
 }
 function aaKill(A, p) { // a mount's chance to destroy a missile or bomb
-  return A.pk * (p.w.jet ? 0.5 : 1) * (p.w.ord ? 0.8 : 1);
+  return Math.min(0.95, A.stop * (0.5 + rng.next()) * (p.w.jet ? 0.7 : 1) / aaTough(p.w)); // (a jet's bombs come in faster)
+}
+// how hard a missile or bomb is to stop: by the weight of its warhead (a 100-damage rocket is 1)
+function aaTough(w) {
+  return w.tough || clamp(Math.sqrt((w.dmg || 100) / 100), 0.4, 4);
 }
 
 Object.assign(Game.prototype, {
@@ -96,24 +108,18 @@ Object.assign(Game.prototype, {
         const A = AA_BY_ID[id], gun = t.aaGuns[i];
         if (!A || gun.cd-- > 0) return;
         const key = t.idx * 4 + i;
-        // a missile or bomb coming in (not one going away), nearest first
-        let best = null, bd = A.range;
+        // every missile or bomb within range, once each (all of them: point defence never runs dry)
+        let fired = false;
         for (const p of shots) {
-          if (p.owner === t || (p.aaSeen && p.aaSeen.has(key))) continue;
-          const d = dist(p.x, p.y, c.x, c.y);
-          if (d >= bd) continue;
-          if ((p.x - c.x) * p.vx + (p.y - c.y) * p.vy > 0 && d > 60) continue; // going away
-          bd = d; best = p;
+          if (p.owner === t || (p.aaSeen && p.aaSeen.has(key)) || dist(p.x, p.y, c.x, c.y) >= A.range) continue;
+          (p.aaSeen || (p.aaSeen = new Set())).add(key);
+          this.aaFire(t, A, p, 'shot');
+          fired = true;
         }
-        if (best) {
-          (best.aaSeen || (best.aaSeen = new Set())).add(key);
-          this.aaFire(t, A, best, 'shot');
-          gun.cd = A.rof;
-          return;
-        }
+        if (fired) { gun.cd = 2; return; }
         if (gun.budget <= 0) return;
         // aircraft: a rival's planes, and drones
-        let air = null; bd = A.range;
+        let air = null, bd = A.range;
         for (const e of this.aaAircraft(t)) {
           const q = e.center(), d = dist(q.x, q.y, c.x, c.y);
           if (d < bd) { bd = d; air = e; }
@@ -163,21 +169,25 @@ Object.assign(Game.prototype, {
 
   aaBurst(r) {
     const A = r.A, tg = r.target;
-    // the burst: a dark flak puff, or point defence's sparks
-    for (let i = 0; i < (A.role === 'air' ? 6 : 4); i++) {
+    // the burst: point defence's sparks, or flak: a flash, fragments flung out and a black puff
+    // that hangs in the sky (bigger for heavier mounts)
+    if (A.role === 'air') this.flakBurst(r.x, r.y, clamp(Math.sqrt(A.dmg / 20), 0.8, 2.6), (A.splash || 0) > 0);
+    else for (let i = 0; i < 4; i++) {
       this.particles.add({ x: r.x + (Math.random() - 0.5) * 10, y: r.y + (Math.random() - 0.5) * 10, vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5, g: 0, drag: 0.92, life: 0.5 + Math.random() * 0.4,
-        size: A.role === 'air' ? 6 + Math.random() * 6 : 3 + Math.random() * 3, color: A.role === 'air' ? [52, 50, 56] : [255, 230, 150] });
+        size: 3 + Math.random() * 3, color: [255, 230, 150] });
     }
     if (r.kind === 'shot') {
-      if (tg.dead || !this.projectiles.includes(tg) || dist(tg.x, tg.y, r.x, r.y) > 30 + Math.hypot(tg.vx, tg.vy) * 2) return; // gone, or out of reach
-      if (rng.next() < aaKill(A, tg)) {
+      if (tg.dead || !this.projectiles.includes(tg)) return; // gone (point defence doesn't miss: see the top)
+      tg.aaCut = (tg.aaCut || 1) * (1 - aaKill(A, tg)); // (the hit takes its share of the damage off)
+      tg.aaHit = true; // (it trails smoke from here)
+      if (tg.aaCut <= AA_SHOT_DOWN) { // little left of it: down it goes
         tg.dead = true;
         this.particles.explosion(tg.x, tg.y, 26, 'shell');
         this.particles.text(tg.x, tg.y - 20, 'INTERCEPTED', A.role === 'missile' ? '#9ae0ff' : '#e8d8a0');
         this.sfx.explosion(10);
         if (this.report) this.report.intercepts = (this.report.intercepts || 0) + 1;
         if (this.range && this.range.drill) { this.range.stopped++; this.ui.codexReadout(); }
-      } else if (A.cut) tg.aaCut = (tg.aaCut || 1) * (1 - A.cut); // it gets through, damaged
+      } else this.particles.text(tg.x, tg.y - 20, `HIT −${Math.round((1 - tg.aaCut) * 100)}%`, A.role === 'missile' ? '#9ae0ff' : '#e8d8a0');
       return;
     }
     // aircraft
@@ -187,6 +197,20 @@ Object.assign(Game.prototype, {
       const q = e.center();
       if (dist(q.x, q.y, r.x, r.y) > (A.splash || 40) + (e.hw || 12)) continue;
       this.damage(e, A.dmg * (rng.next() > A.acc ? AA_GRAZE : 1), r.owner, { aa: true }); // (a miss still grazes)
+    }
+  },
+
+  // a flak shell bursting: s scales it (a 25mm pop to a 10cm crack), wide for a rocket barrage
+  flakBurst(x, y, s, wide) {
+    const P = this.particles, n = Math.round(6 + 5 * s);
+    P.add({ x, y, vx: 0, vy: 0, g: 0, drag: 1, life: 0.12, size: 10 * s, color: [255, 236, 170] }); // the flash
+    for (let i = 0; i < n; i++) { // fragments
+      const a = Math.random() * Math.PI * 2, v = (2 + Math.random() * 3) * (0.7 + 0.3 * s) * (wide ? 1.5 : 1);
+      P.add({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 0.12, drag: 0.9, life: 0.25 + Math.random() * 0.25, size: 2, color: i % 3 ? [255, 190, 90] : [255, 250, 220] });
+    }
+    for (let i = 0; i < 3 + Math.round(s * 2); i++) { // and the black puff, drifting
+      P.add({ x: x + (Math.random() - 0.5) * 8 * s, y: y + (Math.random() - 0.5) * 8 * s, vx: (Math.random() - 0.5) * 0.6, vy: -0.1 - Math.random() * 0.2, g: 0, drag: 0.97, life: 1.1 + Math.random() * 0.8,
+        size: (6 + Math.random() * 6) * s, color: i % 2 ? [40, 38, 44] : [62, 60, 66] });
     }
   },
 
