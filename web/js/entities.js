@@ -283,43 +283,19 @@ class Tank {
   }
 
   // screen space (1600x900 HUD units); sx, sy = ground point on screen
-  drawLabel(ctx, sx, sy, active) {
+  // under her feet (fy: the screen y of her feet), so nothing sits over where she aims: armour and
+  // health bars, then her name, then (her turn) the gun in hand by its short name
+  drawLabel(ctx, sx, fy, active) {
     if (!this.alive) return;
     if (this.dummy) {
       ctx.textAlign = 'center';
       ctx.font = `13px ${HUD_FONT}`;
-      plateText(ctx, 'TRAINING DUMMY', Math.round(sx), Math.round(sy - 70), HUD.dim, 'center');
+      plateText(ctx, 'TRAINING DUMMY', Math.round(sx), Math.round(fy + 22), HUD.dim, 'center');
       return;
-    }
-    ctx.textAlign = 'center';
-    ctx.font = `13px ${HUD_FONT}`;
-    const title = `${this.name} | ${this.vehicle.name}`;
-    const tw = ctx.measureText(title).width + 24;
-    ctx.fillStyle = HUD.plate;
-    ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 124 + LABEL_LIFT), Math.round(tw), 20);
-    if (active) {
-      ctx.fillStyle = this.color;
-      ctx.fillRect(Math.round(sx - tw / 2), Math.round(sy - 124 + LABEL_LIFT), 5, 20);
-    }
-    ctx.fillStyle = active ? HUD.bright : HUD.dim;
-    ctx.fillText(title, Math.round(sx), Math.round(sy - 109 + LABEL_LIFT));
-    // a CPU's grudge: a square in the colour of whoever it is out for
-    if (this.isCpu && this.lastAttacker && this.lastAttacker.alive) {
-      ctx.fillStyle = this.lastAttacker.color;
-      ctx.fillRect(Math.round(sx + tw / 2 + 4), Math.round(sy - 120 + LABEL_LIFT), 12, 12);
-    }
-    // bounty on the match leader
-    if (this.bounty > 0) {
-      ctx.fillStyle = HUD.gold;
-      ctx.fillRect(Math.round(sx - tw / 2 - 52), Math.round(sy - 124 + LABEL_LIFT), 48, 20);
-      ctx.fillStyle = HUD.plateInk;
-      ctx.font = `12px ${HUD_FONT}`;
-      ctx.fillText(`¢${this.bounty}`, Math.round(sx - tw / 2 - 28), Math.round(sy - 109 + LABEL_LIFT));
-      ctx.font = `13px ${HUD_FONT}`;
     }
     // A3 layout: an armour bar stacked on the health bar, armour number left, health right
     const bw = 100;
-    const by = Math.round(sy - 102 + LABEL_LIFT);
+    const by = Math.round(fy + 6);
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(Math.round(sx - bw / 2), by, bw, 20);
     ctx.fillStyle = HUD.line;
@@ -330,33 +306,57 @@ class Tank {
     ctx.fillStyle = HUD.cool;
     ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 11, Math.round((bw - 12) * clamp(this.hp / this.maxHp, 0, 1)), 5);
     ctx.font = `13px ${HUD_FONT}`;
-    ctx.textAlign = 'right';
-    plateText(ctx, Math.ceil(this.armour), Math.round(sx - bw / 2 - 2), Math.round(sy - 86 + LABEL_LIFT), HUD.accent, 'right');
-    plateText(ctx, Math.ceil(this.hp), Math.round(sx + bw / 2 + 2), Math.round(sy - 86 + LABEL_LIFT), HUD.cool, 'left');
+    plateText(ctx, Math.ceil(this.armour), Math.round(sx - bw / 2 - 2), by + 16, HUD.accent, 'right');
+    plateText(ctx, Math.ceil(this.hp), Math.round(sx + bw / 2 + 2), by + 16, HUD.cool, 'left');
+    ctx.textAlign = 'center';
+    ctx.font = `13px ${HUD_FONT}`;
+    const title = this.name;
+    const tw = ctx.measureText(title).width + 20;
+    const ty = by + 24;
+    ctx.fillStyle = HUD.plate;
+    ctx.fillRect(Math.round(sx - tw / 2), ty, Math.round(tw), 19);
     if (active) {
-      const w = this.weapon;
+      ctx.fillStyle = this.color;
+      ctx.fillRect(Math.round(sx - tw / 2), ty, 4, 19);
+    }
+    ctx.fillStyle = active ? HUD.bright : HUD.dim;
+    ctx.fillText(title, Math.round(sx), ty + 14);
+    // a CPU's grudge: a square in the colour of whoever it is out for
+    if (this.isCpu && this.lastAttacker && this.lastAttacker.alive) {
+      ctx.fillStyle = this.lastAttacker.color;
+      ctx.fillRect(Math.round(sx + tw / 2 + 4), ty + 4, 11, 11);
+    }
+    // bounty on the match leader
+    if (this.bounty > 0) {
+      ctx.fillStyle = HUD.gold;
+      ctx.fillRect(Math.round(sx - tw / 2 - 52), ty, 48, 19);
+      ctx.fillStyle = HUD.plateInk;
+      ctx.font = `12px ${HUD_FONT}`;
+      ctx.fillText(`¢${this.bounty}`, Math.round(sx - tw / 2 - 28), ty + 14);
+      ctx.font = `13px ${HUD_FONT}`;
+    }
+    if (active) {
+      const w = this.weapon, nm = shortName(w);
       ctx.font = `13px ${HUD_FONT}`;
       ctx.textAlign = 'center';
-      const ww = ctx.measureText(w.name).width + 30;
-      ctx.fillStyle = HUD.plate;
-      ctx.fillRect(Math.round(sx - ww / 2), Math.round(sy + 18), Math.round(ww), 20);
+      const ww = ctx.measureText(nm).width + 16;
+      const wy = ty + 23;
       // A3 badge: rarity + type letters in a square outlined in the rarity colour
-      const bx = Math.round(sx - ww / 2 - 26);
-      const by = Math.round(sy + 16);
+      const bx = Math.round(sx - (ww + 24) / 2);
       const rc = RARITY[w.rarity].ui;
       ctx.fillStyle = HUD.plate;
-      ctx.fillRect(bx, by, 24, 24);
+      ctx.fillRect(bx, wy, 22, 20);
+      ctx.fillRect(bx + 24, wy, Math.round(ww), 20);
       ctx.fillStyle = rc;
-      ctx.fillRect(bx, by, 24, 1); ctx.fillRect(bx, by + 23, 24, 1); ctx.fillRect(bx, by, 1, 24); ctx.fillRect(bx + 23, by, 1, 24);
-      ctx.font = `12px ${HUD_FONT}`;
-      ctx.fillText(badgeText(w), bx + 12, by + 17);
+      ctx.fillRect(bx, wy, 22, 1); ctx.fillRect(bx, wy + 19, 22, 1); ctx.fillRect(bx, wy, 1, 20); ctx.fillRect(bx + 21, wy, 1, 20);
+      ctx.font = `11px ${HUD_FONT}`;
+      ctx.fillText(badgeText(w), bx + 11, wy + 14);
       ctx.font = `13px ${HUD_FONT}`;
-      ctx.fillStyle = RARITY[w.rarity].ui;
-      ctx.fillText(w.name, Math.round(sx), Math.round(sy + 33));
-      // autoloader rounds left this turn
+      ctx.fillText(nm, Math.round(bx + 24 + ww / 2), wy + 14);
+      // autoloader rounds (planes: squads) left this turn
       for (let i = 0; i < w.clip; i++) {
         ctx.fillStyle = i < this.shotsLeft ? HUD.accent : HUD.plate;
-        ctx.fillRect(Math.round(sx - (w.clip * 10) / 2 + i * 10), Math.round(sy + 42), 7, 7);
+        ctx.fillRect(Math.round(sx - (w.clip * 10) / 2 + i * 10), wy + 24, 7, 7);
       }
     }
   }

@@ -4,6 +4,12 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['0e28912', 'Planes fly smooth curves and bank as they turn; all jets but the starter. Each type waits on its own approach line and attacks down it, dive bombers steep and fast enough for a kinetic bonus.'],
+  ['0e28912', 'Launching no longer holds up the turn: the squad flies out while play goes on.'],
+  ['0e28912', 'The Taufaun is one armoured jet with one enormous bomb. Planes are named after visual novels.'],
+  ['0e28912', 'A squad whose girl is destroyed stays on and still strikes.'],
+  ['0e28912', 'Health, name and a short gun name now sit under each girl; aim dots and the marker have white rims.'],
+  ['0e28912', 'The camera follows the spy plane again; character select scrolls.'],
   ['e4149f1', 'CPUs buy planes and AA mounts too.'],
   ['38b4063', 'Zuihou, the Sengoku light carrier: she marks a spot and her squadron hovers over it, striking on her next turn. Her final weapon is the Kidō Butai.'],
   ['38b4063', 'Planes at every rarity (dive, torpedo, fighter, rocket wing, NXi heavy). Squads hover where anyone can shoot them; no flight deck means 30% softer.'],

@@ -255,40 +255,40 @@ const WEAPONS = [
   //   torpedo  each runs in low and drops a torpedo that skims the ground through the mark
   //   fighter  guns: aircraft and drones near the mark first (triple damage), else a strafing run
   //   rocket   each fires air.ord seeker rockets from overhead (LFS)
-  //   heavy    guided bombs that steer onto the nearest rival near the mark (NXi)
-  weapon('kansen0', "Sengoku Type 0 Kansen", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 22, dmgR: 30, explR: 2, clip: 2, rarity: 1, cost: 900,
+  //   heavy    one plane, one enormous guided bomb that steers onto the nearest rival near the mark (NXi)
+  weapon('kansen0', "Sengoku 'Aokana' Flying Circus", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 22, dmgR: 30, explR: 2, clip: 2, rarity: 1, cost: 900,
     air: { type: 'fighter', planes: 3, ord: 6, hp: 55, reload: 1 },
-    short: 'The Zero: light, nimble, and murder on anything else in the air.', long: 'Fighters: they go for planes and drones near the mark first (triple damage), and strafe it when the sky is clear.' }),
-  weapon('kankou97', "Sengoku Type 97 Kankou", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 120, dmgR: 70, explR: 10, clip: 2, rarity: 1, cost: 1000,
+    short: 'Four rhythms across the blue: the nimblest jets in the sky, and murder on anything else up there.', long: 'Fighters: they go for planes and drones near the mark first (triple damage), and strafe it when the sky is clear.' }),
+  weapon('kankou97', "Sengoku 'Ever17' Torpedo Jet", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 120, dmgR: 70, explR: 10, clip: 2, rarity: 1, cost: 1000,
     air: { type: 'torpedo', planes: 2, ord: 1, hp: 50, reload: 1 },
-    short: 'A torpedo bomber that never learned the sea was gone. It flies in low and lets go along the ground.', long: 'Torpedoes skim the ground through the mark and go off on the first thing they touch: stepping aside along their line won’t save you.' }),
-  weapon('suisei', "Sengoku 'Suisei' Dive Bomber", 'air', 0, 80, { maxCharge: 85, disp: 0.8, dmg: 190, dmgR: 70, explR: 11, clip: 2, rarity: 2, cost: 2400,
+    short: 'Built for a sea that drained away seventeen years ago. It still flies in low and lets go along the ground.', long: 'Torpedoes skim the ground through the mark and go off on the first thing they touch: stepping aside along their line won’t save you.' }),
+  weapon('suisei', "Sengoku 'Sora' Dive Jet", 'air', 0, 80, { maxCharge: 85, disp: 0.8, dmg: 190, dmgR: 70, explR: 11, clip: 2, rarity: 2, cost: 2400,
     air: { type: 'dive', planes: 2, ord: 1, hp: 55, reload: 1 },
-    short: 'Comet: faster than the Kanbaku, steeper in the dive, and a heavier bomb.', long: 'Two dive bombers a squad, two squads.' }),
-  weapon('tenzan', "Sengoku 'Tenzan' Torpedo Bomber", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 260, dmgR: 80, explR: 12, clip: 2, rarity: 3, cost: 4800,
+    short: 'Named for the crow that watched the summer sky. It folds its wings and drops like a stone.', long: 'Two dive bombers a squad, two squads.' }),
+  weapon('tenzan', "Sengoku 'Umineko' Torpedo Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 260, dmgR: 80, explR: 12, clip: 2, rarity: 3, cost: 4800,
     air: { type: 'torpedo', planes: 3, ord: 1, hp: 70, reload: 2 },
-    short: 'Heavenly Mountain: three torpedo bombers a squad, running in abreast.', long: 'Three torpedoes along the ground through the mark.' }),
-  weapon('reppuu', "Sengoku 'Reppuu' Interceptor", 'air', 0, 80, { maxCharge: 90, disp: 0.7, dmg: 55, dmgR: 35, explR: 2, clip: 2, rarity: 3, cost: 4400,
+    short: 'When the seagulls cry: three torpedo jets abreast, running in low off the water.', long: 'Three torpedoes along the ground through the mark.' }),
+  weapon('reppuu', "Sengoku 'Shiranui' Interceptor", 'air', 0, 80, { maxCharge: 90, disp: 0.7, dmg: 55, dmgR: 35, explR: 2, clip: 2, rarity: 3, cost: 4400,
     air: { type: 'fighter', planes: 3, ord: 8, hp: 80, reload: 2 },
-    short: 'Built to clear the sky of everything with an engine. Drones and squadrons alike.', long: 'Fighters with heavier guns: aircraft first, then a strafing run.' }),
+    short: 'A tactical surface fighter’s airframe without the arms and legs. Clears the sky of everything with an engine.', long: 'Fighters with heavier guns: aircraft first, then a strafing run.' }),
   weapon('taillteann', "Sengoku–LFS 'Taillteann' Rocket Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 150, dmgR: 55, explR: 7, clip: 2, rarity: 4, cost: 11500,
     hybrid: true, maker: 'Sengoku × Lymilark',
     air: { type: 'rocket', planes: 2, ord: 3, hp: 75, reload: 2 },
     guide: { arm: 4, burn: 60, seek: 999, apex: false, turn: 4, range: 320, cone: 90, lift: 0.4 },
     short: 'Sengoku airframes carrying Lymilark seeker pods. They fire from overhead and the seekers do the rest.', long: 'Three seekers a plane, each going for the nearest target under it: a target that moved a little still gets found.' }),
-  weapon('ryusei', "Sengoku 'Ryusei' Attack Plane", 'air', 0, 80, { maxCharge: 95, disp: 0.7, dmg: 420, dmgR: 100, explR: 16, clip: 2, rarity: 5, cost: 21000,
+  weapon('ryusei', "Sengoku 'Hoshimemo' Attack Jet", 'air', 0, 80, { maxCharge: 95, disp: 0.7, dmg: 420, dmgR: 100, explR: 16, clip: 2, rarity: 5, cost: 21000,
     air: { type: 'dive', planes: 3, ord: 1, hp: 90, reload: 2 },
-    short: 'Shooting Star: dive bomber and torpedo bomber in one gull-winged airframe. Here it carries the big bomb.', long: 'Three heavy bombs a squad.' }),
-  weapon('kikka', "Sengoku 'Kikka' Jet Bomber", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 360, dmgR: 85, explR: 13, clip: 2, rarity: 6, cost: 33000,
+    short: 'Memories of a starry sky: it comes down like a shooting star, carrying the big bomb.', long: 'Three heavy bombs a squad.' }),
+  weapon('kikka', "Sengoku 'Narcissu' Jet Bomber", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 360, dmgR: 85, explR: 13, clip: 2, rarity: 6, cost: 33000,
     air: { type: 'dive', planes: 3, ord: 2, hp: 100, reload: 3, jet: true },
-    short: 'Orange Blossom: a jet. Too fast for most AA to track, and it drops two bombs a pass.', long: 'Jets: anti-aircraft fire has half the chance against them and their bombs.' }),
-  weapon('shiden', "Sengoku 'Shiden Kai Ni' Fighter", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 95, dmgR: 40, explR: 3, clip: 2, rarity: 6, cost: 30000,
+    short: 'One last drive to the sea. Too fast for most AA to track, and it drops two bombs a pass.', long: 'Jets: anti-aircraft fire has half the chance against them and their bombs.' }),
+  weapon('shiden', "Sengoku 'Takemikazuchi' Fighter", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 95, dmgR: 40, explR: 3, clip: 2, rarity: 6, cost: 30000,
     air: { type: 'fighter', planes: 4, ord: 10, hp: 130, reload: 3 },
-    short: 'Violet Lightning: the last and best of the Sengoku fighters. Four a squad.', long: 'Clears the sky over the mark, then rakes it.' }),
-  weapon('tifaun', "NXi × Sengoku 'Tifaun' Strike Wing", 'air', 0, 80, { maxCharge: 110, disp: 0.4, dmg: 700, dmgR: 110, explR: 18, clip: 2, rarity: 7, cost: 150000,
+    short: 'The thunder god’s own frame, the last and best of the Sengoku fighters. Four a squad.', long: 'Clears the sky over the mark, then rakes it.' }),
+  weapon('tifaun', "NXi × Sengoku 'Taufaun' Strike Jet", 'air', 0, 80, { maxCharge: 110, disp: 0.4, dmg: 700, dmgR: 260, explR: 42, clip: 2, rarity: 7, cost: 150000,
     hybrid: true, maker: 'NXi × Sengoku',
-    air: { type: 'heavy', planes: 3, ord: 2, hp: 260, reload: 3, jet: true, seek: 240 },
-    short: 'The UAF\'s minibrieve: Sengoku\'s lift-fan airframe, built like a battlecruiser by the November Division. Triple-redundant, and it does not miss.', long: 'Armoured jets dropping guided bombs that steer onto the nearest rival within 240 of the mark. AA has half the chance against them.' }),
+    air: { type: 'heavy', planes: 1, ord: 1, hp: 420, reload: 3, jet: true, seek: 260 },
+    short: 'The UAF’s minibrieve: one Sengoku lift-fan airframe, built like a battlecruiser by the November Division, carrying one bomb. That is all it needs.', long: 'A single armoured jet with one enormous guided bomb that steers onto the nearest rival within 260 of the mark. AA has half the chance against it.' }),
   // Final weapons: one per girl, only in her own shop (sig), the price of the end game, and a tier
   // of their own above Godly (Ascendant). Each has a
   // set piece of its own (finals.js).
@@ -352,7 +352,7 @@ const REBALANCE = {
   // rearms, so it fires more of its turns than a gun of its tier (airValue credits that back, AIR_TEMPO)
   zui0: { dmg: 120 }, kansen0: { dmg: 20, cost: 800 }, kankou97: { dmg: 105, cost: 1000 }, suisei: { dmg: 285, cost: 2500 }, tenzan: { dmg: 320, cost: 5200 },
   reppuu: { dmg: 75, cost: 4600 }, taillteann: { dmg: 390, cost: 12000 }, ryusei: { dmg: 1270, cost: 22000 }, kikka: { dmg: 1000, cost: 34000 },
-  shiden: { dmg: 250, cost: 30000 }, tifaun: { dmg: 840, cost: 50000 },
+  shiden: { dmg: 250, cost: 30000 }, tifaun: { dmg: 3300, cost: 50000 },
 };
 const ALL_WEAPONS = [...WEAPONS, ...VEHICLES.map((v) => v.weapon)];
 const CLASSIC = Object.fromEntries(ALL_WEAPONS.map((w) => [w.id, { dmg: w.dmg, clip: w.clip, cost: w.cost }]));
@@ -392,6 +392,16 @@ function makerOf(w) {
   if (n.includes('Hatsuyuki')) return 'Hatsuyuki';
   if (n.includes('Sengoku')) return 'Sengoku Inc.';
   return '';
+}
+
+// a gun's short name for the HUD under her: its nickname if it has one ('Doki-Doki'), else its name
+// without the maker and the calibre
+function shortName(w) {
+  if (w.abbr) return w.abbr;
+  const q = w.name.match(/'([^']+)'/);
+  let s = q ? q[1] : w.name.replace(/\b(CLS-T|LFS|NXi|KTS-T|Sengoku|G\.W\.|Kotona|Hatsuyuki|Mk\.\w+)\b/g, '').replace(/[\d.]+(mm|cm|in)?\b|\/[\d.]+\w*|\b\d+x\d*\b|\bx\d+\b/g, '').replace(/[×–\-·]+/g, ' ');
+  s = s.replace(/\s+/g, ' ').trim();
+  return (w.abbr = s.length > 22 ? s.slice(0, 21) + '…' : s || w.name);
 }
 
 function badgeText(w) {

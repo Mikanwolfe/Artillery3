@@ -544,7 +544,7 @@ class Game {
     this.charging = false;
     this.phase = 'aim';
     this.cpu = t.isCpu ? new CpuController(this, t) : null;
-    this.cam.follow(this.range ? this.rangeFocus() : t);
+    if (!(this.cinematic > 0)) this.cam.follow(this.range ? this.rangeFocus() : t); // (the spy plane's pass keeps the camera)
     this.ui.turn(t);
   }
 
@@ -1995,6 +1995,8 @@ class Game {
     const v = t.aimVec();
     const dot = (x, y, d, len) => {
       const a = 0.8 * clamp((len - d) / (len * 0.6), 0, 1); // solid at first, then fades out
+      ctx.fillStyle = `rgba(255,255,255,${a})`; // a white rim, so it reads on dark ground too
+      sq(ctx, x, y, 7);
       ctx.fillStyle = `rgba(32,32,74,${a})`;
       sq(ctx, x, y, 4);
     };
@@ -2029,9 +2031,11 @@ class Game {
   // target marker: a box-built crosshair in the player's colour
   drawMark(ctx, t) {
     const { x, y } = t.mark;
-    ctx.fillStyle = t.color;
-    for (let d = 8; d <= 20; d += 6) {
-      sq(ctx, x - d, y, 4); sq(ctx, x + d, y, 4); sq(ctx, x, y - d, 4); sq(ctx, x, y + d, 4);
+    for (const [col, s] of [['#ffffff', 7], [t.color, 4]]) { // white rim first, so it reads on dark ground
+      ctx.fillStyle = col;
+      for (let d = 8; d <= 20; d += 6) {
+        sq(ctx, x - d, y, s); sq(ctx, x + d, y, s); sq(ctx, x, y - d, s); sq(ctx, x, y + d, s);
+      }
     }
     ctx.fillStyle = '#ffffff';
     sq(ctx, x, y, 4);
@@ -2055,7 +2059,7 @@ class Game {
       ctx.fillRect(bx + 2, by + 2, Math.round(200 * sat.health), 6);
     }
     const live = this.phase === 'aim' ? this.active : null;
-    for (const t of this.tanks) t.drawLabel(ctx, cam.sx(t.x), cam.sya(t.y, LABEL_ANCHOR), t === live);
+    for (const t of this.tanks) t.drawLabel(ctx, cam.sx(t.x), cam.sy(t.y), t === live);
     this.drawHazardLabels(ctx, cam);
     this.drawPlaneLabels(ctx, cam);
     this.particles.drawText(ctx, cam);
