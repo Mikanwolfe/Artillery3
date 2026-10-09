@@ -82,7 +82,7 @@ class Plane {
     this.hd = 0; // heading (radians, y down)
     this.ang = 0; // drawn rotation
     this.lvl = 0;
-    this.passes = group.w.fleet ? 1 : AIR_PASSES[kind] || 1; // attacks left before it goes home
+    this.passes = AIR_PASSES[kind] || 1; // attacks left before it goes home
     this.flash = 0;
     this.dir = group.dir;
     this.face = this.dir || 1; // which way it is drawn upright (it only rolls over once level)
@@ -232,13 +232,13 @@ class Plane {
   // to her to rearm (it lands and is gone); with her gone, away off the map
   goHome() {
     const o = this.owner;
-    if (!o.alive) { this.leave(); return; }
+    if (!o.alive || this.w.fleet) { this.leave(); return; } // (a fleet's planes go back out to sea)
     this.state = 'leave'; this.attack = null;
     this.go(() => ({ x: o.x, y: o.y - TANK_H }), { arrive: true, r: 30 });
   }
 
   leave() {
-    const d = this.face || 1;
+    const d = this.w.fleet && this.launchDir ? -this.launchDir : this.face || 1; // (a fleet's: back out to sea)
     this.state = 'leave'; this.attack = null;
     this.go({ x: this.x + d * 1400, y: this.group.ceil - 400 }, { v: this.fl.top, r: 150 });
   }
@@ -734,7 +734,9 @@ Object.assign(Game.prototype, {
 // wing (dive bombers, torpedo bombers, fighters), which climbs away, comes back over the mark and
 // hovers there in a great formation. It strikes two of her turns later, if anything is left of it.
 const KIDO = { OUT: 46, LAUNCH: 56, BACK: 230, BACK_END: 272, END: 640 };
-const KIDO_OFF = 1500; // the nearest carrier, past the edge of the map
+const KIDO_OFF = 2600; // the nearest carrier, past the edge of the map
+const KIDO_COAST = 1100; // where the land past the edge meets the sea
+const KIDO_SPAN = 9000; // how far out the sea is drawn
 const KIDO_GAP = 760;
 
 class FleetStrike {
@@ -766,6 +768,7 @@ class FleetStrike {
     this.focus = { x: mark.x, y: mark.y - 160 };
     this.view = { x: this.ships[1 % this.ships.length].x, y: this.seaY - 300 };
     game.cam.wide = KIDO_OFF + KIDO_GAP * F.carriers + 900;
+    game.cam.wideSide = side; // (only out to sea: past the far edge there is nothing)
     game.cam.follow(this.focus);
     game.ui.notice('Kidō Butai: the carriers turn into the wind.');
     game.events.push(`${owner.name} calls the Kidō Butai: ${kinds.length} aircraft are coming.`);
@@ -788,23 +791,39 @@ class FleetStrike {
     cam.follow(f);
     if (t <= KIDO.BACK_END) cam.snap();
     this.whip = Math.abs(f.x - px);
-    if (t >= KIDO.BACK_END + 20) { cam.wide = 0; return false; } // (the air wing flies on in while play goes on)
+    if (t >= KIDO.BACK_END + 20) { cam.wide = 0; cam.wideSide = 0; return false; } // (the air wing flies on in while play goes on)
     return true;
   }
 
-  // the sea past the edge of the map, the coast, and the carriers steaming into the wind (behind
-  // everything, so the planes take off over them)
-  drawBack(ctx) {
-    const g = this.game, side = this.side, e = this.edge, time = g.time;
-    const x0 = side < 0 ? e - 6000 : e, x1 = side < 0 ? e : e + 6000;
-    ctx.fillStyle = g.terrain.color;
-    ctx.fillRect(side < 0 ? e - 160 : e, this.coast, 160, this.seaY - this.coast + 10); // the cliff down to the sea
+  // the sea past the edge of the map, drawn over the far hills (which end a little past the edge):
+  // open sky fading in beyond the edge, the land running down to a beach well out from it, the sea,
+  // and the carriers steaming into the wind far out (under the terrain and the planes)
+  drawMid(ctx) {
+    const g = this.game, side = this.side, e = this.edge, time = g.time, cam = g.cam;
+    const out = (d) => e + side * d; // d past the edge, out to sea
+    const strip = (d0, d1, y0, y1) => ctx.fillRect(Math.round(Math.min(out(d0), out(d1))), Math.round(y0), Math.round(Math.abs(d1 - d0)), Math.round(y1 - y0));
+    const top = Math.min(cam.y, this.seaY - 2000) - 200, bottom = WORLD_BOTTOM + 600;
+    const sky = g.bg.biome.sky, grad = ctx.createLinearGradient(0, cam.y, 0, cam.y + cam.h);
+    grad.addColorStop(0, rgb(sky[0])); grad.addColorStop(1, rgb(sky[1]));
+    ctx.fillStyle = grad;
+    for (let k = 0; k < 12; k++) { ctx.globalAlpha = (k + 1) / 12; strip(k * 50, k * 50 + 50, top, this.seaY + 2); }
+    ctx.globalAlpha = 1;
+    strip(600, KIDO_SPAN, top, this.seaY + 2);
+    // the sea, then the land easing down from the map's edge to the beach and on down under the
+    // water as the sea bed (seen side on, like the map's own ground)
     ctx.fillStyle = 'rgb(34,62,92)';
-    ctx.fillRect(x0, this.seaY, x1 - x0, WORLD_BOTTOM + 400 - this.seaY);
+    strip(0, KIDO_SPAN, this.seaY, bottom);
+    ctx.fillStyle = g.terrain.color;
+    ctx.beginPath();
+    ctx.moveTo(out(0), this.coast);
+    for (let k = 1; k <= 24; k++) { const u = k / 24; ctx.lineTo(out(u * KIDO_COAST), lerp(this.coast, this.seaY, u * u * (3 - 2 * u))); }
+    ctx.lineTo(out(KIDO_COAST + 900), this.seaY + 420);
+    ctx.lineTo(out(KIDO_COAST + 900), bottom); ctx.lineTo(out(0), bottom); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgb(214,200,160)'; strip(KIDO_COAST - 150, KIDO_COAST + 20, this.seaY - 3, this.seaY + 6); // the beach
     ctx.fillStyle = 'rgb(58,96,128)';
-    for (let k = 0; k < 60; k++) { // swell
-      const x = x0 + ((k * 137 + time * 30) % (x1 - x0)), y = this.seaY + 6 + (k % 7) * 18;
-      ctx.fillRect(Math.round(x), Math.round(y), 40 + (k % 5) * 12, 3);
+    for (let k = 0; k < 80; k++) { // swell
+      const d = KIDO_COAST + 400 + ((k * 137 + time * 30) % (KIDO_SPAN - KIDO_COAST - 400)), y = this.seaY + 6 + (k % 7) * 18;
+      ctx.fillRect(Math.round(out(d)), Math.round(y), 40 + (k % 5) * 12, 3);
     }
     for (const s of this.ships) {
       const y = this.seaY + Math.sin(time * 0.9 + s.bob) * 2, L = s.len, x = s.x;

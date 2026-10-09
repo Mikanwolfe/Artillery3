@@ -72,7 +72,7 @@ const GUN_NOTES = {
   shiden: ['Matches', 'Four fighters a squad. Clears the sky of anything.'],
   tifaun: ['Matches', 'One armoured jet, one bomb: it steers onto the nearest rival in its zone and goes off across 260, so leave the zone by a wide margin, or shoot it down (700 health under 300 armour, AA has half the chance).'],
   fortissimo: ['Matches', 'Level bombers: a stick of bombs walked across a wide zone, unguided. The armour soaks the first hit whatever its size, so chip it with flak before the big gun.'],
-  kidobutai: ['Final', 'Zuihou only. A laser dot for three carriers off the coast: 21 aircraft (9 dive bombers, 6 torpedo bombers, 6 fighters) climb away, hover over the mark and strike two of her turns later. Everyone has two turns to shoot them down or get clear.'],
+  kidobutai: ['Final', 'Zuihou only. A laser dot for three carriers off the coast: 21 aircraft (9 dive bombers, 6 torpedo bombers, 6 fighters) climb away, hover over the mark and strike two of her turns later, then again on each of her turns until their loadouts run out, and she can redirect the whole fleet with each dot. It won’t launch again until this one is gone, so shooting it down buys time.'],
   apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 6,000 across 650, in bullet time, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
 };
 const GIRL_NOTES = {
@@ -115,7 +115,7 @@ function codexMeta(w) {
   if (w.sig) lines.push(['Per firing turn', 'the set piece’s, see below (the marker round itself barely scratches)']);
   else lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
   const R = reloadOf(w);
-  if (w.air) { const S = w.air.squads || 1, P = w.fleet ? 1 : AIR_PASSES[w.air.type]; lines.push(['Tempo', `${S} squad${S > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck), one dot each a turn. A squad strikes its zone ${w.air.delay || 1} of her turns after the dot lands, then again on each of her turns, ${P} pass${P > 1 ? 'es' : ''} in all, before flying home to rearm for ${R} turns`]); }
+  if (w.air) { const S = w.air.squads || 1, P = w.fleet ? AIR_PASSES.dive : AIR_PASSES[w.air.type]; lines.push(['Tempo', `${S} squad${S > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck), one dot each a turn. A squad strikes its zone ${w.air.delay || 1} of her turns after the dot lands, then again on each of her turns, ${P} pass${P > 1 ? 'es' : ''} in all, before flying home to rearm for ${R} turns`]); }
   else if (R) lines.push(['Tempo', w.sig ? `Fires every ${R + 1} turns` : `Fires every ${R + 1} turns on its own, about ${Math.round(worth / (R + 1))} a turn; rotate it with other guns`]);
   const el = Math.min(45, w.elevMax);
   const reach = (w.maxCharge * w.maxCharge * Math.sin(2 * rad(el))) / GRAV;

@@ -321,10 +321,10 @@ const WEAPONS = [
   weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 8, cost: 75000,
     meteor: { dmg: 6000, r: 650, explR: 175, size: 300, lava: 920, splash: 30 },
     short: 'Where her arrow of light lands, the sky answers: she marks an asteroid and brings it down.', long: 'Ikaros only.' }),
-  weapon('kidobutai', "Sengoku 'Kidō Butai' Strike Fleet", 'air', 0, 80, { sig: 'zui', maxCharge: 100, disp: 0.4, dmg: 520, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
+  weapon('kidobutai', "Sengoku 'Kidō Butai' Strike Fleet", 'air', 0, 80, { sig: 'zui', maxCharge: 100, disp: 0.4, dmg: 300, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
     air: { squads: 1, type: 'fleet', planes: 0, ord: 1, hp: 120, reload: 3, delay: 2 },
     fleet: { carriers: 3, dive: 9, torpedo: 6, fighter: 6 },
-    short: 'A laser dot for the carriers off the coast. Their whole air wing comes, and takes its time.', long: 'Zuihou only.' }),
+    short: 'A laser dot for the carriers off the coast. Their whole air wing comes, and takes its time.', long: 'Zuihou only. One great squad of 21: each dot after the first redirects it, and it strikes on each of her turns until its loadouts are spent (dive bombers three passes, torpedo jets one, fighters six) or it is shot down. Only then can the carriers launch again.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its

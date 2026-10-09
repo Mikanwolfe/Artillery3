@@ -90,6 +90,7 @@ class Camera {
     this.rot = 0; // a roll, in radians, for set pieces (the HUD never turns)
     this.ceil = -1000; // how high the camera may go (set pieces lift it, into space)
     this.wide = 0; // how far past the map's edges it may go (G.W.'s battery sits off the map)
+    this.wideSide = 0; // past which edge: -1 the left, 1 the right, 0 both
     this.zmin = 0; // set pieces may pull back further than the wheel can (0: CAM_ZOOM_MIN)
   }
 
@@ -107,7 +108,7 @@ class Camera {
     if (!ease) this.zoomTo = z; // set pieces jump straight there; the wheel eases (update)
     const cx = this.x + this.w / 2, cy = this.y + this.h * 0.55;
     this.zoom = z;
-    this.x = clamp(cx - this.w / 2, -this.wide, Math.max(0, WORLD_W - this.w) + this.wide);
+    this.x = clamp(cx - this.w / 2, this.wideSide > 0 ? 0 : -this.wide, Math.max(0, WORLD_W - this.w) + (this.wideSide < 0 ? 0 : this.wide));
     this.y = clamp(cy - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h);
   }
 
@@ -117,7 +118,7 @@ class Camera {
     const f = this.manual || this.focus;
     if (!f) return null;
     return {
-      x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), -this.wide, Math.max(0, WORLD_W - this.w) + this.wide),
+      x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), this.wideSide > 0 ? 0 : -this.wide, Math.max(0, WORLD_W - this.w) + (this.wideSide < 0 ? 0 : this.wide)),
       y: clamp(f.y - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h),
     };
   }
@@ -1938,6 +1939,7 @@ class Game {
     this.satellite.draw(ctx);
     for (const p of this.projectiles) if (p.drawBack) p.drawBack(ctx); // set pieces' backdrops, behind the hills
     this.bg.drawRidges(ctx, cam);
+    for (const p of this.projectiles) if (p.drawMid) p.drawMid(ctx); // (over the far hills: the Kidō Butai's sea)
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);
     this.terrain.drawTrees(ctx, cam.x, cam.x + cam.w);
