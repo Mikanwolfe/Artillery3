@@ -6,8 +6,10 @@
 //   Gunner    a drone with a gun: closes in the same way, then fires a three-round burst if it has a
 //             clear line of sight within GUNNER_RANGE.
 //   Turret    an emplacement built into the ground: lobs a shell at the nearest vehicle every cycle.
-//   FPV       a small kamikaze quad: dives up to FPV_MOVE straight at its vehicle each cycle and
-//             blows up when it gets there. Shoot it first.
+//   FPV       a small kamikaze quad: comes in high, and spends its first cycle flying FPV_ENTER in
+//             from the edge (or climbing, mid-map) without attacking, so nobody by the edge is
+//             caught by one the moment it appears. Then each cycle it flies up to FPV_MOVE: over
+//             its vehicle, and down onto it from the sky, blowing up when it gets there. Shoot it first.
 //   Carrier   a heavy drone with a drone tank slung under it: flies to a drop zone near the players
 //             and lets it down on a parachute, then bombs like a drone.
 //   Drone tank a tracked Hatsuyuki vehicle: drives in from the edge of the map (or is airdropped),
@@ -29,6 +31,8 @@ const MOB_CAP = 12; // most flying hostiles alive at once
 const GROUND_CAP = 4;
 const BOMB_REACH = 260; // a bomber lets go within this much of its vehicle (sideways), throwing the bomb // most drone tanks (and androids) at once
 const FPV_MOVE = 900; // how far a kamikaze dives in one cycle
+const FPV_ENTER = 700; // how far in from the edge it flies on its first cycle (no attack)
+const FPV_HIGH = 320; // how far over the hover height it comes in, and dives from
 const TANK_MOVE = 150; // how far a drone tank drives in one cycle (the android: 1.5x)
 const PARACHUTE_VY = 2.2; // an airdropped tank's descent speed
 const FLAK_MOB_MULT = 2; // flak does double damage to mobs
@@ -98,6 +102,7 @@ class Mob {
         const dx = this.dest.x - this.x, dy = this.dest.y - this.y, d = Math.hypot(dx, dy);
         const s = Math.min(d, 15);
         if (d > 0.5) { this.x += (dx / d) * s; this.y += (dy / d) * s; this.aim = { x: dx / d, y: dy / d }; }
+        else if (this.path && this.path.length) this.dest = this.path.shift(); // (over it: now down)
       } else this.y += Math.sin(this.t / 20) * 0.4;
       // a quad tips into its direction of travel: nose down to go, level to hover
       const want = this.dest && !this.arrived() ? clamp(this.aim.x * 0.55 + Math.max(0, this.aim.y) * 0.2 * Math.sign(this.aim.x || 1), -0.75, 0.75) : 0;
@@ -120,7 +125,7 @@ class Mob {
 
   arrived() {
     if (this.drop) return false;
-    if (this.kind === 'fpv') return !this.dest || dist(this.x, this.y, this.dest.x, this.dest.y) < 4;
+    if (this.kind === 'fpv') return !this.dest || (dist(this.x, this.y, this.dest.x, this.dest.y) < 4 && !(this.path && this.path.length));
     return !this.dest || Math.abs(this.dest.x - this.x) < (this.kind === 'mothership' ? 4 : 3);
   }
 
@@ -399,8 +404,9 @@ Object.assign(Game.prototype, {
   // q: its quality (the stage its health, armour and damage scale with); reinforcements come in better
   addMob(kind, x, q = this.stage()) {
     const st = clamp(Math.round(q), 1, 12); // (a long round keeps getting worse, up to a point)
-    const y = Mob.GROUND.has(kind) ? this.terrain.hAt(clamp(x, 0, WORLD_W - 1)) : kind === 'mothership' ? Mob.shipY(this.terrain) : Mob.hoverY(this.terrain, x);
+    const y = Mob.GROUND.has(kind) ? this.terrain.hAt(clamp(x, 0, WORLD_W - 1)) : kind === 'mothership' ? Mob.shipY(this.terrain) : Mob.hoverY(this.terrain, x) - (kind === 'fpv' ? FPV_HIGH : 0);
     const m = new Mob(kind, x, y, st);
+    if (kind === 'fpv') m.entering = true; // (see planMobs: in first, then the attack)
     this.mobs.push(m);
     return m;
   },
@@ -454,10 +460,26 @@ Object.assign(Game.prototype, {
       m.cycles++;
       const near = victims.slice().sort((a, b) => Math.abs(a.x - m.x) - Math.abs(b.x - m.x));
       m.victim = m.kind === 'turret' || m.kind === 'mothership' ? rng.pick(victims) : near[0];
-      if (m.kind === 'fpv') { // dive straight at it, as far as it can get this cycle
-        const c = m.victim.center();
-        const d = dist(m.x, m.y, c.x, c.y), k = Math.min(1, FPV_MOVE / (d || 1));
-        m.dest = { x: m.x + (c.x - m.x) * k, y: m.y + (c.y - m.y) * k };
+      if (m.kind === 'fpv') {
+        m.path = [];
+        if (m.entering) { // its first cycle: in from the edge (toward the middle), high up; no attack yet
+          const ex = clamp(m.x + clamp(WORLD_W / 2 - m.x, -FPV_ENTER, FPV_ENTER), 60, WORLD_W - 60);
+          m.dest = { x: ex, y: Mob.hoverY(this.terrain, ex) - FPV_HIGH };
+          continue;
+        }
+        // over its vehicle, then straight down onto it, as far as it gets this cycle
+        const c = m.victim.center(), top = { x: c.x, y: Math.min(c.y - FPV_HIGH * 0.8, m.y) };
+        const over = Math.abs(m.x - c.x) < 90 && m.y < c.y - 150; // already above it: just dive
+        const legs = over ? [c] : [top, c];
+        let left = FPV_MOVE, at = { x: m.x, y: m.y };
+        for (const L of legs) {
+          const d = dist(at.x, at.y, L.x, L.y);
+          if (left <= 0) break;
+          const k = Math.min(1, left / (d || 1));
+          m.path.push({ x: at.x + (L.x - at.x) * k, y: at.y + (L.y - at.y) * k });
+          left -= d; at = L;
+        }
+        m.dest = m.path.shift();
       } else if (m.mover) { // a firing spot 380-650 from its vehicle, on the near side
         const want = m.victim.x + Math.sign(m.x - m.victim.x || 1) * (m.kind === 'android' ? 420 : 520);
         const reach = TANK_MOVE * (m.kind === 'android' ? 1.5 : 1);
@@ -498,6 +520,7 @@ Object.assign(Game.prototype, {
       if (!v || !v.alive) continue;
       const vc = v.center();
       if (m.kind === 'fpv') {
+        if (m.entering) { m.entering = false; continue; } // (it has only just come in)
         const c = m.center();
         if (dist(c.x, c.y, vc.x, vc.y) > 46) continue; // not there yet: next cycle
         m.alive = false; // it is the warhead
