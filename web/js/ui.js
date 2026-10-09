@@ -55,6 +55,7 @@ const UI = {
     $('help-close').onclick = () => this.toggleHelp(false);
     $('help').onclick = (e) => { if (e.target === $('help')) this.toggleHelp(false); };
     $('btn-keys').onclick = () => this.toggleHelp();
+    document.querySelectorAll('#help .help-tabs button').forEach((b) => { b.onclick = () => this.helpTab(b.dataset.tab); });
     $('pause-keys').onclick = () => this.toggleHelp(true);
     $('veh-back').onclick = () => { $('vehicles').hidden = true; $('menu').hidden = false; this.pick = null; };
     $('start').onclick = () => this.selectVehicles();
@@ -129,11 +130,16 @@ const UI = {
   },
 
   // the controls / how-to-play sheet (menu link, H or ? in game, pause menu)
-  toggleHelp(on = $('help').hidden) {
+  toggleHelp(on = $('help').hidden, tab = 'play') {
     $('help').hidden = !on;
+    if (on) this.helpTab(tab);
     return true;
   },
   helpOpen() { return !$('help').hidden; },
+  helpTab(tab) {
+    document.querySelectorAll('#help .help-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+    document.querySelectorAll('#help .tab').forEach((d) => { d.hidden = d.dataset.tab !== tab; });
+  },
 
   configs() {
     const seen = new Set();

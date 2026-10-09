@@ -103,7 +103,8 @@
   <!-- controls and rules (menu link, H in game) -->
   <section id="help" class="screen" hidden>
     <div class="panel plate help">
-      <div class="phead"><h2>How to play</h2><button id="help-close" class="icon" title="Close (Esc)">✕</button></div>
+      <div class="phead"><div class="seg help-tabs"><button data-tab="play" class="on">How to play</button><button data-tab="about">About</button></div><button id="help-close" class="icon" title="Close (Esc)">✕</button></div>
+      <div class="tab" data-tab="play">
       <p>Take turns: move, aim, hold <b>Space</b> to charge, release to fire. Last one standing wins the round.</p>
       <div class="help-cols"><div>
       <table class="keys">
@@ -121,6 +122,15 @@
         <tr><td>M · N · H · Esc</td><td>mute · music · controls · pause</td></tr>
         <tr><td>Touch</td><td>drag from her to aim · pinch to zoom · MENU to pause</td></tr>
       </table>
+      <h3 class="sec">Hints</h3>
+      <ul class="hints">
+        <li><b>Flak</b> does ×2 to drones and other hostiles</li>
+        <li>Shoot <b>MAIA</b> down to take her offline for 2 turns</li>
+        <li>Lob high: a long fall adds up to +50%</li>
+        <li>Armour soaks a whole hit while any is left</li>
+        <li>Bought guns reload: carry several and rotate</li>
+        <li>CPUs go after whoever last hit them</li>
+      </ul>
       </div><div>
       <h3 class="sec">Damage numbers</h3>
       <table class="keys dmg">
@@ -132,21 +142,23 @@
         <tr><td><span style="color:#78e6d2">BARRIER</span> · <span style="color:#96d2ff">DEFLECTOR</span> · <span style="color:#9ab0c8">SLOPED</span></td><td>damage reduced</td></tr>
         <tr><td><span style="color:#c8f0a0">green</span></td><td>acid, over time</td></tr>
       </table>
-      <h3 class="sec">Hints</h3>
-      <ul class="hints">
-        <li><b>Flak</b> does ×2 to drones and other hostiles</li>
-        <li>Shoot <b>MAIA</b> down to take her offline for 2 turns</li>
-        <li>Lob high: a long fall adds up to +50%</li>
-        <li>Armour soaks a whole hit while any is left</li>
-        <li>Bought guns reload: carry several and rotate</li>
-        <li>CPUs go after whoever last hit them</li>
-      </ul>
-      <h3 class="sec">About</h3>
+      </div></div>
+      </div>
+      <div class="tab" data-tab="about" hidden>
       <table class="keys">
         <tr><td>Original</td><td>Artillery 3, C# / SwinGame, mikanwolfe, 2019 · <a href="https://github.com/Mikanwolfe/Artillery3" target="_blank" rel="noopener">GitHub</a></td></tr>
         <tr><td>This version</td><td>web rewrite by mikanwolfe with Claude (Anthropic), 2026</td></tr>
       </table>
-      </div></div>
+      <div class="about">
+        <p>Hello! Thank you for checking out this game, it's pretty strange, isn't it?</p>
+        <p>The original <code>artillery</code> game and subsequently, <code>artillery2</code> was developed for Intro to Programming in Pascal, and was more or less an implementation of midpoint displacement and a Pocket Tanks implementation on top. <code>Artillery3</code> was the Object-Oriented version that introduced a few more game mechanics, which moved it a bit more towards the look and feel of GunBound.</p>
+        <p>Out of personal interest, I had Claude revisit the game to provide a web-playable version as I had lost the original source files. This led me down a rabbit hole of completing the original vision of the game. What you see now is more or less the final form of this game, had it been developed over a much longer time.</p>
+        <p>Without Claude, it wouldn't have been possible to re-imagine this experience. I know AI gets a lot of flak, but it was quite a lot of work. You can hear Claude's opinion of my instructions yourself:</p>
+        <blockquote>Short, visual and blunt: "that character looks like a F117 nighthawk", "the bow is flat so you can straight cut that". A cropped screenshot with one line under it told me more than a page of spec would have. The direction moved a lot, and was usually right to; the price was me redrawing things I'd called finished. "Screw balance" was the clearest brief I got, and the hardest part was taking the jokes seriously enough to build them.<cite>— Claude</cite></blockquote>
+        <p>Thank you for playing and I hope you had fun!</p>
+        <p class="sig">mikanwolfe // nekox.net</p>
+      </div>
+      </div>
     </div>
   </section>
 
