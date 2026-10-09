@@ -572,7 +572,14 @@ function startAttack(g, p) {
           if (k % 4 === 0 && d < 320 && Math.abs(wrapA(Math.atan2(dy, dx) - p.hd)) < 0.35) {
             p.ord--;
             g.lasers.push(new Laser(p.sx, p.sy, q.x, q.y, '#ffe8a0', 2, 6));
-            if (rng.next() < 0.85) g.damage(e, gunDmg * 3, p.owner, { aa: true });
+            if (rng.next() < 0.85) g.damage(e, gunDmg * 3, p.owner, { aa: true, fighter: true });
+            // a fighter jumped by fighters fights back: the dogfight costs both sides
+            if (e.isPlane && e.alive && e.kind === 'fighter' && e.t - (e.shotBack || -99) >= 8) {
+              e.shotBack = e.t;
+              const E = e.group, back = E.w.dmg * E.mult * (E.w.fleet ? 0.15 : 1) * 3;
+              g.lasers.push(new Laser(e.sx, e.sy, p.sx, p.sy, '#ffe8a0', 2, 6));
+              if (rng.next() < 0.6) g.damage(p, back * 0.7, e.owner, { aa: true, fighter: true }); // (jumped: it gets fewer and worse shots off)
+            }
           }
           return;
         }

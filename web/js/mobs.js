@@ -36,6 +36,9 @@ const FPV_HIGH = 320; // how far over the hover height it comes in, and dives fr
 const TANK_MOVE = 150; // how far a drone tank drives in one cycle (the android: 1.5x)
 const PARACHUTE_VY = 2.2; // an airdropped tank's descent speed
 const FLAK_MOB_MULT = 2; // flak does double damage to mobs
+const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'fpv', 'mothership']);
+const SHIELD_RESIST = 0.5; // what share of a flak or fighter hit tells on a drone's shielding
+const DRONE_FIELD = 60, DRONE_FIELD_DMG = 2; // every flying hostile's static discharge field: a plane inside it is zapped (+½ a stage, to stage 8)
 
 class Mob {
   constructor(kind, x, y, stage) {
@@ -59,11 +62,18 @@ class Mob {
       fpv: { name: 'FPV kamikaze', hp: 25 + 8 * stage, hw: 12, hh: 10, bounty: 150 + 40 * stage },
       carrier: { name: 'Hatsuyuki carrier', hp: 90 + 25 * stage, hw: 30, hh: 20, bounty: 350 + 70 * stage },
       dtank: { name: 'Hatsuyuki drone tank', hp: 70 + 25 * stage, armour: 30 + 12 * stage, hw: 22, hh: 20, bounty: 450 + 80 * stage },
+      aatank: { name: 'Hatsuyuki AA tank', hp: 80 + 22 * stage, armour: 20 + 10 * stage, hw: 22, hh: 20, bounty: 500 + 80 * stage },
       android: { name: 'Hatsuyuki android', hp: 260 + 50 * stage, armour: 160 + 30 * stage, hw: 14, hh: 42, bounty: 2500 + 300 * stage },
     }[kind];
     Object.assign(this, S);
     this.maxHp = this.hp;
     this.maxArmour = this.armour;
+    // better drones (from stage 4) carry a little shielding, which shrugs off flak and fighters'
+    // guns; it grows a stage at a time and levels off by stage 8
+    const sh = clamp(stage - 3, 0, 5);
+    this.shield = this.maxShield = DRONE_SHIELDED.has(kind) ? (kind === 'mothership' ? 80 : 8) * sh : 0;
+    // the AA tank's mount: flak at the players' planes while shots play out (aa.js), levelling off by stage 8
+    if (kind === 'aatank') this.aaMount = { id: 'mob_aa', role: 'air', range: 340, rof: 8, dmg: 16 + 2 * Math.min(stage, 8), acc: 0.7, pk: 0.04, perTurn: 4, splash: 0 };
     this.facing = -1;
     this.vy = 0;
     this.aim = { x: 1, y: 0 };
@@ -71,12 +81,13 @@ class Mob {
   }
 
   get flying() { return !Mob.GROUND.has(this.kind); }
-  get mover() { return this.kind === 'dtank' || this.kind === 'android'; } // drives and fires like a player
+  get mover() { return this.kind === 'dtank' || this.kind === 'aatank' || this.kind === 'android'; } // drives and fires like a player
   center() { return { x: this.x, y: this.y - this.hh / 2 }; }
 
   update(game) {
     this.t++;
     this.flash = Math.max(0, this.flash - 0.08);
+    this.aaKick = Math.max(0, (this.aaKick || 0) - 0.15);
     if (!this.alive) return;
     if (this.kind === 'turret') { this.y = game.terrain.hAt(this.x); return; }
     if (this.mover) {
@@ -213,14 +224,22 @@ class Mob {
         ctx.fillRect(x - 1, cy + 6, 2, 8); // the sling
         Mob.drawTankBody(ctx, x, cy + 30, 0.8, c, blink, { x: this.facing, y: 0 }, this.facing);
       }
-    } else if (this.kind === 'dtank') {
+    } else if (this.kind === 'dtank' || this.kind === 'aatank') {
       if (this.drop) this.drawChute(ctx, x, y - 26);
-      // sat on the slope: sheared like the girls' rigs, so its boxes stay square to the pixel grid
+      // sat on the slope: turned to lie along it (a shear made it look italic)
       ctx.save();
       ctx.translate(x, y);
-      ctx.transform(1, this.drop ? 0 : this.tilt || 0, 0, 1, 0, 0);
+      ctx.rotate(this.drop ? 0 : clamp(Math.atan(this.tilt || 0), -0.5, 0.5));
       ctx.translate(-x, -y);
       Mob.drawTankBody(ctx, x, y, 1, c, blink, this.aim, this.facing, this.walking ? this.t : 0);
+      if (this.kind === 'aatank') { // a twin flak mount on the turret, on whatever it last fired at
+        const a = this.aaAng === undefined ? -Math.PI / 2 + this.facing * 0.5 : this.aaAng;
+        ctx.save(); ctx.translate(x - this.facing * 4, y - 24); ctx.rotate(a);
+        ctx.fillStyle = c('#4a4a56'); ctx.fillRect(-4, -5, 8, 10);
+        ctx.fillStyle = c('#24242c'); ctx.fillRect(3 - (this.aaKick || 0) * 3, -4, 18, 3); ctx.fillRect(3 - (this.aaKick || 0) * 3, 1, 18, 3);
+        ctx.restore();
+        ctx.fillStyle = blink ? 'rgb(120,220,255)' : 'rgb(50,110,140)'; ctx.fillRect(x - 2, y - 30, 4, 3); // (its radar)
+      }
       ctx.restore();
     } else if (this.kind === 'android') {
       if (this.drop) this.drawChute(ctx, x, y - 50);
@@ -338,13 +357,13 @@ class Mob {
       ctx.fillText(`${this.name} · ${Math.ceil(this.hp)}`, Math.round(sx), Math.round(sy - 113));
       return;
     }
-    const top = { turret: 40, android: 70, dtank: 40, carrier: 40, fpv: 26 }[this.kind] || 34;
-    const arm = this.maxArmour > 0;
+    const top = { turret: 40, android: 70, dtank: 40, aatank: 46, carrier: 40, fpv: 26 }[this.kind] || 34;
+    const arm = this.maxArmour > 0 || this.shield > 0;
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(Math.round(sx - 26), Math.round(sy - top - 8 - (arm ? 6 : 0)), 52, 8 + (arm ? 6 : 0));
-    if (arm) { // armour over health, as on the girls
-      ctx.fillStyle = '#c3b0ff';
-      ctx.fillRect(Math.round(sx - 24), Math.round(sy - top - 12), Math.round(48 * clamp(this.armour / this.maxArmour, 0, 1)), 4);
+    if (arm) { // armour (or a drone's shielding, in blue) over health
+      ctx.fillStyle = this.shield > 0 ? '#9ae0ff' : '#c3b0ff';
+      ctx.fillRect(Math.round(sx - 24), Math.round(sy - top - 12), Math.round(48 * clamp(this.shield > 0 ? this.shield / this.maxShield : this.armour / this.maxArmour, 0, 1)), 4);
     }
     ctx.fillStyle = HUD.hot;
     ctx.fillRect(Math.round(sx - 24), Math.round(sy - top - 6), Math.round(48 * clamp(this.hp / this.maxHp, 0, 1)), 4);
@@ -424,7 +443,17 @@ Object.assign(Game.prototype, {
 
   damageMob(m, amt, owner, def, hit) {
     if (!m.alive) return;
-    if (def && (def.kind === 'flak' || def.airburst)) { amt *= FLAK_MOB_MULT; if (hit) hit.flak = true; }
+    const flakish = def && (def.kind === 'flak' || def.airburst), guns = def && (def.fighter || (def.ord && def.kind === 'gun'));
+    if (m.shield > 0) { // its shielding takes the hit first, and flak and fighters' guns barely dent it
+      const resist = flakish || guns ? SHIELD_RESIST : 1;
+      const soak = Math.min(m.shield, amt * resist);
+      m.shield -= soak;
+      amt -= soak / resist;
+      m.flash = 1;
+      this.hitPopup(m.x, m.y - m.hh - 20, soak, { q: clamp(soak / (m.maxShield || 1), 0, 1), alt: 0, kin: 0, front: 1, shieldHit: true }, m);
+      if (amt <= 0.5) return;
+    }
+    if (flakish) { amt *= FLAK_MOB_MULT; if (hit) hit.flak = true; }
     if (m.armour > 0) m.armour = Math.max(0, m.armour - amt); // armour soaks the whole hit (A3)
     else m.hp -= amt;
     m.flash = 1;
@@ -636,9 +665,12 @@ Object.assign(Game.prototype, {
     // and from 4.5 a drone tank sometimes drives on from the edge of the map
     if (q >= 4.5 && groundRoom > 0 && rng.chance(0.4)) {
       const left = rng.chance(0.5);
-      const m = this.addMob(q >= 8 && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : 'dtank', left ? -30 : WORLD_W + 30, q);
+      // (an AA tank instead, half the time, once anyone has planes: it hunts squads, not girls)
+      const air = q >= 5.5 && this.tanks.some((t) => t.alive && t.weapons.some((id) => WEAPON_BY_ID[id].air)) && !this.mobs.some((x) => x.alive && x.kind === 'aatank');
+      const kind = q >= 8 && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : air && rng.chance(0.35) ? 'aatank' : 'dtank';
+      const m = this.addMob(kind, left ? -30 : WORLD_W + 30, q);
       m.facing = left ? 1 : -1;
-      names.push(`a ${m.kind === 'android' ? 'android' : 'drone tank'} from the ${left ? 'west' : 'east'}`);
+      names.push(`a ${{ android: 'android', aatank: 'AA tank', dtank: 'drone tank' }[m.kind]} from the ${left ? 'west' : 'east'}`);
     }
     if (names.length) {
       this.ui.notice(`Incoming: ${names.join(', ')}.`);
@@ -646,4 +678,4 @@ Object.assign(Game.prototype, {
     }
   },
 });
-Mob.GROUND = new Set(['turret', 'dtank', 'android']);
+Mob.GROUND = new Set(['turret', 'dtank', 'aatank', 'android']);

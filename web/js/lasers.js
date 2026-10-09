@@ -18,6 +18,7 @@ const DRONE_SINK = 4; // and sinks back when it's done
 // a shot plays out like a MAIA strike: the camera rides the drone up while it charges, then pans to
 // the target, and only then does the beam land. Later beams in the same volley skip the wind-up.
 const DRONE_CHARGE = 30;
+const AFFINITY_CEIL = 2.5, AFFINITY_DMG = 1.25; // Ikaros's mechanical affinity: her drone climbs 2.5x as far, and its beams hit 25% harder
 const DRONE_PAN = 28;
 const BEAM_STEP = 5; // beam trace resolution
 const CEIL_STEP = 6; // height search resolution
@@ -54,7 +55,7 @@ function beamTrace(terrain, targets, owner, x0, y0, x1, y1, solid = false) {
 // The drone's shot at a pointer spot: how high it has to climb (capped at its ceiling) and where the
 // beam ends. Shared by the game and the CPU's solver.
 function droneShot(terrain, targets, owner, w, spot) {
-  const ceil = laserCeil(w);
+  const ceil = laserCeil(w) * (hasTrait(owner, 'affinity') ? AFFINITY_CEIL : 1); // (Ikaros's drone climbs much further)
   // aim a little past the spot so a beam onto the ground meets the surface
   const o0 = droneOrigin(owner, 0);
   const sees = (h) => {
@@ -155,7 +156,7 @@ class DroneBeam {
       g.lasers.push(new Laser(o.x, o.y, end.x, end.y, (DRONE_ART[w.id] && DRONE_ART[w.id].beam) || (c === '#ffffff' ? '#e0e0ff' : c), Math.min(18, 8 + w.dmg / 250), 50));
     }
     if (w.chain) g.sfx.thunder(); else g.sfx.laser();
-    g.explode(end.x, end.y, { ...w, front: this.front, dmg: w.dmg * this.front, from: { x: o.x - end.x, y: o.y - end.y } }, t, 'laser');
+    g.explode(end.x, end.y, { ...w, front: this.front, dmg: w.dmg * this.front * (hasTrait(t, 'affinity') ? AFFINITY_DMG : 1), from: { x: o.x - end.x, y: o.y - end.y } }, t, 'laser');
     if (w.acid) { // an acid laser (the Ichor): the beam leaves a boiling pool
       for (let i = 0; i < 18; i++) {
         const a = -Math.PI * (0.15 + 0.7 * rng.next());
@@ -163,7 +164,7 @@ class DroneBeam {
         g.drops.push(new AcidDrop(g, t, end.x, end.y - 4, Math.cos(a) * sp, Math.sin(a) * sp, w.acid));
       }
     }
-    if (w.chain) g.chainArc(end, w, t, w.dmg * this.front);
+    if (w.chain) g.chainArc(end, w, t, w.dmg * this.front * (hasTrait(t, 'affinity') ? AFFINITY_DMG : 1));
     if (w.meteor) g.projectiles.push(new AsteroidStrike(g, t, end, w.meteor)); // Ikaros' Apollon (finals.js)
     if ((w.sat || this.uplink) && this.main) g.satTarget = { x: end.x, y: end.y, owner: t };
   }

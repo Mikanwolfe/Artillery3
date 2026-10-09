@@ -85,7 +85,7 @@ const VEHICLES = [
   // the secret girl (unlocked by finishing a first game): an angel who came through the gate
   {
     id: 'ang', name: 'Ikaros', hp: 130, armour: 110, secret: true, blurb: 'Something came through the gate on white wings. She says she is here to help, and means it.',
-    traits: ['wings', 'grace'], aa: ['aa_ang'],
+    traits: ['wings', 'grace', 'affinity'], aa: ['aa_ang'],
     weapon: weapon('gloria', "'Gloria' Halo Lance", 'laser', -20, 35, {
       ceil: 110, clip: 2, maxCharge: 55, disp: 0.6, dmg: 200, explR: 4, dmgR: 40,
       short: 'A little halo with wings that follows her about and answers when she points.', long: 'Starting weapon for Ikaros.' }),
@@ -99,6 +99,7 @@ const VEHICLES = [
 const TRAITS = {
   wings: { name: 'Wings', desc: 'Her jump costs half the fuel, and she glides down: no fall damage.' },
   grace: { name: 'Grace', desc: 'Once a round, a hit that would bring her down leaves her at 1 health instead.' },
+  affinity: { name: 'Mechanical affinity', desc: 'Machines take to her: her laser drone climbs two and a half times as high to find a line, and its beams hit 25% harder.' },
   drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn lands a solid hit on a rival, she gets that round back.' },
   geschutz: { name: 'Geschützwagen', desc: 'A steady gun platform: every weapon she fires has half the spread.' },
   sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
@@ -108,7 +109,7 @@ const TRAITS = {
   uplink: { name: 'Priority uplink', desc: 'MAIA strikes she calls have a 30% bigger blast.' },
   retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA nudges its aim onto them.' },
   firecontrol: { name: 'Lymilark fire control', desc: 'Her rockets’ seekers see 40% further and turn 30% faster.' },
-  telemetry: { name: 'Knight telemetry', desc: 'Her rockets lock onto rivals before drones or crates, when one is in sight.' },
+  telemetry: { name: 'Knight telemetry', desc: 'Her rocket weapons fire one more rocket in every salvo.' },
   flightdeck: { name: 'Flight deck', desc: 'Her planes take off from her deck, not straight up: no VTOL penalty, and one more plane in every squad.' },
   twinaa: { name: 'Twin AA mounts', desc: 'Two air-defence slots instead of one, for two different mounts. The second is empty in round one.' },
 };
@@ -128,7 +129,7 @@ function guideFor(w, owner) {
   if (hasTrait(owner, 'firecontrol')) { G.range *= 1.4; G.turn *= 1.3; }
   return G;
 }
-function preferFor(owner) { return hasTrait(owner, 'telemetry') ? 'rival' : null; }
+function preferFor() { return null; } // (no girl has a seeker preference just now: Knight telemetry adds a rocket instead)
 const DRILL_QUALITY = 0.6; // a 'solid' hit or better (see HIT_TIERS) earns the drill's round back
 const RETARGET_RANGE = 160; // how far from the mark MAIA looks for a rival
 const RETARGET_SHIFT = 70; // and how far it will move its aim
