@@ -37,8 +37,8 @@ const TANK_MOVE = 150; // how far a drone tank drives in one cycle (the android:
 const PARACHUTE_VY = 2.2; // an airdropped tank's descent speed
 const FLAK_MOB_MULT = 2; // flak does double damage to mobs
 const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'fpv', 'mothership']);
-const SHIELD_RESIST = 0.35; // what share of a flak or fighter hit tells on a drone's shielding
-const DRONE_FIELD = 80, DRONE_FIELD_DMG = 3; // every flying hostile's static discharge field: a plane inside it is zapped (+1 a stage)
+const SHIELD_RESIST = 0.5; // what share of a flak or fighter hit tells on a drone's shielding
+const DRONE_FIELD = 60, DRONE_FIELD_DMG = 2; // every flying hostile's static discharge field: a plane inside it is zapped (+½ a stage, to stage 8)
 
 class Mob {
   constructor(kind, x, y, stage) {
@@ -68,10 +68,12 @@ class Mob {
     Object.assign(this, S);
     this.maxHp = this.hp;
     this.maxArmour = this.armour;
-    // better drones (from stage 3) carry a little shielding, which shrugs off flak and fighters' guns
-    this.shield = this.maxShield = DRONE_SHIELDED.has(kind) && stage >= 3 ? (kind === 'mothership' ? 120 : 10) * (stage - 2) : 0;
-    // the AA tank's mount: flak at the players' planes while shots play out (aa.js)
-    if (kind === 'aatank') this.aaMount = { id: 'mob_aa', role: 'air', range: 380, rof: 7, dmg: 24 + 4 * stage, acc: 0.75, pk: 0.04, perTurn: 6, splash: 0 };
+    // better drones (from stage 4) carry a little shielding, which shrugs off flak and fighters'
+    // guns; it grows a stage at a time and levels off by stage 8
+    const sh = clamp(stage - 3, 0, 5);
+    this.shield = this.maxShield = DRONE_SHIELDED.has(kind) ? (kind === 'mothership' ? 80 : 8) * sh : 0;
+    // the AA tank's mount: flak at the players' planes while shots play out (aa.js), levelling off by stage 8
+    if (kind === 'aatank') this.aaMount = { id: 'mob_aa', role: 'air', range: 340, rof: 8, dmg: 16 + 2 * Math.min(stage, 8), acc: 0.7, pk: 0.04, perTurn: 4, splash: 0 };
     this.facing = -1;
     this.vy = 0;
     this.aim = { x: 1, y: 0 };
@@ -664,8 +666,8 @@ Object.assign(Game.prototype, {
     if (q >= 4.5 && groundRoom > 0 && rng.chance(0.4)) {
       const left = rng.chance(0.5);
       // (an AA tank instead, half the time, once anyone has planes: it hunts squads, not girls)
-      const air = this.tanks.some((t) => t.alive && t.weapons.some((id) => WEAPON_BY_ID[id].air)) && !this.mobs.some((x) => x.alive && x.kind === 'aatank');
-      const kind = q >= 8 && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : air && rng.chance(0.5) ? 'aatank' : 'dtank';
+      const air = q >= 5.5 && this.tanks.some((t) => t.alive && t.weapons.some((id) => WEAPON_BY_ID[id].air)) && !this.mobs.some((x) => x.alive && x.kind === 'aatank');
+      const kind = q >= 8 && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : air && rng.chance(0.35) ? 'aatank' : 'dtank';
       const m = this.addMob(kind, left ? -30 : WORLD_W + 30, q);
       m.facing = left ? 1 : -1;
       names.push(`a ${{ android: 'android', aatank: 'AA tank', dtank: 'drone tank' }[m.kind]} from the ${left ? 'west' : 'east'}`);

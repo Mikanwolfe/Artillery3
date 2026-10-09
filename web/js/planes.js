@@ -578,7 +578,7 @@ function startAttack(g, p) {
               e.shotBack = e.t;
               const E = e.group, back = E.w.dmg * E.mult * (E.w.fleet ? 0.15 : 1) * 3;
               g.lasers.push(new Laser(e.sx, e.sy, p.sx, p.sy, '#ffe8a0', 2, 6));
-              if (rng.next() < 0.75) g.damage(p, back, e.owner, { aa: true, fighter: true });
+              if (rng.next() < 0.6) g.damage(p, back * 0.7, e.owner, { aa: true, fighter: true }); // (jumped: it gets fewer and worse shots off)
             }
           }
           return;
