@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['b18ec08', 'Fixed a crash when using a repair kit. Starting guns and mounts can be sold (for ¢250 scrap) to free their slot, and a bought mount replaces a girl’s own one, Zuihou’s Type 96 included. Torpedo jets get two passes instead of one.'],
   ['07ca353', 'FPV kamikazes come in high and spend their first cycle flying in from the edge without attacking, so they can no longer appear next to you at the map edge and blow you up at once. After that they get over their target and dive onto it from the sky.'],
   ['ac3cfcf', 'One bar under each girl: health, with armour laid over it (armour goes first and uncovers the health under it), and one number, armour and health together. Every heal (repair kits, crates, the field workshop) goes to health first, then armour. Fortress planes show their armour the same way.'],
   ['6bd0dca', 'Point defence engages every rocket and bomb in range and each hit takes a share of its damage off (random, and less off heavy warheads); one left with little is shot down. Light rockets rarely land against good point defence, heavy ones get through damaged and smoking. All seeker rockets see further and turn harder. Anti-air guns now burst as flak.'],
