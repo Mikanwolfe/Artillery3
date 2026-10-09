@@ -30,14 +30,14 @@ const MAKER_CLASS = { nxi: ' nxi', obj: ' kts', ang: ' ang', zui: ' sgk' };
 const VEHICLES = [
   {
     id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'A sturdy Geschützwagen girl with a two-round autoloader on her back.',
-    traits: ['drill', 'geschutz'],
+    traits: ['drill', 'geschutz'], aa: ['aa_gwt'],
     weapon: weapon('morser', 'G.W. 150mm/78 Morser', 'shell', -20, 90, {
       dmg: 100, disp: 1.5, clip: 2, maxCharge: 50, dmgR: 50,
       short: 'Extensively field-tested, a reliable and sturdy weapon with no equal.', long: 'Starting weapon for G.W. Tiger.' }),
   },
   {
     id: 'obj', name: 'Object 15X', hp: 65, armour: 175, blurb: 'A KTS-T girl: thin hull, thick angled plating, one huge accurate shot.',
-    traits: ['sloped', 'designator'],
+    traits: ['sloped', 'designator'], aa: ['aa_obj'],
     weapon: weapon('d76', '190mm D-76ST 15X', 'shell', 0, 45, {
       dmg: 200, disp: 0.9, maxCharge: 58, drift: 0.75, dmgR: 75,
       short: 'A KTS-T design from the last Neko Wars, years ahead of anything CLS-T fielded.', long: 'Starting weapon for Object 15X.' }),
@@ -46,14 +46,14 @@ const VEHICLES = [
   // Battlecruiser": overbuilt, triple-redundant, slow, never fails. A rival to CLS-T.
   {
     id: 'nxi', name: 'November', hp: 110, armour: 200, fuel: 0.7, blurb: 'An NXi battlecruiser girl: overbuilt, slow and very hard to kill.',
-    traits: ['redundancy', 'gatekeeper'],
+    traits: ['redundancy', 'defsuite'], aa: ['aa_nxi1', 'aa_nxi2'],
     weapon: weapon('nxi0', "NXi Mk.0 'Bulkhead' 127mm Triple", 'shell', -5, 60, {
-      salvo: 3, disp: 0.6, maxCharge: 55, dmg: 45, dmgR: 50, explR: 6,
+      salvo: 3, disp: 0.6, maxCharge: 55, dmg: 50, dmgR: 50, explR: 6,
       short: 'Triple-redundant: three shells where one would do. November Division standard issue.', long: 'Starting weapon for November.' }),
   },
   {
     id: 'int', name: 'Innocentia', hp: 130, armour: 130, blurb: 'The uplink girl: her twin barrels call down the MAIA satellite.',
-    traits: ['uplink', 'retarget'],
+    traits: ['uplink', 'retarget'], aa: ['aa_int'],
     weapon: weapon('katis', '120mm Kati-S / Sat. Enabled.', 'shell', 0, 45, {
       dmg: 80, salvo: 2, disp: 2.1, maxCharge: 70, dmgR: 80, sat: true,
       short: 'An early prototype that utilised the MAIA Satellite System.', long: 'Starting weapon for Innocentia.' }),
@@ -62,7 +62,7 @@ const VEHICLES = [
   // Alban Eiler programme; lighter blows than a shell, but they find their way.
   {
     id: 'alb', name: 'Alban Eiler', hp: 120, armour: 140, blurb: 'The Lymilark rocketeer: her pod of seeker rockets finds whatever is nearest.',
-    traits: ['firecontrol', 'telemetry'],
+    traits: ['firecontrol', 'telemetry'], aa: ['aa_alb'],
     weapon: weapon('lfs0', "LFS 'Eiler' 60mm Seeker Pod", 'rocket', 0, 60, {
       salvo: 2, disp: 3.0, maxCharge: 50, dmg: 50, dmgR: 45, explR: 6,
       guide: { arm: 6, burn: 50, seek: 999, apex: true, turn: 3, range: 280, cone: 75, lift: 0.5 },
@@ -85,7 +85,7 @@ const VEHICLES = [
   // the secret girl (unlocked by finishing a first game): an angel who came through the gate
   {
     id: 'ang', name: 'Ikaros', hp: 130, armour: 110, secret: true, blurb: 'Something came through the gate on white wings. She says she is here to help, and means it.',
-    traits: ['wings', 'grace'],
+    traits: ['wings', 'grace'], aa: ['aa_ang'],
     weapon: weapon('gloria', "'Gloria' Halo Lance", 'laser', -20, 35, {
       ceil: 110, clip: 2, maxCharge: 55, disp: 0.6, dmg: 200, explR: 4, dmgR: 40,
       short: 'A little halo with wings that follows her about and answers when she points.', long: 'Starting weapon for Ikaros.' }),
@@ -94,7 +94,7 @@ const VEHICLES = [
 
 // Character traits: two passives per girl, so they play differently beyond stats and starter gun.
 // Hooks: Game.finishShot (drill), spreadOf (geschutz), explode (sloped), designation /
-// stepBallistic (designator), damage (redundancy), the shop and useAbility (gatekeeper), startSatellite /
+// stepBallistic (designator), damage (redundancy), aaSlots (defsuite, twinaa), startSatellite /
 // updateSatellite (uplink, retarget), jump / stepTanks / landed (wings), damage (grace).
 const TRAITS = {
   wings: { name: 'Wings', desc: 'Her jump costs half the fuel, and she glides down: no fall damage.' },
@@ -102,9 +102,9 @@ const TRAITS = {
   drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn lands a solid hit on a rival, she gets that round back.' },
   geschutz: { name: 'Geschützwagen', desc: 'A steady gun platform: every weapon she fires has half the spread.' },
   sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
-  designator: { name: 'Laser designator', desc: 'A laser dot goes out ahead of every shot onto her selected target (mark it with a click); no damage, but her shells and beams veer slightly toward it.' },
+  designator: { name: 'Laser designator', desc: 'A laser dot goes out ahead of every shot onto her selected target (mark it with a click): her rounds steer for it on the way up and home on it on the way down.' },
   redundancy: { name: 'Triple redundancy', desc: 'No single hit takes more than 40% of her max health.' },
-  gatekeeper: { name: 'Gatekeeper', desc: 'The Bulwark Barrier is hers from round one, at half price.' },
+  defsuite: { name: 'Defensive Suite', desc: 'Two air-defence slots, both filled from the start: NXi point defence and flak of her own.' },
   uplink: { name: 'Priority uplink', desc: 'MAIA strikes she calls have a 30% bigger blast.' },
   retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA nudges its aim onto them.' },
   firecontrol: { name: 'Lymilark fire control', desc: 'Her rockets’ seekers see 40% further and turn 30% faster.' },
@@ -115,7 +115,6 @@ const TRAITS = {
 const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
 // a gun's spread in her hands (G.W. Tiger's Geschützwagen halves it)
 const spreadOf = (w, t) => (w.disp || 0) * (hasTrait(t, 'geschutz') ? 0.5 : 1);
-const GATEKEEPER_DISCOUNT = 0.5;
 // a shooter's seeker settings: Alban Eiler's fire control extends and sharpens them, her telemetry
 // prefers rivals over drones and crates
 // rocket fuel: frames of motor by rarity (a rocket's own burn is a ceiling); better rockets fly further
@@ -204,19 +203,19 @@ const WEAPONS = [
     incendiary: 2.5,
     short: 'Named for the fire god whose birth burned his mother. Forty incendiary shells a turn.', long: 'Wide spread, small bursts, and every fragment lands burning. CLS-T’s napalm.' }),
   // NXi, November Division: the rival to CLS-T. Overbuilt and triple-verified; accurate, a little slow
-  weapon('nxi105', "NXi Mk.I 'Bulkhead' 105mm", 'shell', -5, 60, { salvo: 3, disp: 0.6, maxCharge: 55, dmg: 60, dmgR: 55, explR: 7, rarity: 1, cost: 1500,
+  weapon('nxi105', "NXi Mk.I 'Bulkhead' 105mm", 'shell', -5, 60, { salvo: 3, disp: 0.6, maxCharge: 55, dmg: 67, dmgR: 55, explR: 7, rarity: 1, cost: 1500,
     short: 'Overbuilt, over-tested, over-documented, and proud of it.', long: 'Three shells in close formation. Every one of them inspected.' }),
-  weapon('nxitv', "NXi 'Triple-Verify' 120mm Coilgun", 'gun', -10, 40, { clip: 2, salvo: 3, disp: 0.8, maxCharge: 45, dmg: 70, dmgR: 50, rarity: 2, cost: 3200,
+  weapon('nxitv', "NXi 'Triple-Verify' 120mm Coilgun", 'gun', -10, 40, { clip: 2, salvo: 3, disp: 0.8, maxCharge: 45, dmg: 78, dmgR: 50, rarity: 2, cost: 3200,
     short: 'Every round is verified three times before it leaves the barrel.', long: "Never fires a shot it hasn't checked. Twice a turn." }),
   weapon('nxisec9', "NXi SEC-9 'Veto' Point-Defence Battery", 'flak', 10, 90, { clip: 2, salvo: 3, disp: 0.8, maxCharge: 85, dmg: 90, dmgR: 100, explR: 5, rarity: 3, cost: 4600,
     short: 'SEC-9 has veto power. Drones do not get a vote.', long: 'Proximity-fused point defence for the gate.' }),
   weapon('nxiarch7', "NXi ARCH-7 'Battlecruiser' 280mm", 'shell', -5, 70, { clip: 2, disp: 0.4, maxCharge: 70, dmg: 600, dmgR: 140, explR: 20, rarity: 4, cost: 9800,
     short: 'Built like a battlecruiser: maximum armour, maximum redundancy, maximum reliability.', long: 'Slow to load, slower to miss.' }),
-  weapon('nxiintel3', "NXi INTEL-3 'Gatewatch' Lance", 'laser', -25, 30, { ceil: 200, clip: 2, salvo: 2, disp: 0.4, maxCharge: 100, dmg: 600, dmgR: 70, explR: 6, rarity: 5, cost: 27500,
+  weapon('nxiintel3', "NXi INTEL-3 'Gatewatch' Lance", 'laser', -25, 30, { ceil: 200, clip: 2, salvo: 2, disp: 0.4, maxCharge: 100, dmg: 670, dmgR: 70, explR: 6, rarity: 5, cost: 27500,
     short: 'The gate is guarded at all cost. INTEL-3 sees everything that comes through it.', long: 'Paired beams, triple-verified targeting.' }),
   weapon('nxiaeria', "NXi 'Aeria Charlotte' 406mm Royal Battery", 'shell', -5, 85, { clip: 3, salvo: 3, disp: 2, maxCharge: 110, dmg: 450, dmgR: 150, explR: 24, rarity: 6, cost: 58000,
     short: 'Commanded by Queen Aeria Charlotte herself. Every shell is worthy of royal inspection.', long: 'Three triple turrets. For the UAF.' }),
-  weapon('nxivoid', "NXi November 'Void Between Stars' Arc Lance", 'laser', 0, 25, { ceil: 240, drift: 0.35, clip: 2, maxCharge: 400, disp: 0.01, dmg: 3000, dmgR: 120, explR: 30, sat: true, rarity: 7, cost: 150000,
+  weapon('nxivoid', "NXi November 'Void Between Stars' Arc Lance", 'laser', 0, 25, { ceil: 240, drift: 0.35, clip: 2, maxCharge: 400, disp: 0.01, dmg: 3350, dmgR: 120, explR: 30, sat: true, rarity: 7, cost: 150000,
     chain: { n: 4, range: 280, fall: 0.8 },
     short: 'Opens a rift for an instant and lets the storm between dimensions through. It does not stay where it lands.', long: 'Lightning that arcs from its target to the next nearest thing, four times, a fifth weaker each jump. Trees and poles draw it off. We advance slowly because we advance forever.' }),
   weapon('massdriver', '210mm Kinetic Mass Driver', 'laser', 0, 20, { ceil: 260, drift: 0.15, clip: 2, maxCharge: 1000, disp: 0.001, explR: 80, dmg: 10000, dmgR: 400, sat: true, rarity: 7, cost: 195420,
@@ -336,10 +335,12 @@ const WEAPONS = [
 //    proportional to its price: 0.165 * price * (1 + 0.1 per rarity tier), divided by 1 + 0.15 per
 //    extra autoloader shot (with the aim guide every follow-up shot is an aimed one).
 //  - Acid guns lose a further 10%, since the acid drip comes on top.
+//  - NXi guns with a tighter blast than their tier's (the starter, Mk.I, Triple-Verify, INTEL-3 and
+//    the Void) hit about 12% harder, since near misses do less.
 //  - Starting guns sit just under the cheapest Commons (worth 140-165 a turn).
 // Commons are priced as cheap sidegrades (about 40% under the curve), Uncommons a little under
 const REBALANCE = {
-  morser: { dmg: 110 }, d76: { dmg: 170 }, katis: { dmg: 30 }, nxi0: { dmg: 60 }, gloria: { dmg: 170 },
+  morser: { dmg: 110 }, d76: { dmg: 170 }, katis: { dmg: 30 }, nxi0: { dmg: 68 }, gloria: { dmg: 170 },
   howitzer: { dmg: 260, cost: 700 }, claymore: { dmg: 85, cost: 900 }, lensx2: { dmg: 225, cost: 1100 },
   lance: { dmg: 220, cost: 2100 }, coil: { dmg: 80, cost: 2450 }, obj261: { dmg: 420, cost: 2900 },
   type11: { dmg: 130, cost: 4400 }, lensae: { dmg: 335, cost: 4900 }, type91: { dmg: 515, cost: 5800 },
@@ -348,9 +349,9 @@ const REBALANCE = {
   laser88: { dmg: 720, cost: 20000 }, laser15x: { dmg: 2505, cost: 25000 }, acid220: { dmg: 710, cost: 28000 },
   cls770: { dmg: 505, cost: 33000 }, horizon: { dmg: 740, cost: 40000 }, terminus: { dmg: 555, cost: 45000 },
   flak40: { dmg: 40, cost: 950 }, akizuki: { dmg: 195, cost: 5000 }, maya: { dmg: 305, cost: 11000 },
-  sanshiki: { dmg: 2115, cost: 30000 }, nxi105: { dmg: 110, cost: 950 }, nxitv: { dmg: 105, cost: 2650 },
-  nxisec9: { dmg: 135, cost: 5100 }, nxiarch7: { dmg: 740, cost: 10000 }, nxiintel3: { dmg: 1040, cost: 19000 },
-  nxiaeria: { dmg: 510, cost: 30000 }, nxivoid: { dmg: 1800, cost: 48000 }, massdriver: { dmg: 2620, cost: 52000 },
+  sanshiki: { dmg: 2115, cost: 30000 }, nxi105: { dmg: 124, cost: 950 }, nxitv: { dmg: 118, cost: 2650 },
+  nxisec9: { dmg: 135, cost: 5100 }, nxiarch7: { dmg: 740, cost: 10000 }, nxiintel3: { dmg: 1165, cost: 19000 },
+  nxiaeria: { dmg: 510, cost: 30000 }, nxivoid: { dmg: 2000, cost: 48000 }, massdriver: { dmg: 2620, cost: 52000 },
   // rockets: about 75% of a shell gun's worth for the price (the seeker makes up the rest)
   lfs0: { dmg: 70 }, wren: { dmg: 85, cost: 850 }, kestrel: { dmg: 90, cost: 2400 }, dunbarton: { dmg: 285, cost: 5200 },
   tirchonaill: { dmg: 390, cost: 10500 }, emain: { dmg: 415, cost: 19000 }, avalon: { dmg: 440, cost: 32000 },
@@ -506,7 +507,9 @@ function windAccel(p, wind) {
 const SEEK_FRAMES = 150; // how long a locked seeker can keep steering (no endless loitering)
 function seekCenter(c) { return c.center ? c.center() : { x: c.x, y: c.y - 9 }; }
 const DESIGNATE_SNAP = 70; // how close to a target her marker must be to designate it
-const DESIGNATE_PULL = 0.02; // how hard a designated shot veers toward the dot, per frame
+const DESIGNATE_PULL = 0.07; // how hard a designated shot veers toward the dot on the way up, per frame
+const DESIGNATE_TURN = 0.05; // and on the way down: rad/frame it turns to home on the dot
+const DESIGNATE_RANGE = 520; // (from this close)
 function designPoint(d) { return d.point ? d : seekCenter(d); }
 function findLock(p, seek, owner) {
   const G = p.guide;
@@ -633,13 +636,19 @@ function guideStep(p, seek, owner) {
 function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
   const lift = p.guide ? guideStep(p, seek, owner) : 0;
   const a = windAccel(p, wind);
-  // Object 15X's designator: the shot drifts sideways to close the gap between where it is going to
-  // come down (at the dot's height, ignoring wind) and the dot
+  // Object 15X's designator: on the way up the shot drifts sideways to close the gap between where
+  // it is going to come down (at the dot's height, ignoring wind) and the dot; on the way down,
+  // near it, it homes on the dot like a seeker
   if (p.designate && p.designate.alive) {
     const q = designPoint(p.designate);
     const g = p.noGrav ? 0 : GRAV, h = q.y - p.y;
     const disc = p.vy * p.vy + 2 * g * h;
-    if (g > 0 && disc >= 0) {
+    const dx = q.x - p.x, dy = q.y - p.y;
+    if (p.vy > 0 && dx * dx + dy * dy < DESIGNATE_RANGE * DESIGNATE_RANGE && dx * p.vx + dy * p.vy > 0) {
+      const sp = Math.hypot(p.vx, p.vy), hd = Math.atan2(p.vy, p.vx);
+      const turn = clamp(wrapA(Math.atan2(dy, dx) - hd), -DESIGNATE_TURN, DESIGNATE_TURN);
+      p.vx = Math.cos(hd + turn) * sp; p.vy = Math.sin(hd + turn) * sp - GRAV * (1 - lift); // (and no sag: it flies at the dot)
+    } else if (g > 0 && disc >= 0) {
       const T = (-p.vy + Math.sqrt(disc)) / g;
       const miss = q.x - (p.x + p.vx * T);
       p.vx += Math.sign(miss) * Math.min(DESIGNATE_PULL, Math.abs(miss) / Math.max(T * T, 1));

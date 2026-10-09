@@ -421,6 +421,8 @@ function shade(hex, k) {
   return k >= 0 ? rgb(mixRgb(c, [255, 255, 255], k)) : rgb(mixRgb(c, [0, 0, 0], -k));
 }
 
+const SHELL_EDGE = 'rgba(18,14,26,0.9)';
+
 class Projectile {
   constructor(game, w, owner, x, y, vx, vy, main) {
     this.game = game;
@@ -652,6 +654,9 @@ class Projectile {
           sq(ctx, this.x - nx * (sk.size * 1.6 + k * 4) + (Math.random() - 0.5) * 2, this.y - ny * (sk.size * 1.6 + k * 4) + (Math.random() - 0.5) * 2, sk.size * (0.8 - k * 0.15) + Math.random() * 2);
         }
       }
+      ctx.fillStyle = SHELL_EDGE; // (a dark outline, so bright rounds read against any sky)
+      for (const d of [-sk.size * 0.9, 0]) sq(ctx, this.x + nx * d, this.y + ny * d, sk.size * 0.8 + 2);
+      sq(ctx, this.x + nx * (sk.size * 0.8), this.y + ny * (sk.size * 0.8), Math.max(2, sk.size * 0.55) + 2);
       ctx.fillStyle = rgb(col);
       for (const d of [-sk.size * 0.9, 0]) sq(ctx, this.x + nx * d, this.y + ny * d, sk.size * 0.8);
       ctx.fillStyle = rgb(sk.nose);
@@ -662,6 +667,9 @@ class Projectile {
       }
       return;
     }
+    ctx.fillStyle = SHELL_EDGE; // (a dark outline, so bright rounds read against any sky)
+    sq(ctx, this.x - nx * 3, this.y - ny * 3, sk.size + 2);
+    sq(ctx, this.x + nx * (sk.size / 2 + 1), this.y + ny * (sk.size / 2 + 1), Math.max(2, sk.size * 0.6) + 2);
     ctx.fillStyle = rgb(col);
     sq(ctx, this.x - nx * 3, this.y - ny * 3, sk.size);
     ctx.fillStyle = rgb(sk.nose);

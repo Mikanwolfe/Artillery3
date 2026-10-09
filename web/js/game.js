@@ -832,9 +832,10 @@ class Game {
     for (const o of this.tanks) {
       if (o !== t && o.alive && Math.abs(o.y - t.y) < TANK_H && Math.abs(o.x - nx) < TANK_W + 4 && Math.abs(o.x - nx) < Math.abs(o.x - t.x)) return;
     }
-    // driving into a tree knocks it down, at a cost
+    // driving into a tree knocks it down, at a cost (not from a bridge or anything else above it)
     for (const tr of this.terrain.trees) {
-      if (tr.alive && Math.abs(tr.x - nx) < TANK_W / 2 + 3 && Math.abs(tr.x - nx) < Math.abs(tr.x - t.x)) this.ramTree(t, tr);
+      if (tr.alive && Math.abs(tr.x - nx) < TANK_W / 2 + 3 && Math.abs(tr.x - nx) < Math.abs(tr.x - t.x)
+        && t.y > this.terrain.hAt(tr.x) - this.terrain.treeHeight(tr) + 4) this.ramTree(t, tr);
     }
     t.x = nx;
     t.fuel--;
@@ -1607,8 +1608,8 @@ class Game {
       tank.money -= u.costs[lvl];
       tank.upgrades[id] = lvl + 1;
     } else if (kind === 'aa') { // an air-defence mount into a free slot (two of the same can't share)
-      const a = AA_BY_ID[id], slot = tank.aa.indexOf(null);
-      if (!a || slot < 0 || tank.aa.includes(id) || tank.money < a.cost) { this.sfx.deny(); return false; }
+      const a = AA_BY_ID[id], slot = a ? aaSlotFor(tank, a.role) : -1;
+      if (!a || a.starter || slot < 0 || tank.aa.includes(id) || tank.money < a.cost) { this.sfx.deny(); return false; }
       tank.money -= a.cost;
       tank.aa[slot] = id;
     } else if (kind === 'kit') {
@@ -1629,7 +1630,7 @@ class Game {
   canSell(tank, id) { return tank.weapons.length > 1 && !(BALANCE === 'rebalanced' && WEAPON_BY_ID[id].starter); }
 
   // a girl's own mount (Zuihou's) came with her and stays; bought ones sell back in full
-  canSellAA(tank, id) { return !!AA_BY_ID[id] && !(tank.vehicle.aa || []).includes(id); }
+  canSellAA(tank, id) { return !!AA_BY_ID[id] && !AA_BY_ID[id].starter && !(tank.vehicle.aa || []).includes(id); }
   sellAA(tank, id) {
     if (!this.canSellAA(tank, id)) { this.sfx.deny(); return false; }
     tank.aa[tank.aa.indexOf(id)] = null;
@@ -1661,26 +1662,30 @@ class Game {
     // Once planes have killed it (any CPU, Easy too), anti-air comes first, from a bigger share, and
     // a lesser mount is traded in for the best anti-air gun it can afford
     const burned = (t.airDowned || 0) > 0;
+    const mounts = () => t.aa.map((id) => AA_BY_ID[id]).filter((a) => a && !a.starter); // (bought ones)
     if (burned) {
-      const share = t.money * AA_SHARE_BURNED;
-      const best = AA_WEAPONS.filter((a) => a.role === 'air' && !t.aa.includes(a.id)).filter((a) => a.cost <= share).sort((a, b) => b.cost - a.cost)[0];
-      const air = t.aa.map((id) => AA_BY_ID[id]).filter((a) => a && a.role === 'air');
-      const worst = t.aa.map((id) => AA_BY_ID[id]).filter(Boolean).sort((a, b) => a.cost - b.cost)[0];
-      const trade = air.length ? air[0] : !t.aa.includes(null) && worst; // (its anti-air gun, else with no slot free its cheapest mount)
-      if (best && trade && this.canSellAA(t, trade.id) && best.cost > trade.cost * 1.5) { t.aa[t.aa.indexOf(trade.id)] = null; t.money += trade.cost; }
-      const slot = t.aa.indexOf(null);
-      if (best && slot >= 0 && !t.aa.some((id) => AA_BY_ID[id] && AA_BY_ID[id].role === 'air') && best.cost <= t.money) { t.money -= best.cost; t.aa[slot] = best.id; }
+      const best = AA_WEAPONS.filter((a) => a.role === 'air' && !t.aa.includes(a.id) && a.cost <= t.money * AA_SHARE_BURNED).sort((a, b) => b.cost - a.cost)[0];
+      const air = mounts().find((a) => a.role === 'air');
+      if (best && air && best.cost > air.cost * 1.5) { t.aa[t.aa.indexOf(air.id)] = null; t.money += air.cost; } // trade up
+      if (best && !mounts().some((a) => a.role === 'air')) {
+        let slot = aaSlotFor(t, 'air');
+        const worst = mounts().sort((a, b) => a.cost - b.cost)[0];
+        if (slot < 0 && worst) { slot = t.aa.indexOf(worst.id); t.aa[slot] = null; t.money += worst.cost; }
+        if (slot >= 0 && best.cost <= t.money) { t.money -= best.cost; t.aa[slot] = best.id; }
+      }
     }
     if (t.type !== 'easy') {
       const rivals = this.tanks.filter((x) => x !== t).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
       const missiles = rivals.some((w) => w.kind === 'rocket' || w.carpet);
       const air = rivals.some((w) => w.air) || this.round >= 2;
-      for (let slot = t.aa.indexOf(null); slot >= 0; slot = t.aa.indexOf(null)) {
-        const have = t.aa.map((id) => AA_BY_ID[id]).filter(Boolean);
+      for (let slot = aaSlotFor(t), n = 0; slot >= 0 && n < 2; slot = aaSlotFor(t), n++) {
+        const have = mounts();
         const role = have.length ? (have[0].role === 'missile' ? 'air' : 'missile') : burned ? 'air' : missiles ? 'missile' : air ? 'air' : null;
         if (!role) break;
+        slot = aaSlotFor(t, role);
         const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost <= t.money * AA_SHARE).sort((a, b) => b.cost - a.cost)[0];
-        if (!pick) break;
+        const old = AA_BY_ID[t.aa[slot]]; // (her starter, if it is in that slot: only for something clearly better)
+        if (!pick || (old && aaPower(pick) < aaPower(old) * 1.3)) break;
         t.money -= pick.cost;
         t.aa[slot] = pick.id;
       }
@@ -1721,7 +1726,7 @@ class Game {
     }
     // abilities: Hard keeps a Double Shot and a Deflector, Normal a Double Shot, Easy now and then
     const wants = t.type === 'hard' ? ['double', 'shield'] : t.type === 'normal' ? ['double'] : rng.chance(0.4) ? [rng.pick(['double', 'shield'])] : [];
-    if ((this.isLate() || hasTrait(t, 'gatekeeper')) && t.type !== 'easy') wants.unshift('barrier'); // late game (or November): a barrier first
+    if (this.isLate() && t.type !== 'easy') wants.unshift('barrier'); // late game: a barrier first
     for (const id of wants) {
       const ab = ABILITIES.find((a) => a.id === id);
       const cost = this.abilityCost(t, ab);
@@ -1750,9 +1755,8 @@ class Game {
   // Abilities (see ABILITIES): 1 / 2 arm Double Shot / Overcharge for the next shot (press again
   // to disarm; they only recharge once fired), 3 switches the Deflector on. None takes the turn.
   // late game: the second half of a finite match, or from round 4 in infinite mode
-  // November's gatekeeper: the barrier is hers from round one, at half price
-  abilityUnlocked(t, ab) { return !ab.late || this.isLate() || (ab.id === 'barrier' && hasTrait(t, 'gatekeeper')); }
-  abilityCost(t, ab) { return ab.id === 'barrier' && hasTrait(t, 'gatekeeper') ? Math.round(ab.cost * GATEKEEPER_DISCOUNT) : ab.cost; }
+  abilityUnlocked(t, ab) { return !ab.late || this.isLate(); }
+  abilityCost(t, ab) { return ab.cost; }
 
   isLate() { return this.rounds ? this.round > this.rounds / 2 : this.round >= 4; }
 

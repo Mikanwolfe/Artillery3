@@ -31,13 +31,44 @@ const AA_WEAPONS = [
   { id: 'gatewatch', name: "NXi 'Gatewatch' Aegis Net", role: 'missile', rarity: 6, cost: 28000, range: 340, rof: 3, pk: 0.8, cut: 0.6, dmg: 30, acc: 0.6, perTurn: 3,
     short: 'What guards the gate. Nothing gets through without a vote, and nobody votes yes.', long: 'Point defence: the best there is.' },
 ];
-const AA_BY_ID = Object.fromEntries(AA_WEAPONS.map((a) => [a.id, a]));
+// every girl comes with a mount of her own (starter: not sold in the shop, worth nothing back, and
+// swapped out by the first one she buys into its slot), from weakest to best: Ikaros, Innocentia,
+// Alban Eiler, G.W. Tiger, Object 15X, then Zuihou (the shop's Type 96, and a second slot) and
+// November (two of her own: the Defensive Suite)
+const AA_STARTERS = [
+  { id: 'aa_ang', name: "'Feather' Halo Ward", role: 'air', rarity: 1, cost: 0, starter: true, range: 200, rof: 10, dmg: 10, acc: 0.55, pk: 0.02, perTurn: 2,
+    short: 'The halo flicks feathers at anything that flies too close to her. It isn’t really for fighting.', long: 'Anti-aircraft, barely: Ikaros’s own.' },
+  { id: 'aa_int', name: 'Kati-S Coaxial Flak', role: 'air', rarity: 1, cost: 0, starter: true, range: 220, rof: 9, dmg: 14, acc: 0.6, pk: 0.03, perTurn: 3,
+    short: 'A small flak gun slaved to the twin barrels. It points where they point, roughly.', long: 'Anti-aircraft: Innocentia’s own.' },
+  { id: 'aa_alb', name: "LFS 'Buckler' Micro-Interceptor", role: 'missile', rarity: 1, cost: 0, starter: true, range: 210, rof: 6, pk: 0.2, cut: 0.15, dmg: 8, acc: 0.5, perTurn: 1,
+    short: 'A pocket Aegis: two tiny seekers that go for seekers.', long: 'Point defence: Alban Eiler’s own.' },
+  { id: 'aa_gwt', name: 'G.W. 20mm Flakvierling', role: 'air', rarity: 1, cost: 0, starter: true, range: 250, rof: 8, dmg: 18, acc: 0.65, pk: 0.04, perTurn: 4,
+    short: 'Four 20mm barrels on the autoloader’s roof. Field-tested, of course.', long: 'Anti-aircraft: G.W. Tiger’s own.' },
+  { id: 'aa_obj', name: "KTS-T 'Shtora' Active Protection", role: 'missile', rarity: 1, cost: 0, starter: true, range: 230, rof: 5, pk: 0.3, cut: 0.2, dmg: 10, acc: 0.5, perTurn: 1,
+    short: 'Dazzlers and a ring of shot charges round the turret: what comes in at her mostly doesn’t arrive whole.', long: 'Point defence: Object 15X’s own.' },
+  { id: 'aa_nxi1', name: "NXi Mk.0 'Bulkhead' Point Defence", role: 'missile', rarity: 1, cost: 0, starter: true, range: 240, rof: 4, pk: 0.35, cut: 0.25, dmg: 12, acc: 0.5, perTurn: 2,
+    short: 'Half of the Defensive Suite: a radar-laid gatling, triple-verified.', long: 'Point defence: November’s own.' },
+  { id: 'aa_nxi2', name: 'NXi Mk.0 Flak Mount', role: 'air', rarity: 1, cost: 0, starter: true, range: 280, rof: 8, dmg: 22, acc: 0.7, pk: 0.04, perTurn: 4,
+    short: 'The other half of the Defensive Suite: proximity flak, twin-mounted, never jams.', long: 'Anti-aircraft: November’s own.' },
+];
+const AA_BY_ID = Object.fromEntries(AA_WEAPONS.concat(AA_STARTERS).map((a) => [a.id, a]));
+const AA_GRAZE = 0.25; // an anti-air burst that misses still grazes for this much
 function aaMaker(a) { return a.name.startsWith('NXi') ? 'NXi' : a.name.startsWith('LFS') ? 'Lymilark' : a.name.startsWith('Kotona') ? 'Kotona' : 'Sengoku Inc.'; }
 const AA_ROUND_SPEED = { air: 26, missile: 60 }; // world units a frame (point defence is near enough hitscan)
 const VTOL_MULT = 0.7; // planes launched straight up (no flight deck) hit this much as hard
 
 // how many mounts she can carry
-function aaSlots(t) { return hasTrait(t, 'twinaa') ? 2 : 1; }
+function aaSlots(t) { return hasTrait(t, 'twinaa') || hasTrait(t, 'defsuite') ? 2 : 1; }
+// roughly what a mount is worth a turn, to compare like with unlike
+function aaPower(A) { return A.role === 'air' ? A.dmg * A.acc * A.perTurn * (A.splash ? 1.5 : 1) : A.pk * A.perTurn * 60 + A.range * 0.05; }
+// where a mount she buys goes: a free slot, else the slot her own starter mount sits in
+// (a starter of the same role first)
+function aaSlotFor(t, role) {
+  const i = t.aa.indexOf(null);
+  if (i >= 0) return i;
+  const same = t.aa.findIndex((id) => AA_BY_ID[id] && AA_BY_ID[id].starter && AA_BY_ID[id].role === role);
+  return same >= 0 ? same : t.aa.findIndex((id) => AA_BY_ID[id] && AA_BY_ID[id].starter);
+}
 // things in flight a mount can shoot at: missiles and bombs (shells and beams are too fast or too small)
 function aaInterceptable(p) {
   const w = p.w;
@@ -154,8 +185,7 @@ Object.assign(Game.prototype, {
       if (!e.alive) continue;
       const q = e.center();
       if (dist(q.x, q.y, r.x, r.y) > (A.splash || 40) + (e.hw || 12)) continue;
-      if (rng.next() > A.acc) continue;
-      this.damage(e, A.dmg, r.owner, { aa: true });
+      this.damage(e, A.dmg * (rng.next() > A.acc ? AA_GRAZE : 1), r.owner, { aa: true }); // (a miss still grazes)
     }
   },
 

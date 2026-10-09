@@ -455,7 +455,7 @@ const UI = {
       const list = WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) => forVehicle(w, tank.vehicle.id)).filter((w) =>
         f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= w.cost : f === 'NXi' ? makerOf(w) === 'NXi' : f === 'hybrid' ? w.hybrid : f === 'Sengoku' ? makerOf(w).includes('Sengoku') : w.kind === f);
       if (f === 'aa') { // air-defence mounts: their own slots
-        const freeSlot = tank.aa.indexOf(null);
+        const freeSlot = aaSlotFor(tank);
         $('shop-grid').innerHTML = AA_WEAPONS.map((a) => {
           const r = RARITY[a.rarity], owned = tank.aa.includes(a.id), afford = tank.money >= a.cost;
           const can = !owned && freeSlot >= 0 && afford;
@@ -498,7 +498,7 @@ const UI = {
         if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty mount${i ? ' (second)' : ''}: buy one under AA</span></div>`;
         const st = this.game.canSellAA(tank, id);
         return `<div class="owned">${this.badge(a, true)}<span>${esc(a.name)}</span>
-          <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(a.cost) : 'Hers'}</button></div>`;
+          <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(a.cost) : a.starter ? 'Hers (a bought one replaces it)' : 'Hers'}</button></div>`;
       }).join('');
       $('shop-aa').querySelectorAll('[data-sa]').forEach((b) => { b.onclick = () => { g.sellAA(tank, b.dataset.sa); render(); }; });
       $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour]].map(([id, label, cur]) => {
@@ -524,8 +524,7 @@ const UI = {
         const owned = tank.abilities[a.id] > 0;
         const locked = !g.abilityUnlocked(tank, a);
         const cost = g.abilityCost(tank, a);
-        const perk = cost !== a.cost ? ` <small class="lvl">${esc(TRAITS.gatekeeper.name)}</small>` : '';
-        return `<div class="upg"><span>${esc(a.name)} <small class="lvl">[${a.key}]</small>${perk}<br>
+        return `<div class="upg"><span>${esc(a.name)} <small class="lvl">[${a.key}]</small><br>
         <small>${esc(a.desc)} Recharges in ${a.cd} turns.</small></span>
         <button data-a="${a.id}" ${!owned && !locked && tank.money >= cost ? '' : 'disabled'}>${owned ? 'Owned' : locked ? 'Late game' : money(cost)}</button></div>`;
       }).join('');

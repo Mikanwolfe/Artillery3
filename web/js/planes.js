@@ -50,7 +50,6 @@ const AIR_GRAV = 0.1; // along the flight path: a dive gains speed, a climb lose
 const AIR_SPRING = 0.03, AIR_DAMP = 0.24;
 const AIR_PIVOT = 0.13; // rad/frame: the fastest any plane turns (slow, on its lift fan)
 const AIR_CLEAR = 70; // how far it keeps off the ground ahead (unless it is meant to be low)
-const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
 // how a type looks: body colours, length, the NXi stripe
 const PLANE_LOOK = {
@@ -426,6 +425,9 @@ function planeOrd(G, extra = {}) {
 // what a plane goes for in its zone: the nearest rival to the middle of it, else a hostile on the
 // ground; nothing outside the zone
 function zoneLock(g, p, m, Z) {
+  // a dot up in the sky by MAIA (it hit her): MAIA it is
+  const sat = g.satellite;
+  if (sat && sat.alive && m.y < g.terrain.hAt(clamp(m.x, 0, WORLD_W - 1)) - 120 && Math.abs(sat.center().x - m.x) < Z + 60) return sat;
   let lock = null, best = Infinity;
   for (const e of g.targets()) {
     if (!e.alive || e === p.owner || e.isSat || e.isPlane || (e.isMob && e.flying)) continue;
@@ -437,6 +439,27 @@ function zoneLock(g, p, m, Z) {
   return lock;
 }
 
+// MAIA, up in the sky, whatever the plane: a straight run in at her, its ordnance fired at her core
+// from close in (bombs can't fall up), then down and away and back round to its hover
+function satRun(g, p, sat) {
+  const G = p.group, F = p.fl, R = 230;
+  let shots = clamp(p.ord, 1, 4), k = 0;
+  const near = () => { const c = sat.center(), dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy) || 1; return { x: c.x + (dx / d) * R, y: c.y + (dy / d) * R }; };
+  p.go(near, { v: F.cruise, r: 40, clear: 40 }, () => {
+    p.attack = () => {
+      if (k++ % 6) return;
+      if (!sat.alive) shots = 0;
+      else {
+        const c = sat.center(), tx = c.x - p.sx, ty = c.y - p.sy, d = Math.hypot(tx, ty) || 1;
+        g.projectiles.push(new Projectile(g, { ...planeOrd(G), kind: 'rocket', dmgR: Math.max(G.w.dmgR, 80), visR: G.w.dmgR }, p.owner, p.sx, p.sy, (tx / d) * 14, (ty / d) * 14, p.i === 0));
+        g.sfx.click();
+        shots--;
+      }
+      if (shots <= 0) { p.passDone(); p.go({ x: p.x + Math.cos(p.hd) * 260, y: p.y + 180 }, { v: F.cruise, r: 90 }, () => p.rejoin()); }
+    };
+  });
+}
+
 // a plane's attack, by type: up and away first to pick up height, in along its approach line,
 // ordnance off, then out and round (a loop, mostly) to its hover again (rejoin)
 function startAttack(g, p) {
@@ -446,6 +469,7 @@ function startAttack(g, p) {
   p.attack = null;
   p.ord = w.fleet ? (p.kind === 'fighter' ? 6 : 1) : w.air.ord;
   const lock = (p.lock = zoneLock(g, p, m, Z));
+  if (lock && lock.isSat) { satRun(g, p, lock); return; }
   // fairly sharp on something in the zone, looser on an empty one; the squad spreads a little
   const n = G.planes.length, off = p.i - (n - 1) / 2;
   const jit = (rng.next() - 0.5) * (lock ? 8 + w.disp * 6 : 24 + w.disp * 30) + off * (lock ? 5 : 14);
