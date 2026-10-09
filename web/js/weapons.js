@@ -601,9 +601,9 @@ function altitudeBonus(drop, launch) {
   return Math.min(ALTITUDE_MAX, Math.max(0, drop) * ALTITUDE_RATE) * (0.5 + 0.5 * Math.max(0, Math.sin(launch)));
 }
 
-function bonusFactor(w, drop, speed, close, launch = Math.PI / 4) {
+function bonusFactor(w, drop, speed, launch = Math.PI / 4) {
   if (w.kind === 'laser') return 1;
   const alt = altitudeBonus(drop, launch);
-  const kin = close ? Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED : 0;
-  return 1 + alt + kin;
+  const kin = Math.min(KINETIC_MAX, Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * (w.kin || 1));
+  return (1 + alt) * (1 + kin);
 }

@@ -945,10 +945,11 @@ const CRATE_KINDS = [
 ];
 
 class Crate {
-  constructor(x, kind) {
+  constructor(x, kind, y = -150) {
     this.x = x;
-    this.y = -150;
+    this.y = y;
     this.kind = kind;
+    this.golden = kind === 'golden';
     this.landed = false;
     this.alive = true;
     this.t = 0;
@@ -957,8 +958,8 @@ class Crate {
   update(game) {
     this.t++;
     if (!this.landed) {
-      this.y += 2.2;
-      this.x = clamp(this.x + game.wind.x * 30, 40, WORLD_W - 40);
+      this.y += this.golden ? 5 : 2.2; // the spy plane's drop comes down fast from a long way up
+      this.x = clamp(this.x + game.wind.x * (this.golden ? 10 : 30), 40, WORLD_W - 40);
       const gy = game.terrain.hAt(this.x);
       if (this.y >= gy) {
         this.y = gy;
@@ -976,7 +977,7 @@ class Crate {
       const cy = y - 62;
       for (let i = -4; i <= 4; i++) {
         const h = Math.round(Math.sqrt(Math.max(0, 25 - i * i)) * 3.2);
-        ctx.fillStyle = i % 2 ? '#d8402c' : '#f4f4f8';
+        ctx.fillStyle = this.golden ? (i % 2 ? '#f2c45a' : '#fff3c4') : i % 2 ? '#d8402c' : '#f4f4f8';
         ctx.fillRect(x + i * 6 - 3, cy - h, 6, h);
       }
       ctx.fillStyle = '#6b6f78';
@@ -984,16 +985,70 @@ class Crate {
         for (let k = 1; k < 6; k++) sq(ctx, lerp(x + ex, x, k / 6), lerp(cy, y - 18, k / 6), 2);
       }
     }
-    ctx.fillStyle = 'rgb(96,72,48)';
+    const [dk, lt] = this.golden ? ['rgb(150,104,24)', 'rgb(242,196,90)'] : ['rgb(96,72,48)', 'rgb(176,136,84)'];
+    ctx.fillStyle = dk;
     ctx.fillRect(x - 10, y - 18, 20, 18);
-    ctx.fillStyle = 'rgb(176,136,84)';
+    ctx.fillStyle = lt;
     ctx.fillRect(x - 8, y - 16, 16, 14);
-    ctx.fillStyle = 'rgb(96,72,48)';
+    ctx.fillStyle = dk;
     ctx.fillRect(x - 8, y - 10, 16, 2);
     ctx.fillRect(x - 1, y - 16, 2, 14);
+    if (this.golden && (this.t >> 3) % 3 === 0) { // a glint
+      ctx.fillStyle = '#ffffff';
+      sq(ctx, x - 5 + ((this.t >> 3) % 6), y - 13, 2);
+    }
     if (this.landed && (this.t >> 4) % 2 === 0) {
       ctx.fillStyle = '#ffd84a';
-      sq(ctx, x, y - 22, 4);
+      sq(ctx, x, y - 22, this.golden ? 6 : 4);
     }
+  }
+}
+
+// The spy plane (a rare event, Game.spyPlane): a long-winged high-altitude jet that crosses the top of
+// the sky with a contrail and lets a golden crate go over dropX
+class SpyPlane {
+  constructor(x, dir, dropX) {
+    this.x = x;
+    this.y = -720;
+    this.dir = dir;
+    this.dropX = dropX;
+    this.dropped = null;
+    this.alive = true;
+    this.trail = [];
+  }
+
+  update(game) {
+    this.x += this.dir * 9;
+    if ((game.time * 60 | 0) % 3 === 0) this.trail.push({ x: this.x - this.dir * 50, y: this.y + 2, life: 1 });
+    for (const c of this.trail) c.life -= 0.006;
+    this.trail = this.trail.filter((c) => c.life > 0);
+    if (!this.dropped && (this.x - this.dropX) * this.dir >= 0) {
+      this.dropped = new Crate(this.x, 'golden', this.y + 24);
+      game.crates.push(this.dropped);
+      game.cam.follow(this.dropped);
+      game.sfx.click();
+    }
+    if (this.x < -400 || this.x > WORLD_W + 400) this.alive = this.trail.length > 0;
+  }
+
+  draw(ctx) {
+    for (const c of this.trail) { // the contrail
+      ctx.fillStyle = `rgba(255,255,255,${(c.life * 0.55).toFixed(3)})`;
+      sq(ctx, c.x, c.y, 6 + (1 - c.life) * 10);
+    }
+    const x = Math.round(this.x), y = Math.round(this.y), f = this.dir;
+    const S = 1.6; // drawn big: it is a long way up
+    const R = (lx, ty, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x + (f < 0 ? -lx - w : lx) * S), Math.round(y + ty * S), Math.round(w * S), Math.round(h * S)); };
+    R(-48, -4, 96, 8, '#2a2c34'); // fuselage
+    R(40, -3, 14, 5, '#2a2c34'); // nose
+    R(52, -1, 6, 2, '#1a1c22');
+    R(18, -7, 14, 4, '#7ab8d8'); // canopy
+    R(-30, -2, 70, 2, '#3c3e48');
+    R(-16, 2, 40, 3, '#3c3e48'); // the long glider wing, seen edge on
+    R(-70, 1, 54, 2, '#3c3e48');
+    R(24, 1, 46, 2, '#3c3e48');
+    R(-48, -16, 10, 12, '#2a2c34'); // tail fin
+    R(-50, -2, 12, 4, '#1a1c22'); // exhaust
+    if (((this.x | 0) >> 3) % 2) R(-44, -16, 3, 3, '#ff3a3a');
   }
 }

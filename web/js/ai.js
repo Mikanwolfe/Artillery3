@@ -77,7 +77,6 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
   const facing = target.x >= tank.x ? 1 : -1;
   const tc = target.center();
   const arc = (DIFFICULTY[tank.type] || DIFFICULTY.normal).arc * arcScale;
-  const kinR = Math.max(18, w.dmgR * KINETIC_RADIUS);
   const maxV = Math.min(w.maxCharge, 140); // beyond this everything leaves the map anyway
   const seek = w.guide ? game.seekables() : null;
   const evalShot = (elev, v) => {
@@ -97,7 +96,7 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
     if (selfD < Math.max(w.dmgR, w.sat ? 150 : 0) + 20 && r.tank !== target) err += 400;
     // only shots that would actually do damage earn the bonus
     const d = dist(r.x, r.y, tc.x, tc.y);
-    const f = d < w.dmgR ? bonusFactor(w, r.drop, r.speed, d < kinR, rad(elev + tank.hullAngle(facing))) : 1;
+    const f = d < w.dmgR ? bonusFactor(w, r.drop, r.speed, rad(elev + tank.hullAngle(facing))) : 1;
     return { err, score: err - arc * (f - 1), f };
   };
   let best = { err: Infinity, score: Infinity, f: 1, elev: (w.elevMin + w.elevMax) / 2, v: maxV / 2, facing };

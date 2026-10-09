@@ -159,7 +159,7 @@ Object.assign(Game.prototype, {
     this.round = 1;
     this.events = [];
     if (!this.terrain.height || !this.biome) this.newEnvironment();
-    this.projectiles = []; this.drops = []; this.lasers = []; this.traces = []; this.crates = []; this.slides = [];
+    this.projectiles = []; this.drops = []; this.lasers = []; this.traces = []; this.crates = []; this.flyovers = []; this.cinematic = 0; this.slides = [];
     this.salvo = this.satSeq = this.satTarget = null;
     this.particles.clear();
     this.setupHazards();

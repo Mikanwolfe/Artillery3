@@ -329,7 +329,7 @@ const UI = {
   renderRack(g) {
     const t = g.active;
     const show = t && t.alive && (g.phase === 'aim' || g.phase === 'resolve');
-    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, !!g.cpu, g.phase, BALANCE, t.fuel >= Math.ceil(t.maxFuel * JUMP_FUEL), t.fuel >= Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)), !!t.falling]) : '';
+    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, t.uplinkTurns || 0, !!g.cpu, g.phase, BALANCE, t.fuel >= Math.ceil(t.maxFuel * JUMP_FUEL), t.fuel >= Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)), !!t.falling]) : '';
     if (sig === this.last.rack) return;
     this.last.rack = sig;
     $('rack').hidden = !show;
@@ -363,7 +363,8 @@ const UI = {
     const leapCost = Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1));
     ab.push(`<button class="slot a" data-jump="leap" title="Leap: bound far the way you face and land softly, for ${Math.round(LEAP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= leapCost && !t.falling ? '' : 'disabled'}><span class="kb">L</span><span class="txt"><span class="nm">Leap</span><span class="st">${Math.round(LEAP_FUEL * 100)}% fuel</span></span></button>`);
     if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% health and armour, takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
-    if (t.uplink) ab.push(`<span class="slot a armed uplink" title="Satellite uplink: your next shot calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">next shot</span></span></span>`);
+    if (t.uplinkTurns > 0) ab.push(`<span class="slot a armed uplink" title="Golden uplink: the first shot of each turn calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">${t.uplinkTurns} turn${t.uplinkTurns > 1 ? 's' : ''}</span></span></span>`);
+    else if (t.uplink) ab.push(`<span class="slot a armed uplink" title="Satellite uplink: your next shot calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">next shot</span></span></span>`);
     $('rack-a').innerHTML = ab.join('');
     $('rack-a').hidden = !ab.length;
   },

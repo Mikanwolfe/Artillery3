@@ -24,7 +24,7 @@ const HIGHWAY_DECK = 14;
 const HIGHWAY_SEG_HP = 220;
 const TOWER_SEC = 40; // height of a radio tower section
 const TOWER_SEC_HP = 120;
-const TOWER_CRUSH = 14; // damage per fallen section to whatever a toppling tower lands on (up to 90)
+const TOWER_CRUSH = 20; // damage per fallen section to whatever a toppling tower lands on (up to 120)
 const MATERIALS = {
   timber: { hp: 1, deck: ['#8a6440', '#a47c52', '#5a3e26'], pole: '#5a4030' },
   concrete: { hp: 1.5, deck: ['#a4a29c', '#c2c0ba', '#6a6864'], pole: '#8a8884' },
@@ -177,28 +177,62 @@ Object.assign(Game.prototype, {
 
   // a section of tower broke: it and everything above topple away from the blast and crush what
   // they land on
+  // (the broken part swings over about the break, picking up speed, and crushes on landing: stepTowers)
   toppleTower(t, k, fromX) {
-    const T = this.terrain;
     const fallen = t.h - k;
-    if (fallen <= 0) return;
-    const dir = Math.sign(t.x - fromX) || 1;
-    const L = fallen * TOWER_SEC;
-    const a = t.x + dir * 6, b = t.x + dir * (6 + L);
-    t.debris.push({ x0: Math.min(a, b), x1: Math.max(a, b) });
+    if (fallen <= 0 || t.fall) return;
+    t.fall = { k, n: fallen, dir: Math.sign(t.x - fromX) || 1, ang: 0.02, w: 0.004, top: t.h === t.n };
     t.h = k;
-    const dmg = Math.min(90, TOWER_CRUSH * fallen);
-    for (const v of this.tanks) {
-      if (!v.alive || v.x < Math.min(a, b) - TANK_W / 2 || v.x > Math.max(a, b) + TANK_W / 2) continue;
-      if (Math.abs(v.y - T.hAt(v.x)) > 30) continue; // up on a bridge or a fort: it falls past
-      this.particles.text(v.x, v.y - 70, 'CRUSHED', '#e8c890');
-      this.damage(v, dmg, null);
+    this.sfx.thud();
+    this.ui.notice(k ? 'The radio tower snaps!' : 'The radio tower is coming down!');
+  },
+
+  stepTowers() {
+    const T = this.terrain;
+    for (const t of T.towers || []) {
+      const f = t.fall;
+      if (!f) continue;
+      f.w += 0.0045 + 0.012 * Math.sin(f.ang); // it tips slowly, then comes down fast
+      f.ang += f.w;
+      if (f.ang < Math.PI / 2) continue;
+      // down: it lies along the ground from the break, and crushes whatever is under it
+      t.fall = null;
+      const L = f.n * TOWER_SEC;
+      const a = t.x + f.dir * 6, b = t.x + f.dir * (6 + L);
+      t.debris.push({ x0: Math.min(a, b), x1: Math.max(a, b) });
+      const dmg = Math.min(120, TOWER_CRUSH * f.n);
+      for (const v of this.tanks.concat(this.mobs.filter((m) => m.alive && !m.flying))) {
+        if (!v.alive || v.x < Math.min(a, b) - TANK_W / 2 || v.x > Math.max(a, b) + TANK_W / 2) continue;
+        if (Math.abs(v.y - T.hAt(v.x)) > 30) continue; // up on a bridge or a fort: it falls past
+        this.particles.text(v.x, v.y - 70, 'CRUSHED', '#e8c890');
+        this.damage(v, dmg, null);
+      }
+      T.fellTrees((a + b) / 2, T.hAt((a + b) / 2) - 10, L / 2);
+      for (let x = Math.min(a, b); x < Math.max(a, b); x += 12) this.particles.puff(x, T.hAt(x), [150, 145, 140]);
+      this.shake = Math.max(this.shake, 8);
+      this.sfx.explosion(25);
+      this.events.push(f.k ? 'A radio tower lost its top.' : 'A radio tower came down.');
     }
-    T.fellTrees((a + b) / 2, T.hAt((a + b) / 2) - 10, L / 2);
-    for (let x = Math.min(a, b); x < Math.max(a, b); x += 12) this.particles.puff(x, T.hAt(x), [150, 145, 140]);
-    this.shake = Math.max(this.shake, 6);
-    this.sfx.explosion(25);
-    this.ui.notice(k ? 'The radio tower snaps!' : 'The radio tower comes down!');
-    this.events.push(k ? 'A radio tower lost its top.' : 'A radio tower came down.');
+  },
+
+  // a tower's broken top in mid-fall: its lattice as squares along the swinging axis
+  drawTowerFall(ctx, t, col) {
+    const f = t.fall, T = this.terrain;
+    const g = T.hAt(t.x), H = t.n * TOWER_SEC, base = f.k * TOWER_SEC;
+    const px = t.x, py = g - base;
+    const ax = f.dir * Math.sin(f.ang), ay = -Math.cos(f.ang); // along the falling part
+    const qx = Math.cos(f.ang), qy = f.dir * Math.sin(f.ang); // across it
+    const P = (u, v) => [px + ax * u + qx * v, py + ay * u + qy * v];
+    const half = (u) => lerp(12, 4, (base + u) / H);
+    const L = f.n * TOWER_SEC;
+    ctx.fillStyle = col;
+    for (let u = 0; u < L; u += 3) { const h = half(u); sq(ctx, ...P(u, -h), 3); sq(ctx, ...P(u, h), 3); }
+    for (let s = 0; s < f.n; s++) for (let q = 0; q <= 1; q += 0.1) {
+      const u = (s + q) * TOWER_SEC;
+      sq(ctx, ...P(u, lerp(-half(s * TOWER_SEC), half((s + 1) * TOWER_SEC), q)), 2);
+      sq(ctx, ...P(u, lerp(half(s * TOWER_SEC), -half((s + 1) * TOWER_SEC), q)), 2);
+    }
+    if (f.top) for (let u = L; u < L + 30; u += 2) sq(ctx, ...P(u, 0), 2); // the antenna
   },
 
   // blasts break deck segments (any segment gone and the bridge comes down) and knock poles over
@@ -430,6 +464,7 @@ Object.assign(Game.prototype, {
       for (let x = d.x0; x < d.x1; x += 4) sq(ctx, x, T.hAt(x) - 3, 3);
       for (let x = d.x0; x < d.x1; x += 20) { sq(ctx, x + 5, T.hAt(x) - 7, 3); sq(ctx, x + 10, T.hAt(x) - 4, 3); }
     }
+    if (t.fall) this.drawTowerFall(ctx, t, col);
     if (!t.h) return;
     const H = t.n * TOWER_SEC;
     const half = (y) => lerp(12, 4, (g - y) / H);

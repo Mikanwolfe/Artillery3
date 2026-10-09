@@ -35,6 +35,10 @@ const ROUND_STEP = 200; // and this much more for each round after the first
 const SAVE_KEY = 'a3.save';
 const CRATE_CHANCE = 0.3; // chance of a supply drop at the start of each turn (after the first few)
 const CRATE_MAX = 2;
+const GOLDEN_CHANCE = 0.08; // chance a turn opens with the spy plane's golden crate (once a round at most)
+const GOLDEN_CASH = 1200; // + GOLDEN_CASH_ROUND a round after the first
+const GOLDEN_CASH_ROUND = 300;
+const GOLDEN_UPLINK = 3; // turns of MAIA uplink
 // Smoke traces: every shell leaves a line of grey squares that drift with the wind and fade
 const TRACE_LIFE = 360; // frames (~6 s)
 const TRACE_MAX = 5000;
@@ -42,9 +46,9 @@ const TRACE_STEP = 7; // world units between puffs along a shell's path (jittere
 // Arcade bonuses that reward high, plunging shots (shells, guns and acid; not lasers):
 //  - kinetic: extra damage from impact speed, packed into a tighter radius than the blast
 //  - altitude: the whole blast is scaled up by how far the shell fell from the top of its arc
-const KINETIC_MIN_SPEED = 25; // px/frame at impact before kinetic damage starts
-const KINETIC_PER_SPEED = 0.022; // + this fraction of the weapon's damage per px/frame above that
-const KINETIC_RADIUS = 0.4; // of the weapon's damage radius
+const KINETIC_MIN_SPEED = 25; // px/frame at impact before the kinetic bonus starts
+const KINETIC_PER_SPEED = 0.022; // + this share of the damage per px/frame above that (x a weapon's own kin)
+const KINETIC_MAX = 0.5; // capped at +50%, like the altitude bonus
 const ALTITUDE_RATE = 0.0006; // + this fraction of damage per world unit fallen from the apex
 const ALTITUDE_MAX = 0.5; // at most +50%, and only for a shot fired straight up (see altitudeBonus)
 // Falls: a vehicle whose ground is blown away (or slides away) takes damage past a short drop
@@ -192,6 +196,7 @@ class Game {
     this.lasers = [];
     this.traces = [];
     this.crates = [];
+    this.flyovers = [];
     this.slides = [];
     this.fronts = [];
     this.mobs = [];
@@ -412,6 +417,8 @@ class Game {
     this.lasers = [];
     this.traces = [];
     this.crates = [];
+    this.flyovers = [];
+    this.goldenRound = false;
     this.slides = [];
     this.salvo = null;
     this.satSeq = null;
@@ -492,6 +499,7 @@ class Game {
     this.satellite.newTurn();
     this.satTurn();
     if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
+    else if (this.events_on && !this.range && !this.goldenRound && this.turnCount > 3 && rng.chance(GOLDEN_CHANCE)) this.spyPlane();
     t.fuel = t.maxFuel;
     t.shield = false; // a Deflector lasts until its owner's next turn
     t.barrier = null; // so does a Bulwark Barrier
@@ -552,6 +560,7 @@ class Game {
       }
     }
     this.stepTanks();
+    this.stepTowers();
     this.stepDrones();
     this.updateHazards();
     if (this.phase === 'aim') this.updateAim();
@@ -560,6 +569,14 @@ class Game {
     this.lasers = this.lasers.filter((l) => l.update());
     this.updateTraces();
     for (const c of this.crates) if (c.alive) c.update(this);
+    for (const f of this.flyovers) f.update(this);
+    this.flyovers = this.flyovers.filter((f) => f.alive);
+    if (this.cinematic > 0) { // the spy plane's pass: hand the camera back once its crate is down
+      this.cinematic--;
+      const p = this.flyovers[0];
+      if (!p || (p.dropped && p.dropped.landed) || this.phase !== 'aim') this.cinematic = 0;
+      if (!this.cinematic) { this.cam.ceil = -1000; if (this.phase === 'aim' && this.active) this.cam.follow(this.range ? this.rangeFocus() : this.active); }
+    }
     this.crates = this.crates.filter((c) => c.alive);
     this.windMarker += (this.windDir - this.windMarker) / 20;
     this.cam.update();
@@ -723,11 +740,40 @@ class Game {
     this.ui.notice('Supply drop incoming!');
   }
 
+  // the spy plane: the camera goes up to it as it crosses high over the map, and it drops a golden crate
+  spyPlane() {
+    this.goldenRound = true;
+    const left = rng.chance(0.5);
+    const p = new SpyPlane(left ? -260 : WORLD_W + 260, left ? 1 : -1, rng.range(500, WORLD_W - 500));
+    this.flyovers.push(p);
+    this.cinematic = 480; // input waits while it plays (cut short once the crate is down)
+    this.cam.ceil = Math.min(this.cam.ceil, p.y - 600); // (lifted for the pass: the plane is way up)
+    this.cam.follow(p);
+    this.events.push('A spy plane passes high overhead.');
+    this.ui.notice('A spy plane overhead: it is dropping something!');
+    this.sfx.satPrep();
+  }
+
   claimCrate(c, t) {
     if (!c.alive || !t) return;
     c.alive = false;
     let desc;
-    if (c.kind === 'repair') {
+    if (c.kind === 'golden') { // one of three, each well worth the detour
+      const r = rng.int(0, 2);
+      if (r === 0) {
+        const hp = Math.min(t.maxHp - t.hp, Math.round(t.maxHp * 0.7));
+        const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.7));
+        t.hp += hp; t.armour += ar;
+        desc = `golden repair (+${hp + ar})`;
+      } else if (r === 1) {
+        const amt = GOLDEN_CASH + GOLDEN_CASH_ROUND * (this.round - 1);
+        t.money += amt;
+        desc = `¢${amt.toLocaleString('en-US')}`;
+      } else {
+        t.uplinkTurns = GOLDEN_UPLINK;
+        desc = `a MAIA uplink for ${GOLDEN_UPLINK} turns`;
+      }
+    } else if (c.kind === 'repair') {
       const hp = Math.min(t.maxHp - t.hp, Math.round(t.maxHp * 0.3));
       const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.2));
       t.hp += hp;
@@ -801,6 +847,7 @@ class Game {
       if (this.range) this.resetRange(); else this.nextTurn();
       return;
     }
+    if (this.cinematic > 0) { this.input.queue.length = 0; return; } // the spy plane's pass: everyone watches
     let c;
     if (this.cpu) {
       this.cpu.update(DT);
@@ -861,6 +908,9 @@ class Game {
     const w = t.weapon;
     if (this.range) { this.range.shots++; this.range.last = 0; }
     if (!t.firedThisTurn && reloadOf(w)) t.reload[w.id] = reloadOf(w) + 1; // sits out reloadOf(w) of its owner's turns
+    // a golden crate's long uplink: the first shot of each of her next few turns calls MAIA
+    const linked = !!t.uplink || (t.uplinkTurns > 0 && !t.firedThisTurn);
+    if (t.uplinkTurns > 0 && !t.firedThisTurn) t.uplinkTurns--;
     t.shotsLeft--;
     t.firedThisTurn = true;
     const dir = t.aimVec();
@@ -870,7 +920,7 @@ class Game {
     if (t.armed.over) t.cooldown.over = ABILITY_BY_ID.over.cd;
     t.lastCharge = t.charge / t.chargeCap();
     t.armed = { double: false, over: false };
-    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo * (dbl ? 2 : 1), timer: 0, first: true, uplink: !!t.uplink, designate: this.designation(t) };
+    this.salvo = { t, w, vx: dir.x * t.charge, vy: dir.y * t.charge, left: w.salvo * (dbl ? 2 : 1), timer: 0, first: true, uplink: linked, designate: this.designation(t) };
     t.uplink = false;
     t.charge = 0;
     t.recoil = 1;
@@ -1131,8 +1181,8 @@ class Game {
     const size = Math.round(18 + 22 * h.q + Math.min(18, Math.sqrt(amt) * 0.9));
     const chips = [];
     if (h.alt >= 0.05) chips.push([`ALT +${Math.round(h.alt * 100)}%`, '#f2c45a']);
-    if (h.kin >= 1) chips.push([`KIN +${Math.round(h.kin)}`, '#ff9a5a']);
-    if (h.front > 1.01) chips.push([`FORCE ×${h.front.toFixed(2)}`, '#ffd84a']);
+    if (h.kin >= 0.05) chips.push([`KIN +${Math.round(h.kin * 100)}%`, '#ff9a5a']);
+    if (h.front > 1.01) chips.push([`FRONT ×${h.front.toFixed(2)}`, '#ffd84a']);
     if (h.front < 0.99) chips.push([`RAIN ×${h.front.toFixed(2)}`, '#8ab4ff']);
     if (h.sat) chips.push(['MAIA', '#ff78c8']);
     if (h.region) chips.push([`MAIA ${h.region}`, '#ff78c8']);
@@ -1170,9 +1220,11 @@ class Game {
     const alt = altitudeBonus(p.y - p.peak, p.launch || 0);
     const speed = Math.hypot(p.vx, p.vy);
     const body = this.bodyFactor(p);
-    const kin = Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * w.dmg * body * (p.charging ? w.lance.kin : w.kin || 1); // w.kin: a weapon's own kinetic multiplier
+    // a fast impact: a percentage on top, like the altitude bonus (w.kin: a weapon's own multiplier
+    // makes it climb to the cap sooner)
+    const kin = Math.min(KINETIC_MAX, Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * (p.charging ? w.lance.kin : w.kin || 1));
     const front = this.frontMult(p);
-    return { ...w, alt, front, dmg: w.dmg * body * (1 + alt) * front, kin: kin >= 1 ? { dmg: kin, r: Math.max(18, w.dmgR * KINETIC_RADIUS) } : null };
+    return { ...w, alt, front, kinPct: kin, dmg: w.dmg * body * (1 + alt) * (1 + kin) * front, kin: null };
   }
 
   // flak burst: fragments rain down from the airburst
@@ -1210,8 +1262,7 @@ class Game {
       const d = dist(c.x, c.y, x, y);
       let amt = d < def.dmgR ? def.dmg * (1 - d / def.dmgR) : 0;
       // what went into the hit, for the damage popup: accuracy (1 = dead centre) and each modifier
-      const hit = { px: x, py: y, q: def.dmgR ? clamp(1 - d / def.dmgR, 0, 1) : 0, alt: def.alt || 0, front: def.front || 1, kin: 0, sat: !!def.maia };
-      if (def.kin && d < def.kin.r) { hit.kin = def.kin.dmg * (1 - d / def.kin.r); amt += hit.kin; }
+      const hit = { px: x, py: y, q: def.dmgR ? clamp(1 - d / def.dmgR, 0, 1) : 0, alt: def.alt || 0, front: def.front || 1, kin: def.kinPct || 0, sat: !!def.maia };
       if (amt > 0 && t.armour > 0 && hasTrait(t, 'sloped')) { // Object 15X: blasts from the side she faces
         const fx = Math.abs(x - c.x) < 12 && def.from ? def.from.x : x - c.x;
         if (fx * t.facing > 0) { amt *= 0.8; hit.sloped = true; }
@@ -1796,6 +1847,7 @@ class Game {
     }
     for (const d of this.drops) d.draw(ctx);
     for (const c of this.crates) c.draw(ctx);
+    for (const f of this.flyovers) f.draw(ctx);
     this.drawTraces(ctx);
     for (const p of this.projectiles) p.draw(ctx);
     for (const l of this.lasers) l.draw(ctx);

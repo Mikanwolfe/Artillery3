@@ -13,14 +13,17 @@
 
 // Fronts: strength s = width / 100 (about 0.6 at level I up to 2 at level III)
 const FRONT_TYPES = {
-  force: { name: 'Force', col: [255, 216, 74], tip: 'shells hit harder' },
-  storm: { name: 'Storm', col: [150, 210, 255], tip: 'shells throw lightning' },
-  updraft: { name: 'Updraft', col: [255, 170, 120], tip: 'lifts shells' },
-  gale: { name: 'Gale', col: [200, 222, 232], tip: 'blows shells sideways' },
-  blizzard: { name: 'Blizzard', col: [240, 244, 255], tip: 'slows shells' },
+  force: { name: 'Force', col: [255, 216, 74], tip: 'shells hit far harder' },
+  storm: { name: 'Storm', col: [150, 210, 255], tip: 'shells throw lightning and hit harder' },
+  updraft: { name: 'Updraft', col: [255, 170, 120], tip: 'lifts shells, which hit harder' },
+  gale: { name: 'Gale', col: [200, 222, 232], tip: 'blows shells sideways, and they hit harder' },
+  blizzard: { name: 'Blizzard', col: [240, 244, 255], tip: 'slows shells, which hit harder' },
   rain: { name: 'Rain', col: [110, 150, 214], tip: 'damps blasts' },
-  sandstorm: { name: 'Sandstorm', col: [206, 160, 100], tip: 'buffets shells' },
+  sandstorm: { name: 'Sandstorm', col: [206, 160, 100], tip: 'buffets shells, which hit harder' },
 };
+const FRONT_POWER = 2; // how hard fronts push shells about (x their original strength)
+const FRONT_FORCE = 0.8; // Force: +80% damage at full width (strength 1)
+const FRONT_BUFF = 0.2; // every other front (bar Rain) also adds +20% at full width
 const FRONT_WIDTH = [null, [60, 90], [100, 140], [150, 200]];
 const FRONT_DRIFT = 1200; // world units of drift per turn per unit of wind
 const FOG_RISE = 45; // world units per turn cycle (+5 per stage)
@@ -146,14 +149,15 @@ Object.assign(Game.prototype, {
       if (Math.abs(p.x - f.x) > f.w / 2) continue;
       const s = this.frontStrength(f);
       if (!s) continue;
+      if (f.kind !== 'rain') p.forceMult = Math.max(p.forceMult || 1, 1 + (f.kind === 'force' ? FRONT_FORCE : FRONT_BUFF) * s);
+      const k = FRONT_POWER * s;
       switch (f.kind) {
-        case 'force': p.forceMult = Math.max(p.forceMult || 1, 1 + 0.35 * s); break;
         case 'storm': p.storm = Math.max(p.storm || 0, s); break;
         case 'rain': p.rainMult = Math.min(p.rainMult || 1, 1 - 0.18 * s); break;
-        case 'updraft': p.vy -= GRAV * 0.35 * s; break;
-        case 'gale': p.vx += f.dir * 0.05 * s; break;
-        case 'blizzard': p.vx *= 1 - 0.007 * s; p.vy *= 1 - 0.004 * s; break;
-        case 'sandstorm': p.vx += (rng.next() - 0.5) * 0.3 * s; p.vy += (rng.next() - 0.5) * 0.3 * s; break;
+        case 'updraft': p.vy -= GRAV * 0.35 * k; break;
+        case 'gale': p.vx += f.dir * 0.05 * k; break;
+        case 'blizzard': p.vx *= 1 - 0.007 * k; p.vy *= 1 - 0.004 * k; break;
+        case 'sandstorm': p.vx += (rng.next() - 0.5) * 0.3 * k; p.vy += (rng.next() - 0.5) * 0.3 * k; break;
         default: break;
       }
       if (p.age % 3 === 0) {
