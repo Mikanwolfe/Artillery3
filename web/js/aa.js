@@ -51,7 +51,7 @@ const AA_STARTERS = [
     short: 'Dazzlers and a ring of shot charges round the turret: what comes in at her mostly doesn’t arrive whole.', long: 'Point defence: Object 15X’s own.' },
   { id: 'aa_nxi1', name: "NXi Mk.0 'Bulkhead' Point Defence", role: 'missile', rarity: 1, cost: 0, starter: true, range: 240, rof: 4, pk: 0.35, cut: 0.25, dmg: 12, acc: 0.5, perTurn: 2,
     short: 'Half of the Defensive Suite: a radar-laid gatling, triple-verified.', long: 'Point defence: November’s own.' },
-  { id: 'aa_nxi2', name: 'NXi Mk.0 Flak Mount', role: 'air', rarity: 1, cost: 0, starter: true, range: 280, rof: 8, dmg: 22, acc: 0.7, pk: 0.04, perTurn: 4,
+  { id: 'aa_nxi2', name: 'NXi Mk.0 Flak Mount', role: 'air', rarity: 1, cost: 0, starter: true, range: 340, rof: 7, dmg: 32, acc: 0.8, pk: 0.04, perTurn: 6,
     short: 'The other half of the Defensive Suite: proximity flak, twin-mounted, never jams.', long: 'Anti-aircraft: November’s own.' },
 ];
 const AA_BY_ID = Object.fromEntries(AA_WEAPONS.concat(AA_STARTERS).map((a) => [a.id, a]));
@@ -84,6 +84,59 @@ function aaInterceptable(p) {
   const w = p.w;
   return !!w && (w.kind === 'rocket' || w.bomblet || w.ord || w.id === 'mobbomb' || w.id === 'shipbomb');
 }
+// how each mount looks on her back (girl units, before her scale): flak guns as a row of barrels,
+// rocket launchers as a box of tubes, point defence as a gatling under a radome, a pod, or a lens
+const AA_LOOK = {
+  aa_ang: { k: 'wing' }, aa_int: { k: 'guns', n: 1, len: 14, w: 2 }, aa_alb: { k: 'pod', n: 2 }, aa_gwt: { k: 'guns', n: 4, len: 12, w: 2 },
+  aa_obj: { k: 'pod', n: 4, flat: true }, aa_nxi1: { k: 'dome' }, aa_nxi2: { k: 'guns', n: 2, len: 18, w: 3 },
+  aa96: { k: 'guns', n: 3, len: 16, w: 2 }, aabofors: { k: 'guns', n: 4, len: 18, w: 2 }, aegis: { k: 'pod', n: 3 },
+  aafd94: { k: 'guns', n: 2, len: 22, w: 3, director: true }, ciws: { k: 'dome' }, aarocket: { k: 'rockets' },
+  kotonapd: { k: 'lens' }, akizukikai: { k: 'guns', n: 2, len: 24, w: 4, shield: true, director: true }, gatewatch: { k: 'dome', big: true },
+};
+const AA_METAL = 'rgb(112,118,128)', AA_DARK = 'rgb(46,48,56)';
+
+// her mounts, drawn behind her shoulder (slot 0) and lower on her back (slot 1), barrels on what
+// they last fired at; each kicks back when it fires
+function drawAAMounts(ctx, t, px, py, f) {
+  if (!t.aa) return;
+  t.aa.forEach((id, i) => {
+    const L = AA_LOOK[id];
+    if (!L) return;
+    const bx = px - f * (12 + i * 11), by = py - 5 + i * 9;
+    const aim = t.aaAim && t.aaAim[i] !== undefined ? t.aaAim[i] : (f > 0 ? -1.1 : Math.PI + 1.1); // (up and ahead, idle)
+    const kick = (t.aaKick && t.aaKick[i]) || 0;
+    ctx.fillStyle = AA_DARK; ctx.fillRect(Math.round(bx - 5), Math.round(by - 1), 10, 5); // its base
+    ctx.save();
+    ctx.translate(Math.round(bx), Math.round(by - 1));
+    if (L.k === 'wing') { // Ikaros's halo ward: a little white wing
+      ctx.fillStyle = 'rgb(240,240,248)';
+      for (let k = 0; k < 4; k++) ctx.fillRect(-f * (2 + k * 2) - 1, -4 - k * 2 + Math.round(Math.sin((t.blink || 0) * 3) * 1), 3, 3 + k);
+      ctx.restore(); return;
+    }
+    if (L.k === 'lens') { ctx.fillStyle = AA_METAL; ctx.fillRect(-4, -7, 8, 7); ctx.fillStyle = 'rgb(160,230,255)'; ctx.fillRect(-2, -5, 4, 3); ctx.restore(); return; }
+    if (L.k === 'dome') { // a radome over a gatling
+      const s = L.big ? 1.3 : 1;
+      ctx.fillStyle = 'rgb(214,218,224)'; ctx.fillRect(Math.round(-4 * s), Math.round(-10 * s), Math.round(8 * s), Math.round(6 * s)); ctx.fillRect(Math.round(-3 * s), Math.round(-12 * s), Math.round(6 * s), 2);
+      ctx.fillStyle = AA_METAL; ctx.fillRect(-4, -4, 8, 4);
+    }
+    ctx.rotate(aim);
+    if (L.k === 'dome') { ctx.fillStyle = AA_DARK; ctx.fillRect(2 - kick * 2, -1, 9, 3); }
+    else if (L.k === 'pod' || L.k === 'rockets') { // a box of tubes
+      const n = L.k === 'rockets' ? 5 : L.n, h = L.flat ? 2 : 3;
+      ctx.fillStyle = AA_METAL; ctx.fillRect(-2 - kick, -Math.ceil(n * h / 2) - 1, L.k === 'rockets' ? 14 : 9, n * h + 2);
+      ctx.fillStyle = AA_DARK; for (let k = 0; k < n; k++) ctx.fillRect((L.k === 'rockets' ? 11 : 6) - kick, -Math.ceil(n * h / 2) + k * h, 2, h - 1);
+    } else { // flak: barrels side by side along the aim
+      const gap = L.w + 1;
+      ctx.fillStyle = AA_METAL; ctx.fillRect(-3, -Math.ceil(L.n * gap / 2) - 1, 7, L.n * gap + 2); // the cradle
+      ctx.fillStyle = AA_DARK;
+      for (let k = 0; k < L.n; k++) ctx.fillRect(2 - kick * 3, -Math.ceil(L.n * gap / 2) + k * gap, L.len, L.w);
+      if (L.shield) { ctx.fillStyle = AA_METAL; ctx.fillRect(-1, -Math.ceil(L.n * gap / 2) - 3, 3, L.n * gap + 6); }
+    }
+    ctx.restore();
+    if (L.director) { ctx.fillStyle = AA_METAL; ctx.fillRect(Math.round(bx - f * 6 - 2), Math.round(by - 7), 5, 4); ctx.fillStyle = 'rgb(160,230,255)'; ctx.fillRect(Math.round(bx - f * 6 - 1), Math.round(by - 6), 2, 1); } // (its rangefinder)
+  });
+}
+
 function aaKill(A, p) { // a mount's chance to destroy a missile or bomb
   return Math.min(0.95, A.stop * (0.5 + rng.next()) * (p.w.jet ? 0.7 : 1) / aaTough(p.w)); // (a jet's bombs come in faster)
 }
@@ -121,10 +174,13 @@ Object.assign(Game.prototype, {
         if (fired) { gun.cd = 2; return; }
         if (gun.budget <= 0) return;
         // aircraft: a rival's planes, and drones
-        let air = null, bd = A.range;
+        // (focus fire: the one in range with the least left, so a squad loses planes, not paint)
+        let air = null, bs = Infinity;
         for (const e of this.aaAircraft(t)) {
           const q = e.center(), d = dist(q.x, q.y, c.x, c.y);
-          if (d < bd) { bd = d; air = e; }
+          if (d >= A.range) continue;
+          const sc = (e.hp || 0) + (e.armour || 0) + d * 0.05;
+          if (sc < bs) { bs = sc; air = e; }
         }
         if (!air) return;
         gun.budget--;
@@ -145,6 +201,8 @@ Object.assign(Game.prototype, {
   aaFire(t, A, target, kind) {
     const c = t.center(), from = { x: c.x, y: c.y - 14 };
     const q = target.center ? target.center() : { x: target.x, y: target.y };
+    const slot = t.aa.indexOf(A.id); // (its barrels swing onto it, and kick)
+    if (slot >= 0) { (t.aaAim || (t.aaAim = []))[slot] = Math.atan2(q.y - from.y, q.x - from.x); (t.aaKick || (t.aaKick = []))[slot] = 1; }
     const speed = AA_ROUND_SPEED[A.role];
     let k = Math.max(1, Math.round(dist(q.x, q.y, from.x, from.y) / speed));
     let tx = q.x + (target.vx || 0) * k, ty = q.y + (target.vy || 0) * k; // lead it

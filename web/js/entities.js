@@ -228,6 +228,7 @@ class Tank {
   update(dt) {
     this.blink = (this.blink || 0) + dt;
     this.recoil = Math.max(0, this.recoil - dt * 2.5);
+    if (this.aaKick) for (let i = 0; i < this.aaKick.length; i++) this.aaKick[i] = Math.max(0, (this.aaKick[i] || 0) - dt * 5);
     this.walking = Math.max(0, (this.walking || 0) - 1);
     this.poseT = (this.poseT || 0) + dt;
     this.barrierHit = Math.max(0, (this.barrierHit || 0) - dt * 3);
@@ -260,6 +261,7 @@ class Tank {
       const off = girlPivotOffset(o); // the victory hop lifts her rigging
       drawGun(ctx, this.weapon, { x: x + (a.pivot[0] + off[0]) * f, y: y + a.pivot[1] + off[1] }, this.aimVec(), f, this.recoil, shade(this.color, -0.5), this.blink || 0, active ? this.charge / this.chargeCap() : 0);
       drawGirlMount(ctx, o);
+      drawAAMounts(ctx, this, x + (a.pivot[0] + off[0]) * f, y + a.pivot[1] + off[1], f); // (her air defence, on her back)
     }
     ctx.restore();
     if (!this.alive) return;

@@ -465,7 +465,7 @@ const UI = {
             <p title="${esc(a.long)}">${esc(a.short)}</p>
             <div class="stats">${this.weaponStats(a)}</div>
             <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(a.cost)}</span>
-            <button data-aa="${a.id}" ${can ? '' : 'disabled'}>${owned ? 'Mounted' : freeSlot < 0 ? 'Slots full' : afford ? 'Mount' : 'Short ' + money(a.cost - tank.money)}</button></div></div></div>`;
+            <button data-aa="${a.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : freeSlot < 0 ? 'Slots full' : afford ? 'Buy' : 'Short ' + money(a.cost - tank.money)}</button></div></div></div>`;
         }).join('');
         $('shop-grid').querySelectorAll('[data-aa]').forEach((b) => { b.onclick = () => { g.buy(tank, 'aa', b.dataset.aa); render(); }; });
       } else $('shop-grid').innerHTML = list.map((w) => {
@@ -495,7 +495,7 @@ const UI = {
       }).join('');
       $('shop-aa').innerHTML = tank.aa.map((id, i) => {
         const a = AA_BY_ID[id];
-        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty mount${i ? ' (second)' : ''}: buy one under AA</span></div>`;
+        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty AA slot${i ? ' (second)' : ''}: buy one under AA</span></div>`;
         const st = this.game.canSellAA(tank, id);
         return `<div class="owned">${this.badge(a, true)}<span>${esc(a.name)}</span>
           <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(this.game.aaSellValue(tank, id)) : 'Hers'}</button></div>`;
