@@ -137,7 +137,7 @@ const UI = {
   },
   helpOpen() { return !$('help').hidden; },
   helpTab(tab) {
-    if (tab === 'about' && !$('changelog').childElementCount) {
+    if (tab === 'changes' && !$('changelog').childElementCount) {
       $('changelog').innerHTML = CHANGELOG.map((e) => `<div class="cl-day"><b>${esc(e.date)}</b><ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('');
     }
     document.querySelectorAll('#help .help-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
