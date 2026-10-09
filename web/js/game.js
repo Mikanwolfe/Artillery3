@@ -790,6 +790,12 @@ class Game {
 
   updateAim() {
     const t = this.active;
+    if (!t.alive) { // she died on her own turn (drove into a tree, fell, a live wire): it passes on
+      this.charging = false;
+      this.input.queue.length = 0;
+      if (this.range) this.resetRange(); else this.nextTurn();
+      return;
+    }
     let c;
     if (this.cpu) {
       this.cpu.update(DT);
@@ -1384,6 +1390,7 @@ class Game {
 
   // ------------------------------------------------------------ round / shop flow
   endRound() {
+    if (this.range) { this.resetRange(); return; } // the Codex range has no rounds: she died out there, start it over
     this.phase = 'roundEnd';
     const winner = this.tanks.find((t) => t.alive) || null;
     if (winner) {

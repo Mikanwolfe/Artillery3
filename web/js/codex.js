@@ -184,6 +184,14 @@ Object.assign(Game.prototype, {
     this.cam.snap();
   },
 
+  // fresh ground and a fresh start (the button, or when she dies out here)
+  resetRange() {
+    const r = this.range;
+    if (!r) return;
+    this.newEnvironment();
+    this.startRange(r.vid, r.wid);
+  },
+
   // the camera frames the girl and the dummy together, in the part of the screen right of the panel
   rangeFocus() {
     const [you, dummy] = this.tanks;
@@ -298,6 +306,7 @@ Object.assign(UI, {
     $('cx-filter').querySelectorAll('button').forEach((b) => { b.onclick = () => { this.codex.filter = b.dataset.f; this.renderCodex(); b.blur(); }; });
     $('cx-dist').querySelectorAll('button').forEach((b) => { b.onclick = () => { const g = this.game; if (g.range) { g.range.dist = b.dataset.d; g.startRange(this.codex.vid, this.codex.wid); } this.renderCodex(); this.codexReadout(); b.blur(); }; });
     $('cx-wind').querySelectorAll('button').forEach((b) => { b.onclick = () => { const g = this.game; if (g.range) { g.range.calm = b.dataset.w === 'calm'; g.startRange(this.codex.vid, this.codex.wid); } this.renderCodex(); this.codexReadout(); b.blur(); }; });
+    $('cx-regen').onclick = (e) => { this.game.resetRange(); this.codexReadout(); e.currentTarget.blur(); }; // new ground, everyone back on their feet
     $('cx-reset').onclick = (e) => { const r = this.game.range; if (r) { r.last = r.total = r.best = r.shots = 0; this.codexReadout(); } e.currentTarget.blur(); };
   },
 });

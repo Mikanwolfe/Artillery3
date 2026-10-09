@@ -175,7 +175,9 @@ option { background: var(--bg); color: var(--fg); }
 .cx-legend i { display: inline-block; width: 0.6em; height: 0.6em; margin-right: 0.3em; }
 .cx-legend i.fit { height: 0; border-top: 1px dashed var(--ash); width: 1.2em; vertical-align: middle; }
 /* the range runs behind the Codex panel: move the HUD clear of it */
-#stage.ranging #dock { left: 36%; }
+#stage.ranging #dock { left: 36%; transform: none; align-items: flex-start; max-width: calc(64% - 61.1% / var(--ar) - 1.5%); } /* stops short of the power bar */
+#stage.ranging #rack { align-items: flex-start; }
+#stage.ranging .rack-group { flex-wrap: wrap; }
 #stage.ranging #topleft, #stage.ranging #chat { left: 36%; }
 #stage.ranging #hints { display: none; }
 .help { max-width: 84%; max-height: 92%; overflow-y: auto; }
@@ -357,6 +359,8 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
   #rack { flex-wrap: wrap; justify-content: center; }
   .slot .txt .nm { display: none; }
   .rk { display: none; }
+  #stage.ranging #touch { left: 35%; } /* clear of the Codex panel */
+  #stage.ranging #dock { bottom: 9.5em; } /* stacked above the arrow pad */
 }
 @media (max-aspect-ratio: 1/1) { #stage { font-size: 1.5cqw; } }
 #pause-seed { margin: 14px 0 0; text-transform: none; letter-spacing: 0.04em; text-align: center; }
