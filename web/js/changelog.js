@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['05acb72', 'Hit popups add up: more hits on the same target raise its number instead of piling on, acid keeps one running total, and they stay up longer.'],
   ['dc274ed', 'Performance: still scenery and sprites are drawn once and reused, and CPUs think without stalling frames.'],
   ['6d8f7ef', 'The ring has depth: its far side rises behind it as a darker blocky silhouette.'],
   ['1c665e4', 'The ring in sections: city (a billion lights), radio masts, truss connectors and industry, grey blocks jutting in and out, towers above and below.'],
