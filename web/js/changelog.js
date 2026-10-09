@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['6d8f7ef', 'The ring has depth: its far side rises behind it as a darker blocky silhouette.'],
   ['1c665e4', 'The ring in sections: city (a billion lights), radio masts, truss connectors and industry, grey blocks jutting in and out, towers above and below.'],
   ['58b9683', 'The ring rebuilt: a vast, shallow arc of blocky modules in rings within rings, trussed together, fogged by distance, beacons blinking along it.'],
   ['58b9683', 'When the Warm Meadows go cold, the flowers frost over and droop.'],
