@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['13296ec', 'Kidō Butai is one 21-plane squad: it strikes on each of her turns until its loadouts run out, each dot redirects the whole fleet, and the carriers won’t launch again until it is gone. The sea is far out past a proper coastline now (no more hills clipping into it).'],
   ['d2f5c27', 'Plane squads work like autoloader rounds: each dot of a turn takes the next squad (launch, or redirect one already out), one squad per strike zone, pips on the rack. Squads only hit what is inside their zone. Fixed extra squads in the Codex range.'],
   ['d2f5c27', 'Planes fly for real: speed, thrust, gravity and a turn radius, so bombers climb, tip over into the dive and loop back up to hover. Every plane shows its health, tougher with rarity; plane bombs and rockets actually steer now.'],
   ['d2f5c27', "New Sengoku 'Fortissimo' Flying Fortress: level bombers that walk a stick of bombs across a wide zone, with armour that takes a whole hit (the Taufaun has some too)."],
