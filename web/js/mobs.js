@@ -423,7 +423,7 @@ Object.assign(Game.prototype, {
     else m.hp -= amt;
     m.flash = 1;
     if (m.kind === 'android') { m.pose = 'hit'; m.poseAt = m.t; }
-    if (hit) this.hitPopup(m.x, m.y - m.hh - 20, amt, hit);
+    if (hit) this.hitPopup(m.x, m.y - m.hh - 20, amt, hit, m);
     else this.particles.text(m.x, m.y - m.hh - 20, String(Math.round(amt)), '#ffffff', amt > 100);
     if (m.hp > 0) return;
     m.alive = false;

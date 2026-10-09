@@ -107,7 +107,6 @@ class Tank {
     this.shield = false;
     this.shotsLeft = 0;
     this.roundDealt = 0;
-    this.dmgAcc = 0;
     this.speech = null;
   }
 

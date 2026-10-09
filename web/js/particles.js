@@ -128,6 +128,11 @@ class Particles {
         p.y = v.y0 - v.rise * u + Math.sin(v.th) * v.r * 0.8;
         continue;
       }
+      if (p.follow) { // a popup riding its target, rising a little off it
+        p.x = p.follow.x + p.ox;
+        p.y = p.follow.y + p.oy - 26 * (1 - Math.exp(-p.age * 1.5));
+        continue;
+      }
       p.vx *= p.drag;
       p.vy = p.vy * p.drag + p.g;
       p.x += p.vx;
@@ -149,8 +154,9 @@ class Particles {
   // a hit popup (Game.hitPopup): the number punches in oversized and settles, then the quality
   // tag and the modifier chips appear under it one by one
   drawHit(ctx, cam, p) {
-    const t = p.age / p.life;
-    const punch = p.age < 0.14 ? 1 + 0.6 * (1 - p.age / 0.14) : 1;
+    if (p.hidden) return;
+    const t = p.age / p.life, since = p.age - (p.punchAt || 0);
+    const punch = p.kind !== 'acid' && since < 0.14 ? 1 + 0.6 * (1 - since / 0.14) : 1;
     const sx = Math.round(cam.sx(p.x));
     const sy = Math.round(cam.sy(p.y));
     ctx.globalAlpha = clamp(2 * (1 - t), 0, 1);
@@ -166,7 +172,7 @@ class Particles {
     ctx.font = `700 11px ${HUD_FONT}`;
     const lines = [[p.tag, p.color]].concat(p.chips);
     lines.forEach(([txt, col], i) => {
-      if (p.age < 0.1 + i * 0.08) return;
+      if (since < 0.1 + i * 0.08 && p.age < 0.1 + i * 0.08) return;
       const w = ctx.measureText(txt).width + 10;
       ctx.fillStyle = 'rgba(14,12,22,0.78)';
       ctx.fillRect(Math.round(sx - w / 2), y - 10, Math.round(w), 14);
