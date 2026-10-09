@@ -366,6 +366,7 @@ class Game {
     const id = this.mapChoice && this.mapChoice !== 'random' ? this.mapChoice : rng.pick(BIOME_IDS);
     this.biome = BIOMES[id] || BIOMES.snow;
     this.terrain.generate(this.biome);
+    if (this.bg) this.bg.dispose(); // (its cached strips: some browsers hold canvas memory until told)
     this.bg = new Background(this.biome);
   }
 

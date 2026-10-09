@@ -41,7 +41,9 @@ const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
 // CPU, so a table of CPUs doesn't all pile onto one player (a grudge still outweighs one of these)
 const CROWD = 150;
 const AI_MOBS = 2; // mobs (drones, motherships) a CPU weighs as targets: the nearest few
-const AI_BUDGET_MS = 8; // planning time per frame, so a CPU's aim search never stalls a frame
+const AI_BUDGET_MS = 6; // planning time per frame, so a CPU's aim search never stalls a frame
+const AI_WINDOW_MS = 16; // ...measured by the clock: a slow frame runs several steps, and they share one budget
+const aiClock = { win: -Infinity, spent: 0 };
 const DODGE = { easy: 0.35, normal: 0.75, hard: 0.95 }; // chance it drives out from under a drone
 const MOB_AIM = 0.6; // aim error against hostiles (they hold still, and CPUs practise on them)
 const MOB_DISLIKE = 90; // score penalty for going after a mob instead of a player (less for big bounties / with flak)
@@ -68,7 +70,7 @@ const DIFFICULTY = {
 
 // Search for the best shot at `target`. Each candidate is scored by its miss distance minus a bonus
 // for the damage multiplier it would earn (bonusFactor), so among shots that land, high arcs win.
-// A generator: it yields after each row of the grid so the search can be spread over frames
+// A generator: it yields every few shots so the search can be spread over frames
 // (CpuController plans with a per-frame time budget, so the game never freezes while a CPU
 // thinks); solveShot runs it to the end in one go.
 function solveShot(...args) { return runGen(solveShotGen(...args)); }
@@ -102,9 +104,10 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
   let best = { err: Infinity, score: Infinity, f: 1, elev: (w.elevMin + w.elevMax) / 2, v: maxV / 2, facing };
   const vStep = maxV / 28; // a coarse pass (the refinement below closes in)
   for (let e = w.elevMin; e <= w.elevMax; e += 5) {
-    for (let v = maxV * 0.08; v <= maxV; v += vStep) {
+    for (let v = maxV * 0.08, k = 0; v <= maxV; v += vStep, k++) {
       const r = evalShot(e, v);
       if (r.score < best.score) best = { ...r, elev: e, v, facing };
+      if (k % 4 === 3) yield;
     }
     yield;
   }
@@ -119,8 +122,8 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
         if (v <= 0 || v > maxV) continue;
         const r = evalShot(e, v);
         if (r.score < best.score) best = { ...r, elev: e, v, facing };
+        if (j % 4 === 0) yield;
       }
-      if (i % 4 === 0) yield;
     }
   }
   return best;
@@ -289,8 +292,11 @@ class CpuController {
         // the search runs a few milliseconds a frame; the game world holds still meanwhile (see
         // Game.step), so a seeded match replays the same however long the search takes
         const t0 = performance.now();
+        if (t0 - aiClock.win > AI_WINDOW_MS) { aiClock.win = t0; aiClock.spent = 0; }
+        if (aiClock.spent >= AI_BUDGET_MS) return; // spent for this frame: think on in the next
         let r = this.planGen.next();
-        while (!r.done && performance.now() - t0 < AI_BUDGET_MS) r = this.planGen.next();
+        while (!r.done && performance.now() - t0 < AI_BUDGET_MS - aiClock.spent) r = this.planGen.next();
+        aiClock.spent += performance.now() - t0;
         if (!r.done) return;
         this.planGen = null;
         this.plan = r.value;
