@@ -1686,32 +1686,33 @@ class Game {
         t.aa[slot] = pick.id;
       }
     }
+    const worth = (w) => cpuValue(w, t); // (her own line counts for more, lasers for less)
     for (let n = 0; n < 4; n++) {
       const owned = t.weapons.map((id) => WEAPON_BY_ID[id]);
-      const bestOwned = Math.max(...owned.map(weaponValue));
+      const bestOwned = Math.max(...owned.map(worth));
       const sellable = owned.filter((w) => this.canSell(t, w.id) && !w.starter); // (a CPU keeps the gun that never reloads)
-      const weakest = (sellable.length ? sellable : owned).slice().sort((a, b) => weaponValue(a) - weaponValue(b))[0];
+      const weakest = (sellable.length ? sellable : owned).slice().sort((a, b) => worth(a) - worth(b))[0];
       const full = t.weapons.length >= MAX_WEAPONS;
       const budget = t.money + (full ? this.sellValue(weakest) : 0);
-      const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id) && forVehicle(w, t.vehicle.id)).sort((a, b) => weaponValue(b) - weaponValue(a));
+      const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id) && forVehicle(w, t.vehicle.id)).sort((a, b) => worth(b) - worth(a));
       let pick = shop.find((w) => w.cost <= budget);
       if (!pick) break;
       // not too clinical: any affordable gun within CPU_PICK_SPREAD of the best one's worth will do
-      const close = shop.filter((w) => w.cost <= budget && weaponValue(w) >= weaponValue(pick) * CPU_PICK_SPREAD);
+      const close = shop.filter((w) => w.cost <= budget && worth(w) >= worth(pick) * CPU_PICK_SPREAD);
       pick = rng.pick(close);
       if (t.type === 'easy' && rng.chance(0.4)) pick = rng.pick(shop.filter((w) => w.cost <= budget));
       else {
         const later = shop.find((w) => w.cost <= budget + horizon);
         // save only when what it can afford now is a small step up; a big jump is bought straight away
-        if (later && later !== pick && weaponValue(later) > weaponValue(pick) * 1.4 && weaponValue(pick) < bestOwned * 1.6 && t.type !== 'easy') {
+        if (later && later !== pick && worth(later) > worth(pick) * 1.4 && worth(pick) < bestOwned * 1.6 && t.type !== 'easy') {
           reserve = Math.min(t.money, later.cost - (full ? this.sellValue(weakest) : 0)); // save up for it
           break;
         }
       }
       // classic: a gun must beat the best one owned; rebalanced: reloads make a rack of guns worth
       // having, so it only has to beat the one it replaces (or the starter, for an empty slot)
-      const bar = BALANCE === 'rebalanced' ? weaponValue(full ? weakest : t.vehicle.weapon) : bestOwned;
-      if (weaponValue(pick) < bar * 1.15) break; // not worth a slot
+      const bar = BALANCE === 'rebalanced' ? worth(full ? weakest : t.vehicle.weapon) : bestOwned;
+      if (worth(pick) < bar * 1.15) break; // not worth a slot
       if (full) {
         t.money += this.sellValue(weakest);
         t.weapons = t.weapons.filter((id) => id !== weakest.id);

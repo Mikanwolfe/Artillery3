@@ -448,6 +448,23 @@ const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
 // final weapons (w.sig) are only for their own girl
 function forVehicle(w, vid) { return !w.sig || w.sig === vid; }
 
+// a CPU's eye for a gun: weaponValue, warmed to her own line (her makers, and guns of the same
+// kind as her starter: the CLS-T turret girls' shells, KTS-T and Kotona for Object 15X, NXi for
+// November, Lymilark rockets for Alban Eiler, Sengoku planes for Zuihou, MAIA guns for Innocentia,
+// beams for Ikaros) and cool on lasers for anyone else, since CPUs place them badly
+const CPU_LINES = { gwt: ['CLS-T', 'G.W.'], obj: ['Kotona', 'KTS-T'], nxi: ['NXi'], alb: ['Lymilark'], int: ['CLS-T'], zui: ['Sengoku'], ang: [] };
+const CPU_OWN_LINE = 1.4, CPU_LASER = 0.6;
+function cpuValue(w, t) {
+  let v = weaponValue(w);
+  const vid = t && t.vehicle && t.vehicle.id, start = t && t.vehicle && t.vehicle.weapon;
+  if (!vid) return v;
+  const maker = makerOf(w);
+  const own = (CPU_LINES[vid] || []).some((m) => maker.includes(m)) || (start && w.kind === start.kind && (w.kind !== 'shell' || vid === 'gwt' || vid === 'int')) || (vid === 'int' && w.sat) || w.sig === vid;
+  if (own) v *= CPU_OWN_LINE;
+  if (w.kind === 'laser' && !(start && start.kind === 'laser')) v *= CPU_LASER;
+  return v;
+}
+
 // Rough worth of a weapon per turn, used by CPUs to rank, buy and pick weapons: damage over the
 // whole clip and salvo, scaled by blast radius (easier to hit with) and spread (harder), plus acid
 // and MAIA strikes. Rarity adds a little on top for what this doesn't capture.

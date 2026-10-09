@@ -322,23 +322,23 @@ class Tank {
     const bw = 100, iw = bw - 12;
     const by = Math.round(fy + 6);
     ctx.fillStyle = HUD.plate;
-    ctx.fillRect(Math.round(sx - bw / 2), by, bw, 20);
+    ctx.fillRect(Math.round(sx - bw / 2), by, bw, 17);
     ctx.fillStyle = HUD.line;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 5, iw, 10);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 6, iw, 5);
     ctx.fillStyle = HUD.cool;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 5, Math.round(iw * clamp(this.hp / this.maxHp, 0, 1)), 10);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 6, Math.round(iw * clamp(this.hp / this.maxHp, 0, 1)), 5);
     if (this.armour > 0) {
       ctx.fillStyle = HUD.accent;
-      ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 5, Math.round(iw * clamp(this.armour / this.maxArmour, 0, 1)), 10);
-      if (this.armour > this.maxArmour) { ctx.fillStyle = HUD.bright; ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 3, Math.round(iw * clamp(this.armour / this.maxArmour - 1, 0, 1)), 2); } // (plating over the top)
+      ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 6, Math.round(iw * clamp(this.armour / this.maxArmour, 0, 1)), 5);
+      if (this.armour > this.maxArmour) { ctx.fillStyle = HUD.bright; ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 4, Math.round(iw * clamp(this.armour / this.maxArmour - 1, 0, 1)), 1); } // (plating over the top)
     }
     ctx.font = `13px ${HUD_FONT}`;
-    plateText(ctx, Math.ceil(this.armour + this.hp), Math.round(sx + bw / 2 + 2), by + 16, this.armour > 0 ? HUD.accent : HUD.cool, 'left');
+    plateText(ctx, Math.ceil(this.armour + this.hp), Math.round(sx + bw / 2 + 2), by + 13, this.armour > 0 ? HUD.accent : HUD.cool, 'left');
     ctx.textAlign = 'center';
     ctx.font = `13px ${HUD_FONT}`;
     const title = this.name;
     const tw = ctx.measureText(title).width + 20;
-    const ty = by + 24;
+    const ty = by + 21;
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(Math.round(sx - tw / 2), ty, Math.round(tw), 19);
     if (active) {
