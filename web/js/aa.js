@@ -180,7 +180,10 @@ Object.assign(Game.prototype, {
     }
     if (r.kind === 'shot') {
       if (tg.dead || !this.projectiles.includes(tg)) return; // gone (point defence doesn't miss: see the top)
-      tg.aaCut = (tg.aaCut || 1) * (1 - aaKill(A, tg)); // (the hit takes its share of the damage off)
+      const was = tg.aaCut || 1;
+      tg.aaCut = was * (1 - aaKill(A, tg)); // (the hit takes its share of the damage off)
+      const off = (tg.w.dmg || 0) * (was - tg.aaCut); // (what it took off the warhead, shown like any hit)
+      if (off >= 1) this.hitPopup(tg.x, tg.y - 20, off, { q: clamp(1 - tg.aaCut, 0, 1), alt: 0, kin: 0, front: 1, pd: true });
       tg.aaHit = true; // (it trails smoke from here)
       if (tg.aaCut <= AA_SHOT_DOWN) { // little left of it: down it goes
         tg.dead = true;
@@ -189,7 +192,7 @@ Object.assign(Game.prototype, {
         this.sfx.explosion(10);
         if (this.report) this.report.intercepts = (this.report.intercepts || 0) + 1;
         if (this.range && this.range.drill) { this.range.stopped++; this.ui.codexReadout(); }
-      } else this.particles.text(tg.x, tg.y - 20, `HIT −${Math.round((1 - tg.aaCut) * 100)}%`, A.role === 'missile' ? '#9ae0ff' : '#e8d8a0');
+      }
       return;
     }
     // aircraft

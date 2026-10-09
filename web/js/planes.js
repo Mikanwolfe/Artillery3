@@ -690,18 +690,19 @@ Object.assign(Game.prototype, {
   damagePlane(p, amt, owner, def, hit) {
     if (!p.alive || p.owner === owner) return;
     if (def && (def.kind === 'flak' || def.airburst)) { amt *= FLAK_MOB_MULT; if (hit) hit.flak = true; }
-    if (p.drill && this.range) { this.drillHit(p, amt); return; } // (the Codex's AA drill: tallied, not destroyed)
+    // the same hit popup as any other hit (a burst with no shot behind it, like AA's, is scored on how
+    // much of the plane it took)
+    hit = hit || { q: clamp(amt / (p.maxHp || 1), 0, 1), alt: 0, kin: 0, front: 1, aa: !!(def && def.aa) };
+    if (p.drill && this.range) { this.drillHit(p, amt, hit); return; } // (the Codex's AA drill: tallied, not destroyed)
     p.flash = 1;
     if (p.armour > 0) { // a fortress's armour takes a whole hit, however big, like a girl's
       const a = Math.min(amt, p.armour);
       p.armour -= a;
-      if (hit) this.hitPopup(p.sx, p.sy - 26, a, hit, p);
-      else this.particles.text(p.sx, p.sy - 26, String(Math.round(a)), '#c8d2e4');
+      this.hitPopup(p.sx, p.sy - 26, a, { ...hit, armour: true }, p);
       return;
     }
     p.hp -= amt;
-    if (hit) this.hitPopup(p.sx, p.sy - 26, amt, hit, p);
-    else this.particles.text(p.sx, p.sy - 26, String(Math.round(amt)), '#ffffff');
+    this.hitPopup(p.sx, p.sy - 26, amt, hit, p);
     if (p.hp > 0) return;
     p.alive = false; // (no bounty: they're somebody's planes)
     const c = p.center();

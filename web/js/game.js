@@ -1226,6 +1226,9 @@ class Game {
     if (h.shield) chips.push(['DEFLECTOR ½', '#96d2ff']);
     if (h.capped) chips.push(['REDUNDANCY CAP', '#c3b0ff']);
     if (h.flak) chips.push(['FLAK ×2', '#78d8c4']);
+    if (h.aa) chips.push(['AA', '#e8d8a0']);
+    if (h.pd) chips.push(['POINT DEFENCE', '#9ae0ff']);
+    if (h.armour) chips.push(['ARMOUR', '#c8d2e4']);
     const tag = n > 1 ? `${HIT_TIERS[tier].tag} · ${n} HITS` : HIT_TIERS[tier].tag;
     const life = HIT_POPUP_LIFE + h.q + chips.length * 0.15;
     if (live) Object.assign(live, { q, total, n, str: String(Math.round(total)), color, size, tag, chips, punchAt: live.age, life: Math.max(live.life, live.age + life) });
