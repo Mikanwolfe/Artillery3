@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['e4149f1', 'CPUs buy planes and AA mounts too.'],
   ['38b4063', 'Zuihou, the Sengoku light carrier: she marks a spot and her squadron hovers over it, striking on her next turn. Her final weapon is the Kidō Butai.'],
   ['38b4063', 'Planes at every rarity (dive, torpedo, fighter, rocket wing, NXi heavy). Squads hover where anyone can shoot them; no flight deck means 30% softer.'],
   ['38b4063', 'AA mounts: point defence stops rockets and bombs, anti-air shoots planes and drones. Everyone gets a slot; Zuihou gets two.'],
