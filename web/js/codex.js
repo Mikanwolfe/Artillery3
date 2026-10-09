@@ -63,7 +63,7 @@ const GUN_NOTES = {
   apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 6,000 across 650, in bullet time, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
 };
 const GIRL_NOTES = {
-  gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and she drives anywhere without fall or tree damage.' },
+  gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and a steady platform that halves the spread of every gun she carries.' },
   obj: { plays: 'The glass cannon: a thin hull behind thick, angled plating. Mark a target and her designator bends every shot a little onto it, so she rewards patient, deliberate sniping; but she can’t take many hits back when she misses.' },
   nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
   alb: { plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },

@@ -621,7 +621,7 @@ class Game {
       this.damage(t, (t.hp + t.armour) * 10 + 1000, this.terrain.voidOwner && this.terrain.voidOwner !== t ? this.terrain.voidOwner : null);
       return;
     }
-    if (drop <= FALL_SAFE || hasTrait(t, 'geschutz') || hasTrait(t, 'wings')) return;
+    if (drop <= FALL_SAFE || hasTrait(t, 'wings')) return;
     const sh = this.report && this.report.shooter;
     const owner = sh && sh !== t ? sh : null;
     if (this.report) this.report.fallen = (this.report.fallen || new Set()).add(t);
@@ -709,7 +709,7 @@ class Game {
     this.sfx.thud();
     this.shake = Math.max(this.shake, 3);
     this.events.push(`${t.name} drove through a tree.`);
-    if (!hasTrait(t, 'geschutz')) this.damage(t, TREE_RAM_DMG + 3 * tr.h, null);
+    this.damage(t, TREE_RAM_DMG + 3 * tr.h, null);
   }
 
   spawnCrate() {
@@ -892,8 +892,9 @@ class Game {
     const t = s.t;
     const m = t.muzzle();
     // dispersion: random jitter on each round's velocity (A3 RandomPoint2D, made symmetric)
-    const vx = s.vx + (rng.next() - 0.5) * s.w.disp;
-    const vy = s.vy + (rng.next() - 0.5) * s.w.disp;
+    const sp = spreadOf(s.w, t);
+    const vx = s.vx + (rng.next() - 0.5) * sp;
+    const vy = s.vy + (rng.next() - 0.5) * sp;
     const p = new Projectile(this, s.w, t, m.x, m.y, vx, vy, s.first);
     p.launch = Math.atan2(-vy, Math.abs(vx)); // launch angle above the horizon: steeper shots earn more altitude bonus
     p.uplink = s.uplink && s.first;
