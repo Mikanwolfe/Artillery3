@@ -687,6 +687,44 @@ Object.assign(Game.prototype, {
     });
   },
 
+  // her squads out over a zone and free to take orders (not sent this turn, not striking, not
+  // already on their way home): of weapon w, or of any plane weapon
+  recallable(t, w) {
+    return (this.airGroups || []).filter((G) => G.owner === t && (!w || G.w === w) && G.squad && G.squad.state === 'out' && !G.squad.tasked && !G.striking && G.planes.some((p) => p.alive));
+  },
+
+  // Recall (X): her squads fly home now, loadouts unspent, rather than wait over their zones to be
+  // shot at; they rearm as if they had flown their passes. Doesn't use up the turn.
+  recallSquads(t, w) {
+    const L = this.recallable(t, w);
+    if (!L.length) { this.sfx.deny(); return false; }
+    for (const G of L) {
+      G.squad.state = 'home';
+      for (const p of G.planes) {
+        if (!p.alive) continue;
+        if (p.state === 'wait' || p.state === 'out') p.alive = false; // (never got up)
+        else p.goHome();
+      }
+      const c = squadCentre(G);
+      if (c) this.particles.text(c.x, c.y - 30, 'RECALLED', '#ffd0d4');
+    }
+    this.sfx.click();
+    this.events.push(`${t.name} recalls ${L.length > 1 ? `${L.length} squads` : 'a squad'}.`);
+    return true;
+  },
+
+  // a CPU brings its squads home unless one can be sure of something this turn: a rival it would
+  // finish off, or a hostile with a bounty on it
+  cpuRecall(t) {
+    for (const G of this.recallable(t)) {
+      const live = G.planes.filter((p) => p.alive && p.passes > 0);
+      const strike = live.reduce((s, p) => s + G.w.dmg * G.mult * (G.w.fleet ? 1 : G.w.air.ord || 1), 0) * 0.6; // (what it can count on landing)
+      const kill = this.tanks.some((x) => x.alive && x !== t && x.hp + x.armour <= strike);
+      const prize = (this.mobs || []).some((m) => m.alive && m.bounty > 0 && m.hp + (m.armour || 0) <= strike);
+      if (!kill && !prize) this.recallSquads(t, G.w);
+    }
+  },
+
   damagePlane(p, amt, owner, def, hit) {
     if (!p.alive || p.owner === owner) return;
     if (def && (def.kind === 'flak' || def.airburst)) { amt *= FLAK_MOB_MULT; if (hit) hit.flak = true; }

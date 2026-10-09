@@ -167,6 +167,7 @@ class Input {
       case 'KeyS': if (down && !e.repeat) this.queue.push({ drop: true }); break;
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
+      case 'KeyX': if (down && !e.repeat) this.queue.push({ recall: true }); break;
       case 'KeyW': case 'KeyJ': if (down && !e.repeat) this.queue.push({ jump: true }); break;
       case 'KeyL': if (down && !e.repeat) this.queue.push({ jump: 'leap' }); break;
       case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': {
@@ -528,6 +529,7 @@ class Game {
     if (this.range) { t.reload = {}; for (const id in t.wings) for (const q of t.wings[id]) if (q.state === 'rearm') q.turns = 1; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting (squads rearm at once, but are still the squads she has)
     t.tickReloads();
     t.drill = hasTrait(t, 'drill');
+    if (t.isCpu && !this.range) this.cpuRecall(t); // (a CPU keeps a squad out only for a sure kill or a bounty)
     t.shotsLeft = t.shotsFor(t.weapon); // autoloaders reload every turn (planes: the squads she has left)
     t.firedThisTurn = false;
     this.startAim();
@@ -884,6 +886,8 @@ class Game {
         } else if (a.repair) {
           this.useRepair(t);
           return;
+        } else if (a.recall) { // X: her squads home (the selected plane weapon's, else all of them)
+          this.recallSquads(t, t.weapon.air && this.recallable(t, t.weapon).length ? t.weapon : null);
         } else if (a.ability) {
           this.useAbility(t, a.ability);
         } else if (a.endTurn) {

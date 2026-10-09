@@ -338,6 +338,7 @@ const UI = {
       if (b.dataset.i !== undefined) g.input.queue.push({ select: +b.dataset.i });
       else if (b.dataset.ab) g.input.queue.push({ ability: b.dataset.ab });
       else if (b.dataset.rep) g.input.queue.push({ repair: true });
+      else if (b.dataset.recall) g.input.queue.push({ recall: true });
       else if (b.dataset.jump) g.input.queue.push({ jump: b.dataset.jump === 'leap' ? 'leap' : true });
     };
   },
@@ -385,6 +386,8 @@ const UI = {
     const leapCost = Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1));
     ab.push(`<button class="slot a" data-jump="leap" title="Leap: bound far the way you face and land softly, for ${Math.round(LEAP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= leapCost && !t.falling && !t.upgrades.deck ? '' : 'disabled'}><span class="kb">L</span><span class="txt"><span class="nm">Leap</span><span class="st">${Math.round(LEAP_FUEL * 100)}% fuel</span></span></button>`);
     if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% of health and armour together (health first), takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
+    const rc = g.recallable ? g.recallable(t, t.weapon.air && g.recallable(t, t.weapon).length ? t.weapon : null) : [];
+    if (rc.length) ab.push(`<button class="slot a" data-recall="1" title="Recall: ${rc.length > 1 ? 'these squads fly' : 'this squad flies'} home now, loadout unspent, instead of waiting over the zone to be shot at; rearms as usual. Doesn't use your turn"><span class="kb">X</span><span class="txt"><span class="nm">Recall</span><span class="st">${rc.length > 1 ? rc.length + ' squads' : esc(shortName(rc[0].w))}</span></span></button>`);
     for (const id of t.aa || []) {
       const a = AA_BY_ID[id];
       if (a) ab.push(`<span class="slot a passive" title="${esc(a.name)}: ${esc(a.long)}"><span class="kb">AA</span><span class="txt"><span class="nm">${esc(a.name.replace(/^(SI|NXi|LFS|Kotona) /, ''))}</span><span class="st">${a.role === 'missile' ? 'point defence' : 'anti-air'} · auto</span></span></span>`);
