@@ -3,8 +3,8 @@
 // (generated like the terrain, rougher) that scroll slower than the camera, treelines along the
 // ridges, and ambient particles blown by the wind (snow, autumn leaves or sand). The near ridge
 // carries the same kind of things as the battlefield, in silhouette: a radio tower or two and a power
-// line; and on maps with `rail`, an elevated railway (Melbourne's skyrail) that a blue and yellow
-// suburban train rocks along every so often.
+// line; and on maps with `rail`, an elevated railway (Melbourne's skyrail) that a silver suburban
+// train in Metro's blue and yellow trim rocks along every so often.
 
 const BG_STATIC = 1, BG_LIVE = 2; // the two passes over a ridge: into its cached strip, and each frame
 
@@ -617,27 +617,35 @@ class Background {
       }
       ctx.fillRect(Math.round(Math.max(x0, ox)), y - 27, Math.round(Math.min(x1, WORLD_W + ox) - Math.max(x0, ox)), 1); // the wire
     }
-    // the train: six cars, blue with a yellow band and a yellow nose, windows, doors, pantographs up
+    // the train: six cars in Metro's look, stainless silver with a blue band low down, blue doors
+    // edged in yellow, dark windows, and a blue cab front with a yellow edge; pantographs up
     const tr = r.train;
     if (!tr || !(pass & BG_LIVE)) return;
     const L = 66, gap = 3;
+    const SILVER = haze('rgb(192,198,206)', 0.22), SHADE = haze('rgb(150,156,166)', 0.22), BLUE = haze('rgb(28,78,168)', 0.22), YELLOW = haze('rgb(246,200,40)', 0.22);
     for (let k = 0; k < tr.cars; k++) {
       const cx = tr.x - tr.dir * k * (L + gap) + ox; // its nose end
       const left = tr.dir > 0 ? cx - L : cx;
       if (left > x1 || left + L < x0) continue;
       const rock = Math.round(Math.sin(this.t * 9 + k * 1.7) * 0.8); // it rocks on the track
       const top = y - 20 + rock;
-      ctx.fillStyle = haze('rgb(34,84,176)', 0.22); ctx.fillRect(Math.round(left), top, L, 18); // body
-      ctx.fillStyle = haze('rgb(242,196,58)', 0.22); ctx.fillRect(Math.round(left), top + 12, L, 4); // the yellow band
-      ctx.fillStyle = haze('rgb(214,230,246)', 0.25);
+      ctx.fillStyle = SILVER; ctx.fillRect(Math.round(left), top, L, 18); // the stainless body
+      ctx.fillStyle = SHADE; ctx.fillRect(Math.round(left), top, L, 1); ctx.fillRect(Math.round(left), top + 17, L, 1); // (roof line and skirt)
+      ctx.fillStyle = BLUE; ctx.fillRect(Math.round(left), top + 12, L, 3); // the blue band
+      ctx.fillStyle = haze('rgb(36,44,62)', 0.25);
       for (let wx = 6; wx < L - 8; wx += 10) ctx.fillRect(Math.round(left + wx), top + 4, 6, 5); // windows
-      ctx.fillStyle = haze('rgb(20,40,90)', 0.22);
-      ctx.fillRect(Math.round(left + L * 0.3), top + 2, 2, 14); ctx.fillRect(Math.round(left + L * 0.68), top + 2, 2, 14); // doors
+      for (const f of [0.3, 0.68]) { // doors: blue, framed in yellow
+        const dx = Math.round(left + L * f);
+        ctx.fillStyle = YELLOW; ctx.fillRect(dx - 1, top + 2, 6, 15);
+        ctx.fillStyle = BLUE; ctx.fillRect(dx, top + 3, 4, 13);
+      }
       ctx.fillStyle = haze('rgb(40,40,48)', 0.3); ctx.fillRect(Math.round(left + 4), top + 18, L - 8, 2); // bogies
-      if (k === 0 || k === tr.cars - 1) { // a driving cab at each end: the yellow nose and its windscreen
-        const end = (k === 0) === (tr.dir > 0) ? left + L - 8 : left;
-        ctx.fillStyle = haze('rgb(242,196,58)', 0.22); ctx.fillRect(Math.round(end), top, 8, 18);
-        ctx.fillStyle = haze('rgb(30,40,60)', 0.22); ctx.fillRect(Math.round(end + 1), top + 3, 6, 5);
+      if (k === 0 || k === tr.cars - 1) { // a driving cab at each end: blue front, yellow edge, windscreen
+        const nose = (k === 0) === (tr.dir > 0);
+        const end = nose ? left + L - 8 : left;
+        ctx.fillStyle = BLUE; ctx.fillRect(Math.round(end), top, 8, 18);
+        ctx.fillStyle = YELLOW; ctx.fillRect(Math.round(nose ? end + 7 : end), top, 1, 18); ctx.fillRect(Math.round(end), top + 15, 8, 2);
+        ctx.fillStyle = haze('rgb(24,30,46)', 0.22); ctx.fillRect(Math.round(end + 1), top + 3, 6, 5);
       }
       if (k === 1 || k === 4) { // pantographs to the wire
         ctx.fillStyle = haze('rgb(60,60,68)', 0.3);
