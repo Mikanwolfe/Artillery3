@@ -2,15 +2,15 @@
 // Planes (Sengoku Inc.; the weapons are in weapons.js, kind 'air'). The gun is a laser designator.
 // A plane weapon has a fixed set of squads (air.squads), its autoloader rounds (Tank.wing): each
 // dot of a turn takes the next one. A squad on her deck takes off (along a flight deck, or
-// straight up on its lift fan: VTOL, 30% softer), climbs out of sight, comes back in and hovers
-// over the dot's strike zone; a squad already out is redirected to it. So one squad is one zone,
-// and a squad shot down is one zone fewer until it has rearmed.
-// At the start of each of its owner's turns every squad over a zone attacks it: anything in the
-// zone (airZone) is found and hit fairly accurately, a target outside it is safe. A plane carries
-// a loadout of passes (AIR_PASSES: bombers several, torpedo jets one, fighters many); between
-// them it loops back up and hovers over its zone again, where anyone can shoot it. Loadout spent,
-// it flies home and the squad rearms for air.reload of her turns. A squad whose owner is
-// destroyed stays on as a hazard. Shooting planes down pays nothing.
+// straight up on its lift fan: VTOL, 30% softer) and flies over the dot's strike zone; a squad
+// already out (hovering over an earlier zone) is redirected to it. Either way it attacks there and
+// then, and the turn waits for it (AirStrike). So one squad is one zone a turn, and a squad shot
+// down is one zone fewer until it has rearmed. Anything in the zone (airZone) is found and hit
+// fairly accurately, a target outside it is safe. A plane carries a loadout of passes
+// (AIR_PASSES: bombers several, torpedo jets one, fighters many), one a dot; between them it
+// loops back up and hovers over its zone, where anyone can shoot it. Loadout spent, it flies home
+// and the squad rearms for air.reload of her turns. A squad whose owner is destroyed flies off.
+// Shooting planes down pays nothing.
 // Flight: planes are steered, not moved along curves. Each has a speed (thrust and brakes, a dive
 // gains speed and a climb loses it) and turns no faster than its pull allows at that speed, so a
 // fast plane turns wide: a dive bomber climbs away first, rolls over into its dive, pulls out
@@ -27,7 +27,7 @@ const AIR_ANGLE = { dive: 80, heavy: 75, fortress: 86, fighter: 50, rocket: 40, 
 const TORPEDO_SPEED = 7;
 const TORPEDO_RUN = 760; // how far a torpedo runs before it goes off anyway
 const DIVE_KIN = 6; // a dive-released bomb's kinetic multiplier (it leaves the plane at the dive's speed)
-// a plane's loadout: how many of her turns it attacks on before it flies home to rearm
+// a plane's loadout: how many dots it attacks on before it flies home to rearm
 const AIR_PASSES = { dive: 3, torpedo: 1, fighter: 6, rocket: 2, heavy: 1, fortress: 2 };
 const BOMB_GUIDE = { arm: 2, burn: 120, seek: 4, apex: false, turn: 1.6, range: 90, cone: 120, lift: 0, brake: false }; // a dive bomb's fins: a nudge, not a seeker
 // the strike zone a dot marks: a squad attacks what is in it, and nothing outside
@@ -153,7 +153,7 @@ class Plane {
           if (this.t % 3 === 0) g.particles.add({ x: this.x + (Math.random() - 0.5) * 8, y: this.y + 8, vx: (Math.random() - 0.5) * 2, vy: 1.5, g: 0, drag: 0.9, life: 0.4, size: 4 + Math.random() * 4, color: [210, 210, 214] });
           if (this.t > 30) {
             this.sp = 2; this.hd = -Math.PI / 2;
-            this.go({ x: this.x + this.dir * 700, y: Math.max(G.ceil - 160, this.y - 900) }, { v: this.fl.cruise, r: 120 }, () => this.goOut());
+            this.state = 'inbound'; this.toSlot(); // (straight over to its zone)
           }
         }
         break;
@@ -207,8 +207,10 @@ class Plane {
     if (!G.deck) return; // (VTOL: see update)
     const d = this.dir;
     this.sp = 1.5; this.hd = d > 0 ? 0 : Math.PI;
-    this.go({ x: F.x + d * 260, y: F.y - 40 }, { v: this.fl.cruise, r: 50, clear: 0 },
-      () => this.go({ x: F.x + d * 800, y: Math.max(G.ceil - 160, F.y - 1000) }, { v: this.fl.cruise, r: 120 }, () => this.goOut()));
+    this.go({ x: F.x + d * 260, y: F.y - 40 }, { v: this.fl.cruise, r: 50, clear: 0 }, () => {
+      if (!this.w.fleet) { this.state = 'inbound'; this.toSlot(); return; } // off her deck and over to its zone
+      this.go({ x: F.x + d * 800, y: Math.max(G.ceil - 160, F.y - 1000) }, { v: this.fl.cruise, r: 120 }, () => this.goOut()); // (a fleet's: up and away, out of sight)
+    });
   }
 
   goOut() { this.state = 'out'; this.t = 0; this.nav = null; }
@@ -377,26 +379,32 @@ class Torpedo {
   }
 }
 
-// The attack, at the start of its owner's turn: every squad over a zone, one plane after another,
-// PLANE_STAGGER apart (any still on their way back to their hover join when they get there).
+// A sortie: the squad a dot sent flies to its zone and attacks it there and then, one plane after
+// another PLANE_STAGGER apart as they reach their places over it. It holds the turn until each
+// plane has let its ordnance go (the camera rides with the squad, then goes to the zone).
 class AirStrike {
   constructor(game, groups) {
-    this.game = game; this.groups = groups; this.t = 0;
+    this.game = game; this.groups = groups; this.t = 0; this.next = 0;
     this.queue = [];
-    for (const G of groups) for (const p of G.planes) if (p.alive && p.state !== 'attack' && p.state !== 'leave') { p.strikeDone = false; this.queue.push(p); }
-    this.queue.forEach((p, i) => { p.goAt = i * PLANE_STAGGER; });
+    for (const G of groups) { G.striking = true; for (const p of G.planes) if (p.alive && p.state !== 'attack' && p.state !== 'leave') { p.strikeDone = false; this.queue.push(p); } }
     this.focus = { x: groups[0].mark.x, y: groups[0].mark.y - 160 };
+    this.struck = false;
   }
 
   update() {
     const g = this.game;
     this.t++;
-    for (const p of this.queue) if (p.alive && !p.strikeDone && p.state === 'hover' && this.t >= p.goAt) {
+    for (const p of this.queue) if (p.alive && !p.strikeDone && !p.attack && p.state === 'hover' && this.t >= this.next) {
       startAttack(g, p);
-      this.focus = { x: p.group.mark.x, y: p.group.mark.y - 160 }; // (the camera goes from zone to zone)
+      this.next = this.t + PLANE_STAGGER;
+      this.struck = true;
+      this.focus = { x: p.group.mark.x, y: p.group.mark.y - 160 };
     }
+    if (!this.struck) { const c = squadCentre(this.groups[0]); if (c) this.focus = { x: (c.x + this.groups[0].mark.x) / 2, y: c.y + 60 }; } // (riding along on the way in)
     g.cam.follow(this.focus);
-    return this.queue.some((p) => p.alive && !p.strikeDone) && this.t < 60 * 16;
+    const on = this.queue.some((p) => p.alive && !p.strikeDone) && this.t < 60 * 30;
+    if (!on) for (const G of this.groups) G.striking = false;
+    return on;
   }
   draw() {}
 }
@@ -578,20 +586,21 @@ Object.assign(Game.prototype, {
     q.orders = this.airOrders = (this.airOrders || 0) + 1;
     const muzzle = t.muzzle();
     this.lasers.push(new Laser(muzzle.x, muzzle.y, p.x, p.y, '#ff3a4a', 2, 26));
-    if (G0) { // redirected: it flies over and strikes there on her next turn (hover, see Plane.update)
+    if (G0) { // redirected: it flies over and strikes there (hover, see Plane.update)
       G0.mark = mark;
       G0.side = t.x <= mark.x ? 1 : -1;
       this.events.push(`${t.name} redirects a squad.`);
+      this.projectiles.push(new AirStrike(this, [G0]));
       return G0;
     }
     q.state = 'out';
     const deck = hasTrait(t, 'flightdeck') || (t.upgrades && t.upgrades.deck > 0);
     const n = A.planes + (hasTrait(t, 'flightdeck') ? 1 : 0);
-    const G = this.makeGroup(t, w, mark, { deck, kinds: Array(n).fill(A.type), delay: A.delay || 1 });
+    const G = this.makeGroup(t, w, mark, { deck, kinds: Array(n).fill(A.type) });
     G.squad = q;
     this.particles.text(mark.x, mark.y - 30, `${n} ${A.type === 'fighter' ? 'fighters' : 'planes'} inbound`, '#ffd0d4');
     this.events.push(`${t.name} calls a squad of ${n} onto the mark.`);
-    // (the squad flies out in the background: the turn moves on as soon as the dot is down)
+    this.projectiles.push(new AirStrike(this, [G])); // (the turn waits for it to strike)
     return G;
   },
 
@@ -603,8 +612,7 @@ Object.assign(Game.prototype, {
     const side = owner.x <= mark.x ? 1 : -1; // they come in from the owner's side (torpedoes run away from her)
     const G = {
       owner, w, mark, side, ceil, deck: o.deck, mult: o.deck ? 1 : VTOL_MULT, hp: o.hp || w.air.hp, armour: w.air.armour || 0,
-      due: (owner.turnsTaken || 0) + o.delay, delay: o.delay, planes: [],
-      dueTurn: (this.turnCount || 0) + Math.max(1, this.tanks.filter((x) => x.alive).length) * o.delay, // (if she's gone by then: about when her turn would have come)
+      planes: [],
       hoverY: Math.max(ceil + 120, top - PLANE_HOVER),
       dir: owner.facing || 1,
       from: o.from || { x: owner.x, y: owner.y - TANK_H * 0.8 },
@@ -641,6 +649,10 @@ Object.assign(Game.prototype, {
     this.planes = this.planes.filter((p) => p.alive || p.falling);
     this.airGroups = this.airGroups.filter((G) => {
       const q = G.squad;
+      if (!G.owner.alive && !G.abandoned) { // her planes go: those not up yet stay down, the rest fly off
+        G.abandoned = true;
+        for (const p of G.planes) if (p.alive && (p.state === 'wait' || p.state === 'out')) p.alive = false; else if (p.alive && p.state !== 'attack') p.leave();
+      }
       if (G.planes.some((p) => p.alive)) {
         if (q && q.state === 'out' && G.planes.every((p) => !p.alive || p.state === 'leave')) q.state = 'home'; // loadout spent: no more orders
         return true;
@@ -649,28 +661,6 @@ Object.assign(Game.prototype, {
       if (q && (q.state === 'out' || q.state === 'home')) { q.state = 'rearm'; q.turns = reloadOf(G.w); }
       return false;
     });
-  },
-
-  // start of a turn: this owner's squads that are due strike their zones. Returns true if a strike
-  // took the turn over (finishShot hands it back to her).
-  startStrikes(t) {
-    // a squad whose girl is gone stays on as a hazard and strikes about when her turn would have come
-    const due = this.airGroups.filter((G) => !G.striking && (G.owner.alive ? G.owner === t && (t.turnsTaken || 0) >= G.due : this.turnCount >= G.dueTurn)
-      && G.planes.some((p) => p.alive && p.state !== 'attack' && p.state !== 'leave'));
-    if (!due.length) return false;
-    this.phase = 'resolve';
-    this.strikeResolve = true;
-    this.resolveSteps = 0;
-    this.quiet = 0;
-    this.salvo = null;
-    this.report = { shooter: t, blasts: [], dmg: new Map(), fall: new Map(), kills: [] };
-    this.projectiles.push(new AirStrike(this, due));
-    for (const G of due) { G.striking = true; G.struck = true; }
-    const who = [...new Set(due.map((G) => G.owner.name))].join(' and ');
-    this.events.push(`${who}'s planes attack.`);
-    this.ui.notice(`${who}'s squadron${due.length > 1 ? 's attack' : ' attacks'}!`);
-    this.ui.turn(t);
-    return true;
   },
 
   damagePlane(p, amt, owner, def, hit) {
@@ -720,20 +710,17 @@ Object.assign(Game.prototype, {
     this.drawAA(ctx);
   },
 
-  // HUD over each waiting squad: its badge, then a pip a pass it has left (like an autoloader's
-  // rounds), and only if it is not striking on her next turn, how long until it does
+  // HUD over each waiting squad: its badge, then a pip a pass it has left (like an autoloader's rounds)
   drawPlaneLabels(ctx, cam) {
     if (!this.airGroups) return;
     ctx.textAlign = 'center';
     for (const G of this.airGroups) {
       const live = G.planes.filter((p) => p.alive && p.state === 'hover');
       if (!live.length || G.striking) continue;
-      const left = Math.max(0, G.due - (G.owner.turnsTaken || 0));
-      const passes = Math.max(...live.map((p) => p.passes)), wait = left > 1 ? `in ${left}` : '';
+      const passes = Math.max(...live.map((p) => p.passes));
       const c = squadCentre(G), rc = RARITY[G.w.rarity].ui;
       ctx.font = `11px ${HUD_FONT}`;
-      const tw = wait ? ctx.measureText(wait).width + 8 : 0;
-      const w = 22 + 4 + passes * 10 + tw;
+      const w = 22 + 4 + passes * 10;
       const x = Math.round(cam.sx(c.x) - w / 2), y = Math.round(cam.sy(c.y - 40) - 44);
       ctx.fillStyle = HUD.plate; ctx.fillRect(x, y, 22, 20);
       ctx.fillStyle = rc;
@@ -741,7 +728,6 @@ Object.assign(Game.prototype, {
       ctx.fillText(badgeText(G.w), x + 11, y + 14);
       ctx.fillStyle = G.owner.color; ctx.fillRect(x, y + 21, 22, 2); // (whose)
       for (let i = 0; i < passes; i++) { ctx.fillStyle = HUD.accent; ctx.fillRect(x + 26 + i * 10, y + 7, 7, 7); }
-      if (wait) { ctx.fillStyle = '#e8e4f4'; ctx.fillText(wait, x + 26 + passes * 10 + tw / 2, y + 14); }
     }
   },
 });
@@ -770,7 +756,7 @@ class FleetStrike {
     for (let i = 0; i < Math.max(F.dive, F.torpedo, F.fighter); i++) for (const [k, n] of [['fighter', F.fighter], ['dive', F.dive], ['torpedo', F.torpedo]]) if (i < n) kinds.push(k);
     const mark = { x: clamp(at.x, 20, WORLD_W - 20), y: Math.min(at.y, game.terrain.hAt(clamp(at.x, 0, WORLD_W - 1))) };
     this.group = game.makeGroup(owner, w, mark, {
-      deck: true, kinds, delay: w.air.delay || 2, hp: w.air.hp, wait: KIDO.LAUNCH, stagger: 6,
+      deck: true, kinds, hp: w.air.hp, wait: KIDO.LAUNCH, stagger: 6,
       place: (pl, i) => {
         const s = this.ships[i % this.ships.length];
         pl.from = { x: s.x + side * s.len * 0.38, y: this.seaY - 62 }; // the carrier's stern
@@ -809,7 +795,7 @@ class FleetStrike {
     cam.follow(f);
     if (t <= KIDO.BACK_END) cam.snap();
     this.whip = Math.abs(f.x - px);
-    if (t >= KIDO.BACK_END + 20) { cam.wide = 0; cam.wideSide = 0; return false; } // (the air wing flies on in while play goes on)
+    if (t >= KIDO.BACK_END + 20) { cam.wide = 0; cam.wideSide = 0; g.projectiles.push(new AirStrike(g, [this.group])); return false; } // (and the air wing flies on in to strike)
     return true;
   }
 
@@ -883,6 +869,6 @@ class FleetStrike {
     ctx.fillStyle = `rgba(255,230,200,${a})`;
     ctx.fillText(`SENGOKU KIDŌ BUTAI  ·  ${this.ships.length} CARRIERS`, W / 2, y - 2);
     ctx.fillStyle = `rgba(220,220,230,${a})`; ctx.font = '11px monospace';
-    ctx.fillText(`${n} AIRCRAFT  ·  STRIKE IN ${this.group.delay} TURNS`, W / 2, y + 15);
+    ctx.fillText(`${n} AIRCRAFT  ·  STRIKE INBOUND`, W / 2, y + 15);
   }
 }

@@ -72,7 +72,7 @@ const GUN_NOTES = {
   shiden: ['Matches', 'Four fighters a squad. Clears the sky of anything.'],
   tifaun: ['Matches', 'One armoured jet, one bomb: it steers onto the nearest rival in its zone and goes off across 260, so leave the zone by a wide margin, or shoot it down (700 health under 300 armour, AA has half the chance).'],
   fortissimo: ['Matches', 'Level bombers: a stick of bombs walked across a wide zone, unguided. The armour soaks the first hit whatever its size, so chip it with flak before the big gun.'],
-  kidobutai: ['Final', 'Zuihou only. A laser dot for three carriers off the coast: 21 aircraft (9 dive bombers, 6 torpedo bombers, 6 fighters) climb away, hover over the mark and strike two of her turns later, then again on each of her turns until their loadouts run out, and she can redirect the whole fleet with each dot. It won’t launch again until this one is gone, so shooting it down buys time.'],
+  kidobutai: ['Final', 'Zuihou only. A laser dot for three carriers off the coast: 21 aircraft (9 dive bombers, 6 torpedo bombers, 6 fighters) climb away and strike the mark in the same turn, then hover over it; each later dot redirects the whole fleet to strike again, until their loadouts run out. It won’t launch again until this one is gone, so shooting it down buys time.'],
   apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 6,000 across 650, in bullet time, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
 };
 const GIRL_NOTES = {
@@ -81,7 +81,7 @@ const GIRL_NOTES = {
   nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
   alb: { plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },
   ang: { plays: 'The guardian angel. Light armour, but grace saves her from one killing blow a round, and her wings make her the most mobile girl: half-price jumps and no fall damage, so she can take high ground no one else can. Her halo lance needs a line of sight.' },
-  zui: { plays: 'The light carrier. She marks a spot; her squadron hovers over it for a round and strikes on her next turn, so she plays a turn ahead: mark where they will be, or where they can’t leave. A full deck (one more plane a squad, no VTOL penalty) and two AA mounts make her the best defended girl in the air.' },
+  zui: { plays: 'The light carrier. She marks a spot; her squadron flies over and strikes it in the same turn, then hovers there, a target, until her next dot sends it on. A full deck (one more plane a squad, no VTOL penalty) and two AA mounts make her the best defended girl in the air.' },
   int: { plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
 };
 
@@ -115,7 +115,7 @@ function codexMeta(w) {
   if (w.sig) lines.push(['Per firing turn', 'the set piece’s, see below (the marker round itself barely scratches)']);
   else lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
   const R = reloadOf(w);
-  if (w.air) { const S = w.air.squads || 1, P = w.fleet ? AIR_PASSES.dive : AIR_PASSES[w.air.type]; lines.push(['Tempo', `${S} squad${S > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck), one dot each a turn. A squad strikes its zone ${w.air.delay || 1} of her turns after the dot lands, then again on each of her turns, ${P} pass${P > 1 ? 'es' : ''} in all, before flying home to rearm for ${R} turns`]); }
+  if (w.air) { const S = w.air.squads || 1, P = w.fleet ? AIR_PASSES.dive : AIR_PASSES[w.air.type]; lines.push(['Tempo', `${S} squad${S > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck), one dot each a turn. A squad strikes its zone as soon as it gets there, and again for each later dot it is redirected by, ${P} pass${P > 1 ? 'es' : ''} in all, before flying home to rearm for ${R} turns`]); }
   else if (R) lines.push(['Tempo', w.sig ? `Fires every ${R + 1} turns` : `Fires every ${R + 1} turns on its own, about ${Math.round(worth / (R + 1))} a turn; rotate it with other guns`]);
   const el = Math.min(45, w.elevMax);
   const reach = (w.maxCharge * w.maxCharge * Math.sin(2 * rad(el))) / GRAV;

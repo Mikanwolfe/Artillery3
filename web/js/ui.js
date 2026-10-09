@@ -229,7 +229,7 @@ const UI = {
     if (w.air) { // planes: what a squad is, and how often it flies
       const A = w.air, F = w.fleet;
       const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : A.planes], ['Squads', A.squads || 1], ['Passes', F ? '1–6' : AIR_PASSES[A.type]],
-        ['Rearm', `${reloadOf(w)} turns`], ['Type', F ? 'fleet' : A.type], ['Zone', airZone(w)], ['Strike', `in ${A.delay || 1} turn${(A.delay || 1) > 1 ? 's' : ''}`], ['Plane HP', A.hp]];
+        ['Rearm', `${reloadOf(w)} turns`], ['Type', F ? 'fleet' : A.type], ['Zone', airZone(w)], ['Plane HP', A.hp]];
       if (A.armour) rows.push(['Armour', A.armour]);
       if (A.jet) rows.push(['Jet', 'AA ½']);
       if (w.guide) rows.push(['Seek', w.guide.range]);

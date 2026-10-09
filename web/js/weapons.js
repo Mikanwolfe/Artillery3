@@ -71,7 +71,7 @@ const VEHICLES = [
   // Sengoku Inc. (after KanColle's carriers): the light carrier. Her gun is a laser designator;
   // what it marks, her planes come back and hit (planes.js). Two AA mounts keep her deck clear.
   {
-    id: 'zui', name: 'Zuihou', hp: 115, armour: 120, fuel: 0.9, blurb: 'A Sengoku light-carrier girl: she marks a spot, and her squadron hits it on her next turn.',
+    id: 'zui', name: 'Zuihou', hp: 115, armour: 120, fuel: 0.9, blurb: 'A Sengoku light-carrier girl: she marks a spot, and her squadron is over it and hitting it moments later.',
     traits: ['flightdeck', 'twinaa'], aa: ['aa96'],
     // and a gun of her own for while her squadron is away
     extra: [weapon('zui1', "SI 12.7cm Twin High-Angle Gun", 'shell', -5, 80, {
@@ -252,9 +252,9 @@ const WEAPONS = [
   // Planes (Sengoku Inc., after KanColle's carrier aircraft; planes.js): the gun is a laser
   // designator. A weapon has air.squads squads (one early on, three or four late), its autoloader
   // rounds: each dot of a turn takes the next. One on her deck takes off (air.planes, one more from
-  // a flight deck), comes back and hovers over the dot's strike zone, where anyone can shoot it;
-  // with none on deck, the squad out longest on its orders is redirected. Every squad over a zone
-  // attacks it at the start of each of her turns, until its loadout is spent (AIR_PASSES: bombers
+  // a flight deck), flies over the dot's strike zone and attacks it in the same turn, then hovers
+  // there, where anyone can shoot it; with none on deck, the squad out longest on its orders is
+  // redirected (and attacks the new zone). A squad attacks once a dot, until its loadout is spent (AIR_PASSES: bombers
   // several passes, torpedo jets one, fighters many), then flies home and rearms for air.reload
   // turns; one shot down rearms too. Planes that take off straight up (no flight deck) hit 30%
   // softer. dmg is per bomb, torpedo or rocket; hp per plane (armour: it takes a whole hit).
@@ -322,9 +322,9 @@ const WEAPONS = [
     meteor: { dmg: 6000, r: 650, explR: 175, size: 300, lava: 920, splash: 30 },
     short: 'Where her arrow of light lands, the sky answers: she marks an asteroid and brings it down.', long: 'Ikaros only.' }),
   weapon('kidobutai', "SI 'Kidō Butai' Strike Fleet", 'air', 0, 80, { sig: 'zui', maxCharge: 100, disp: 0.4, dmg: 300, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
-    air: { squads: 1, type: 'fleet', planes: 0, ord: 1, hp: 120, reload: 3, delay: 2 },
+    air: { squads: 1, type: 'fleet', planes: 0, ord: 1, hp: 120, reload: 3 },
     fleet: { carriers: 3, dive: 9, torpedo: 6, fighter: 6 },
-    short: 'A laser dot for the carriers off the coast. Their whole air wing comes, and takes its time.', long: 'Zuihou only. One great squad of 21: each dot after the first redirects it, and it strikes on each of her turns until its loadouts are spent (dive bombers three passes, torpedo jets one, fighters six) or it is shot down. Only then can the carriers launch again.' }),
+    short: 'A laser dot for the carriers off the coast. Their whole air wing comes.', long: 'Zuihou only. One great squad of 21 that strikes as soon as it arrives; each later dot redirects it and it strikes again, until its loadouts are spent (dive bombers three passes, torpedo jets one, fighters six) or it is shot down. Only then can the carriers launch again.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its

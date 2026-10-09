@@ -429,7 +429,6 @@ class Game {
     this.planes = [];
     this.airGroups = [];
     this.aaRounds = [];
-    this.strikeResolve = false;
     this.goldenRound = false;
     this.slides = [];
     this.salvo = null;
@@ -532,7 +531,6 @@ class Game {
     t.drill = hasTrait(t, 'drill');
     t.shotsLeft = t.shotsFor(t.weapon); // autoloaders reload every turn (planes: the squads she has left)
     t.firedThisTurn = false;
-    if (this.startStrikes(t)) return; // her planes from last turn hit first
     this.startAim();
   }
 
@@ -1033,20 +1031,6 @@ class Game {
     if (this.hazardResolve) { // the drones' bombs have landed: on with the turn order
       this.hazardResolve = false;
       if (this.tanks.filter((x) => x.alive).length <= 1) this.endRound();
-      else this.nextTurn();
-      return;
-    }
-    if (this.strikeResolve) { // her planes have hit: now her turn proper
-      this.strikeResolve = false;
-      const alive = this.tanks.filter((x) => x.alive).length;
-      for (const G of this.airGroups) { // a squad that struck comes again on her next turn
-        G.striking = false;
-        if (G.struck) { G.struck = false; G.due = (G.owner.turnsTaken || 0) + 1; G.dueTurn = this.turnCount + alive; }
-      }
-      this.react(this.report);
-      this.report = null;
-      if (this.tanks.filter((x) => x.alive).length <= 1) this.endRound();
-      else if (t.alive) this.startAim();
       else this.nextTurn();
       return;
     }
