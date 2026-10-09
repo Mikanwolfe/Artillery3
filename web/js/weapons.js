@@ -79,7 +79,7 @@ const VEHICLES = [
       short: 'The carrier’s own guns: a twin high-angle mount for when the squadron is out.', long: 'Zuihou’s second starting weapon.' })],
     weapon: weapon('zui0', "Sengoku Type 99 Kanbaku", 'air', 0, 80, {
       maxCharge: 75, disp: 0.8, dmg: 70, dmgR: 60, explR: 9, clip: 1,
-      air: { squads: 1, type: 'dive', planes: 2, ord: 1, hp: 45, reload: 2 },
+      air: { squads: 1, type: 'dive', planes: 2, ord: 1, hp: 60, reload: 2 },
       short: 'Fixed undercarriage, a lift fan in the fuselage, and the best dive-bombing crews Sengoku ever trained.', long: 'Starting weapon for Zuihou. Two squads, then a turn to rearm.' }),
   },
   // the secret girl (unlocked by finishing a first game): an angel who came through the gate
@@ -250,52 +250,55 @@ const WEAPONS = [
     guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 3.5, range: 220, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 0.5, r: 75, at: 50, every: 2 },
     short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten bomblets in sequence, unguided and wind-blown.' }),
   // Planes (Sengoku Inc., after KanColle's carrier aircraft; planes.js): the gun is a laser
-  // designator. Where its dot lands, a squad of air.planes (one more from a flight deck) takes
-  // off, climbs out of sight, comes back and hovers over the mark, where anyone can shoot it, and
-  // strikes at the start of its owner's next turn. The squad then pursues its target like a drone,
-  // striking again on each of her turns until its loadout is spent (AIR_PASSES: bombers three
-  // passes, torpedo jets one, fighters six), and flies home to her. A weapon has air.squads squads
-  // (one early on, three or four late): a shot sends one from reserve, or with none left in
-  // reserve redirects the squad out longest without new orders to the new dot. A squad that comes
-  // home or is shot down is back in reserve air.reload turns later. Planes that take off straight
-  // up (no flight deck) hit 30% softer. dmg is per bomb, torpedo or rocket.
+  // designator. A weapon has air.squads squads (one early on, three or four late), its autoloader
+  // rounds: each dot of a turn takes the next. One on her deck takes off (air.planes, one more from
+  // a flight deck), comes back and hovers over the dot's strike zone, where anyone can shoot it;
+  // with none on deck, the squad out longest on its orders is redirected. Every squad over a zone
+  // attacks it at the start of each of her turns, until its loadout is spent (AIR_PASSES: bombers
+  // several passes, torpedo jets one, fighters many), then flies home and rearms for air.reload
+  // turns; one shot down rearms too. Planes that take off straight up (no flight deck) hit 30%
+  // softer. dmg is per bomb, torpedo or rocket; hp per plane (armour: it takes a whole hit).
   //   dive     each plane drops air.ord bombs almost straight down onto the mark
   //   torpedo  each runs in low and drops a torpedo that skims the ground through the mark
   //   fighter  guns: aircraft and drones near the mark first (triple damage), else a strafing run
   //   rocket   each fires air.ord seeker rockets from overhead (LFS)
-  //   heavy    one plane, one enormous guided bomb that steers onto the nearest rival near the mark (NXi)
+  //   heavy    one plane, one enormous guided bomb that steers onto the nearest rival in the zone (NXi)
+  //   fortress a level bomber: straight across the zone at altitude, walking a stick of air.ord bombs over it
   weapon('kansen0', "Sengoku 'Aokana' Flying Circus", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 22, dmgR: 30, explR: 2, clip: 1, rarity: 1, cost: 900,
-    air: { squads: 1, type: 'fighter', planes: 3, ord: 6, hp: 55, reload: 2 },
+    air: { squads: 1, type: 'fighter', planes: 3, ord: 6, hp: 70, reload: 2 },
     short: 'Four rhythms across the blue: the nimblest jets in the sky, and murder on anything else up there.', long: 'Fighters: they go for planes and drones near the mark first (triple damage), and strafe it when the sky is clear.' }),
   weapon('kankou97', "Sengoku 'Ever17' Torpedo Jet", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 120, dmgR: 70, explR: 10, clip: 1, rarity: 1, cost: 1000,
-    air: { squads: 1, type: 'torpedo', planes: 2, ord: 1, hp: 50, reload: 2 },
+    air: { squads: 1, type: 'torpedo', planes: 2, ord: 1, hp: 65, reload: 2 },
     short: 'Built for a sea that drained away seventeen years ago. It still flies in low and lets go along the ground.', long: 'Torpedoes skim the ground through the mark and go off on the first thing they touch: stepping aside along their line won’t save you.' }),
   weapon('suisei', "Sengoku 'Sora' Dive Jet", 'air', 0, 80, { maxCharge: 85, disp: 0.8, dmg: 190, dmgR: 70, explR: 11, clip: 1, rarity: 2, cost: 2400,
-    air: { squads: 1, type: 'dive', planes: 2, ord: 1, hp: 55, reload: 2 },
-    short: 'Named for the crow that watched the summer sky. It folds its wings and drops like a stone.', long: 'Two dive bombers a squad, two squads.' }),
-  weapon('tenzan', "Sengoku 'Umineko' Torpedo Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 260, dmgR: 80, explR: 12, clip: 1, rarity: 3, cost: 4800,
-    air: { squads: 2, type: 'torpedo', planes: 3, ord: 1, hp: 70, reload: 2 },
+    air: { squads: 1, type: 'dive', planes: 2, ord: 1, hp: 90, reload: 2 },
+    short: 'Named for the crow that watched the summer sky. It folds its wings and drops like a stone.', long: 'Two dive bombers a squad.' }),
+  weapon('tenzan', "Sengoku 'Umineko' Torpedo Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 150, dmgR: 80, explR: 12, clip: 1, rarity: 3, cost: 4800,
+    air: { squads: 2, type: 'torpedo', planes: 3, ord: 1, hp: 120, reload: 2 },
     short: 'When the seagulls cry: three torpedo jets abreast, running in low off the water.', long: 'Three torpedoes along the ground through the mark.' }),
-  weapon('reppuu', "Sengoku 'Shiranui' Interceptor", 'air', 0, 80, { maxCharge: 90, disp: 0.7, dmg: 55, dmgR: 35, explR: 2, clip: 1, rarity: 3, cost: 4400,
-    air: { squads: 2, type: 'fighter', planes: 3, ord: 8, hp: 80, reload: 2 },
+  weapon('reppuu', "Sengoku 'Shiranui' Interceptor", 'air', 0, 80, { maxCharge: 90, disp: 0.7, dmg: 32, dmgR: 35, explR: 2, clip: 1, rarity: 3, cost: 4400,
+    air: { squads: 2, type: 'fighter', planes: 3, ord: 8, hp: 130, reload: 2 },
     short: 'A tactical surface fighter’s airframe without the arms and legs. Clears the sky of everything with an engine.', long: 'Fighters with heavier guns: aircraft first, then a strafing run.' }),
-  weapon('taillteann', "Sengoku–LFS 'Taillteann' Rocket Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 150, dmgR: 55, explR: 7, clip: 1, rarity: 4, cost: 11500,
+  weapon('taillteann', "Sengoku–LFS 'Taillteann' Rocket Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 86, dmgR: 55, explR: 7, clip: 1, rarity: 4, cost: 11500,
     hybrid: true, maker: 'Sengoku × Lymilark',
-    air: { squads: 2, type: 'rocket', planes: 2, ord: 3, hp: 75, reload: 2 },
-    guide: { arm: 4, burn: 60, seek: 999, apex: false, turn: 4, range: 320, cone: 90, lift: 0.4 },
+    air: { squads: 2, type: 'rocket', planes: 2, ord: 3, hp: 160, reload: 2 },
+    guide: { arm: 4, burn: 60, seek: 6, apex: false, turn: 4, range: 160, cone: 90, lift: 0.4 },
     short: 'Sengoku airframes carrying Lymilark seeker pods. They fire from overhead and the seekers do the rest.', long: 'Three seekers a plane, each going for the nearest target under it: a target that moved a little still gets found.' }),
-  weapon('ryusei', "Sengoku 'Hoshimemo' Attack Jet", 'air', 0, 80, { maxCharge: 95, disp: 0.7, dmg: 420, dmgR: 100, explR: 16, clip: 1, rarity: 5, cost: 21000,
-    air: { squads: 3, type: 'dive', planes: 3, ord: 1, hp: 90, reload: 2 },
+  weapon('ryusei', "Sengoku 'Hoshimemo' Attack Jet", 'air', 0, 80, { maxCharge: 95, disp: 0.7, dmg: 182, dmgR: 100, explR: 16, clip: 1, rarity: 5, cost: 21000,
+    air: { squads: 3, type: 'dive', planes: 3, ord: 1, hp: 220, reload: 2 },
     short: 'Memories of a starry sky: it comes down like a shooting star, carrying the big bomb.', long: 'Three heavy bombs a squad.' }),
-  weapon('kikka', "Sengoku 'Narcissu' Jet Bomber", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 360, dmgR: 85, explR: 13, clip: 1, rarity: 6, cost: 33000,
-    air: { squads: 3, type: 'dive', planes: 3, ord: 2, hp: 100, reload: 3, jet: true },
+  weapon('fortissimo', "Sengoku 'Fortissimo' Flying Fortress", 'air', 0, 80, { maxCharge: 95, disp: 0.7, dmg: 140, dmgR: 60, explR: 8, clip: 1, rarity: 5, cost: 20000,
+    air: { squads: 2, type: 'fortress', planes: 2, ord: 6, hp: 320, armour: 180, reload: 3 },
+    short: 'A song that never ends: four engines, two lift fans, and armour plate that shrugs off a whole burst.', long: 'Level bombers: they cross the zone high up and walk six bombs each across it. Unguided, and the wind takes them, but the armour takes one hit of any size.' }),
+  weapon('kikka', "Sengoku 'Narcissu' Jet Bomber", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 156, dmgR: 85, explR: 13, clip: 1, rarity: 6, cost: 33000,
+    air: { squads: 3, type: 'dive', planes: 3, ord: 2, hp: 250, reload: 3, jet: true },
     short: 'One last drive to the sea. Too fast for most AA to track, and it drops two bombs a pass.', long: 'Jets: anti-aircraft fire has half the chance against them and their bombs.' }),
-  weapon('shiden', "Sengoku 'Takemikazuchi' Fighter", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 95, dmgR: 40, explR: 3, clip: 1, rarity: 6, cost: 30000,
-    air: { squads: 3, type: 'fighter', planes: 4, ord: 10, hp: 130, reload: 3 },
+  weapon('shiden', "Sengoku 'Takemikazuchi' Fighter", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 41, dmgR: 40, explR: 3, clip: 1, rarity: 6, cost: 30000,
+    air: { squads: 3, type: 'fighter', planes: 4, ord: 10, hp: 300, reload: 3 },
     short: 'The thunder god’s own frame, the last and best of the Sengoku fighters. Four a squad.', long: 'Clears the sky over the mark, then rakes it.' }),
-  weapon('tifaun', "NXi × Sengoku 'Taufaun' Strike Jet", 'air', 0, 80, { maxCharge: 110, disp: 0.4, dmg: 700, dmgR: 260, explR: 42, clip: 1, rarity: 7, cost: 150000,
+  weapon('tifaun', "NXi × Sengoku 'Taufaun' Strike Jet", 'air', 0, 80, { maxCharge: 110, disp: 0.4, dmg: 254, dmgR: 260, explR: 42, clip: 1, rarity: 7, cost: 150000,
     hybrid: true, maker: 'NXi × Sengoku',
-    air: { squads: 4, type: 'heavy', planes: 1, ord: 1, hp: 420, reload: 3, jet: true, seek: 260 },
+    air: { squads: 4, type: 'heavy', planes: 1, ord: 1, hp: 700, armour: 300, reload: 3, jet: true },
     short: 'The UAF’s minibrieve: one Sengoku lift-fan airframe, built like a battlecruiser by the November Division, carrying one bomb. That is all it needs.', long: 'A single armoured jet with one enormous guided bomb that steers onto the nearest rival within 260 of the mark. AA has half the chance against it.' }),
   // Final weapons: one per girl, only in her own shop (sig), the price of the end game, and a tier
   // of their own above Godly (Ascendant). Each has a
@@ -318,10 +321,10 @@ const WEAPONS = [
   weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 8, cost: 75000,
     meteor: { dmg: 6000, r: 650, explR: 175, size: 300, lava: 920, splash: 30 },
     short: 'Where her arrow of light lands, the sky answers: she marks an asteroid and brings it down.', long: 'Ikaros only.' }),
-  weapon('kidobutai', "Sengoku 'Kidō Butai' Strike Fleet", 'air', 0, 80, { sig: 'zui', maxCharge: 100, disp: 0.4, dmg: 520, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
+  weapon('kidobutai', "Sengoku 'Kidō Butai' Strike Fleet", 'air', 0, 80, { sig: 'zui', maxCharge: 100, disp: 0.4, dmg: 300, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
     air: { squads: 1, type: 'fleet', planes: 0, ord: 1, hp: 120, reload: 3, delay: 2 },
     fleet: { carriers: 3, dive: 9, torpedo: 6, fighter: 6 },
-    short: 'A laser dot for the carriers off the coast. Their whole air wing comes, and takes its time.', long: 'Zuihou only.' }),
+    short: 'A laser dot for the carriers off the coast. Their whole air wing comes, and takes its time.', long: 'Zuihou only. One great squad of 21: each dot after the first redirects it, and it strikes on each of her turns until its loadouts are spent (dive bombers three passes, torpedo jets one, fighters six) or it is shot down. Only then can the carriers launch again.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
@@ -356,11 +359,12 @@ const REBALANCE = {
   // the Yukikaze's warheads are weak on purpose: MAIA does the damage
   yukikaze: { dmg: 40, cost: 11000 }, feuerlilie: { dmg: 155, cost: 6000 }, ichor: { dmg: 1800, cost: 21000 },
   // planes: per bomb, torpedo, rocket or gun burst (see planes.js)
-  // fitted like the guns, then about a third off: a plane weapon flies both its squads before it
-  // rearms, so it fires more of its turns than a gun of its tier (airValue credits that back, AIR_TEMPO)
-  zui0: { dmg: 120 }, zui1: { dmg: 55 }, kansen0: { dmg: 20, cost: 800 }, kankou97: { dmg: 105, cost: 1000 }, suisei: { dmg: 285, cost: 2500 }, tenzan: { dmg: 320, cost: 5200 },
-  reppuu: { dmg: 75, cost: 4600 }, taillteann: { dmg: 390, cost: 12000 }, ryusei: { dmg: 1270, cost: 22000 }, kikka: { dmg: 1000, cost: 34000 },
-  shiden: { dmg: 250, cost: 30000 }, tifaun: { dmg: 3300, cost: 50000 },
+  // fitted like the guns, then about a third off: a plane weapon flies its squads on several of her
+  // turns before it rearms (airValue credits that back, AIR_TEMPO); the more squads it has (each a
+  // zone a turn), the less each bomb, so with all of them out it hits like an autoloader of its value
+  zui0: { dmg: 120 }, zui1: { dmg: 55 }, kansen0: { dmg: 20, cost: 800 }, kankou97: { dmg: 105, cost: 1000 }, suisei: { dmg: 285, cost: 2500 }, tenzan: { dmg: 184, cost: 5200 },
+  reppuu: { dmg: 43, cost: 4600 }, taillteann: { dmg: 224, cost: 12000 }, ryusei: { dmg: 550, cost: 22000 }, kikka: { dmg: 433, cost: 34000 },
+  shiden: { dmg: 108, cost: 30000 }, fortissimo: { dmg: 260, cost: 20000 }, tifaun: { dmg: 1196, cost: 50000 },
 };
 // every girl's starting guns (her signature one, and any extra: Zuihou's sidearm)
 const STARTERS = VEHICLES.flatMap((v) => [v.weapon, ...(v.extra || [])]);
@@ -461,16 +465,16 @@ function weaponValue(w) {
   return (w.dmg * shots * (heads + carpet + arcs) * radius * spread * guided + acid + sat + fire) * (1 + 0.12 * (w.rarity - 1));
 }
 
-// a plane weapon's worth for the squad it flies on a turn: its ordnance, by type, discounted for
+// a plane weapon's worth for its squads on a turn (each a zone): their ordnance, by type, discounted for
 // the wait (the target can move, and AA and rivals can shoot the planes down first). Planes are
 // counted at 85% (a flight deck adds one, VTOL takes 30% off).
-const AIR_TYPE_WORTH = { dive: 1, torpedo: 1.1, rocket: 1.25, heavy: 1.45, fighter: 0.45, fleet: 1 };
+const AIR_TYPE_WORTH = { dive: 1, torpedo: 1.1, rocket: 1.25, heavy: 1.45, fortress: 0.6, fighter: 0.45, fleet: 1 };
 const AIR_DELAY_WORTH = 0.7;
-const AIR_TEMPO = 1.45; // a plane weapon fires more of its turns than a gun of its tier (two squads, then rearm)
+const AIR_TEMPO = 1.45; // a plane weapon fires more of its turns than a gun of its tier (passes, then rearm)
 function airValue(w) {
   const A = w.air;
   const planes = A.type === 'fleet' ? w.fleet.dive + w.fleet.torpedo : A.planes * 0.85;
-  return w.dmg * planes * A.ord * (1 + 0.15 * ((A.squads || 1) - 1)) * Math.sqrt(w.dmgR / 80) * (AIR_TYPE_WORTH[A.type] || 1) * AIR_DELAY_WORTH * AIR_TEMPO * (1 + 0.12 * (w.rarity - 1));
+  return w.dmg * planes * A.ord * (A.squads || 1) * Math.sqrt(w.dmgR / 80) * (AIR_TYPE_WORTH[A.type] || 1) * AIR_DELAY_WORTH * AIR_TEMPO * (1 + 0.12 * (w.rarity - 1));
 }
 
 // Wind on a shell, scaled by its drift (p.drift, 1 by default). Two parts: a steady push (A3's wind,

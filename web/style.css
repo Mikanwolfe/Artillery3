@@ -332,6 +332,8 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .pips { display: flex; gap: 2px; }
 .pips i { width: 0.45em; height: 0.9em; border: 1px solid var(--accent); }
 .pips i.f { background: var(--accent); }
+.pips i.o { background: var(--pc, var(--accent)); border-color: var(--pc, var(--accent)); } /* a squad out over a zone (it can be redirected) */
+.pips i.r { opacity: 0.35; border-style: dashed; } /* rearming */
 .slot .kb { color: var(--accent); border: 1px solid var(--line); padding: 0 0.35em; font-size: 0.9em; }
 .slot.a.armed { border-color: var(--gold); background: rgba(242,196,90,.12); }
 .slot.a.armed .st, .slot.a.armed .kb { color: var(--gold); }

@@ -228,10 +228,11 @@ const UI = {
   weaponStats(w) {
     if (w.air) { // planes: what a squad is, and how often it flies
       const A = w.air, F = w.fleet;
-      const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : A.planes], ['Squads', A.squads || 1], ['Passes', F ? 1 : AIR_PASSES[A.type]],
-        ['Rearm', `${reloadOf(w)} turns`], ['Type', F ? 'fleet' : A.type], ['Strike', `in ${A.delay || 1} turn${(A.delay || 1) > 1 ? 's' : ''}`], ['Plane HP', A.hp]];
+      const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : A.planes], ['Squads', A.squads || 1], ['Passes', F ? '1–6' : AIR_PASSES[A.type]],
+        ['Rearm', `${reloadOf(w)} turns`], ['Type', F ? 'fleet' : A.type], ['Zone', airZone(w)], ['Strike', `in ${A.delay || 1} turn${(A.delay || 1) > 1 ? 's' : ''}`], ['Plane HP', A.hp]];
+      if (A.armour) rows.push(['Armour', A.armour]);
       if (A.jet) rows.push(['Jet', 'AA ½']);
-      if (w.guide || A.seek) rows.push(['Seek', A.seek || w.guide.range]);
+      if (w.guide) rows.push(['Seek', w.guide.range]);
       return rows.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
     }
     if (w.role) { // an air-defence mount
@@ -357,12 +358,17 @@ const UI = {
       const left = t.reloadLeft(id);
       const total = reloadOf(w) + 1;
       let st;
-      if (on && t.firedThisTurn && t.shotsLeft > 0) st = `${t.shotsLeft} left`;
+      if (on && t.firedThisTurn && t.shotsLeft > 0 && !w.air) st = `${t.shotsLeft} left`;
       else if (left > 0) st = `↻ ${left} turn${left > 1 ? 's' : ''}`;
-      else if (w.air) { const g = t.wing(w); st = `${g.reserve} ready${g.out ? ` · ${g.out} out` : ''}${g.rearm.length ? ` · ${g.rearm.length} rearming` : ''}`; }
+      else if (w.air) { // planes: her squads, by where they are
+        const sq = t.wing(w), n = (f) => sq.filter(f).length, rearm = sq.filter((q) => q.state === 'rearm');
+        const parts = [[n((q) => !q.tasked && q.state === 'deck'), 'ready'], [n((q) => !q.tasked && q.state === 'out'), 'out'], [n((q) => q.tasked && q.state === 'out'), 'sent'], [n((q) => q.state === 'home'), 'returning'],
+          [rearm.length, `rearming${rearm.length ? ` (${Math.min(...rearm.map((q) => q.turns))})` : ''}`]].filter(([k]) => k > 0);
+        st = parts.map(([k, s]) => `${k} ${s}`).join(' · ');
+      }
       else st = on ? (w.clip > 1 ? `${w.clip} shots` : 'in hand') : 'loaded';
-      const reloadNote = w.air ? `${w.air.squads} squad${w.air.squads > 1 ? 's' : ''}: a shot sends one, or redirects one already out; each back or lost rearms for ${reloadOf(w)} turns` : reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
-      const pips = on && w.clip > 1 ? `<span class="pips">${Array.from({ length: w.clip }, (_, k) => `<i class="${k < (t.firedThisTurn || w.air ? t.shotsLeft : w.clip) ? 'f' : ''}"></i>`).join('')}</span>` : '';
+      const reloadNote = w.air ? `${w.air.squads} squad${w.air.squads > 1 ? 's' : ''}, one dot each a turn: one on deck takes off, else one already out is redirected; each back or lost rearms for ${reloadOf(w)} turns` : reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
+      const pips = w.air ? `<span class="pips">${t.wing(w).map((q) => `<i class="${q.state === 'rearm' || q.state === 'home' ? 'r' : q.tasked ? '' : q.state === 'out' ? 'o' : 'f'}"></i>`).join('')}</span>` : on && w.clip > 1 ? `<span class="pips">${Array.from({ length: w.clip }, (_, k) => `<i class="${k < (t.firedThisTurn || w.air ? t.shotsLeft : w.clip) ? 'f' : ''}"></i>`).join('')}</span>` : '';
       return `<button class="slot w${on ? ' on' : ''}${left > 0 ? ' rl' : ''}" data-i="${i}" title="${esc(w.name)} · ${reloadNote}" ${left > 0 || !t.weaponReady(id) || (t.firedThisTurn && !on) ? 'disabled' : ''}>
         ${this.badge(w, true)}<span class="txt"><span class="nm">${esc(w.name)}</span><span class="st">${st}</span></span>${pips}
         ${left > 0 ? `<span class="rlbar"><i style="width:${Math.round(100 * (1 - left / total))}%"></i></span>` : ''}</button>`;

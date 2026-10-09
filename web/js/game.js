@@ -90,6 +90,7 @@ class Camera {
     this.rot = 0; // a roll, in radians, for set pieces (the HUD never turns)
     this.ceil = -1000; // how high the camera may go (set pieces lift it, into space)
     this.wide = 0; // how far past the map's edges it may go (G.W.'s battery sits off the map)
+    this.wideSide = 0; // past which edge: -1 the left, 1 the right, 0 both
     this.zmin = 0; // set pieces may pull back further than the wheel can (0: CAM_ZOOM_MIN)
   }
 
@@ -107,7 +108,7 @@ class Camera {
     if (!ease) this.zoomTo = z; // set pieces jump straight there; the wheel eases (update)
     const cx = this.x + this.w / 2, cy = this.y + this.h * 0.55;
     this.zoom = z;
-    this.x = clamp(cx - this.w / 2, -this.wide, Math.max(0, WORLD_W - this.w) + this.wide);
+    this.x = clamp(cx - this.w / 2, this.wideSide > 0 ? 0 : -this.wide, Math.max(0, WORLD_W - this.w) + (this.wideSide < 0 ? 0 : this.wide));
     this.y = clamp(cy - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h);
   }
 
@@ -117,7 +118,7 @@ class Camera {
     const f = this.manual || this.focus;
     if (!f) return null;
     return {
-      x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), -this.wide, Math.max(0, WORLD_W - this.w) + this.wide),
+      x: clamp(f.x - this.w / 2 - (this.manual ? 0 : this.bias), this.wideSide > 0 ? 0 : -this.wide, Math.max(0, WORLD_W - this.w) + (this.wideSide < 0 ? 0 : this.wide)),
       y: clamp(f.y - this.h * 0.55, this.ceil, WORLD_BOTTOM - this.h),
     };
   }
@@ -525,7 +526,7 @@ class Game {
     this.infraTurn(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
-    if (this.range) { t.reload = {}; t.wings = {}; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting
+    if (this.range) { t.reload = {}; for (const id in t.wings) for (const q of t.wings[id]) if (q.state === 'rearm') q.turns = 1; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting (squads rearm at once, but are still the squads she has)
     t.tickReloads();
     t.drill = hasTrait(t, 'drill');
     t.shotsLeft = t.shotsFor(t.weapon); // autoloaders reload every turn (planes: the squads she has left)
@@ -538,6 +539,7 @@ class Game {
     const t = this.active;
     this.timeScale = 1; // (in case a set piece's bullet time was cut short)
     t.charge = 0;
+    if (t.weapon.air) t.shotsLeft = t.firedThisTurn ? Math.min(t.shotsLeft, t.squadsFree(t.weapon)) : t.shotsFor(t.weapon); // (a squad lost since)
     t.clampElev();
     this.input.ctl.reset();
     this.input.queue.length = 0;
@@ -1056,7 +1058,7 @@ class Game {
     this.report = null;
     const alive = this.tanks.filter((x) => x.alive).length;
     if (alive <= 1) this.endRound();
-    else if (t.alive && t.shotsLeft > 0 && !(t.isCpu && t.weapon.air)) this.startAim(); // autoloader: same tank fires again (a CPU keeps its other squad)
+    else if (t.alive && t.shotsLeft > 0 && (!t.weapon.air || t.squadsFree(t.weapon) > 0)) this.startAim(); // autoloader (planes: her next squad): same tank fires again
     else this.nextTurn();
   }
 
@@ -1144,7 +1146,8 @@ class Game {
     }
     if (w.kind === 'air') { // the designator's dot has landed: a squad (or a whole fleet) is coming
       if (r && r.hit !== 'out') {
-        if (w.fleet && p.owner.wing(w).reserve > 0) this.projectiles.push(new FleetStrike(this, p.owner, p, w));
+        const q = w.fleet && p.owner.wing(w).find((q) => !q.tasked && q.state === 'deck');
+        if (q) this.projectiles.push(new FleetStrike(this, p.owner, p, w, q));
         else this.launchSquad(p);
       }
       return;
@@ -1936,6 +1939,7 @@ class Game {
     this.satellite.draw(ctx);
     for (const p of this.projectiles) if (p.drawBack) p.drawBack(ctx); // set pieces' backdrops, behind the hills
     this.bg.drawRidges(ctx, cam);
+    for (const p of this.projectiles) if (p.drawMid) p.drawMid(ctx); // (over the far hills: the Kidō Butai's sea)
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);
     this.terrain.drawTrees(ctx, cam.x, cam.x + cam.w);

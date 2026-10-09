@@ -79,15 +79,22 @@ class Tank {
   abilityReady(id) { return this.abilities[id] > 0 && !(this.cooldown[id] > 0); }
   // reloads (rebalanced): own turns until a gun can fire again; 0 = ready
   reloadLeft(id) { return this.reload[id] | 0; }
-  // planes: not while its squad is out (planes.js), nor while it rearms after
+  // planes: while one of its squads can still take a dot this turn (planes.js)
   weaponReady(id = this.weapon.id) {
     const w = WEAPON_BY_ID[id];
-    if (w.air) { const g = this.wing(w); return g.reserve > 0 || g.out > 0; } // a squad to send, or one to redirect
+    if (w.air) return this.squadsFree(w) > 0;
     return !(this.reload[id] > 0);
   }
-  // a plane weapon's squads: in reserve, out (planes.js), and rearming (own turns left, each)
-  wing(w) { return this.wings[w.id] || (this.wings[w.id] = { reserve: w.air.squads || 1, out: 0, rearm: [] }); }
-  shotsFor(w) { return w.clip; }
+  // a plane weapon's squads: a fixed set of air.squads, each on her deck, out (its group in the
+  // sky, planes.js: G.squad), flying home with its loadout spent, or rearming (turns: own turns
+  // left). They are the weapon's autoloader
+  // rounds: each dot takes one (tasked) until her next turn, so one squad is one zone.
+  wing(w) {
+    return this.wings[w.id] || (this.wings[w.id] = Array.from({ length: w.air.squads || 1 }, (_, i) => ({ i, state: 'deck', turns: 0, tasked: false, orders: 0 })));
+  }
+  // squads that can still take a dot this turn: on deck, or out and not given one yet
+  squadsFree(w) { return this.wing(w).filter((q) => !q.tasked && (q.state === 'deck' || q.state === 'out')).length; }
+  shotsFor(w) { return w.air ? this.squadsFree(w) : w.clip; }
   chargeCap() { return this.weapon.maxCharge * (this.armed.over ? OVERCHARGE : 1); }
 
   resetRound(x, terrain) {
@@ -154,11 +161,9 @@ class Tank {
   // best loaded one (the starter never reloads, but a sold starter or an old save might leave none)
   tickReloads() {
     for (const id in this.reload) if (this.reload[id] > 0) this.reload[id]--;
-    for (const id in this.wings) { // squads rearming come back into reserve
-      const g = this.wings[id];
-      g.rearm = g.rearm.map((n) => n - 1);
-      g.reserve += g.rearm.filter((n) => n <= 0).length;
-      g.rearm = g.rearm.filter((n) => n > 0);
+    for (const id in this.wings) for (const q of this.wings[id]) { // squads: a new turn's orders; rearmed ones back on deck
+      q.tasked = false;
+      if (q.state === 'rearm' && --q.turns <= 0) q.state = 'deck';
     }
     // (planes never skip their rearming: a carrier with nothing else may have a turn with nothing to fly)
     const guns = this.weapons.filter((id) => !WEAPON_BY_ID[id].air);
@@ -363,8 +368,17 @@ class Tank {
       ctx.fillText(badgeText(w), bx + 11, wy + 14);
       ctx.font = `13px ${HUD_FONT}`;
       ctx.fillText(nm, Math.round(bx + 24 + ww / 2), wy + 14);
-      // autoloader rounds (planes: squads) left this turn
-      for (let i = 0; i < w.clip; i++) {
+      // autoloader rounds left this turn; planes: one pip a squad (filled: can take a dot this turn,
+      // her colour: out on an earlier one, dark: rearming or spent this turn)
+      if (w.air) {
+        const sq = this.wing(w), n = sq.length;
+        sq.forEach((q, i) => {
+          const x = Math.round(sx - (n * 10) / 2 + i * 10);
+          ctx.fillStyle = q.state === 'deck' && !q.tasked ? HUD.accent : q.state === 'out' ? this.color : HUD.plate;
+          ctx.fillRect(x, wy + 24, 7, 7);
+          if (q.state === 'out' && !q.tasked) { ctx.fillStyle = HUD.accent; ctx.fillRect(x + 2, wy + 26, 3, 3); }
+        });
+      } else for (let i = 0; i < w.clip; i++) {
         ctx.fillStyle = i < this.shotsLeft ? HUD.accent : HUD.plate;
         ctx.fillRect(Math.round(sx - (w.clip * 10) / 2 + i * 10), wy + 24, 7, 7);
       }
