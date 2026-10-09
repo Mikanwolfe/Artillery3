@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['438d74a', 'Hits on planes, and point defence’s hits on rockets, show the same damage popups as any other hit (with AA, POINT DEFENCE or ARMOUR tags) instead of plain numbers and percentages.'],
   ['06f8fe9', 'The skyrail train looks like a Melbourne Metro train now: silver stainless with a blue band, blue doors edged in yellow and blue cab fronts.'],
   ['1201391', 'A thinner health and armour bar. CPUs favour their own girl’s line when buying and choosing guns (her makers, and her starter’s kind), and only Ikaros’s CPU likes lasers, since CPUs aim them badly.'],
   ['b18ec08', 'Fixed a crash when using a repair kit. Starting guns and mounts can be sold (for ¢250 scrap) to free their slot, and a bought mount replaces a girl’s own one, Zuihou’s Type 96 included. Torpedo jets get two passes instead of one.'],
