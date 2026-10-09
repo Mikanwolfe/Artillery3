@@ -45,6 +45,9 @@ const FLIGHT = {
   fortress: { cruise: 7, top: 10, dive: 8, thrust: 0.16, brake: 0.3, pull: 0.55 },
 };
 const AIR_GRAV = 0.1; // along the flight path: a dive gains speed, a climb loses it
+// the drawn plane trails the flight model on a damped spring (it matches the model's velocity and
+// is pulled onto its position), so turns read as a heavy airframe swinging round, not a pivot
+const AIR_SPRING = 0.03, AIR_DAMP = 0.24;
 const AIR_PIVOT = 0.13; // rad/frame: the fastest any plane turns (slow, on its lift fan)
 const AIR_CLEAR = 70; // how far it keeps off the ground ahead (unless it is meant to be low)
 const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -88,13 +91,14 @@ class Plane {
     this.face = this.dir || 1; // which way it is drawn upright (it only rolls over once level)
     this.nav = null;
     this.x = group.from.x; this.y = group.from.y;
+    this.snap = true; // (the sprite jumps to it: see follow)
   }
 
   get name() { return `${this.owner.name}'s ${shortName(this.w)}`; }
   get fl() { return FLIGHT[this.kind] || FLIGHT.dive; }
   // shootable while it is in the sky over the map (not before take-off, nor while out of sight)
   get targetable() { return this.alive && this.state !== 'wait' && this.state !== 'out'; }
-  center() { return { x: this.x, y: this.y - this.hh / 2 }; }
+  center() { return { x: this.sx ?? this.x, y: (this.sy ?? this.y) - this.hh / 2 }; } // (where it is drawn: what you see is what you hit)
 
   // fly to a point (or wherever to() says each frame): o.v the speed to hold, o.arrive to slow to a
   // stop on it, o.r how close counts (going past it counts too), o.clear how far to keep off the
@@ -171,24 +175,34 @@ class Plane {
     }
     if (this.nav) this.steer();
     if (this.state === 'leave' && !this.nav) this.alive = false; // home (not shot down)
+    if (this.state === 'wait' || this.state === 'out') this.snap = true;
+    this.follow();
     this.orient();
   }
 
   // drawn along its heading; it stays upright-side the same way through a loop, and rolls over
   // only once it has been flying level the other way for a moment
+  follow() {
+    if (this.snap || this.sx === undefined) { this.sx = this.x; this.sy = this.y; this.svx = this.vx; this.svy = this.vy; this.snap = false; return; }
+    this.svx += (this.x - this.sx) * AIR_SPRING + (this.vx - this.svx) * AIR_DAMP;
+    this.svy += (this.y - this.sy) * AIR_SPRING + (this.vy - this.svy) * AIR_DAMP;
+    this.sx += this.svx; this.sy += this.svy;
+  }
+
   orient() {
-    const flying = this.nav && this.sp > 1.2;
+    const sv = Math.hypot(this.svx, this.svy), flying = this.nav && this.sp > 1.2 && sv > 1;
+    const hd = flying ? Math.atan2(this.svy, this.svx) : this.hd; // (the way the sprite is actually going)
     if (flying) {
-      const c = Math.cos(this.hd);
+      const c = Math.cos(hd);
       if (Math.abs(c) > 0.8 && Math.sign(c) !== this.face) { if (++this.lvl > 12) { this.face = Math.sign(c); this.lvl = 0; } } else this.lvl = 0;
     } else if (this.state === 'hover') this.face = this.dir || this.face;
-    const want = flying ? wrapA(this.face > 0 ? this.hd : this.hd - Math.PI) : 0;
-    this.ang = wrapA(this.ang + wrapA(want - this.ang) * 0.3);
+    const want = flying ? wrapA(this.face > 0 ? hd : hd - Math.PI) : 0;
+    this.ang = wrapA(this.ang + wrapA(want - this.ang) * 0.2);
   }
 
   takeOff() {
     const G = this.group, F = this.from || G.from;
-    this.state = 'launch'; this.t = 0; this.x = F.x; this.y = F.y; this.dir = this.launchDir || this.dir; this.face = this.dir;
+    this.state = 'launch'; this.t = 0; this.x = F.x; this.y = F.y; this.snap = true; this.dir = this.launchDir || this.dir; this.face = this.dir;
     if (this.i % 3 === 0) this.game.sfx.click();
     if (!G.deck) return; // (VTOL: see update)
     const d = this.dir;
@@ -202,7 +216,7 @@ class Plane {
   comeIn() {
     const s = this.group.slot(this.i), ax = this.group.side;
     this.state = 'inbound'; this.t = 0;
-    this.x = s.x - ax * 760; this.y = s.y - 620;
+    this.x = s.x - ax * 760; this.y = s.y - 620; this.snap = true;
     this.hd = Math.atan2(s.y - this.y, s.x - this.x); this.sp = this.fl.cruise; this.face = ax;
     this.toSlot();
   }
@@ -248,7 +262,7 @@ class Plane {
     const L = PLANE_LOOK[this.prop ? 'prop' : this.kind] || PLANE_LOOK.dive, f = this.face || 1, S = PLANE_S;
     const len = L.len, half = len / 2;
     ctx.save();
-    ctx.translate(Math.round(this.x), Math.round(this.y - 8));
+    ctx.translate(Math.round(this.sx), Math.round(this.sy - 8));
     ctx.rotate(this.ang);
     const box = (lx, ty, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(f > 0 ? lx * S : -(lx + w) * S), Math.round(ty * S), Math.max(1, Math.round(w * S)), Math.max(1, Math.round(h * S))); };
     const c = (v, k = 1) => rgb(v.map((u) => clamp(u * k, 0, 255)));
@@ -313,7 +327,7 @@ class Plane {
     }
     ctx.restore();
     if (this.targetable) { // its health (and a fortress's armour) under every plane in the sky
-      const x = Math.round(this.x), y = Math.round(this.y + 12), bw = this.kind === 'fortress' || this.kind === 'heavy' ? 40 : 28;
+      const x = Math.round(this.sx), y = Math.round(this.sy + 12), bw = this.kind === 'fortress' || this.kind === 'heavy' ? 40 : 28;
       ctx.fillStyle = 'rgba(14,12,22,0.75)'; ctx.fillRect(x - bw / 2 - 1, y - 1, bw + 2, this.maxArmour ? 9 : 6);
       ctx.fillStyle = this.owner.color; ctx.fillRect(x - bw / 2, y, Math.round(bw * clamp(this.hp / this.maxHp, 0, 1)), 4);
       if (this.maxArmour) { ctx.fillStyle = '#c8d2e4'; ctx.fillRect(x - bw / 2, y + 5, Math.round(bw * clamp(this.armour / this.maxArmour, 0, 1)), 2); }
@@ -454,7 +468,7 @@ function startAttack(g, p) {
       p.ord--;
       const sp = Math.min(16, p.sp);
       const guide = heavy ? { arm: 2, burn: 300, seek: 4, apex: false, turn: 5, range: Z, cone: 180, lift: 0.4, brake: false } : BOMB_GUIDE;
-      const b = new Projectile(g, planeOrd(G, { kin: DIVE_KIN, guide, visR: w.dmgR * 2.2 }), p.owner, p.x, p.y + 6, Math.cos(p.hd) * sp, Math.sin(p.hd) * sp, p.i === 0);
+      const b = new Projectile(g, planeOrd(G, { kin: DIVE_KIN, guide, visR: w.dmgR * 2.2 }), p.owner, p.sx, p.sy + 6, Math.cos(p.hd) * sp, Math.sin(p.hd) * sp, p.i === 0);
       b.launch = Math.PI / 2;
       b.prefer = 'rival'; b.wseed = rng.int(0, 1e9);
       g.projectiles.push(b);
@@ -467,7 +481,7 @@ function startAttack(g, p) {
     const x1 = clamp(gx - side * 560, 10, WORLD_W - 10), x2 = clamp(gx - side * 230, 10, WORLD_W - 10);
     p.go(climb(100), up, () => p.go({ x: x1, y: ground(x1) - 80 }, { v: F.dive, r: 60, clear: 0 },
       () => p.go({ x: x2, y: ground(x2) - 30 }, { v: F.cruise, r: 34, clear: 16 }, () => {
-        if (p.ord > 0) { p.ord--; g.projectiles.push(new Torpedo(g, p.owner, planeOrd(G), p.x, side)); g.sfx.click(); }
+        if (p.ord > 0) { p.ord--; g.projectiles.push(new Torpedo(g, p.owner, planeOrd(G), p.sx, side)); g.sfx.click(); }
         p.passDone();
         const px = clamp(gx + side * 260, 10, WORLD_W - 10);
         p.go({ x: px, y: ground(px) - 260 }, { v: F.top, r: 90 }, () => p.rejoin());
@@ -482,7 +496,7 @@ function startAttack(g, p) {
       if (p.ord <= 0 || fire++ % 6) return;
       p.ord--;
       const tx = gx - p.x, ty = gy - 10 - p.y, d = Math.hypot(tx, ty) || 1;
-      const r = new Projectile(g, { ...planeOrd(G), kind: 'rocket', guide: w.guide }, p.owner, p.x, p.y + 6, (tx / d) * 13, (ty / d) * 13, p.i === 0);
+      const r = new Projectile(g, { ...planeOrd(G), kind: 'rocket', guide: w.guide }, p.owner, p.sx, p.sy + 6, (tx / d) * 13, (ty / d) * 13, p.i === 0);
       r.launch = Math.PI / 3;
       g.projectiles.push(r);
       g.sfx.click();
@@ -504,7 +518,7 @@ function startAttack(g, p) {
       if (!run) { run = p.nav && side * (p.nav.to().x - p.x) > 0 && Math.sign(p.vx) === side; return; }
       if (k < n && side * (p.x - xs[k]) >= 0) {
         k++; p.ord--;
-        const b = new Projectile(g, planeOrd(G), p.owner, p.x, p.y + 8, p.vx, Math.max(0, p.vy), p.i === 0);
+        const b = new Projectile(g, planeOrd(G), p.owner, p.sx, p.sy + 8, p.vx, Math.max(0, p.vy), p.i === 0);
         b.launch = Math.PI / 2;
         g.projectiles.push(b);
         g.sfx.click();
@@ -525,7 +539,7 @@ function startAttack(g, p) {
           const q = e.center(), dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy);
           if (k % 4 === 0 && d < 320 && Math.abs(wrapA(Math.atan2(dy, dx) - p.hd)) < 0.35) {
             p.ord--;
-            g.lasers.push(new Laser(p.x, p.y, q.x, q.y, '#ffe8a0', 2, 6));
+            g.lasers.push(new Laser(p.sx, p.sy, q.x, q.y, '#ffe8a0', 2, 6));
             if (rng.next() < 0.85) g.damage(e, gunDmg * 3, p.owner, { aa: true });
           }
           return;
@@ -545,7 +559,7 @@ function startAttack(g, p) {
       const tx = gx + (rng.next() - 0.5) * 40 - p.x, ty = gy - 8 - p.y, d = Math.hypot(tx, ty) || 1;
       if (diving && k % 4 === 0 && p.ord > 0 && d < 380 && Math.abs(wrapA(Math.atan2(ty, tx) - p.hd)) < 0.6) {
         p.ord--;
-        g.projectiles.push(new Projectile(g, { ...planeOrd(G), kind: 'gun', drift: 0.1, dmg: gunDmg }, p.owner, p.x, p.y + 4, (tx / d) * 16, (ty / d) * 16, false));
+        g.projectiles.push(new Projectile(g, { ...planeOrd(G), kind: 'gun', drift: 0.1, dmg: gunDmg }, p.owner, p.sx, p.sy + 4, (tx / d) * 16, (ty / d) * 16, false));
       }
     };
   }
@@ -567,7 +581,6 @@ Object.assign(Game.prototype, {
     if (G0) { // redirected: it flies over and strikes there on her next turn (hover, see Plane.update)
       G0.mark = mark;
       G0.side = t.x <= mark.x ? 1 : -1;
-      this.particles.text(mark.x, mark.y - 30, 'squad redirected', '#ffd0d4');
       this.events.push(`${t.name} redirects a squad.`);
       return G0;
     }
@@ -667,13 +680,13 @@ Object.assign(Game.prototype, {
     if (p.armour > 0) { // a fortress's armour takes a whole hit, however big, like a girl's
       const a = Math.min(amt, p.armour);
       p.armour -= a;
-      if (hit) this.hitPopup(p.x, p.y - 26, a, hit, p);
-      else this.particles.text(p.x, p.y - 26, String(Math.round(a)), '#c8d2e4');
+      if (hit) this.hitPopup(p.sx, p.sy - 26, a, hit, p);
+      else this.particles.text(p.sx, p.sy - 26, String(Math.round(a)), '#c8d2e4');
       return;
     }
     p.hp -= amt;
-    if (hit) this.hitPopup(p.x, p.y - 26, amt, hit, p);
-    else this.particles.text(p.x, p.y - 26, String(Math.round(amt)), '#ffffff');
+    if (hit) this.hitPopup(p.sx, p.sy - 26, amt, hit, p);
+    else this.particles.text(p.sx, p.sy - 26, String(Math.round(amt)), '#ffffff');
     if (p.hp > 0) return;
     p.alive = false; // (no bounty: they're somebody's planes)
     const c = p.center();
@@ -707,23 +720,28 @@ Object.assign(Game.prototype, {
     this.drawAA(ctx);
   },
 
-  // HUD: what each waiting squad is and when it hits
+  // HUD over each waiting squad: its badge, then a pip a pass it has left (like an autoloader's
+  // rounds), and only if it is not striking on her next turn, how long until it does
   drawPlaneLabels(ctx, cam) {
     if (!this.airGroups) return;
-    ctx.font = `11px ${HUD_FONT}`;
     ctx.textAlign = 'center';
     for (const G of this.airGroups) {
       const live = G.planes.filter((p) => p.alive && p.state === 'hover');
       if (!live.length || G.striking) continue;
       const left = Math.max(0, G.due - (G.owner.turnsTaken || 0));
-      const passes = Math.max(...live.map((p) => p.passes));
-      const txt = `${G.owner.name} · ${shortName(G.w)} · ${live.length} plane${live.length > 1 ? 's' : ''} · ${passes} pass${passes > 1 ? 'es' : ''} left · ${left <= 1 ? 'strikes next turn' : `strikes in ${left} turns`}`;
-      const c = squadCentre(G);
-      const x = Math.round(cam.sx(c.x)), y = Math.round(cam.sy(c.y - 40) - 30);
-      const w = ctx.measureText(txt).width + 12;
-      ctx.fillStyle = 'rgba(14,12,22,0.72)'; ctx.fillRect(x - w / 2, y - 11, w, 15);
-      ctx.fillStyle = G.owner.color; ctx.fillRect(x - w / 2, y - 11, 3, 15);
-      ctx.fillStyle = '#e8e4f4'; ctx.fillText(txt, x, y);
+      const passes = Math.max(...live.map((p) => p.passes)), wait = left > 1 ? `in ${left}` : '';
+      const c = squadCentre(G), rc = RARITY[G.w.rarity].ui;
+      ctx.font = `11px ${HUD_FONT}`;
+      const tw = wait ? ctx.measureText(wait).width + 8 : 0;
+      const w = 22 + 4 + passes * 10 + tw;
+      const x = Math.round(cam.sx(c.x) - w / 2), y = Math.round(cam.sy(c.y - 40) - 44);
+      ctx.fillStyle = HUD.plate; ctx.fillRect(x, y, 22, 20);
+      ctx.fillStyle = rc;
+      ctx.fillRect(x, y, 22, 1); ctx.fillRect(x, y + 19, 22, 1); ctx.fillRect(x, y, 1, 20); ctx.fillRect(x + 21, y, 1, 20);
+      ctx.fillText(badgeText(G.w), x + 11, y + 14);
+      ctx.fillStyle = G.owner.color; ctx.fillRect(x, y + 21, 22, 2); // (whose)
+      for (let i = 0; i < passes; i++) { ctx.fillStyle = HUD.accent; ctx.fillRect(x + 26 + i * 10, y + 7, 7, 7); }
+      if (wait) { ctx.fillStyle = '#e8e4f4'; ctx.fillText(wait, x + 26 + passes * 10 + tw / 2, y + 14); }
     }
   },
 });
