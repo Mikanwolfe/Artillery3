@@ -160,7 +160,8 @@ class Input {
         if (down && !e.repeat) c.charge = true;
         else if (!down) c.charge = false;
         break;
-      case 'KeyS': case 'KeyE': case 'Tab': if (down && !e.repeat) this.queue.push({ cycle: 1 }); break;
+      case 'KeyE': case 'Tab': if (down && !e.repeat) this.queue.push({ cycle: 1 }); break;
+      case 'KeyS': if (down && !e.repeat) this.queue.push({ drop: true }); break;
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
       case 'KeyW': case 'KeyJ': if (down && !e.repeat) this.queue.push({ jump: true }); break;
@@ -198,6 +199,8 @@ class Game {
     this.traces = [];
     this.crates = [];
     this.flyovers = [];
+    this.planes = [];
+    this.airGroups = [];
     this.slides = [];
     this.fronts = [];
     this.mobs = [];
@@ -420,6 +423,10 @@ class Game {
     this.traces = [];
     this.crates = [];
     this.flyovers = [];
+    this.planes = [];
+    this.airGroups = [];
+    this.aaRounds = [];
+    this.strikeResolve = false;
     this.goldenRound = false;
     this.slides = [];
     this.salvo = null;
@@ -489,6 +496,8 @@ class Game {
     do { this.turnPtr = (this.turnPtr + 1) % this.order.length; } while (!this.tanks[this.order[this.turnPtr]].alive);
     const t = this.tanks[this.order[this.turnPtr]];
     this.active = t;
+    t.turnsTaken = (t.turnsTaken || 0) + 1;
+    this.aaNewTurn();
     this.sfx.newTurn();
     this.turnSerial++;
     this.turnCount++;
@@ -515,11 +524,12 @@ class Game {
     this.infraTurn(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
-    if (this.range) { t.reload = {}; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting
+    if (this.range) { t.reload = {}; t.sorties = {}; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting
     t.tickReloads();
     t.drill = hasTrait(t, 'drill');
-    t.shotsLeft = t.weapon.clip; // autoloaders reload every turn
+    t.shotsLeft = t.shotsFor(t.weapon); // autoloaders reload every turn (planes: the squads she has left)
     t.firedThisTurn = false;
+    if (this.startStrikes(t)) return; // her planes from last turn hit first
     this.startAim();
   }
 
@@ -566,6 +576,9 @@ class Game {
     this.stepGiants();
     this.stepCold();
     this.stepDrones();
+    this.stepPlanes();
+    this.stepAA();
+    this.updateAA();
     this.updateHazards();
     if (this.phase === 'aim') this.updateAim();
     else if (this.phase === 'resolve') this.updateResolve();
@@ -612,7 +625,8 @@ class Game {
         }
         continue;
       }
-      const gy = this.groundAt(t.x, t.y);
+      if (t.dropT > 0) t.dropT--;
+      const gy = this.groundAt(t.x, t.y, t.dropT > 0);
       if (t.y < gy - 0.5) {
         if (!t.falling) t.fallFrom = t.y;
         t.falling = true;
@@ -829,7 +843,7 @@ class Game {
   // L: leap, the same arc on a far bigger scale, for LEAP_FUEL of a full tank; she lands softly
   jump(t, leap = false) {
     const cost = Math.ceil(t.maxFuel * (leap ? LEAP_FUEL : JUMP_FUEL) * (hasTrait(t, 'wings') ? 0.5 : 1)); // Ikaros's wings: half
-    if (this.phase !== 'aim' || t !== this.active || t.falling || t.fuel < cost) { this.sfx.deny(); return false; }
+    if (this.phase !== 'aim' || t !== this.active || t.falling || t.fuel < cost || (leap && t.upgrades.deck)) { this.sfx.deny(); return false; } // (no leaping with a flight deck on)
     t.fuel -= cost;
     t.vy = leap ? LEAP_VY : JUMP_VY;
     t.jvx = t.facing * (leap ? LEAP_VX : JUMP_VX);
@@ -868,6 +882,8 @@ class Game {
           if (Math.hypot(dx, dy) < 12) continue;
           t.facing = dx < 0 ? -1 : 1;
           t.elev = deg(Math.atan2(-dy, Math.abs(dx))) - t.hullAngle(t.facing);
+        } else if (a.drop) { // S: step off the bridge she stands on, to the ground below
+          if (!t.falling && t.y < this.terrain.hAt(t.x) - 6 && this.groundAt(t.x, t.y, true) > t.y + 4) { t.dropT = 8; this.sfx.click(); } else this.sfx.deny();
         } else if (a.jump) {
           this.jump(t, a.jump === 'leap');
         } else if (a.repair) {
@@ -911,7 +927,10 @@ class Game {
   fire(t) {
     const w = t.weapon;
     if (this.range) { this.range.shots++; this.range.last = 0; }
-    if (!t.firedThisTurn && reloadOf(w)) t.reload[w.id] = reloadOf(w) + 1; // sits out reloadOf(w) of its owner's turns
+    if (w.air) { // a squad flies; with the last one gone the weapon rearms
+      t.sorties[w.id] = t.sortiesLeft(w) - 1;
+      if (t.sorties[w.id] <= 0) t.reload[w.id] = reloadOf(w) + 1;
+    } else if (!t.firedThisTurn && reloadOf(w)) t.reload[w.id] = reloadOf(w) + 1; // sits out reloadOf(w) of its owner's turns
     // a golden crate's long uplink: the first shot of each of her next few turns calls MAIA
     const linked = !!t.uplink || (t.uplinkTurns > 0 && !t.firedThisTurn);
     if (t.uplinkTurns > 0 && !t.firedThisTurn) t.uplinkTurns--;
@@ -1016,6 +1035,16 @@ class Game {
       else this.nextTurn();
       return;
     }
+    if (this.strikeResolve) { // her planes have hit: now her turn proper
+      this.strikeResolve = false;
+      for (const G of this.airGroups) G.striking = false;
+      this.react(this.report);
+      this.report = null;
+      if (this.tanks.filter((x) => x.alive).length <= 1) this.endRound();
+      else if (t.alive) this.startAim();
+      else this.nextTurn();
+      return;
+    }
     if (this.events.length > 40) this.events.splice(0, this.events.length - 40);
     // G.W. Tiger's drill: the first shot of her turn hit a rival, so she gets the round back
     const drilled = t && t.drill && this.report && (this.report.bestQ || 0) >= DRILL_QUALITY;
@@ -1025,7 +1054,7 @@ class Game {
     this.report = null;
     const alive = this.tanks.filter((x) => x.alive).length;
     if (alive <= 1) this.endRound();
-    else if (t.alive && t.shotsLeft > 0) this.startAim(); // autoloader: same tank fires again
+    else if (t.alive && t.shotsLeft > 0 && !(t.isCpu && t.weapon.air)) this.startAim(); // autoloader: same tank fires again (a CPU keeps its other squad)
     else this.nextTurn();
   }
 
@@ -1106,11 +1135,25 @@ class Game {
   impact(p, r) {
     const w = p.w;
     if (r && r.hit === 'tree' && this.report) this.report.treeHit = true;
+    if (w.tower) { // a radio tower's broken top has come down on something
+      this.explode(p.x, p.y, { dmg: w.dmg, dmgR: w.dmgR, explR: w.explR, from: { x: -p.vx, y: -p.vy } }, null, 'shell');
+      this.towerLanded(p);
+      return;
+    }
+    if (w.kind === 'air') { // the designator's dot has landed: a squad (or a whole fleet) is coming
+      if (r && r.hit !== 'out') {
+        if (w.fleet) this.projectiles.push(new FleetStrike(this, p.owner, p, w));
+        else this.launchSquad(p);
+      }
+      return;
+    }
     if (w.kind === 'laser') {
       // the pointer has landed: the drone climbs until it can see the spot and fires (lasers.js)
       if (r && r.hit !== 'out') this.projectiles.push(new DroneBeam(this, w, p.owner, p));
     } else {
-      this.explode(p.x, p.y, { ...this.shotBonus(p), from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
+      const bonus = this.shotBonus(p);
+      if (p.aaCut) bonus.dmg *= p.aaCut; // got through the point defence, damaged
+      this.explode(p.x, p.y, { ...bonus, from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
         for (let i = 0; i < 30; i++) {
           const a = -Math.PI * (0.1 + 0.8 * rng.next());
@@ -1257,12 +1300,15 @@ class Game {
 
   // flak burst: fragments rain down from the airburst
   shrapnel(p) {
-    const frag = { id: 'frag', name: 'Shrapnel', kind: 'shell', dmg: p.w.dmg * 0.2, dmgR: 24, explR: 2, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 10, frag: true, incendiary: p.w.incendiary || 0 };
-    const n = p.w.incendiary ? 3 : 6 + Math.min(6, Math.round(p.w.dmgR / 40)); // incendiary: fewer, burning
+    // fused on an aircraft, the burst throws a dense, fast cone of heavier fragments at it
+    const air = p.fuseTarget && p.fuseTarget.alive ? p.fuseTarget.center() : null;
+    const frag = { id: 'frag', name: 'Shrapnel', kind: 'shell', dmg: p.w.dmg * (air ? 0.3 : 0.2), dmgR: 24, explR: 2, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 10, frag: true, incendiary: p.w.incendiary || 0 };
+    const n = p.w.incendiary ? 3 : (air ? 10 : 6) + Math.min(6, Math.round(p.w.dmgR / 40)); // incendiary: fewer, burning
     for (let i = 0; i < n; i++) {
-      const a = Math.PI / 2 + (rng.next() - 0.5) * 1.6; // a downward cone
-      const sp = 3 + rng.next() * 5;
-      const f = new Projectile(this, frag, p.owner, p.x, p.y, Math.cos(a) * sp + p.vx * 0.2, Math.sin(a) * sp, false);
+      // a downward cone, or a cone thrown at the aircraft, so the fragments hit it
+      const a = air ? Math.atan2(air.y - p.y, air.x - p.x) + (rng.next() - 0.5) * 0.7 : Math.PI / 2 + (rng.next() - 0.5) * 1.6;
+      const sp = air ? 8 + rng.next() * 5 : 3 + rng.next() * 5;
+      const f = new Projectile(this, frag, p.owner, p.x, p.y, Math.cos(a) * sp + p.vx * (air ? 0 : 0.2), Math.sin(a) * sp, false);
       f.age = 10;
       this.projectiles.push(f);
     }
@@ -1322,6 +1368,7 @@ class Game {
     if (!t.alive || amt <= 0) return;
     if (owner && owner.isMob && t.isMob) return; // hostiles never hurt each other
     if (owner && owner.isMob) owner = null; // mob attacks count as the environment
+    if (t.isPlane) { this.damagePlane(t, amt, owner, def, hit); return; }
     if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
     if (t.isSat) { this.damageSat(t, amt, owner, hit); return; }
     if (t.dummy) { this.rangeHit(t, amt, hit); return; } // the Codex's training dummy
@@ -1568,6 +1615,11 @@ class Game {
       if (!u || lvl >= u.costs.length || tank.money < u.costs[lvl]) { this.sfx.deny(); return false; }
       tank.money -= u.costs[lvl];
       tank.upgrades[id] = lvl + 1;
+    } else if (kind === 'aa') { // an air-defence mount into a free slot (two of the same can't share)
+      const a = AA_BY_ID[id], slot = tank.aa.indexOf(null);
+      if (!a || slot < 0 || tank.aa.includes(id) || tank.money < a.cost) { this.sfx.deny(); return false; }
+      tank.money -= a.cost;
+      tank.aa[slot] = id;
     } else if (kind === 'kit') {
       if (tank.kits >= REPAIR_MAX || tank.money < REPAIR_COST) { this.sfx.deny(); return false; }
       tank.money -= REPAIR_COST;
@@ -1584,6 +1636,16 @@ class Game {
 
   // the starter is the gun that never reloads, so (rebalanced) it can't be sold
   canSell(tank, id) { return tank.weapons.length > 1 && !(BALANCE === 'rebalanced' && WEAPON_BY_ID[id].starter); }
+
+  // a girl's own mount (Zuihou's) came with her and stays; bought ones sell back in full
+  canSellAA(tank, id) { return !!AA_BY_ID[id] && !(tank.vehicle.aa || []).includes(id); }
+  sellAA(tank, id) {
+    if (!this.canSellAA(tank, id)) { this.sfx.deny(); return false; }
+    tank.aa[tank.aa.indexOf(id)] = null;
+    tank.money += AA_BY_ID[id].cost;
+    this.sfx.sell();
+    return true;
+  }
 
   sell(tank, id) {
     if (!this.canSell(tank, id)) { this.sfx.deny(); return false; }
@@ -1651,6 +1713,26 @@ class Game {
       const u = VEHICLE_UPGRADES.find((x) => x.id === id);
       const lvl = t.upgrades[id] | 0;
       if (lvl < 1 && t.money - reserve >= u.costs[lvl] * 1.5) { t.money -= u.costs[lvl]; t.upgrades[id] = lvl + 1; }
+    }
+    // air defence (not Easy): point defence if rivals carry rockets or planes, else anti-air; the
+    // best mount it can afford comfortably, one of each role for a second slot
+    if (t.type !== 'easy') {
+      const rivals = this.tanks.filter((x) => x !== t).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
+      const missiles = rivals.some((w) => w.kind === 'rocket' || w.carpet);
+      const air = rivals.some((w) => w.air) || this.round >= 2;
+      for (let slot = t.aa.indexOf(null); slot >= 0; slot = t.aa.indexOf(null)) {
+        const have = t.aa.map((id) => AA_BY_ID[id]).filter(Boolean);
+        const role = have.length ? (have[0].role === 'missile' ? 'air' : 'missile') : missiles ? 'missile' : air ? 'air' : null;
+        if (!role) break;
+        const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost * 1.6 <= t.money - reserve).sort((a, b) => b.cost - a.cost)[0];
+        if (!pick) break;
+        t.money -= pick.cost;
+        t.aa[slot] = pick.id;
+      }
+    }
+    if (t.type !== 'easy' && !hasTrait(t, 'flightdeck') && !t.upgrades.deck && t.weapons.some((id) => WEAPON_BY_ID[id].air)) {
+      const u = VEHICLE_UPGRADES.find((x) => x.id === 'deck');
+      if (t.money - reserve >= u.costs[0] * 1.5) { t.money -= u.costs[0]; t.upgrades.deck = 1; }
     }
     for (let n = 0; n < 6; n++) {
       const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour';
@@ -1743,7 +1825,7 @@ class Game {
       balance: this.balance, events: this.events_on, map: this.mapChoice,
       tanks: this.tanks.map((t) => ({
         idx: t.idx, name: t.name, type: t.type, vehicle: t.vehicle.id, money: t.money, wins: t.wins,
-        upgrades: t.upgrades, weapons: t.weapons, kits: t.kits, abilities: t.abilities, stats: t.stats,
+        upgrades: t.upgrades, weapons: t.weapons, kits: t.kits, abilities: t.abilities, stats: t.stats, aa: t.aa,
       })),
       savedAt: Date.now(),
     };
@@ -1780,6 +1862,7 @@ class Game {
       const ws = (s.weapons || []).filter((id) => WEAPON_BY_ID[id]).slice(0, MAX_WEAPONS);
       t.weapons = ws.length ? ws : [t.vehicle.weapon.id];
       t.kits = clamp(s.kits | 0, 0, REPAIR_MAX);
+      if (Array.isArray(s.aa)) t.aa = t.aa.map((v, i) => (AA_BY_ID[s.aa[i]] ? s.aa[i] : v));
       for (const a of ABILITIES) t.abilities[a.id] = clamp(s.abilities?.[a.id] | 0, 0, 1);
       t.stats = { dealt: s.stats?.dealt || 0, kills: s.stats?.kills | 0 };
       t.resetRound(WORLD_W / 2, this.terrain);
@@ -1861,6 +1944,7 @@ class Game {
     if (aiming && !this.cpu) this.drawGhost(ctx, aiming);
     for (const t of this.tanks) t.draw(ctx, t === aiming);
     this.drawDrones(ctx, aiming && !this.cpu ? aiming : null);
+    this.drawPlanes(ctx);
     if (aiming && !this.cpu) this.drawAimGuide(ctx, aiming);
     if (aiming && !this.cpu && aiming.mark) this.drawMark(ctx, aiming);
     if (aiming && hasTrait(aiming, 'designator')) { // her laser dot sits on the designated target
@@ -1972,6 +2056,7 @@ class Game {
     const live = this.phase === 'aim' ? this.active : null;
     for (const t of this.tanks) t.drawLabel(ctx, cam.sx(t.x), cam.sya(t.y, LABEL_ANCHOR), t === live);
     this.drawHazardLabels(ctx, cam);
+    this.drawPlaneLabels(ctx, cam);
     this.particles.drawText(ctx, cam);
     for (const t of this.tanks) t.drawSpeech(ctx, cam.sx(t.x), cam.sya(t.y, LABEL_ANCHOR));
     // shells above the view

@@ -23,7 +23,7 @@ const BEAM_STEP = 5; // beam trace resolution
 const CEIL_STEP = 6; // height search resolution
 
 function droneOrigin(t, h = t.drone ? t.drone.h : 0) { return { x: t.x - t.facing * DRONE_BACK, y: t.y - DRONE_REST - h }; }
-function laserCeil(w) { return 3 * (w.ceil || 100 + 20 * w.rarity); } // how far above DRONE_CLEAR it can climb
+function laserCeil(w) { return 4.5 * (w.ceil || 100 + 20 * w.rarity); } // how far above DRONE_CLEAR it can climb (half as high again as it was)
 
 // march a beam from (x0,y0) toward (x1,y1); `solid` only (no targets) for line-of-sight checks.
 // Stops on terrain, forts, bridge decks or (unless solid) the first target hitbox in the way.
@@ -41,6 +41,7 @@ function beamTrace(terrain, targets, owner, x0, y0, x1, y1, solid = false) {
     if (terrain.ahu && terrain.ahuAt(x, y)) return { x, y, hit: 'ahu' };
     if (solid) continue;
     for (const t of targets) {
+      if (t.isPlane && t.owner === owner) continue;
       if (!t.alive || t === owner) continue;
       const hw = t.hw || TANK_W / 2 + 2, hh = t.hh || TANK_H + 2;
       const by = t.hitY === undefined ? t.y : t.hitY;

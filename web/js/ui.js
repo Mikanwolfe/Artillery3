@@ -222,10 +222,25 @@ const UI = {
   // the original shop's badge: a square outlined in the rarity colour, two big letters and the word
   badge(w, small = false) {
     const r = RARITY[w.rarity];
-    return `<span class="badge${small ? ' small' : ''}" style="--rc:${r.ui}"><b>${badgeText(w)}</b>${small ? '' : `<i>${r.word}</i>`}</span>`;
+    return `<span class="badge${small ? ' small' : ''}" style="--rc:${r.ui}"><b>${w.role ? r.word[0] + 'd' : badgeText(w)}</b>${small ? '' : `<i>${r.word}</i>`}</span>`;
   },
 
   weaponStats(w) {
+    if (w.air) { // planes: what a squad is, and how often it flies
+      const A = w.air, F = w.fleet;
+      const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : `${A.planes}/squad`], ['Squads', w.clip],
+        ['Rearm', `${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''}`], ['Type', F ? 'fleet' : A.type], ['Strike', `in ${A.delay || 1} turn${(A.delay || 1) > 1 ? 's' : ''}`], ['Plane HP', A.hp]];
+      if (A.jet) rows.push(['Jet', 'AA ½']);
+      if (w.guide || A.seek) rows.push(['Seek', A.seek || w.guide.range]);
+      return rows.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
+    }
+    if (w.role) { // an air-defence mount
+      const rows = [['Role', w.role === 'missile' ? 'point defence' : 'anti-air'], ['Range', w.range]];
+      if (w.role === 'missile') rows.push(['Kill', `${Math.round(w.pk * 100)}%`], ['Dent', `−${Math.round(w.cut * 100)}%`], ['vs air', `${w.dmg}×${w.perTurn}`]);
+      else rows.push(['Burst', w.dmg], ['Hit', `${Math.round(w.acc * 100)}%`], ['Bursts', `${w.perTurn}/turn`], ['vs missiles', `${Math.round(w.pk * 100)}%`]);
+      if (w.splash) rows.push(['Splash', w.splash]);
+      return rows.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
+    }
     const rows = [['Dmg', w.salvo > 1 ? `${w.dmg}×${w.salvo}` : w.dmg], ['Rad', w.dmgR], ['Rng', w.maxCharge], ['Spr', w.disp], ['Elev', `${w.elevMin}…${w.elevMax}°`]];
     if (w.clip > 1) rows.push(['Load', `${w.clip}/turn`]);
     if (reloadOf(w)) rows.push(['Rld', `${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''}`]);
@@ -329,14 +344,14 @@ const UI = {
   renderRack(g) {
     const t = g.active;
     const show = t && t.alive && (g.phase === 'aim' || g.phase === 'resolve');
-    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, t.uplinkTurns || 0, !!g.cpu, g.phase, BALANCE, t.fuel >= Math.ceil(t.maxFuel * JUMP_FUEL), t.fuel >= Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)), !!t.falling]) : '';
+    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.sorties, t.aa, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, t.uplinkTurns || 0, !!g.cpu, g.phase, BALANCE, t.fuel >= Math.ceil(t.maxFuel * JUMP_FUEL), t.fuel >= Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)), !!t.falling]) : '';
     if (sig === this.last.rack) return;
     this.last.rack = sig;
     $('rack').hidden = !show;
     if (!show) return;
     $('rack').classList.toggle('cpu', !!g.cpu);
     $('rack').style.setProperty('--pc', t.color);
-    $('rack-w').innerHTML = `<span class="rk">S</span>` + t.weapons.map((id, i) => {
+    $('rack-w').innerHTML = `<span class="rk">Q·E</span>` + t.weapons.map((id, i) => {
       const w = WEAPON_BY_ID[id];
       const on = i === t.weaponIdx;
       const left = t.reloadLeft(id);
@@ -344,9 +359,10 @@ const UI = {
       let st;
       if (on && t.firedThisTurn && t.shotsLeft > 0) st = `${t.shotsLeft} left`;
       else if (left > 0) st = `↻ ${left} turn${left > 1 ? 's' : ''}`;
+      else if (w.air) st = `${t.sortiesLeft(w)} squad${t.sortiesLeft(w) > 1 ? 's' : ''}`;
       else st = on ? (w.clip > 1 ? `${w.clip} shots` : 'in hand') : 'loaded';
-      const reloadNote = reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
-      const pips = on && w.clip > 1 ? `<span class="pips">${Array.from({ length: w.clip }, (_, k) => `<i class="${k < (t.firedThisTurn ? t.shotsLeft : w.clip) ? 'f' : ''}"></i>`).join('')}</span>` : '';
+      const reloadNote = w.air ? `${w.clip} squads, then rearms for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''}` : reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
+      const pips = on && w.clip > 1 ? `<span class="pips">${Array.from({ length: w.clip }, (_, k) => `<i class="${k < (t.firedThisTurn || w.air ? t.shotsLeft : w.clip) ? 'f' : ''}"></i>`).join('')}</span>` : '';
       return `<button class="slot w${on ? ' on' : ''}${left > 0 ? ' rl' : ''}" data-i="${i}" title="${esc(w.name)} · ${reloadNote}" ${left > 0 || (t.firedThisTurn && !on) ? 'disabled' : ''}>
         ${this.badge(w, true)}<span class="txt"><span class="nm">${esc(w.name)}</span><span class="st">${st}</span></span>${pips}
         ${left > 0 ? `<span class="rlbar"><i style="width:${Math.round(100 * (1 - left / total))}%"></i></span>` : ''}</button>`;
@@ -361,8 +377,12 @@ const UI = {
     const jumpCost = Math.ceil(t.maxFuel * JUMP_FUEL);
     ab.push(`<button class="slot a" data-jump="1" title="Jump: hop the way you face, for ${Math.round(JUMP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= jumpCost && !t.falling ? '' : 'disabled'}><span class="kb">W</span><span class="txt"><span class="nm">Jump</span><span class="st">${Math.round(JUMP_FUEL * 100)}% fuel</span></span></button>`);
     const leapCost = Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1));
-    ab.push(`<button class="slot a" data-jump="leap" title="Leap: bound far the way you face and land softly, for ${Math.round(LEAP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= leapCost && !t.falling ? '' : 'disabled'}><span class="kb">L</span><span class="txt"><span class="nm">Leap</span><span class="st">${Math.round(LEAP_FUEL * 100)}% fuel</span></span></button>`);
+    ab.push(`<button class="slot a" data-jump="leap" title="Leap: bound far the way you face and land softly, for ${Math.round(LEAP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= leapCost && !t.falling && !t.upgrades.deck ? '' : 'disabled'}><span class="kb">L</span><span class="txt"><span class="nm">Leap</span><span class="st">${Math.round(LEAP_FUEL * 100)}% fuel</span></span></button>`);
     if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% health and armour, takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
+    for (const id of t.aa || []) {
+      const a = AA_BY_ID[id];
+      if (a) ab.push(`<span class="slot a passive" title="${esc(a.name)}: ${esc(a.long)}"><span class="kb">AA</span><span class="txt"><span class="nm">${esc(a.name.replace(/^(Sengoku|NXi|LFS|Kotona) /, ''))}</span><span class="st">${a.role === 'missile' ? 'point defence' : 'anti-air'} · auto</span></span></span>`);
+    }
     if (t.uplinkTurns > 0) ab.push(`<span class="slot a armed uplink" title="Golden uplink: the first shot of each turn calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">${t.uplinkTurns} turn${t.uplinkTurns > 1 ? 's' : ''}</span></span></span>`);
     else if (t.uplink) ab.push(`<span class="slot a armed uplink" title="Satellite uplink: your next shot calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">next shot</span></span></span>`);
     $('rack-a').innerHTML = ab.join('');
@@ -427,8 +447,22 @@ const UI = {
       const f = this.shopFilter;
       $('shop-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === f));
       const list = WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) => forVehicle(w, tank.vehicle.id)).filter((w) =>
-        f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= w.cost : f === 'NXi' ? makerOf(w) === 'NXi' : f === 'hybrid' ? w.hybrid : w.kind === f);
-      $('shop-grid').innerHTML = list.map((w) => {
+        f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= w.cost : f === 'NXi' ? makerOf(w) === 'NXi' : f === 'hybrid' ? w.hybrid : f === 'Sengoku' ? makerOf(w).includes('Sengoku') : w.kind === f);
+      if (f === 'aa') { // air-defence mounts: their own slots
+        const freeSlot = tank.aa.indexOf(null);
+        $('shop-grid').innerHTML = AA_WEAPONS.map((a) => {
+          const r = RARITY[a.rarity], owned = tank.aa.includes(a.id), afford = tank.money >= a.cost;
+          const can = !owned && freeSlot >= 0 && afford;
+          return `<div class="card${owned ? ' owned-w' : ''}">${this.badge(a)}<div class="card-body">
+            <span class="maker">${esc(aaMaker(a))} · ${a.role === 'missile' ? 'point defence' : 'anti-air'}</span>
+            <h4 style="color:${r.ui}">${esc(a.name)}</h4>
+            <p title="${esc(a.long)}">${esc(a.short)}</p>
+            <div class="stats">${this.weaponStats(a)}</div>
+            <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(a.cost)}</span>
+            <button data-aa="${a.id}" ${can ? '' : 'disabled'}>${owned ? 'Mounted' : freeSlot < 0 ? 'Slots full' : afford ? 'Mount' : 'Short ' + money(a.cost - tank.money)}</button></div></div></div>`;
+        }).join('');
+        $('shop-grid').querySelectorAll('[data-aa]').forEach((b) => { b.onclick = () => { g.buy(tank, 'aa', b.dataset.aa); render(); }; });
+      } else $('shop-grid').innerHTML = list.map((w) => {
         const r = RARITY[w.rarity];
         const owned = tank.weapons.includes(w.id);
         const afford = tank.money >= w.cost;
@@ -436,7 +470,7 @@ const UI = {
         const maker = makerOf(w);
         const nxi = maker === 'NXi';
         return `<div class="card${nxi ? ' nxi' : ''}${owned ? ' owned-w' : ''}">${this.badge(w)}<div class="card-body">
-          ${maker ? `<span class="maker${nxi ? ' nxi' : ''}">${nxi ? 'NXi · November Division' : esc(maker)}</span>` : ''}
+          ${maker ? `<span class="maker${nxi ? ' nxi' : maker.includes('Sengoku') ? ' sgk' : ''}">${nxi ? 'NXi · November Division' : esc(maker)}</span>` : ''}
           <h4 style="color:${r.ui}">${esc(w.name)}</h4>
           <p title="${esc(w.long)}">${esc(w.short)}</p>
           <div class="stats">${this.weaponStats(w)}</div>
@@ -445,7 +479,7 @@ const UI = {
       }).join('') || '<div class="none">Nothing here. Try another filter.</div>';
       $('shop-count').textContent = `${tank.weapons.length}/4`;
       $('shop-note').textContent = BALANCE === 'rebalanced'
-        ? 'Bought guns reload for 1–3 of your turns after firing (by rarity); your starter never does. Own several to fire a big gun every turn.'
+        ? 'Bought guns reload for 1–3 of your turns after firing (by rarity); your starter never does. Planes fly their squads, then rearm (even a starter). Own several to fire something big every turn.'
         : '';
       $('shop-note').hidden = BALANCE !== 'rebalanced';
       $('shop-owned').innerHTML = tank.weapons.map((id) => {
@@ -453,11 +487,19 @@ const UI = {
         return `<div class="owned">${this.badge(w, true)}<span>${esc(w.name)}</span>
           <button data-s="${id}" ${g.canSell(tank, id) ? '' : 'disabled'} title="Sell">${g.canSell(tank, id) ? 'Sell ' + money(g.sellValue(w)) : w.starter ? 'Starter' : 'Last gun'}</button></div>`;
       }).join('');
+      $('shop-aa').innerHTML = tank.aa.map((id, i) => {
+        const a = AA_BY_ID[id];
+        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty mount${i ? ' (second)' : ''}: buy one under AA</span></div>`;
+        const st = this.game.canSellAA(tank, id);
+        return `<div class="owned">${this.badge(a, true)}<span>${esc(a.name)}</span>
+          <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(a.cost) : 'Hers'}</button></div>`;
+      }).join('');
+      $('shop-aa').querySelectorAll('[data-sa]').forEach((b) => { b.onclick = () => { g.sellAA(tank, b.dataset.sa); render(); }; });
       $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour]].map(([id, label, cur]) => {
         const cost = g.upgradeCost(tank, id);
         return `<div class="upg"><span>${label} <small>${cur} → ${Math.round(cur * 1.3)}</small></span>
           <button data-u="${id}" ${tank.money >= cost ? '' : 'disabled'}>${money(cost)}</button></div>`;
-      }).join('') + VEHICLE_UPGRADES.map((u) => {
+      }).join('') + VEHICLE_UPGRADES.filter((u) => !u.notFor || !hasTrait(tank, u.notFor)).map((u) => {
         const lvl = tank.upgrades[u.id] | 0;
         const maxed = lvl >= u.costs.length;
         const cost = u.costs[lvl];

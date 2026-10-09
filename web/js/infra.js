@@ -177,56 +177,45 @@ Object.assign(Game.prototype, {
     }
   },
 
-  // a section of tower broke: it and everything above topple away from the blast and crush what
-  // they land on
-  // (the broken part swings over about the break, picking up speed, and crushes on landing: stepTowers)
+  // a section of tower broke: it and everything above come away as one piece, flung off the break
+  // away from the blast, and fall like any shell (gravity, wind), crushing whatever they land on
+  // (Game.impact, w.tower)
   toppleTower(t, k, fromX) {
     const fallen = t.h - k;
-    if (fallen <= 0 || t.fall) return;
-    t.fall = { k, n: fallen, dir: Math.sign(t.x - fromX) || 1, ang: 0.02, w: 0.004, top: t.h === t.n };
+    if (fallen <= 0) return;
+    const T = this.terrain, g = T.hAt(t.x), L = fallen * TOWER_SEC, dir = Math.sign(t.x - fromX) || 1;
+    const def = { id: 'towerfall', name: 'Falling tower', kind: 'shell', tower: { L, n: fallen, top: t.h === t.n, base: k * TOWER_SEC, H: t.n * TOWER_SEC, dir },
+      dmg: Math.min(120, TOWER_CRUSH * fallen), dmgR: Math.max(40, L * 0.45), explR: 4, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 10, drift: 0.3 };
+    const p = new Projectile(this, def, null, t.x + dir * 8, g - k * TOWER_SEC - L / 2, dir * (2.2 + fallen * 0.35), -2.5, false);
+    p.spin = 0;
+    p.tw = t;
+    this.projectiles.push(p);
     t.h = k;
     this.sfx.thud();
     this.ui.notice(k ? 'The radio tower snaps!' : 'The radio tower is coming down!');
   },
 
-  stepTowers() {
-    const T = this.terrain;
-    for (const t of T.towers || []) {
-      const f = t.fall;
-      if (!f) continue;
-      f.w += 0.0045 + 0.012 * Math.sin(f.ang); // it tips slowly, then comes down fast
-      f.ang += f.w;
-      if (f.ang < Math.PI / 2) continue;
-      // down: it lies along the ground from the break, and crushes whatever is under it
-      t.fall = null;
-      const L = f.n * TOWER_SEC;
-      const a = t.x + f.dir * 6, b = t.x + f.dir * (6 + L);
-      t.debris.push({ x0: Math.min(a, b), x1: Math.max(a, b) });
-      const dmg = Math.min(120, TOWER_CRUSH * f.n);
-      for (const v of this.tanks.concat(this.mobs.filter((m) => m.alive && !m.flying))) {
-        if (!v.alive || v.x < Math.min(a, b) - TANK_W / 2 || v.x > Math.max(a, b) + TANK_W / 2) continue;
-        if (Math.abs(v.y - T.hAt(v.x)) > 30) continue; // up on a bridge or a fort: it falls past
-        this.particles.text(v.x, v.y - 70, 'CRUSHED', '#e8c890');
-        this.damage(v, dmg, null);
-      }
-      T.fellTrees((a + b) / 2, T.hAt((a + b) / 2) - 10, L / 2);
-      for (let x = Math.min(a, b); x < Math.max(a, b); x += 12) this.particles.puff(x, T.hAt(x), [150, 145, 140]);
-      this.shake = Math.max(this.shake, 8);
-      this.sfx.explosion(25);
-      this.events.push(f.k ? 'A radio tower lost its top.' : 'A radio tower came down.');
-    }
+  // the broken piece has come down: it lies where it landed
+  towerLanded(p) {
+    const T = this.terrain, f = p.w.tower, x = clamp(p.x, 0, WORLD_W - 1);
+    const a = x - f.L / 2, b = x + f.L / 2;
+    if (p.tw) p.tw.debris.push({ x0: a, x1: b });
+    T.fellTrees(x, T.hAt(x) - 10, f.L / 2);
+    for (let q = a; q < b; q += 12) this.particles.puff(q, T.hAt(clamp(q, 0, WORLD_W - 1)), [150, 145, 140]);
+    this.shake = Math.max(this.shake, 8);
+    this.events.push(f.base ? 'A radio tower lost its top.' : 'A radio tower came down.');
   },
 
-  // a tower's broken top in mid-fall: its lattice as squares along the swinging axis
-  drawTowerFall(ctx, t, col) {
-    const f = t.fall, T = this.terrain;
-    const g = T.hAt(t.x), H = t.n * TOWER_SEC, base = f.k * TOWER_SEC;
-    const px = t.x, py = g - base;
-    const ax = f.dir * Math.sin(f.ang), ay = -Math.cos(f.ang); // along the falling part
-    const qx = Math.cos(f.ang), qy = f.dir * Math.sin(f.ang); // across it
-    const P = (u, v) => [px + ax * u + qx * v, py + ay * u + qy * v];
-    const half = (u) => lerp(12, 4, (base + u) / H);
-    const L = f.n * TOWER_SEC;
+  stepTowers() {},
+
+  // a tower's broken piece in flight: its lattice as squares along an axis that tumbles slowly
+  drawTowerFall(ctx, p, col) {
+    const f = p.w.tower;
+    p.spin = (p.spin || 0) + 0.025 * f.dir;
+    const ang = p.spin; // 0: upright, as it broke
+    const ax = Math.sin(ang), ay = -Math.cos(ang), qx = Math.cos(ang), qy = Math.sin(ang);
+    const L = f.L, P = (u, v) => [p.x + ax * (u - L / 2) + qx * v, p.y + ay * (u - L / 2) + qy * v];
+    const half = (u) => lerp(12, 4, (f.base + u) / f.H);
     ctx.fillStyle = col;
     for (let u = 0; u < L; u += 3) { const h = half(u); sq(ctx, ...P(u, -h), 3); sq(ctx, ...P(u, h), 3); }
     for (let s = 0; s < f.n; s++) for (let q = 0; q <= 1; q += 0.1) {
@@ -466,7 +455,6 @@ Object.assign(Game.prototype, {
       for (let x = d.x0; x < d.x1; x += 4) sq(ctx, x, T.hAt(x) - 3, 3);
       for (let x = d.x0; x < d.x1; x += 20) { sq(ctx, x + 5, T.hAt(x) - 7, 3); sq(ctx, x + 10, T.hAt(x) - 4, 3); }
     }
-    if (t.fall) this.drawTowerFall(ctx, t, col);
     if (!t.h) return;
     const H = t.n * TOWER_SEC;
     const half = (y) => lerp(12, 4, (g - y) / H);

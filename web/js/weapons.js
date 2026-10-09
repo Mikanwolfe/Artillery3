@@ -13,7 +13,7 @@ const RARITY = [null,
 
 // How hard the wind pushes a weapon's shells (1 = a normal shell). Fast, dense rounds (coilgun
 // slugs, the rail's titanium pillars) barely notice it; light airburst shells and acid blobs drift.
-const KIND_DRIFT = { shell: 1, gun: 0.45, laser: 0.7, acid: 1.3, flak: 1.15, rocket: 0.6 };
+const KIND_DRIFT = { shell: 1, gun: 0.45, laser: 0.7, acid: 1.3, flak: 1.15, rocket: 0.6, air: 0.5 };
 
 function weapon(id, name, kind, elevMin, elevMax, o) {
   return {
@@ -25,8 +25,8 @@ function weapon(id, name, kind, elevMin, elevMax, o) {
 
 // starting vehicles: (hp, armour) and a signature gun
 // who built each girl: CLS-T runs the trials; KTS-T leads every other maker in tech
-const MAKERS = { gwt: 'CLS-T trials', obj: 'KTS-T', nxi: 'NXi · November Division', alb: 'Lymilark Future Sciences', int: 'CLS-T trials', ang: 'From beyond the gate' };
-const MAKER_CLASS = { nxi: ' nxi', obj: ' kts', ang: ' ang' };
+const MAKERS = { gwt: 'CLS-T trials', obj: 'KTS-T', nxi: 'NXi · November Division', alb: 'Lymilark Future Sciences', int: 'CLS-T trials', ang: 'From beyond the gate', zui: 'Sengoku Inc.' };
+const MAKER_CLASS = { nxi: ' nxi', obj: ' kts', ang: ' ang', zui: ' sgk' };
 const VEHICLES = [
   {
     id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'A sturdy Geschützwagen girl with a two-round autoloader on her back.',
@@ -68,6 +68,16 @@ const VEHICLES = [
       guide: { arm: 6, burn: 50, seek: 999, apex: true, turn: 3, range: 280, cone: 75, lift: 0.5 },
       short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the pod, in very small letters.", long: 'Starting weapon for Alban Eiler.' }),
   },
+  // Sengoku Inc. (after KanColle's carriers): the light carrier. Her gun is a laser designator;
+  // what it marks, her planes come back and hit (planes.js). Two AA mounts keep her deck clear.
+  {
+    id: 'zui', name: 'Zuihou', hp: 115, armour: 120, fuel: 0.9, blurb: 'A Sengoku light-carrier girl: she marks a spot, and her squadron hits it on her next turn.',
+    traits: ['flightdeck', 'twinaa'], aa: ['aa96'],
+    weapon: weapon('zui0', "Sengoku Type 99 Kanbaku", 'air', 0, 80, {
+      maxCharge: 75, disp: 0.8, dmg: 70, dmgR: 60, explR: 9, clip: 2,
+      air: { type: 'dive', planes: 2, ord: 1, hp: 45, reload: 1 },
+      short: 'Fixed undercarriage, a lift fan in the fuselage, and the best dive-bombing crews Sengoku ever trained.', long: 'Starting weapon for Zuihou. Two squads, then a turn to rearm.' }),
+  },
   // the secret girl (unlocked by finishing a first game): an angel who came through the gate
   {
     id: 'ang', name: 'Ikaros', hp: 130, armour: 110, secret: true, blurb: 'Something came through the gate on white wings. She says she is here to help, and means it.',
@@ -95,6 +105,8 @@ const TRAITS = {
   retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA nudges its aim onto them.' },
   firecontrol: { name: 'Lymilark fire control', desc: 'Her rockets’ seekers see 40% further and turn 30% faster.' },
   telemetry: { name: 'Knight telemetry', desc: 'Her rockets lock onto rivals before drones or crates, when one is in sight.' },
+  flightdeck: { name: 'Flight deck', desc: 'Her planes take off from her deck, not straight up: no VTOL penalty, and one more plane in every squad.' },
+  twinaa: { name: 'Twin AA mounts', desc: 'Two air-defence slots instead of one, for two different mounts. The second is empty in round one.' },
 };
 const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
 // a gun's spread in her hands (G.W. Tiger's Geschützwagen halves it)
@@ -233,6 +245,50 @@ const WEAPONS = [
   weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 1.6, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
     guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 3.5, range: 220, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 0.5, r: 75, at: 50, every: 2 },
     short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten bomblets in sequence, unguided and wind-blown.' }),
+  // Planes (Sengoku Inc., after KanColle's carrier aircraft; planes.js): the gun is a laser
+  // designator. Where its dot lands, a squad of air.planes (one more from a flight deck) takes
+  // off, climbs out of sight, comes back and hovers over the mark, where anyone can shoot it, and
+  // strikes at the start of its owner's next turn. clip = squads: each shot flies one, unflown
+  // squads keep, and once all are flown the weapon rearms for air.reload turns. Planes that take
+  // off straight up (no flight deck) hit 30% softer. dmg is per bomb, torpedo or rocket.
+  //   dive     each plane drops air.ord bombs almost straight down onto the mark
+  //   torpedo  each runs in low and drops a torpedo that skims the ground through the mark
+  //   fighter  guns: aircraft and drones near the mark first (triple damage), else a strafing run
+  //   rocket   each fires air.ord seeker rockets from overhead (LFS)
+  //   heavy    guided bombs that steer onto the nearest rival near the mark (NXi)
+  weapon('kansen0', "Sengoku Type 0 Kansen", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 22, dmgR: 30, explR: 2, clip: 2, rarity: 1, cost: 900,
+    air: { type: 'fighter', planes: 3, ord: 6, hp: 55, reload: 1 },
+    short: 'The Zero: light, nimble, and murder on anything else in the air.', long: 'Fighters: they go for planes and drones near the mark first (triple damage), and strafe it when the sky is clear.' }),
+  weapon('kankou97', "Sengoku Type 97 Kankou", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 120, dmgR: 70, explR: 10, clip: 2, rarity: 1, cost: 1000,
+    air: { type: 'torpedo', planes: 2, ord: 1, hp: 50, reload: 1 },
+    short: 'A torpedo bomber that never learned the sea was gone. It flies in low and lets go along the ground.', long: 'Torpedoes skim the ground through the mark and go off on the first thing they touch: stepping aside along their line won’t save you.' }),
+  weapon('suisei', "Sengoku 'Suisei' Dive Bomber", 'air', 0, 80, { maxCharge: 85, disp: 0.8, dmg: 190, dmgR: 70, explR: 11, clip: 2, rarity: 2, cost: 2400,
+    air: { type: 'dive', planes: 2, ord: 1, hp: 55, reload: 1 },
+    short: 'Comet: faster than the Kanbaku, steeper in the dive, and a heavier bomb.', long: 'Two dive bombers a squad, two squads.' }),
+  weapon('tenzan', "Sengoku 'Tenzan' Torpedo Bomber", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 260, dmgR: 80, explR: 12, clip: 2, rarity: 3, cost: 4800,
+    air: { type: 'torpedo', planes: 3, ord: 1, hp: 70, reload: 2 },
+    short: 'Heavenly Mountain: three torpedo bombers a squad, running in abreast.', long: 'Three torpedoes along the ground through the mark.' }),
+  weapon('reppuu', "Sengoku 'Reppuu' Interceptor", 'air', 0, 80, { maxCharge: 90, disp: 0.7, dmg: 55, dmgR: 35, explR: 2, clip: 2, rarity: 3, cost: 4400,
+    air: { type: 'fighter', planes: 3, ord: 8, hp: 80, reload: 2 },
+    short: 'Built to clear the sky of everything with an engine. Drones and squadrons alike.', long: 'Fighters with heavier guns: aircraft first, then a strafing run.' }),
+  weapon('taillteann', "Sengoku–LFS 'Taillteann' Rocket Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 150, dmgR: 55, explR: 7, clip: 2, rarity: 4, cost: 11500,
+    hybrid: true, maker: 'Sengoku × Lymilark',
+    air: { type: 'rocket', planes: 2, ord: 3, hp: 75, reload: 2 },
+    guide: { arm: 4, burn: 60, seek: 999, apex: false, turn: 4, range: 320, cone: 90, lift: 0.4 },
+    short: 'Sengoku airframes carrying Lymilark seeker pods. They fire from overhead and the seekers do the rest.', long: 'Three seekers a plane, each going for the nearest target under it: a target that moved a little still gets found.' }),
+  weapon('ryusei', "Sengoku 'Ryusei' Attack Plane", 'air', 0, 80, { maxCharge: 95, disp: 0.7, dmg: 420, dmgR: 100, explR: 16, clip: 2, rarity: 5, cost: 21000,
+    air: { type: 'dive', planes: 3, ord: 1, hp: 90, reload: 2 },
+    short: 'Shooting Star: dive bomber and torpedo bomber in one gull-winged airframe. Here it carries the big bomb.', long: 'Three heavy bombs a squad.' }),
+  weapon('kikka', "Sengoku 'Kikka' Jet Bomber", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 360, dmgR: 85, explR: 13, clip: 2, rarity: 6, cost: 33000,
+    air: { type: 'dive', planes: 3, ord: 2, hp: 100, reload: 3, jet: true },
+    short: 'Orange Blossom: a jet. Too fast for most AA to track, and it drops two bombs a pass.', long: 'Jets: anti-aircraft fire has half the chance against them and their bombs.' }),
+  weapon('shiden', "Sengoku 'Shiden Kai Ni' Fighter", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 95, dmgR: 40, explR: 3, clip: 2, rarity: 6, cost: 30000,
+    air: { type: 'fighter', planes: 4, ord: 10, hp: 130, reload: 3 },
+    short: 'Violet Lightning: the last and best of the Sengoku fighters. Four a squad.', long: 'Clears the sky over the mark, then rakes it.' }),
+  weapon('tifaun', "NXi × Sengoku 'Tifaun' Strike Wing", 'air', 0, 80, { maxCharge: 110, disp: 0.4, dmg: 700, dmgR: 110, explR: 18, clip: 2, rarity: 7, cost: 150000,
+    hybrid: true, maker: 'NXi × Sengoku',
+    air: { type: 'heavy', planes: 3, ord: 2, hp: 260, reload: 3, jet: true, seek: 240 },
+    short: 'The UAF\'s minibrieve: Sengoku\'s lift-fan airframe, built like a battlecruiser by the November Division. Triple-redundant, and it does not miss.', long: 'Armoured jets dropping guided bombs that steer onto the nearest rival within 240 of the mark. AA has half the chance against them.' }),
   // Final weapons: one per girl, only in her own shop (sig), the price of the end game, and a tier
   // of their own above Godly (Ascendant). Each has a
   // set piece of its own (finals.js).
@@ -254,6 +310,10 @@ const WEAPONS = [
   weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 8, cost: 75000,
     meteor: { dmg: 6000, r: 650, explR: 175, size: 300, lava: 920, splash: 30 },
     short: 'Where her arrow of light lands, the sky answers: she marks an asteroid and brings it down.', long: 'Ikaros only.' }),
+  weapon('kidobutai', "Sengoku 'Kidō Butai' Strike Fleet", 'air', 0, 80, { sig: 'zui', maxCharge: 100, disp: 0.4, dmg: 520, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
+    air: { type: 'fleet', planes: 0, ord: 1, hp: 120, reload: 3, delay: 2 },
+    fleet: { carriers: 3, dive: 9, torpedo: 6, fighter: 6 },
+    short: 'A laser dot for the carriers off the coast. Their whole air wing comes, and takes its time.', long: 'Zuihou only.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
@@ -287,6 +347,12 @@ const REBALANCE = {
   demigod: { dmg: 1600, cost: 50000 }, kagutsuchi: { dmg: 110, cost: 47000 },
   // the Yukikaze's warheads are weak on purpose: MAIA does the damage
   yukikaze: { dmg: 40, cost: 11000 }, feuerlilie: { dmg: 155, cost: 6000 }, ichor: { dmg: 1800, cost: 21000 },
+  // planes: per bomb, torpedo, rocket or gun burst (see planes.js)
+  // fitted like the guns, then about a third off: a plane weapon flies both its squads before it
+  // rearms, so it fires more of its turns than a gun of its tier (see airValue)
+  zui0: { dmg: 120 }, kansen0: { dmg: 20, cost: 800 }, kankou97: { dmg: 105, cost: 1000 }, suisei: { dmg: 285, cost: 2500 }, tenzan: { dmg: 320, cost: 5200 },
+  reppuu: { dmg: 75, cost: 4600 }, taillteann: { dmg: 390, cost: 12000 }, ryusei: { dmg: 1270, cost: 22000 }, kikka: { dmg: 1000, cost: 34000 },
+  shiden: { dmg: 250, cost: 30000 }, tifaun: { dmg: 840, cost: 50000 },
 };
 const ALL_WEAPONS = [...WEAPONS, ...VEHICLES.map((v) => v.weapon)];
 const CLASSIC = Object.fromEntries(ALL_WEAPONS.map((w) => [w.id, { dmg: w.dmg, clip: w.clip, cost: w.cost }]));
@@ -300,7 +366,7 @@ for (const v of VEHICLES) v.weapon.starter = true;
 // reloading and for the dearer misses (the 'firepower' multiplier, on top of REBALANCE).
 const RELOAD_BY_RARITY = [0, 0, 1, 1, 2, 2, 3, 3, 3];
 const FIREPOWER_BY_RARITY = [1, 1.15, 1.27, 1.39, 1.51, 1.63, 1.75, 1.87, 1.87];
-function reloadOf(w) { return BALANCE === 'rebalanced' && !w.starter ? RELOAD_BY_RARITY[w.rarity] : 0; }
+function reloadOf(w) { return w.air ? w.air.reload : BALANCE === 'rebalanced' && !w.starter ? RELOAD_BY_RARITY[w.rarity] : 0; }
 
 // switch the shared weapon objects between the classic and rebalanced numbers
 function applyBalance(mode) {
@@ -313,7 +379,7 @@ function applyBalance(mode) {
 applyBalance(BALANCE);
 
 // A3 shop badge: rarity initial + projectile-type initial, e.g. "Cs" (Common shell), "Gl" (Godly laser)
-const KIND_LETTER = { shell: 's', gun: 'g', laser: 'l', acid: 'a', flak: 'f', rocket: 'r' };
+const KIND_LETTER = { shell: 's', gun: 'g', laser: 'l', acid: 'a', flak: 'f', rocket: 'r', air: 'p' };
 // manufacturer, from the weapon's name: NXi (November Division) vs CLS-T and the rest
 function makerOf(w) {
   if (w.maker) return w.maker;
@@ -324,6 +390,7 @@ function makerOf(w) {
   if (n.includes('KTS-T') || n.includes('Kotona')) return 'Kotona';
   if (n.includes('G.W.')) return 'G.W.';
   if (n.includes('Hatsuyuki')) return 'Hatsuyuki';
+  if (n.includes('Sengoku')) return 'Sengoku Inc.';
   return '';
 }
 
@@ -356,6 +423,7 @@ function forVehicle(w, vid) { return !w.sig || w.sig === vid; }
 // whole clip and salvo, scaled by blast radius (easier to hit with) and spread (harder), plus acid
 // and MAIA strikes. Rarity adds a little on top for what this doesn't capture.
 function weaponValue(w) {
+  if (w.air) return airValue(w);
   const shots = w.salvo * Math.min(w.clip, 4);
   const radius = Math.sqrt(w.dmgR / 80);
   // (a seeker takes out part of its launch spread, so a rocket's counts half)
@@ -371,6 +439,17 @@ function weaponValue(w) {
   // lightning: each arc jump counts for about half its damage (it often goes to a tree or a pole)
   const arcs = w.chain ? Array.from({ length: w.chain.n }, (_, k) => w.chain.fall ** (k + 1)).reduce((a, b) => a + b, 0) * 0.5 : 0;
   return (w.dmg * shots * (heads + carpet + arcs) * radius * spread * guided + acid + sat + fire) * (1 + 0.12 * (w.rarity - 1));
+}
+
+// a plane weapon's worth for the squad it flies on a turn: its ordnance, by type, discounted for
+// the wait (the target can move, and AA and rivals can shoot the planes down first). Planes are
+// counted at 85% (a flight deck adds one, VTOL takes 30% off).
+const AIR_TYPE_WORTH = { dive: 1, torpedo: 1.1, rocket: 1.25, heavy: 1.45, fighter: 0.45, fleet: 1 };
+const AIR_DELAY_WORTH = 0.7;
+function airValue(w) {
+  const A = w.air;
+  const planes = A.type === 'fleet' ? w.fleet.dive + w.fleet.torpedo : A.planes * 0.85;
+  return w.dmg * planes * A.ord * Math.sqrt(w.dmgR / 80) * (AIR_TYPE_WORTH[A.type] || 1) * AIR_DELAY_WORTH * (1 + 0.12 * (w.rarity - 1));
 }
 
 // Wind on a shell, scaled by its drift (p.drift, 1 by default). Two parts: a steady push (A3's wind,
@@ -411,7 +490,7 @@ function findLock(p, seek, owner) {
   const range = G.range; // only what's within its seeker's reach: otherwise it flies on as a shell
   let best = null, bd = range, bestRival = null, brd = range;
   for (const c of seek) {
-    if (!c.alive || c === owner || (p.taken && p.taken.includes(c))) continue;
+    if (!c.alive || c === owner || (c.isPlane && c.owner === owner) || (p.taken && p.taken.includes(c))) continue;
     const q = seekCenter(c);
     const dx = q.x - p.x, dy = q.y - p.y;
     const d = Math.hypot(dx, dy);
@@ -568,6 +647,7 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
     for (const t of tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;
       if (t.isMob && owner && owner.isMob) continue; // hostiles' fire passes through other hostiles
+      if (t.isPlane && t.owner === owner) continue; // and a player's through her own planes
       const hw = t.hw || TANK_W / 2 + 2; // mobs carry their own hitbox
       const hh = t.hh || TANK_H + 2;
       const by = t.hitY === undefined ? t.y : t.hitY; // the satellite's box hangs around its centre
@@ -580,7 +660,9 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
 
 // Fire a hypothetical (dispersion-free) shot and return where it lands, how far it fell from the
 // top of its arc and how fast it was going (for the altitude / kinetic damage bonuses).
-function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy, drift = 1, w = null, seek = tanks) {
+// `past` = { x, dir }: stop once an unguided shell is well past x going away (it can't come back),
+// so the solver doesn't fly out every overshoot
+function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy, drift = 1, w = null, seek = tanks, past = null) {
   const p = { x: mx, y: my, vx, vy, age: 0, drift, guide: w && w.guide ? guideFor(w, owner) : null, prefer: w ? preferFor(owner) : null, pierce: w ? w.pierce || 0 : 0 };
   let peak = my;
   // a carpet rocket: follow its middle bomblet from the moment it would drop
@@ -590,6 +672,7 @@ function simulateShot(terrain, wind, tanks, owner, mx, my, vx, vy, drift = 1, w 
     const r = stepBallistic(p, terrain, wind, tanks, owner, seek);
     if (p.y < peak) peak = p.y;
     if (r) return { x: p.x, y: p.y, hit: r.hit, tank: r.tank || null, drop: p.y - peak, speed: Math.hypot(p.vx, p.vy), lock: p.lastLock || null, early: p.age < splitAt }; // early: it hit before it could split or open
+    if (past && !p.guide && (p.x - past.x) * past.dir > 160) return { x: p.x, y: p.y, hit: 'past', tank: null, drop: p.y - peak, speed: Math.hypot(p.vx, p.vy), lock: null, early: false };
     if (p.age === dropAt) Object.assign(p, { y: p.y + 4, vx: p.vx * 0.5, vy: Math.min(Math.max(p.vy, 0) * 0.5 + 1, 6), drift: BOMBLET_DRIFT, guide: null });
   }
   return { x: p.x, y: p.y, hit: 'out', tank: null, drop: 0, speed: 0 };

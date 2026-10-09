@@ -81,10 +81,12 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
   const arc = (DIFFICULTY[tank.type] || DIFFICULTY.normal).arc * arcScale;
   const maxV = Math.min(w.maxCharge, 140); // beyond this everything leaves the map anyway
   const seek = w.guide ? game.seekables() : null;
+  const targets = game.targets(); // (the world holds still while it thinks)
+  const past = { x: tc.x, dir: facing };
   const evalShot = (elev, v) => {
     const m = tank.muzzle(elev, facing);
     const u = tank.aimVec(elev, facing); // elevation is relative to the hull
-    let r = simulateShot(game.terrain, wind, game.targets(), tank, m.x, m.y, u.x * v, u.y * v, w.drift, w, seek);
+    let r = simulateShot(game.terrain, wind, targets, tank, m.x, m.y, u.x * v, u.y * v, w.drift, w, seek, w.carpet || w.split || w.lance ? null : past);
     if (w.kind === 'laser' && r.hit !== 'out') { // the pointer only marks: the drone's beam is what lands
       const b = droneShot(game.terrain, game.targets(), tank, w, r).end;
       r = { ...r, x: b.x, y: b.y, hit: b.hit === 'spot' ? r.hit : b.hit, tank: b.hit === 'spot' ? r.tank : b.tank || null };
@@ -111,7 +113,7 @@ function* solveShotGen(game, tank, w, target, wind = game.wind, arcScale = 1) {
     }
     yield;
   }
-  for (const [de, dv, n] of [[1, vStep / 4, 6], [0.2, vStep / 20, 6]]) {
+  for (const [de, dv, n] of [[1, vStep / 4, 4], [0.2, vStep / 20, 4]]) {
     const e0 = best.elev;
     const v0 = best.v;
     for (let i = -n; i <= n; i++) {
@@ -150,6 +152,9 @@ class CpuController {
     // overhead a full search could hold the world still for many seconds)
     const mobs = g.mobs.filter((d) => d.alive).sort((a, b) => Math.abs(a.x - t.x) - Math.abs(b.x - t.x));
     let enemies = g.tanks.filter((x) => x.alive && x !== t).concat(mobs.slice(0, AI_MOBS));
+    // a rival's squad hovering close by is coming for it: worth shooting down (planes.js)
+    const planes = (g.planes || []).filter((p) => p.targetable && p.owner !== t && p.state === 'hover' && Math.abs(p.group.mark.x - t.x) < 300);
+    if (planes.length) enemies.push(planes.sort((a, b) => Math.abs(a.x - t.x) - Math.abs(b.x - t.x))[0]);
     if (t.lastAttacker && t.lastAttacker.isMob && t.lastAttacker.alive && !enemies.includes(t.lastAttacker)) enemies.push(t.lastAttacker);
     // the rest of an autoloader's clip goes at the same target, if it still stands
     if (t.firedThisTurn && t.planTarget && t.planTarget.alive && t.planTarget !== t) enemies = [t.planTarget];
@@ -163,6 +168,7 @@ class CpuController {
     const crowd = (e) => g.tanks.filter((o) => o !== t && o.isCpu && o.alive && o.planTarget === e && g.turnCount - (o.planTurn ?? -99) < cycle).length;
     // weapon is locked once the clip has started; otherwise pick by difficulty
     let options = t.firedThisTurn ? [t.weapon] : t.weapons.filter((id) => t.weaponReady(id)).map((id) => WEAPON_BY_ID[id]);
+    if (!options.length) return null; // everything rearming: nothing to fire this turn
     options = options.slice().sort((a, b) => weaponValue(b) - weaponValue(a));
     if (t.type === 'easy') options = rng.chance(0.6) ? [rng.pick(options)] : options.slice(-1);
     else if (t.type === 'normal' && rng.chance(0.4)) options = [rng.pick(options)];
@@ -187,6 +193,8 @@ class CpuController {
         if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
         if (!e.isMob && !e.isSat) score += CROWD * crowd(e);
         if (e.isMob) score += MOB_DISLIKE - Math.min(150, e.bounty * 0.03) - (w.kind === 'flak' ? 120 : 0);
+        if (e.isPlane) score += 60 - (w.kind === 'flak' || w.airburst ? 120 : 0) - (w.air && w.air.type === 'fighter' ? 150 : 0);
+        if (w.air && e.isPlane && w.air.type !== 'fighter') continue; // (bombers don't hunt planes)
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
       }
       if (best && best.err < 40) break; // good enough with the strongest usable weapon
@@ -265,6 +273,16 @@ class CpuController {
           const g = this.game;
           const threat = g.mobs.filter((m) => m.alive && (m.kind === 'drone' || m.kind === 'carrier' || m.kind === 'fpv') && Math.abs(m.x - t.x) < (m.kind === 'fpv' ? 260 : 150))
             .sort((a, b) => Math.abs(a.x - t.x) - Math.abs(b.x - t.x))[0];
+          // or a rival's squad hovering over it, due to strike: drive out from under the mark
+          const sq = (g.airGroups || []).find((G) => G.owner !== t && G.planes.some((p) => p.alive && p.state === 'hover') && Math.abs(G.mark.x - t.x) < Math.max(90, G.w.dmgR) + 50);
+          if (sq && rng.chance(Math.min(1, (DODGE[t.type] || DODGE.normal) + 0.1))) {
+            this.moved = true;
+            this.moveDir = t.x >= sq.mark.x ? 1 : -1;
+            if (t.x + this.moveDir * 200 < 40 || t.x + this.moveDir * 200 > WORLD_W - 40) this.moveDir = -this.moveDir;
+            this.moveFrames = rng.int(90, 150);
+            this.state = 'move';
+            return;
+          }
           if (threat && rng.chance(DODGE[t.type] || DODGE.normal)) {
             this.moved = true;
             this.moveDir = t.x >= threat.x ? 1 : -1;
@@ -300,6 +318,7 @@ class CpuController {
         if (!r.done) return;
         this.planGen = null;
         this.plan = r.value;
+        if (!this.plan) { this.state = 'done'; this.game.finishTurnEarly(); return; } // nothing loaded
         // a good firing solution is worth a Double Shot
         if (!t.armed.double && t.abilityReady('double') && this.plan.err < 40 && rng.chance(t.type === 'hard' ? 0.8 : t.type === 'normal' ? 0.5 : 0.25)) this.game.useAbility(t, 'double');
         // announce a grudge once per attacker

@@ -47,6 +47,7 @@ Object.assign(Game.prototype, {
   targets() {
     const list = this.mobs.length ? this.tanks.concat(this.mobs) : this.tanks.slice();
     if (this.satellite && this.satellite.alive) list.push(this.satellite); // MAIA can be shot
+    if (this.planes) for (const p of this.planes) if (p.targetable) list.push(p); // and planes in the sky
     return list;
   },
   // what a rocket's seeker can lock onto: vehicles, mobs and supply crates (not MAIA: up there it
