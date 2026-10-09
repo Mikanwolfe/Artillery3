@@ -89,7 +89,7 @@ const UI = {
     this.initCodex();
     window.addEventListener('keydown', (e) => {
       // character select: 1-4 picks a card
-      if (this.pick && !$('vehicles').hidden && /^Digit[1-6]$/.test(e.code)) {
+      if (this.pick && !$('vehicles').hidden && /^Digit[1-9]$/.test(e.code)) {
         const el = $('veh-grid').children[+e.code.slice(5) - 1];
         if (el) { el.click(); e.preventDefault(); }
         return;
