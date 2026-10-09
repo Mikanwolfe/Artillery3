@@ -4,6 +4,9 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['7b6a3ba', 'Hostiles never hit each other; bomber drones toss bombs from up to 260 away; drone tanks sit on slopes; the FPV is a proper quad that pitches into its dive.'],
+  ['7b6a3ba', 'One repair kit at a time; abilities cost half.'],
+  ['7b6a3ba', 'Changelog lines carry the commit that made them.'],
   ['4b13dd9', 'The changelog gets its own tab.'],
   ['d51fbe5', 'Hostiles fire on every hostile turn. Several drones from round 2, and reinforcements grow in number and quality each cycle.'],
   ['d51fbe5', 'New hostiles: FPV kamikazes, carriers that airdrop drone tanks, drone tanks driving in from the map edge, and their final form, the Hatsuyuki android.'],
