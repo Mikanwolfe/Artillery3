@@ -349,7 +349,7 @@ const REBALANCE = {
   yukikaze: { dmg: 40, cost: 11000 }, feuerlilie: { dmg: 155, cost: 6000 }, ichor: { dmg: 1800, cost: 21000 },
   // planes: per bomb, torpedo, rocket or gun burst (see planes.js)
   // fitted like the guns, then about a third off: a plane weapon flies both its squads before it
-  // rearms, so it fires more of its turns than a gun of its tier (see airValue)
+  // rearms, so it fires more of its turns than a gun of its tier (airValue credits that back, AIR_TEMPO)
   zui0: { dmg: 120 }, kansen0: { dmg: 20, cost: 800 }, kankou97: { dmg: 105, cost: 1000 }, suisei: { dmg: 285, cost: 2500 }, tenzan: { dmg: 320, cost: 5200 },
   reppuu: { dmg: 75, cost: 4600 }, taillteann: { dmg: 390, cost: 12000 }, ryusei: { dmg: 1270, cost: 22000 }, kikka: { dmg: 1000, cost: 34000 },
   shiden: { dmg: 250, cost: 30000 }, tifaun: { dmg: 840, cost: 50000 },
@@ -446,10 +446,11 @@ function weaponValue(w) {
 // counted at 85% (a flight deck adds one, VTOL takes 30% off).
 const AIR_TYPE_WORTH = { dive: 1, torpedo: 1.1, rocket: 1.25, heavy: 1.45, fighter: 0.45, fleet: 1 };
 const AIR_DELAY_WORTH = 0.7;
+const AIR_TEMPO = 1.45; // a plane weapon fires more of its turns than a gun of its tier (two squads, then rearm)
 function airValue(w) {
   const A = w.air;
   const planes = A.type === 'fleet' ? w.fleet.dive + w.fleet.torpedo : A.planes * 0.85;
-  return w.dmg * planes * A.ord * Math.sqrt(w.dmgR / 80) * (AIR_TYPE_WORTH[A.type] || 1) * AIR_DELAY_WORTH * (1 + 0.12 * (w.rarity - 1));
+  return w.dmg * planes * A.ord * Math.sqrt(w.dmgR / 80) * (AIR_TYPE_WORTH[A.type] || 1) * AIR_DELAY_WORTH * AIR_TEMPO * (1 + 0.12 * (w.rarity - 1));
 }
 
 // Wind on a shell, scaled by its drift (p.drift, 1 by default). Two parts: a steady push (A3's wind,

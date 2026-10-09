@@ -62,6 +62,7 @@ const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
 const KILL_BOUNTY = 250;
 const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
+const AA_SHARE = 0.2; // most of its money a CPU puts into one air-defence mount
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs once a turn cycle (every n turns)
 const SAT_DOWN_CYCLES = 2; // shot down, MAIA stays offline this many turn cycles (2n turns for n players)
 const SAT_REBOOT = 0.5; // and comes back with this share of its health
@@ -1665,6 +1666,22 @@ class Game {
     while (t.kits < kitsWanted && t.money >= REPAIR_COST * 2) { t.money -= REPAIR_COST; t.kits++; }
     const horizon = (this.lastAward || 500) * (t.type === 'hard' ? 2 : 1); // how far ahead it saves
     let reserve = 0;
+    // air defence first (not Easy), from a share of its money: point defence if rivals carry rockets
+    // or planes, else anti-air (from round 2, when drones come); one of each role for a second slot
+    if (t.type !== 'easy') {
+      const rivals = this.tanks.filter((x) => x !== t).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
+      const missiles = rivals.some((w) => w.kind === 'rocket' || w.carpet);
+      const air = rivals.some((w) => w.air) || this.round >= 2;
+      for (let slot = t.aa.indexOf(null); slot >= 0; slot = t.aa.indexOf(null)) {
+        const have = t.aa.map((id) => AA_BY_ID[id]).filter(Boolean);
+        const role = have.length ? (have[0].role === 'missile' ? 'air' : 'missile') : missiles ? 'missile' : air ? 'air' : null;
+        if (!role) break;
+        const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost <= t.money * AA_SHARE).sort((a, b) => b.cost - a.cost)[0];
+        if (!pick) break;
+        t.money -= pick.cost;
+        t.aa[slot] = pick.id;
+      }
+    }
     for (let n = 0; n < 4; n++) {
       const owned = t.weapons.map((id) => WEAPON_BY_ID[id]);
       const bestOwned = Math.max(...owned.map(weaponValue));
@@ -1713,22 +1730,6 @@ class Game {
       const u = VEHICLE_UPGRADES.find((x) => x.id === id);
       const lvl = t.upgrades[id] | 0;
       if (lvl < 1 && t.money - reserve >= u.costs[lvl] * 1.5) { t.money -= u.costs[lvl]; t.upgrades[id] = lvl + 1; }
-    }
-    // air defence (not Easy): point defence if rivals carry rockets or planes, else anti-air; the
-    // best mount it can afford comfortably, one of each role for a second slot
-    if (t.type !== 'easy') {
-      const rivals = this.tanks.filter((x) => x !== t).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
-      const missiles = rivals.some((w) => w.kind === 'rocket' || w.carpet);
-      const air = rivals.some((w) => w.air) || this.round >= 2;
-      for (let slot = t.aa.indexOf(null); slot >= 0; slot = t.aa.indexOf(null)) {
-        const have = t.aa.map((id) => AA_BY_ID[id]).filter(Boolean);
-        const role = have.length ? (have[0].role === 'missile' ? 'air' : 'missile') : missiles ? 'missile' : air ? 'air' : null;
-        if (!role) break;
-        const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost * 1.6 <= t.money - reserve).sort((a, b) => b.cost - a.cost)[0];
-        if (!pick) break;
-        t.money -= pick.cost;
-        t.aa[slot] = pick.id;
-      }
     }
     if (t.type !== 'easy' && !hasTrait(t, 'flightdeck') && !t.upgrades.deck && t.weapons.some((id) => WEAPON_BY_ID[id].air)) {
       const u = VEHICLE_UPGRADES.find((x) => x.id === 'deck');
