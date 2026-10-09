@@ -1363,6 +1363,7 @@ class Game {
     if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
     if (t.isSat) { this.damageSat(t, amt, owner, hit); return; }
     if (t.dummy) { this.rangeHit(t, amt, hit); return; } // the Codex's training dummy
+    if (this.range && this.range.drill && t === this.tanks[0]) { this.range.through += amt; this.particles.text(t.x, t.y - 40, String(Math.round(amt)), '#ff9a8a'); this.ui.codexReadout(); return; } // (an AA drill's rocket that got through)
     if (t.shield) { amt *= SHIELD_FACTOR; if (hit) hit.shield = true; }
     if (owner && owner !== t) t.lastAttacker = owner; // CPUs retaliate against this tank
     if (hit && owner && owner !== t && this.report) this.report.bestQ = Math.max(this.report.bestQ || 0, hit.q); // best hit on a rival this shot

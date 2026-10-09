@@ -176,6 +176,7 @@ Object.assign(Game.prototype, {
         this.particles.text(tg.x, tg.y - 20, 'INTERCEPTED', A.role === 'missile' ? '#9ae0ff' : '#e8d8a0');
         this.sfx.explosion(10);
         if (this.report) this.report.intercepts = (this.report.intercepts || 0) + 1;
+        if (this.range && this.range.drill) { this.range.stopped++; this.ui.codexReadout(); }
       } else if (A.cut) tg.aaCut = (tg.aaCut || 1) * (1 - A.cut); // it gets through, damaged
       return;
     }
