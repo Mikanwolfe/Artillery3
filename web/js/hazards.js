@@ -288,7 +288,7 @@ Object.assign(Game.prototype, {
     const live = this.mobs.filter((m) => m.alive);
     if (!h.fired && (live.every((m) => m.arrived()) || h.t > 200)) {
       h.fired = true;
-      for (const m of live) m.dest = null;
+      for (const m of live) { m.dest = null; m.path = null; }
       const shots = this.mobAttacks() + this.dropDebris();
       if (this.projectiles.length) this.cam.follow(this.projectiles[0]);
       if (shots) this.sfx.shot({ kind: 'shell' });

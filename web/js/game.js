@@ -62,6 +62,7 @@ const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
 const KILL_BOUNTY = 250;
 const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
+const STARTER_SELL = 250; // what her starting gun or mount fetches if she sells it
 const AA_SHARE = 0.2; // most of its money a CPU puts into one air-defence mount
 const AA_SHARE_BURNED = 0.4; // ... once planes have killed it
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs once a turn cycle (every n turns)
@@ -1578,7 +1579,7 @@ class Game {
     const cur = stat === 'hp' ? tank.maxHp : tank.maxArmour;
     return Math.max(100, Math.round((cur * 0.3 * UPGRADE_PER_POINT) / 10) * 10);
   }
-  sellValue(w) { return w.cost; } // a full refund: trying a new gun should cost nothing
+  sellValue(w) { return w.starter ? STARTER_SELL : w.cost; } // a full refund: trying a new gun should cost nothing (a starter: a little scrap)
 
   buy(tank, kind, id) {
     if (kind === 'weapon') {
@@ -1603,6 +1604,7 @@ class Game {
     } else if (kind === 'aa') { // an air-defence mount into a free slot (two of the same can't share)
       const a = AA_BY_ID[id], slot = a ? aaSlotFor(tank, a.role) : -1;
       if (!a || a.starter || slot < 0 || tank.aa.includes(id) || tank.money < a.cost) { this.sfx.deny(); return false; }
+      if (tank.aa[slot]) tank.money += this.aaSellValue(tank, tank.aa[slot]); // (her own mount, swapped out: scrap)
       tank.money -= a.cost;
       tank.aa[slot] = id;
     } else if (kind === 'kit') {
@@ -1619,15 +1621,16 @@ class Game {
     return true;
   }
 
-  // the starter is the gun that never reloads, so (rebalanced) it can't be sold
-  canSell(tank, id) { return tank.weapons.length > 1 && !(BALANCE === 'rebalanced' && WEAPON_BY_ID[id].starter); }
+  // anything but her last gun sells (her starter for scrap: it is the gun that never reloads, so think twice)
+  canSell(tank, id) { return tank.weapons.length > 1; } // (her starter too: it frees the slot, for a little)
 
   // a girl's own mount (Zuihou's) came with her and stays; bought ones sell back in full
-  canSellAA(tank, id) { return !!AA_BY_ID[id] && !AA_BY_ID[id].starter && !(tank.vehicle.aa || []).includes(id); }
+  canSellAA(tank, id) { return !!AA_BY_ID[id]; }
+  aaSellValue(tank, id) { return aaOwn(tank, id) ? STARTER_SELL : AA_BY_ID[id].cost; } // (her own mount: a little scrap)
   sellAA(tank, id) {
     if (!this.canSellAA(tank, id)) { this.sfx.deny(); return false; }
+    tank.money += this.aaSellValue(tank, id);
     tank.aa[tank.aa.indexOf(id)] = null;
-    tank.money += AA_BY_ID[id].cost;
     this.sfx.sell();
     return true;
   }
@@ -1655,7 +1658,7 @@ class Game {
     // Once planes have killed it (any CPU, Easy too), anti-air comes first, from a bigger share, and
     // a lesser mount is traded in for the best anti-air gun it can afford
     const burned = (t.airDowned || 0) > 0;
-    const mounts = () => t.aa.map((id) => AA_BY_ID[id]).filter((a) => a && !a.starter); // (bought ones)
+    const mounts = () => t.aa.filter((id) => AA_BY_ID[id] && !aaOwn(t, id)).map((id) => AA_BY_ID[id]); // (bought ones)
     if (burned) {
       const best = AA_WEAPONS.filter((a) => a.role === 'air' && !t.aa.includes(a.id) && a.cost <= t.money * AA_SHARE_BURNED).sort((a, b) => b.cost - a.cost)[0];
       const air = mounts().find((a) => a.role === 'air');
@@ -1686,7 +1689,7 @@ class Game {
     for (let n = 0; n < 4; n++) {
       const owned = t.weapons.map((id) => WEAPON_BY_ID[id]);
       const bestOwned = Math.max(...owned.map(weaponValue));
-      const sellable = owned.filter((w) => this.canSell(t, w.id));
+      const sellable = owned.filter((w) => this.canSell(t, w.id) && !w.starter); // (a CPU keeps the gun that never reloads)
       const weakest = (sellable.length ? sellable : owned).slice().sort((a, b) => weaponValue(a) - weaponValue(b))[0];
       const full = t.weapons.length >= MAX_WEAPONS;
       const budget = t.money + (full ? this.sellValue(weakest) : 0);
@@ -1800,7 +1803,7 @@ class Game {
       this.particles.add({ x: t.x + (Math.random() - 0.5) * 30, y: t.y - Math.random() * 20, vx: 0, vy: -0.6 - Math.random(), g: 0, drag: 0.99, life: 0.9, size: 4, color: [90, 200, 120] });
     }
     this.sfx.repair();
-    this.events.push(`${t.name} used a repair kit (+${hp} health, +${ar} armour).`);
+    this.events.push(`${t.name} used a repair kit (+${got}).`);
     if (t.isCpu && Math.random() < 0.6) this.banter(t, 'repair');
     // using the kit is the turn
     this.charging = false;
