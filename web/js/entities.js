@@ -395,7 +395,7 @@ class Projectile {
     if (this.guide) {
       this.wseed = rng.int(0, 1e9); // its own fin quirks (see finFor)
       // and its seeker's error: it homes on a point up to SEEKER_SPREAD x its spread off the target
-      this.aimOff = (rng.next() * 2 - 1) * (w.disp || 0) * SEEKER_SPREAD;
+      this.aimOff = (rng.next() * 2 - 1) * spreadOf(w, owner) * SEEKER_SPREAD;
     }
     this.prefer = preferFor(owner);
   }

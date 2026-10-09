@@ -63,7 +63,7 @@ const GUN_NOTES = {
   apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 6,000 across 650, in bullet time, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
 };
 const GIRL_NOTES = {
-  gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and she drives anywhere without fall or tree damage.' },
+  gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and a steady platform that halves the spread of every gun she carries.' },
   obj: { plays: 'The glass cannon: a thin hull behind thick, angled plating. Mark a target and her designator bends every shot a little onto it, so she rewards patient, deliberate sniping; but she can’t take many hits back when she misses.' },
   nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
   alb: { plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },
@@ -184,6 +184,14 @@ Object.assign(Game.prototype, {
     this.cam.snap();
   },
 
+  // fresh ground and a fresh start (the button, or when she dies out here)
+  resetRange() {
+    const r = this.range;
+    if (!r) return;
+    this.newEnvironment();
+    this.startRange(r.vid, r.wid);
+  },
+
   // the camera frames the girl and the dummy together, in the part of the screen right of the panel
   rangeFocus() {
     const [you, dummy] = this.tanks;
@@ -298,6 +306,7 @@ Object.assign(UI, {
     $('cx-filter').querySelectorAll('button').forEach((b) => { b.onclick = () => { this.codex.filter = b.dataset.f; this.renderCodex(); b.blur(); }; });
     $('cx-dist').querySelectorAll('button').forEach((b) => { b.onclick = () => { const g = this.game; if (g.range) { g.range.dist = b.dataset.d; g.startRange(this.codex.vid, this.codex.wid); } this.renderCodex(); this.codexReadout(); b.blur(); }; });
     $('cx-wind').querySelectorAll('button').forEach((b) => { b.onclick = () => { const g = this.game; if (g.range) { g.range.calm = b.dataset.w === 'calm'; g.startRange(this.codex.vid, this.codex.wid); } this.renderCodex(); this.codexReadout(); b.blur(); }; });
+    $('cx-regen').onclick = (e) => { this.game.resetRange(); this.codexReadout(); e.currentTarget.blur(); }; // new ground, everyone back on their feet
     $('cx-reset').onclick = (e) => { const r = this.game.range; if (r) { r.last = r.total = r.best = r.shots = 0; this.codexReadout(); } e.currentTarget.blur(); };
   },
 });

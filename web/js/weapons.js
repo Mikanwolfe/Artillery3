@@ -32,7 +32,7 @@ const VEHICLES = [
     id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'A sturdy Geschützwagen girl with a two-round autoloader on her back.',
     traits: ['drill', 'geschutz'],
     weapon: weapon('morser', 'G.W. 150mm/78 Morser', 'shell', -20, 90, {
-      dmg: 100, disp: 3.1, clip: 2, maxCharge: 50, dmgR: 50,
+      dmg: 100, disp: 1.5, clip: 2, maxCharge: 50, dmgR: 50,
       short: 'Extensively field-tested, a reliable and sturdy weapon with no equal.', long: 'Starting weapon for G.W. Tiger.' }),
   },
   {
@@ -79,14 +79,14 @@ const VEHICLES = [
 ];
 
 // Character traits: two passives per girl, so they play differently beyond stats and starter gun.
-// Hooks: Game.finishShot (drill), landed / ramTree (geschutz), explode (sloped), designation /
+// Hooks: Game.finishShot (drill), spreadOf (geschutz), explode (sloped), designation /
 // stepBallistic (designator), damage (redundancy), the shop and useAbility (gatekeeper), startSatellite /
 // updateSatellite (uplink, retarget), jump / stepTanks / landed (wings), damage (grace).
 const TRAITS = {
   wings: { name: 'Wings', desc: 'Her jump costs half the fuel, and she glides down: no fall damage.' },
   grace: { name: 'Grace', desc: 'Once a round, a hit that would bring her down leaves her at 1 health instead.' },
   drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn lands a solid hit on a rival, she gets that round back.' },
-  geschutz: { name: 'Geschützwagen', desc: 'Never takes fall or tree damage.' },
+  geschutz: { name: 'Geschützwagen', desc: 'A steady gun platform: every weapon she fires has half the spread.' },
   sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
   designator: { name: 'Laser designator', desc: 'A laser dot goes out ahead of every shot onto her selected target (mark it with a click); no damage, but her shells and beams veer slightly toward it.' },
   redundancy: { name: 'Triple redundancy', desc: 'No single hit takes more than 40% of her max health.' },
@@ -97,6 +97,8 @@ const TRAITS = {
   telemetry: { name: 'Knight telemetry', desc: 'Her rockets lock onto rivals before drones or crates, when one is in sight.' },
 };
 const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
+// a gun's spread in her hands (G.W. Tiger's Geschützwagen halves it)
+const spreadOf = (w, t) => (w.disp || 0) * (hasTrait(t, 'geschutz') ? 0.5 : 1);
 const GATEKEEPER_DISCOUNT = 0.5;
 // a shooter's seeker settings: Alban Eiler's fire control extends and sharpens them, her telemetry
 // prefers rivals over drones and crates
