@@ -8,7 +8,7 @@
 // colour it touches), merged into boxes and cached.
 //
 // API
-//   GIRL_ART[id]            id in 'gwt' | 'obj' | 'int' | 'nxi' | 'alb' | 'ang'
+//   GIRL_ART[id]            id in 'gwt' | 'obj' | 'int' | 'nxi' | 'alb' | 'ang' | 'zui'
 //     .pivot  [lx, ly]      gun trunnion (world units, facing right, relative to the ground point)
 //     .barrel { size, twin, triple, n, step, start }  suggested barrel: n squares of `size`,
 //                           `step` apart starting `start` from the pivot (twin: two parallel lines,
@@ -515,6 +515,96 @@ const GIRL_DEFS = {
     mount: [['R', -1, -1, 4, 3], ['g', -1, -1, 4, 1], ['p', 0, 1, 2, 1]],
   },
 
+  // Zuihou (Sengoku Inc.): a light-carrier girl in a miko's white haori and red hakama, long pale
+  // brown hair in a high ponytail tied with a red cord, amber eyes, white tabi. Her flight deck is
+  // slung behind her at the waist like a shield (wooden planking, white lines, the red sun), with
+  // a quiver-like hangar on her back and the laser designator's mount on top of it.
+  zui: {
+    pivot: [5, 9],
+    barrel: { size: 3, n: 4, step: 3, start: 4 },
+    pal: {
+      h: '#caa27a', H: '#9a7450', L: '#ecd4b0', n: '#d8303c', I: '#8a4a22', i: '#e8a24e',
+      u: '#fbfbff', U: '#d2d4e4', z: '#ffffff', c: '#c8323c', C: '#8c1c26',
+      x: '#3a2a2a', X: '#5a4040', r: '#b08a5a', R: '#7a5c38', g: '#dcc08c',
+    },
+    legs: 'parade', legMap: { A: 'c', T: 'c', B: 'c', F: 'w' },
+    order: ['rig', 'tail', 'back', 'deck', 'legs', 'hakama', 'body', 'arm', 'face', 'front'],
+    rig: { at: 8, x0: 2, rows: [
+      '...ggg',
+      '..ggrrR',
+      '..grpppR',
+      '..grrrrR',
+      '..gRrRrR',
+      '..grrrrR',
+      '..grqqrR',
+      '..grPPrR',
+      '..grrrrR',
+      '..grrrrR',
+      '..grrrrR',
+    ] },
+    deck: { at: 21, x0: 0, rows: [
+      'ggggggggggggggg',
+      'rwrrrwrrrrrwrrR',
+      'rrrrrrccrrrrrrR',
+      'rwrrrrccrrrwrrR',
+      'RRRRRRRRRRRRRRR',
+    ] },
+    hakama: { at: 25, x0: 14, rows: [
+      '.cccccccc',
+      '.cCcccCcc',
+      'cccCcccCcc',
+      'cccCcccCcc',
+      'ccCccccCcc',
+      'ccCccc.Ccc',
+      'ccCcc..Ccc',
+      'cCcc...cCc',
+    ] },
+    tail: { at: 3, x0: 3, sway: [12, 17], rows: [
+      '.........nn',
+      '........hnnh',
+      '......hhhhhhh',
+      '....hhhhLhh',
+      '...hhhLhhhH',
+      '..hhhLhhhH',
+      '..hhLhhhH',
+      '.hhLhhhH',
+      '.hhLhhH',
+      '.hLhhhH',
+      'hhLhhH',
+      'hhLhhH',
+      'hLhhH',
+      'hLhhH',
+      'hhhH',
+      'hhhH',
+      '.hhH',
+      '.hhH',
+      '..hH',
+      '..H',
+    ] },
+    back: { at: 5, x0: 11, rows: GIRL_HEAD_BACK },
+    front: { at: 7, x0: 11, rows: [
+      '..LLLhhLLLh',
+      '.hhhhhhhhhhhhH',
+      'hhhhhLhhhhLhhH',
+      'hhhhh.hhhh.hhH',
+      '..hH', '..hH', '..hH', '..hH', '..hH', '..hH',
+      '...H',
+    ] },
+    body: { at: 17, x0: 14, rows: [
+      '...zuuU',
+      '..zuccuU',
+      '.uzuuuuuU',
+      '.uzuuuuuU',
+      '.UuuuuuuU',
+      '.cccccccc',
+      '.cCccCccC',
+      '.cCccCccC',
+    ] },
+    arm: { at: 19, x0: 20, rows: ['uuU', '.uuU', '..s', '.s'] },
+    sleeve: 'uUc',
+    mount: [['R', -1, -1, 4, 3], ['g', -1, -1, 4, 1], ['p', 0, 1, 2, 1]],
+  },
+
   // Ikaros (secret, from beyond the gate): an angel. Pale gold hair to her waist, sky-blue
   // eyes, a floating gold halo, white feathered wings folded behind her (the laser pointer sits
   // in the wing joint), a white dress with gold trim and a player-colour sash, white boots.
@@ -612,7 +702,7 @@ for (const id in GIRL_DEFS) {
   };
 }
 
-const GIRL_PHASE = { gwt: 0, obj: 0.37, int: 0.71, nxi: 0.53, alb: 0.19, ang: 0.88, android: 0.42 };
+const GIRL_PHASE = { gwt: 0, obj: 0.37, int: 0.71, nxi: 0.53, alb: 0.19, ang: 0.88, android: 0.42, zui: 0.64 };
 const GIRL_POSE_LEN = { fire: 0.35, hit: 0.5 };
 
 // ---- composition (cached) ----

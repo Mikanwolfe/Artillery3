@@ -27,7 +27,8 @@ function gunSkin(w) {
   const key = w.id + ':' + w.dmg + ':' + w.salvo;
   if (skinCache.has(key)) return skinCache.get(key);
   // a laser's weapon is its drone (lasers.js): on her rigging there is only the pointer
-  const o = w.kind === 'laser' ? { barrels: 1, n: 3, size: 3, brake: false, sat: false } : SKIN_OVERRIDES[w.id] || {};
+  // a plane weapon's is its laser designator (the planes come from her deck, planes.js)
+  const o = w.kind === 'laser' || w.kind === 'air' ? { barrels: 1, n: w.kind === 'air' ? 4 : 3, size: 3, brake: false, sat: false, ...(w.kind === 'air' ? { tip: 'lens', color: '#4a4440' } : {}) } : SKIN_OVERRIDES[w.id] || {};
   const skin = {
     barrels: clamp(w.salvo, 1, 4),
     n: clamp(4 + Math.round(Math.min(w.maxCharge, 140) / 22), 5, 10),
@@ -143,7 +144,7 @@ function shellSkin(w) {
   if (w.bomblet) return { size: 5, body: [64, 70, 56], nose: [230, 200, 90] };
   if (w.kind === 'rocket') return { size: clamp(5 + w.dmg / 120, 5, 9), body: [214, 216, 202], nose: [200, 60, 50] };
   if (w.id && w.id.startsWith('mob') || w.id === 'shipbomb') return { size, body: [80, 40, 50], nose: [255, 90, 90] };
-  if (w.kind === 'laser') return { size: 4, body: [255, 60, 74], nose: [255, 210, 214] }; // the laser pointer's marker
+  if (w.kind === 'laser' || w.kind === 'air') return { size: 4, body: [255, 60, 74], nose: [255, 210, 214] }; // the laser pointer's marker (and the designator's dot)
   if (w.kind === 'acid') return { size, body: [70, 160, 50], nose: [200, 255, 140] };
   if (w.kind === 'flak') return { size, body: [92, 92, 76], nose: [255, 220, 120] };
   if (w.kind === 'gun') return { size: size - 1, body: [60, 64, 74], nose: [200, 200, 210] };

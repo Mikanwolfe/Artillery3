@@ -60,6 +60,18 @@ const GUN_NOTES = {
   verdict: ['Final', 'November only. A target dot. The fleet takes station overhead; the flagship\'s lance comes down on the mark (6,000), then the rest of the fleet rains 60 laser shots (450 each) across 600 either side of it.'],
   constellation: ['Final', 'Innocentia only. A laser dot. MAIA opens her eye and the sky fills with MAIAs, a vast one behind them; five waves of 40 shots (320 each) hit across 650 either side of the mark, then the vast MAIA\'s beam comes down: 6,000.'],
   morrighan: ['Final', 'Alban Eiler only. A flare; the sky over the mark splits open in five vertical tears, and 44 black rockets (600 each) rain out of them on long dark trails, seeking everything beneath.'],
+  zui0: ['Matches', 'Three dive bombers off her deck, two squads, then a turn to rearm. Slow and readable, but a target that sits still eats every bomb.'],
+  kansen0: ['Matches', 'Fighters: they clear drones and planes over the mark at triple damage and only then strafe it. Weak against a girl, superb against a swarm.'],
+  kankou97: ['Matches', 'Torpedoes run along the ground through the mark from her side: stepping sideways along their line doesn’t help, a ridge in the way does.'],
+  suisei: ['Matches', 'The Kanbaku with a heavier bomb. The best plane per credit below Rare.'],
+  tenzan: ['Matches', 'Three torpedoes abreast. Punishes anyone sitting in a valley.'],
+  reppuu: ['Matches', 'The anti-squadron answer: anything flying near the mark dies first.'],
+  taillteann: ['Matches', 'Seekers from overhead: a target that moved a little still gets found. The most forgiving plane.'],
+  ryusei: ['Matches', 'Three huge bombs. If they land, little survives.'],
+  kikka: ['Matches', 'Jets: AA has half the chance against them and their bombs, and each drops two.'],
+  shiden: ['Matches', 'Four fighters a squad. Clears the sky of anything.'],
+  tifaun: ['Matches', 'Armoured jets with guided bombs that steer onto the nearest rival within 240 of the mark. Moving out of the strike zone isn’t enough; leaving the area is.'],
+  kidobutai: ['Final', 'Zuihou only. A laser dot for three carriers off the coast: 21 aircraft (9 dive bombers, 6 torpedo bombers, 6 fighters) climb away, hover over the mark and strike two of her turns later. Everyone has two turns to shoot them down or get clear.'],
   apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 6,000 across 650, in bullet time, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
 };
 const GIRL_NOTES = {
@@ -68,6 +80,7 @@ const GIRL_NOTES = {
   nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, raises a barrier from round one, and can’t be one-shot.' },
   alb: { plays: 'The rocketeer. Her seekers find the nearest thing, rivals first, from further out and turning harder than anyone else’s. Lighter hits, few misses.' },
   ang: { plays: 'The guardian angel. Light armour, but grace saves her from one killing blow a round, and her wings make her the most mobile girl: half-price jumps and no fall damage, so she can take high ground no one else can. Her halo lance needs a line of sight.' },
+  zui: { plays: 'The light carrier. She marks a spot; her squadron hovers over it for a round and strikes on her next turn, so she plays a turn ahead: mark where they will be, or where they can’t leave. A full deck (one more plane a squad, no VTOL penalty) and two AA mounts make her the best defended girl in the air.' },
   int: { plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
 };
 
@@ -77,6 +90,7 @@ const RANGE_X = 1000; // where she stands
 // worth on a turn the gun fires: damage over the clip and salvo, scaled by blast radius and spread,
 // plus acid and MAIA (the armoury's measure)
 function codexWorth(w) {
+  if (w.air) return airValue(w);
   const shots = w.salvo * Math.min(w.clip, 4);
   const heads = w.split ? w.split.n : 1;
   const carpet = w.carpet ? w.carpet.n * w.carpet.frac * 0.45 : 0;
@@ -100,7 +114,8 @@ function codexMeta(w) {
   if (w.sig) lines.push(['Per firing turn', 'the set piece’s, see below (the marker round itself barely scratches)']);
   else lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
   const R = reloadOf(w);
-  if (R) lines.push(['Tempo', w.sig ? `Fires every ${R + 1} turns` : `Fires every ${R + 1} turns on its own, about ${Math.round(worth / (R + 1))} a turn; rotate it with other guns`]);
+  if (w.air) lines.push(['Tempo', `${w.clip} squad${w.clip > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck), then ${R} turn${R > 1 ? 's' : ''} rearming. Strikes ${w.air.delay || 1} of her turns after the dot lands`]);
+  else if (R) lines.push(['Tempo', w.sig ? `Fires every ${R + 1} turns` : `Fires every ${R + 1} turns on its own, about ${Math.round(worth / (R + 1))} a turn; rotate it with other guns`]);
   const el = Math.min(45, w.elevMax);
   const reach = (w.maxCharge * w.maxCharge * Math.sin(2 * rad(el))) / GRAV;
   lines.push(['Reach', `${Math.round(reach).toLocaleString('en-US')} units at ${el}° (the map is ${WORLD_W.toLocaleString('en-US')})`]);
@@ -111,7 +126,7 @@ function codexMeta(w) {
 
 // price against worth for every shop gun (log-log, like the armoury's chart), with `sel` ringed and
 // labelled; the dashed line is the median fit, worth ∝ price^0.75. Dots are buttons (data-w).
-const KIND_COL = { shell: '#c3b0ff', gun: '#aab0c8', laser: '#78c8ff', acid: '#8ad86a', flak: '#78d8c4', rocket: '#ff7c66' };
+const KIND_COL = { shell: '#c3b0ff', gun: '#aab0c8', laser: '#78c8ff', acid: '#8ad86a', flak: '#78d8c4', rocket: '#ff7c66', air: '#ffb84a' };
 function codexChart(sel) {
   const W = 400, H = 210, L = 40, R = 10, T = 10, B = 26;
   const guns = WEAPONS.filter((w) => !w.sig).map((w) => ({ w, c: w.cost, v: codexWorth(w) })); // (final weapons are set pieces, off the scale)
@@ -159,7 +174,7 @@ Object.assign(Game.prototype, {
     this.round = 1;
     this.events = [];
     if (!this.terrain.height || !this.biome) this.newEnvironment();
-    this.projectiles = []; this.drops = []; this.lasers = []; this.traces = []; this.crates = []; this.flyovers = []; this.cinematic = 0; this.slides = [];
+    this.projectiles = []; this.drops = []; this.lasers = []; this.traces = []; this.crates = []; this.flyovers = []; this.cinematic = 0; this.slides = []; this.planes = []; this.airGroups = []; this.aaRounds = []; this.strikeResolve = false;
     this.salvo = this.satSeq = this.satTarget = null;
     this.particles.clear();
     this.setupHazards();

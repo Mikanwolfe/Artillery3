@@ -4,6 +4,14 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['e4149f1', 'CPUs buy planes and AA mounts too.'],
+  ['38b4063', 'Zuihou, the Sengoku light carrier: she marks a spot and her squadron hovers over it, striking on her next turn. Her final weapon is the Kidō Butai.'],
+  ['38b4063', 'Planes at every rarity (dive, torpedo, fighter, rocket wing, NXi heavy). Squads hover where anyone can shoot them; no flight deck means 30% softer.'],
+  ['38b4063', 'AA mounts: point defence stops rockets and bombs, anti-air shoots planes and drones. Everyone gets a slot; Zuihou gets two.'],
+  ['38b4063', 'Flak and rockets burst just short of drones and planes; flak throws its fragments at them.'],
+  ['38b4063', 'A broken radio tower’s top flies off like a shell and crushes what it lands on.'],
+  ['38b4063', 'S drops you off a bridge; switch weapons with Q, E or Tab. Laser drones climb half as high again.'],
+  ['38b4063', 'CPUs think faster.'],
   ['05acb72', 'Hit popups add up: more hits on the same target raise its number instead of piling on, acid keeps one running total, and they stay up longer.'],
   ['dc274ed', 'Performance: still scenery and sprites are drawn once and reused, and CPUs think without stalling frames.'],
   ['6d8f7ef', 'The ring has depth: its far side rises behind it as a darker blocky silhouette.'],

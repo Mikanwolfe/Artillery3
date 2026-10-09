@@ -87,7 +87,7 @@
       <div id="cx-chars"></div>
       <div id="cx-char" class="cx-card"></div>
       <h3 class="sec">Weapon <span class="grip"></span></h3>
-      <div class="seg wrap" id="cx-filter"><button data-f="all">All</button><button data-f="shell">Shell</button><button data-f="gun">Gun</button><button data-f="laser">Laser</button><button data-f="acid">Acid</button><button data-f="flak">Flak</button><button data-f="rocket">Rocket</button><button data-f="hybrid">Hybrid</button><button data-f="NXi">NXi</button></div>
+      <div class="seg wrap" id="cx-filter"><button data-f="all">All</button><button data-f="shell">Shell</button><button data-f="gun">Gun</button><button data-f="laser">Laser</button><button data-f="acid">Acid</button><button data-f="flak">Flak</button><button data-f="rocket">Rocket</button><button data-f="air">Air</button><button data-f="hybrid">Hybrid</button><button data-f="NXi">NXi</button></div>
       <div id="cx-list"></div>
       <div id="cx-wpn" class="cx-card"></div>
       <h3 class="sec">Test range <span class="grip"></span></h3>
@@ -112,7 +112,8 @@
         <tr><td>← →</td><td>move (uses fuel)</td></tr>
         <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
         <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
-        <tr><td>S · Q</td><td>switch weapon (or tap the rack)</td></tr>
+        <tr><td>Q · E</td><td>switch weapon (or tap the rack)</td></tr>
+        <tr><td>S</td><td>drop off a bridge to the ground below</td></tr>
         <tr><td>R</td><td>repair kit (uses your shot)</td></tr>
         <tr><td>W · L</td><td>jump (30% fuel) · leap (90%, soft landing)</td></tr>
         <tr><td>1 2 3 4</td><td>abilities, once bought</td></tr>
@@ -131,6 +132,8 @@
         <li>Armour soaks a whole hit while any is left</li>
         <li>Bought guns reload: carry several and rotate</li>
         <li>CPUs go after whoever last hit them</li>
+        <li><b>Planes</b> hover over their mark until their owner's next turn: move, or shoot them down</li>
+        <li><b>AA</b> mounts fire on their own: point defence stops rockets, anti-air stops planes</li>
       </ul>
       </div><div>
       <h3 class="sec">Damage numbers</h3>
@@ -190,7 +193,7 @@
     <div class="panel plate shop-panel">
       <div class="shop-head">
         <h2 id="shop-title"></h2>
-        <div class="seg" id="shop-filter"><button data-f="all">All</button><button data-f="buy">Affordable</button><button data-f="shell">Shell</button><button data-f="gun">Gun</button><button data-f="laser">Laser</button><button data-f="acid">Acid</button><button data-f="flak">Flak</button><button data-f="rocket">Rocket</button><button data-f="hybrid">Hybrid</button><button data-f="NXi">NXi</button></div>
+        <div class="seg" id="shop-filter"><button data-f="all">All</button><button data-f="buy">Affordable</button><button data-f="shell">Shell</button><button data-f="gun">Gun</button><button data-f="laser">Laser</button><button data-f="acid">Acid</button><button data-f="flak">Flak</button><button data-f="rocket">Rocket</button><button data-f="air">Air</button><button data-f="aa">AA</button><button data-f="hybrid">Hybrid</button><button data-f="NXi">NXi</button><button data-f="Sengoku">Sengoku</button></div>
         <div id="shop-cash"></div>
       </div>
       <div class="shop-body">
@@ -200,6 +203,8 @@
             <h3 class="sec">Loadout <span id="shop-count"></span></h3>
             <p id="shop-note" class="note"></p>
             <div id="shop-owned"></div>
+            <h3 class="sec">Air defence</h3>
+            <div id="shop-aa"></div>
             <h3 class="sec">Upgrades</h3>
             <div id="shop-upg"></div>
             <h3 class="sec">Supplies</h3>
@@ -250,6 +255,8 @@
 <script src="js/infra.js"></script>
 <script src="js/cover.js"></script>
 <script src="js/lasers.js"></script>
+<script src="js/aa.js"></script>
+<script src="js/planes.js"></script>
 <script src="js/finals.js"></script>
 <script src="js/codex.js"></script>
 <script src="js/changelog.js"></script>

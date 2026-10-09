@@ -28,7 +28,10 @@ const VEHICLE_UPGRADES = [
   { id: 'engine', name: 'Engine & tracks', costs: [900, 1800, 3200], desc: '+40% fuel and steeper climbs per level.' },
   { id: 'computer', name: 'Ballistic computer', costs: [2800], desc: 'The aim guide and target marker account for wind, and the guide arc runs further.' },
   { id: 'workshop', name: 'Field workshop', costs: [1200, 2400, 4200], desc: 'Repairs 5% of max armour per level at the start of each of your turns.' },
+  // planes.js: without a deck, planes take off straight up on their lift fans and hit 30% softer
+  { id: 'deck', name: 'Flight deck', costs: [3000], desc: 'Your planes launch off a deck, not straight up: no 30% VTOL penalty. It is heavy: 40% less fuel, and no Leap.', notFor: 'flightdeck' },
 ];
+const DECK_FUEL = 0.6; // fuel left to a girl carrying a flight deck
 const PLAYER_COLORS = ['#3d6fa8', '#b8433a', '#3e8a5a', '#7a4d9a'];
 
 // Vehicles are drawn as turret girls (girls.js) carrying their weapon's skin (weaponskins.js).
@@ -47,9 +50,11 @@ class Tank {
     this.color = PLAYER_COLORS[idx % PLAYER_COLORS.length];
     this.money = 0;
     this.wins = 0;
-    this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0 };
+    this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0, deck: 0 };
     this.weapons = [this.vehicle.weapon.id];
     this.kits = 0; // repair kits carried (consumable)
+    // air-defence mounts (aa.js): a slot each (Zuihou two), the vehicle's own mount in the first
+    this.aa = Array.from({ length: aaSlots(this) }, (_, i) => (this.vehicle.aa || [])[i] || null);
     this.abilities = { double: 0, over: 0, shield: 0, barrier: 0 }; // 1 = owned (see ABILITIES)
     this.lastAttacker = null; // CPUs go after whoever last hurt them
     this.weaponIdx = 0;
@@ -66,7 +71,7 @@ class Tank {
   // A3 shop: Health++ / Armour++ multiply by 1.3 per level
   get maxHp() { return Math.round(this.vehicle.hp * Math.pow(1.3, this.upgrades.hp)); }
   get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)); }
-  get maxFuel() { return Math.round(TANK_FUEL * (this.vehicle.fuel || 1) * (1 + 0.4 * this.upgrades.engine)); }
+  get maxFuel() { return Math.round(TANK_FUEL * (this.vehicle.fuel || 1) * (1 + 0.4 * this.upgrades.engine) * (this.upgrades.deck ? DECK_FUEL : 1)); }
   get climb() { return TANK_CLIMB + 0.5 * this.upgrades.engine; }
   get weapon() { return WEAPON_BY_ID[this.weapons[this.weaponIdx]] || WEAPON_BY_ID[this.weapons[0]]; }
   // full-charge muzzle speed for the next shot (Overcharge raises it)
@@ -74,7 +79,10 @@ class Tank {
   abilityReady(id) { return this.abilities[id] > 0 && !(this.cooldown[id] > 0); }
   // reloads (rebalanced): own turns until a gun can fire again; 0 = ready
   reloadLeft(id) { return this.reload[id] | 0; }
-  weaponReady(id = this.weapon.id) { return !(this.reload[id] > 0); }
+  weaponReady(id = this.weapon.id) { return !(this.reload[id] > 0) && (!WEAPON_BY_ID[id].air || this.sortiesLeft(WEAPON_BY_ID[id]) > 0); }
+  // planes: squads still to fly before the weapon rearms (each shot flies one)
+  sortiesLeft(w) { return this.sorties[w.id] === undefined ? w.clip : this.sorties[w.id]; }
+  shotsFor(w) { return w.air ? Math.max(0, this.sortiesLeft(w)) : w.clip; }
   chargeCap() { return this.weapon.maxCharge * (this.armed.over ? OVERCHARGE : 1); }
 
   resetRound(x, terrain) {
@@ -103,6 +111,9 @@ class Tank {
     this.aimMemo = null; // CPUs: ranging-in memory per target (ai.js)
     this.cooldown = { double: 0, over: 0, shield: 0, barrier: 0 }; // own turns until each ability is ready again
     this.reload = {}; // weapon id -> own turns until it can fire again (every gun starts the round loaded)
+    this.sorties = {}; // plane weapon id -> squads left to fly (planes.js)
+    this.turnsTaken = 0; // own turns this round (a squad strikes on a later one)
+    this.aaGuns = null;
     this.barrier = null; // Bulwark Barrier direction (unit vector), until the next turn
     this.shield = false;
     this.shotsLeft = 0;
@@ -129,7 +140,7 @@ class Tank {
     if (!this.weapons[i] || !this.weaponReady(this.weapons[i])) return false;
     this.weaponIdx = i;
     this.charge = 0;
-    this.shotsLeft = this.weapon.clip;
+    this.shotsLeft = this.shotsFor(this.weapon);
     this.clampElev();
     return true;
   }
@@ -138,12 +149,16 @@ class Tank {
   // best loaded one (the starter never reloads, but a sold starter or an old save might leave none)
   tickReloads() {
     for (const id in this.reload) if (this.reload[id] > 0) this.reload[id]--;
-    if (!this.weapons.some((id) => this.weaponReady(id))) {
-      const soonest = this.weapons.slice().sort((a, b) => this.reloadLeft(a) - this.reloadLeft(b))[0];
+    for (const id of this.weapons) if (WEAPON_BY_ID[id].air && !(this.reload[id] > 0) && this.sorties[id] <= 0) delete this.sorties[id]; // rearmed
+    // (planes never skip their rearming: a carrier with nothing else may have a turn with nothing to fly)
+    const guns = this.weapons.filter((id) => !WEAPON_BY_ID[id].air);
+    if (!this.weapons.some((id) => this.weaponReady(id)) && guns.length) {
+      const soonest = guns.slice().sort((a, b) => this.reloadLeft(a) - this.reloadLeft(b))[0];
       this.reload[soonest] = 0;
     }
     if (!this.weaponReady()) {
       const ready = this.weapons.map((id, i) => [WEAPON_BY_ID[id], i]).filter(([w]) => this.weaponReady(w.id));
+      if (!ready.length) return;
       ready.sort((a, b) => weaponValue(b[0]) - weaponValue(a[0]));
       this.weaponIdx = ready[0][1];
       this.clampElev();
@@ -405,8 +420,12 @@ class Projectile {
 
   update() {
     const g = this.game;
+    if (this.dead) return false; // shot down by a point-defence mount (aa.js)
     if (this.delay > 0) { this.delay--; return true; } // waiting its turn in a burst
     if (this.w.lance && this.lanceStep(g)) { this.age++; return true; }
+    // proximity fuse against aircraft: flak and rockets go off short of a drone or plane they are
+    // about to pass (or hit), not on it, so the blast and the fragments catch it
+    if ((this.w.kind === 'flak' || this.w.airburst || this.w.kind === 'rocket') && this.age >= 6 && !this.w.bomblet && this.airFuse(g)) { g.impact(this, { hit: 'air' }); return false; }
     const r = stepBallistic(this, g.terrain, g.wind, g.targets(), this.owner, this.guide ? g.seekables() : undefined);
     g.frontCheck(this);
     if (!r && this.transform(g)) return false;
@@ -526,6 +545,32 @@ class Projectile {
     return false;
   }
 
+  // the look-ahead fuse: will this frame's flight carry it within its burst distance of an
+  // aircraft? If so, move it to where it first gets that close and report the aircraft
+  airFuse(g) {
+    const flak = this.w.kind === 'flak' || this.w.airburst;
+    const ex = this.x + this.vx, ey = this.y + this.vy + GRAV;
+    const dx = ex - this.x, dy = ey - this.y, L2 = dx * dx + dy * dy || 1;
+    for (const t of g.targets()) {
+      if (!t.alive || t === this.owner || !(t.isPlane || (t.isMob && t.flying))) continue;
+      if (t.isPlane && t.owner === this.owner) continue;
+      if (this.owner && this.owner.isMob && t.isMob) continue;
+      const R = (flak ? clamp(this.w.dmgR * 0.4, 20, 48) : 10) + (t.hw || 16) * 0.5;
+      const c = t.center(), fx = this.x - c.x, fy = this.y - c.y;
+      // first s in [0, 1] with |p + s d - c| = R
+      const b = fx * dx + fy * dy, cc = fx * fx + fy * fy - R * R;
+      if (cc <= 0) { this.fuseTarget = t; return true; } // already inside
+      const disc = b * b - L2 * cc;
+      if (disc < 0) continue;
+      const s = (-b - Math.sqrt(disc)) / L2;
+      if (s < 0 || s > 1) continue;
+      this.x += dx * s; this.y += dy * s;
+      this.fuseTarget = t;
+      return true;
+    }
+    return false;
+  }
+
   // flak proximity fuse: bursts near a mob or an enemy vehicle, or just above the ground on the way down
   fuse(g) {
     if (this.age < 10) return false;
@@ -533,6 +578,7 @@ class Projectile {
     for (const t of g.targets()) {
       if (!t.alive || t === this.owner) continue;
       const c = t.center();
+      if (t.isPlane || (t.isMob && t.flying)) continue; // (aircraft: the look-ahead fuse, airFuse)
       if (dist(c.x, c.y, this.x, this.y) < (t.isMob ? r + t.hw * 0.5 : r * 0.6)) return true;
     }
     return this.vy > 0 && this.y > g.terrain.hAt(this.x) - 60;
@@ -540,6 +586,7 @@ class Projectile {
 
   draw(ctx) {
     if (this.delay > 0) return;
+    if (this.w.tower) { this.game.drawTowerFall(ctx, this, (this.game.terrain.material || MATERIALS.steel).pole); return; }
     const sk = shellSkin(this.w);
     const col = sk.body;
     for (let i = 0; i < this.trail.length; i += 2) {
