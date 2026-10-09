@@ -561,6 +561,7 @@ class Game {
     }
     this.stepTanks();
     this.stepTowers();
+    this.stepGiants();
     this.stepDrones();
     this.updateHazards();
     if (this.phase === 'aim') this.updateAim();
@@ -1245,6 +1246,7 @@ class Game {
     if (y > this.terrain.hAt(x) - (def.explR || 10) * 4 - 20) this.terrain.crater(x, def.explR || 10); // airbursts don't dig
     if (this.terrain.forts.length) this.blastForts(x, y, def);
     this.blastInfra(x, y, def);
+    this.blastGiants(x, y, def);
     if (y > this.terrain.hAt(x) - 30) this.terrain.scorch(x, Math.max(14, def.dmgR * 0.3), 0.2); // a faint scorch, ground hits only
     // a blast that catches a supply crate claims it for whoever fired
     for (const c of this.crates) {
@@ -1828,6 +1830,7 @@ class Game {
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);
     this.terrain.drawTrees(ctx, cam.x, cam.x + cam.w);
+    this.drawGiants(ctx);
     this.drawInfra(ctx);
     const aiming = this.phase === 'aim' ? this.active : null;
     if (aiming && !this.cpu) this.drawGhost(ctx, aiming);

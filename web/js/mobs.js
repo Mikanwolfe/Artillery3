@@ -371,6 +371,7 @@ function lineOfSight(terrain, ax, ay, bx, by) {
     const y = lerp(ay, by, i / n);
     if (x >= 0 && x < WORLD_W && y >= terrain.hAt(x)) return false;
     if (terrain.fortAt && terrain.fortAt(x, y)) return false;
+    if (terrain.giants && terrain.giants.length && terrain.giantAt(x, y)) return false;
   }
   return true;
 }
