@@ -115,7 +115,7 @@ function codexMeta(w) {
     const par = peers.reduce((a, x) => a + per(x), 0) / peers.length;
     const rank = peers.slice().sort((a, b) => per(b) - per(a)).indexOf(w) + 1;
     lines.push(['Value', `${(per(w) / par).toFixed(2)}× the ${RARITY[w.rarity].word} average per ¢ (#${rank} of ${peers.length})`]);
-  } else lines.push(['Value', 'Free starter, never reloads, can’t be sold']);
+  } else lines.push(['Value', 'Free starter, never reloads; sells for ¢' + STARTER_SELL + ' if she wants the slot']);
   if (w.sig) lines.push(['Per firing turn', 'the set piece’s, see below (the marker round itself barely scratches)']);
   else lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
   const R = reloadOf(w);

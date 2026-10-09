@@ -74,9 +74,11 @@ function aaPower(A) { return A.role === 'air' ? A.dmg * A.acc * A.perTurn * (A.s
 function aaSlotFor(t, role) {
   const i = t.aa.indexOf(null);
   if (i >= 0) return i;
-  const same = t.aa.findIndex((id) => AA_BY_ID[id] && AA_BY_ID[id].starter && AA_BY_ID[id].role === role);
-  return same >= 0 ? same : t.aa.findIndex((id) => AA_BY_ID[id] && AA_BY_ID[id].starter);
+  const same = t.aa.findIndex((id) => aaOwn(t, id) && AA_BY_ID[id].role === role);
+  return same >= 0 ? same : t.aa.findIndex((id) => aaOwn(t, id));
 }
+// a mount she came with (a starter, or Zuihou's Type 96): a bought one replaces it, and it sells for scrap
+function aaOwn(t, id) { return !!AA_BY_ID[id] && (AA_BY_ID[id].starter || (t.vehicle.aa || []).includes(id)); }
 // things in flight a mount can shoot at: missiles and bombs (shells and beams are too fast or too small)
 function aaInterceptable(p) {
   const w = p.w;

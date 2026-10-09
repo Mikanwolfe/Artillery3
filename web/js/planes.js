@@ -7,7 +7,7 @@
 // then, and the turn waits for it (AirStrike). So one squad is one zone a turn, and a squad shot
 // down is one zone fewer until it has rearmed. Anything in the zone (airZone) is found and hit
 // fairly accurately, a target outside it is safe. A plane carries a loadout of passes
-// (AIR_PASSES: bombers several, torpedo jets one, fighters many), one a dot; between them it
+// (AIR_PASSES: bombers several, torpedo jets two, fighters many), one a dot; between them it
 // loops back up and hovers over its zone, where anyone can shoot it. Loadout spent, it flies home
 // and the squad rearms for air.reload of her turns. A squad whose owner is destroyed flies off.
 // Shooting planes down pays nothing.
@@ -28,7 +28,7 @@ const TORPEDO_SPEED = 7;
 const TORPEDO_RUN = 760; // how far a torpedo runs before it goes off anyway
 const DIVE_KIN = 6; // a dive-released bomb's kinetic multiplier (it leaves the plane at the dive's speed)
 // a plane's loadout: how many dots it attacks on before it flies home to rearm
-const AIR_PASSES = { dive: 3, torpedo: 1, fighter: 6, rocket: 2, heavy: 1, fortress: 2 };
+const AIR_PASSES = { dive: 3, torpedo: 2, fighter: 6, rocket: 2, heavy: 1, fortress: 2 };
 const BOMB_GUIDE = { arm: 2, burn: 120, seek: 4, apex: false, turn: 1.6, range: 90, cone: 120, lift: 0, brake: false }; // a dive bomb's fins: a nudge, not a seeker
 // the strike zone a dot marks: a squad attacks what is in it, and nothing outside
 function airZone(w) { return w.fleet ? 200 : w.air.type === 'fortress' ? 160 : clamp(w.dmgR + 30, 70, 150); } // (a fortress walks its stick across a wide one)

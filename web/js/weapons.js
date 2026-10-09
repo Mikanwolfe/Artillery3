@@ -256,7 +256,7 @@ const WEAPONS = [
   // a flight deck), flies over the dot's strike zone and attacks it in the same turn, then hovers
   // there, where anyone can shoot it; with none on deck, the squad out longest on its orders is
   // redirected (and attacks the new zone). A squad attacks once a dot, until its loadout is spent (AIR_PASSES: bombers
-  // several passes, torpedo jets one, fighters many), then flies home and rearms for air.reload
+  // several passes, torpedo jets two, fighters many), then flies home and rearms for air.reload
   // turns; one shot down rearms too. Planes that take off straight up (no flight deck) hit 30%
   // softer. dmg is per bomb, torpedo or rocket; hp per plane (armour: it takes a whole hit).
   //   dive     each plane drops air.ord bombs almost straight down onto the mark
@@ -325,7 +325,7 @@ const WEAPONS = [
   weapon('kidobutai', "SI 'Kidō Butai' Strike Fleet", 'air', 0, 80, { sig: 'zui', maxCharge: 100, disp: 0.4, dmg: 300, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
     air: { squads: 1, type: 'fleet', planes: 0, ord: 1, hp: 120, reload: 3 },
     fleet: { carriers: 3, dive: 9, torpedo: 6, fighter: 6 },
-    short: 'A laser dot for the carriers off the coast. Their whole air wing comes.', long: 'Zuihou only. One great squad of 21 that strikes as soon as it arrives; each later dot redirects it and it strikes again, until its loadouts are spent (dive bombers three passes, torpedo jets one, fighters six) or it is shot down. Only then can the carriers launch again.' }),
+    short: 'A laser dot for the carriers off the coast. Their whole air wing comes.', long: 'Zuihou only. One great squad of 21 that strikes as soon as it arrives; each later dot redirects it and it strikes again, until its loadouts are spent (dive bombers three passes, torpedo jets two, fighters six) or it is shot down. Only then can the carriers launch again.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its

@@ -228,7 +228,7 @@ const UI = {
   weaponStats(w) {
     if (w.air) { // planes: what a squad is, and how often it flies
       const A = w.air, F = w.fleet;
-      const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : A.planes], ['Squads', A.squads || 1], ['Passes', F ? '1–6' : AIR_PASSES[A.type]],
+      const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : A.planes], ['Squads', A.squads || 1], ['Passes', F ? '2–6' : AIR_PASSES[A.type]],
         ['Rearm', `${reloadOf(w)} turns`], ['Type', F ? 'fleet' : A.type], ['Zone', airZone(w)], ['Plane HP', A.hp]];
       if (A.armour) rows.push(['Armour', A.armour]);
       if (A.jet) rows.push(['Jet', 'AA ½']);
@@ -491,14 +491,14 @@ const UI = {
       $('shop-owned').innerHTML = tank.weapons.map((id) => {
         const w = WEAPON_BY_ID[id];
         return `<div class="owned">${this.badge(w, true)}<span>${esc(w.name)}</span>
-          <button data-s="${id}" ${g.canSell(tank, id) ? '' : 'disabled'} title="Sell">${g.canSell(tank, id) ? 'Sell ' + money(g.sellValue(w)) : w.starter ? 'Starter' : 'Last gun'}</button></div>`;
+          <button data-s="${id}" ${g.canSell(tank, id) ? '' : 'disabled'} title="Sell">${g.canSell(tank, id) ? 'Sell ' + money(g.sellValue(w)) : 'Last gun'}</button></div>`;
       }).join('');
       $('shop-aa').innerHTML = tank.aa.map((id, i) => {
         const a = AA_BY_ID[id];
         if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty mount${i ? ' (second)' : ''}: buy one under AA</span></div>`;
         const st = this.game.canSellAA(tank, id);
         return `<div class="owned">${this.badge(a, true)}<span>${esc(a.name)}</span>
-          <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(a.cost) : a.starter ? 'Hers (a bought one replaces it)' : 'Hers'}</button></div>`;
+          <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(this.game.aaSellValue(tank, id)) : 'Hers'}</button></div>`;
       }).join('');
       $('shop-aa').querySelectorAll('[data-sa]').forEach((b) => { b.onclick = () => { g.sellAA(tank, b.dataset.sa); render(); }; });
       $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour]].map(([id, label, cur]) => {
