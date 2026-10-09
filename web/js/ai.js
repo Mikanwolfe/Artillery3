@@ -157,7 +157,12 @@ class CpuController {
     if (planes.length) enemies.push(planes.sort((a, b) => Math.abs(a.x - t.x) - Math.abs(b.x - t.x))[0]);
     if (t.lastAttacker && t.lastAttacker.isMob && t.lastAttacker.alive && !enemies.includes(t.lastAttacker)) enemies.push(t.lastAttacker);
     // the rest of an autoloader's clip goes at the same target, if it still stands
-    if (t.firedThisTurn && t.planTarget && t.planTarget.alive && t.planTarget !== t) enemies = [t.planTarget];
+    // planes: each squad takes its own zone, so the next dot goes to someone her squads haven't marked this turn
+    if (t.firedThisTurn && t.weapon.air) {
+      const zones = (g.airGroups || []).filter((G) => G.owner === t && G.squad && G.squad.tasked);
+      enemies = enemies.filter((e) => !e.isPlane && !zones.some((G) => Math.abs(e.x - G.mark.x) < airZone(G.w) + 40));
+      if (!enemies.length) return null; // everyone worth it is marked: done
+    } else if (t.firedThisTurn && t.planTarget && t.planTarget.alive && t.planTarget !== t) enemies = [t.planTarget];
     // MAIA: worth shooting down when a rival can call it and this CPU can't
     const sat = g.satellite;
     const rivalsUplink = g.tanks.some((x) => x.alive && x !== t && x.weapons.some((id) => WEAPON_BY_ID[id].sat));
@@ -357,7 +362,7 @@ class CpuController {
         const p = this.plan;
         if (t.weapon.id !== p.weapon.id && !t.firedThisTurn) {
           t.weaponIdx = t.weapons.indexOf(p.weapon.id);
-          t.shotsLeft = p.weapon.clip;
+          t.shotsLeft = t.shotsFor(p.weapon);
         }
         t.facing = p.facing;
         const diff = p.elev - t.elev;
