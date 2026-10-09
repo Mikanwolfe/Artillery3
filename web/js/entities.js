@@ -51,7 +51,7 @@ class Tank {
     this.money = 0;
     this.wins = 0;
     this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0, deck: 0 };
-    this.weapons = [this.vehicle.weapon.id];
+    this.weapons = [this.vehicle.weapon, ...(this.vehicle.extra || [])].map((w) => w.id);
     this.kits = 0; // repair kits carried (consumable)
     // air-defence mounts (aa.js): a slot each (Zuihou two), the vehicle's own mount in the first
     this.aa = Array.from({ length: aaSlots(this) }, (_, i) => (this.vehicle.aa || [])[i] || null);
@@ -79,10 +79,9 @@ class Tank {
   abilityReady(id) { return this.abilities[id] > 0 && !(this.cooldown[id] > 0); }
   // reloads (rebalanced): own turns until a gun can fire again; 0 = ready
   reloadLeft(id) { return this.reload[id] | 0; }
-  weaponReady(id = this.weapon.id) { return !(this.reload[id] > 0) && (!WEAPON_BY_ID[id].air || this.sortiesLeft(WEAPON_BY_ID[id]) > 0); }
-  // planes: squads still to fly before the weapon rearms (each shot flies one)
-  sortiesLeft(w) { return this.sorties[w.id] === undefined ? w.clip : this.sorties[w.id]; }
-  shotsFor(w) { return w.air ? Math.max(0, this.sortiesLeft(w)) : w.clip; }
+  // planes: not while its squad is out (planes.js), nor while it rearms after
+  weaponReady(id = this.weapon.id) { return !(this.reload[id] > 0) && !this.deployed[id]; }
+  shotsFor(w) { return w.clip; }
   chargeCap() { return this.weapon.maxCharge * (this.armed.over ? OVERCHARGE : 1); }
 
   resetRound(x, terrain) {
@@ -111,7 +110,7 @@ class Tank {
     this.aimMemo = null; // CPUs: ranging-in memory per target (ai.js)
     this.cooldown = { double: 0, over: 0, shield: 0, barrier: 0 }; // own turns until each ability is ready again
     this.reload = {}; // weapon id -> own turns until it can fire again (every gun starts the round loaded)
-    this.sorties = {}; // plane weapon id -> squads left to fly (planes.js)
+    this.deployed = {}; // plane weapon id -> its squad is out (planes.js)
     this.turnsTaken = 0; // own turns this round (a squad strikes on a later one)
     this.aaGuns = null;
     this.barrier = null; // Bulwark Barrier direction (unit vector), until the next turn
@@ -149,7 +148,6 @@ class Tank {
   // best loaded one (the starter never reloads, but a sold starter or an old save might leave none)
   tickReloads() {
     for (const id in this.reload) if (this.reload[id] > 0) this.reload[id]--;
-    for (const id of this.weapons) if (WEAPON_BY_ID[id].air && !(this.reload[id] > 0) && this.sorties[id] <= 0) delete this.sorties[id]; // rearmed
     // (planes never skip their rearming: a carrier with nothing else may have a turn with nothing to fly)
     const guns = this.weapons.filter((id) => !WEAPON_BY_ID[id].air);
     if (!this.weapons.some((id) => this.weaponReady(id)) && guns.length) {
