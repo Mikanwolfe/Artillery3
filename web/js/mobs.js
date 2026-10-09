@@ -2,7 +2,7 @@
 // Hostile mobs (events on): they belong to nobody, attack the players once per turn cycle, and pay a
 // bounty to whoever destroys them. All are targets for shells, blasts and CPUs.
 //   Drone     Hatsuyuki bomber (named after A3's shelved AI project): flies up to MOB_MOVE toward the
-//             nearest vehicle each cycle and drops a bomb if it got over one.
+//             nearest vehicle each cycle and, within BOMB_REACH of it, tosses a bomb onto it.
 //   Gunner    a drone with a gun: closes in the same way, then fires a three-round burst if it has a
 //             clear line of sight within GUNNER_RANGE.
 //   Turret    an emplacement built into the ground: lobs a shell at the nearest vehicle every cycle.
@@ -26,7 +26,8 @@ const MOB_MOVE = 320; // most a drone can fly in one cycle (world units)
 const MOB_SPEED = 7; // per frame while moving
 const GUNNER_RANGE = 720;
 const MOB_CAP = 12; // most flying hostiles alive at once
-const GROUND_CAP = 4; // most drone tanks (and androids) at once
+const GROUND_CAP = 4;
+const BOMB_REACH = 260; // a bomber lets go within this much of its vehicle (sideways), throwing the bomb // most drone tanks (and androids) at once
 const FPV_MOVE = 900; // how far a kamikaze dives in one cycle
 const TANK_MOVE = 150; // how far a drone tank drives in one cycle (the android: 1.5x)
 const PARACHUTE_VY = 2.2; // an airdropped tank's descent speed
@@ -89,6 +90,7 @@ class Mob {
         this.walking = Math.abs(dx) > 0.5;
       } else this.walking = false;
       this.y = game.terrain.hAt(clamp(this.x, 0, WORLD_W - 1));
+      this.tilt = (this.tilt || 0) + (groundSlope(game.terrain, clamp(this.x, 1, WORLD_W - 2)) - (this.tilt || 0)) * 0.2;
       return;
     }
     if (this.kind === 'fpv') {
@@ -97,6 +99,9 @@ class Mob {
         const s = Math.min(d, 15);
         if (d > 0.5) { this.x += (dx / d) * s; this.y += (dy / d) * s; this.aim = { x: dx / d, y: dy / d }; }
       } else this.y += Math.sin(this.t / 20) * 0.4;
+      // a quad tips into its direction of travel: nose down to go, level to hover
+      const want = this.dest && !this.arrived() ? clamp(this.aim.x * 0.55 + Math.max(0, this.aim.y) * 0.2 * Math.sign(this.aim.x || 1), -0.75, 0.75) : 0;
+      this.pitch = (this.pitch || 0) + (want - (this.pitch || 0)) * 0.15;
       return;
     }
     if (this.kind === 'mothership') {
@@ -161,23 +166,29 @@ class Mob {
         for (let i = 1; i <= 4; i++) sq(ctx, x + this.aim.x * (4 + i * 4), cy + 8 + this.aim.y * (4 + i * 4), 3);
       }
     } else if (this.kind === 'fpv') {
-      // a little racing quad, nose toward its dive, a red eye and four blurred props
-      const cy = y - 5;
-      ctx.fillStyle = c('#2a2a34');
-      ctx.fillRect(x - 7, cy - 3, 14, 6);
-      ctx.fillStyle = c('#5a5a6a');
-      ctx.fillRect(x - 12, cy - 1, 24, 2);
-      ctx.fillStyle = 'rgba(200,200,214,0.7)';
-      const b = (this.t >> 1) % 2 ? 8 : 4;
-      ctx.fillRect(x - 12 - b / 2, cy - 4, b, 2);
-      ctx.fillRect(x + 12 - b / 2, cy - 4, b, 2);
-      ctx.fillStyle = blink ? '#ff3a3a' : '#ffb0b0';
-      sq(ctx, x + this.aim.x * 6, cy + this.aim.y * 3, 3);
-      ctx.fillStyle = c('#c8402a'); // the charge strapped underneath
-      ctx.fillRect(x - 4, cy + 3, 8, 3);
-      if (this.dest) { // motion streaks while it dives
+      // a racing quad seen side on: a prop at each end, the battery strapped on top in the middle, the
+      // charge slung underneath, a camera at the nose; it pitches into its dive
+      const cy = y - 8;
+      ctx.save();
+      ctx.translate(x, cy);
+      ctx.rotate(this.pitch || 0);
+      const f = Math.sign(this.aim.x) || 1;
+      ctx.fillStyle = c('#2a2a32'); ctx.fillRect(-15, -1, 30, 3); // carbon frame
+      ctx.fillStyle = c('#4a4a56'); ctx.fillRect(-15, -4, 4, 3); ctx.fillRect(11, -4, 4, 3); // motors
+      const blur = (this.t >> 1) % 2;
+      ctx.fillStyle = 'rgba(210,210,224,0.75)'; // two props, spinning
+      ctx.fillRect(-21 + blur * 2, -6, 12 - blur * 4, 2);
+      ctx.fillRect(9 + blur * 2, -6, 12 - blur * 4, 2);
+      ctx.fillStyle = c('#1c1c22'); ctx.fillRect(-6, -7, 12, 6); // battery pack
+      ctx.fillStyle = c('#f2c45a'); ctx.fillRect(-5, -6, 4, 4); // its label
+      ctx.fillStyle = blink ? '#ff3a3a' : '#7a2020'; ctx.fillRect(3, -6, 2, 2); // charge LED
+      ctx.fillStyle = c('#6a5a3a'); ctx.fillRect(-5, 2, 10, 5); // the explosive charge underneath
+      ctx.fillStyle = c('#c8402a'); ctx.fillRect(-1, 2, 2, 5); // its det cord
+      ctx.fillStyle = c('#101014'); ctx.fillRect(f > 0 ? 13 : -17, 0, 4, 3); // camera at the nose
+      ctx.restore();
+      if (this.dest && !this.arrived()) { // motion streaks while it dives
         ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        for (let i = 1; i <= 3; i++) sq(ctx, x - this.aim.x * i * 9, cy - this.aim.y * i * 9, 4 - i);
+        for (let i = 1; i <= 3; i++) sq(ctx, x - this.aim.x * i * 10, cy - this.aim.y * i * 10, 4 - i);
       }
     } else if (this.kind === 'carrier') {
       // a heavy lifter: long body, four rotors, and its drone tank slung underneath
@@ -199,7 +210,13 @@ class Mob {
       }
     } else if (this.kind === 'dtank') {
       if (this.drop) this.drawChute(ctx, x, y - 26);
+      // sat on the slope: sheared like the girls' rigs, so its boxes stay square to the pixel grid
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.transform(1, this.drop ? 0 : this.tilt || 0, 0, 1, 0, 0);
+      ctx.translate(-x, -y);
       Mob.drawTankBody(ctx, x, y, 1, c, blink, this.aim, this.facing, this.walking ? this.t : 0);
+      ctx.restore();
     } else if (this.kind === 'android') {
       if (this.drop) this.drawChute(ctx, x, y - 50);
       this.drawAndroid(ctx, x, y);
@@ -500,8 +517,11 @@ Object.assign(Game.prototype, {
         this.particles.muzzle(s.x, s.y, { x: Math.sign(s.vx), y: -0.7 });
         if (m.kind === 'android') { m.pose = 'fire'; m.poseAt = m.t; }
       } else if (m.kind === 'drone' || (m.kind === 'carrier' && !m.cargo)) {
-        if (Math.abs(m.x - v.x) < 50) {
-          this.projectiles.push(new Projectile(this, mobWeapon('bomb', st), m, m.x, m.y + 2, 0, 1, false));
+        if (Math.abs(m.x - v.x) < BOMB_REACH) { // tossed forward so it falls on the vehicle
+          const fall = Math.max(40, vc.y - m.y);
+          const tFall = Math.sqrt((2 * fall) / GRAV);
+          const vx = clamp((v.x - m.x) / tFall, -9, 9);
+          this.projectiles.push(new Projectile(this, mobWeapon('bomb', st), m, m.x, m.y + 2, vx, 1, false));
           shots++;
         }
       } else if (m.kind === 'gunner') {

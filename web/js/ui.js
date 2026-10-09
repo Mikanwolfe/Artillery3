@@ -138,7 +138,7 @@ const UI = {
   helpOpen() { return !$('help').hidden; },
   helpTab(tab) {
     if (tab === 'changes' && !$('changelog').childElementCount) {
-      $('changelog').innerHTML = CHANGELOG.map((e) => `<div class="cl-day"><b>${esc(e.date)}</b><ul>${e.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('');
+      $('changelog').innerHTML = `<table class="keys cl">${CHANGELOG.map(([h, txt]) => `<tr><td><a href="${CHANGELOG_REPO}${h}" target="_blank" rel="noopener">${esc(h)}</a></td><td>${esc(txt)}</td></tr>`).join('')}</table>`;
     }
     document.querySelectorAll('#help .help-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     document.querySelectorAll('#help .tab').forEach((d) => { d.hidden = d.dataset.tab !== tab; });

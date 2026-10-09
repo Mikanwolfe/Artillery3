@@ -25,7 +25,7 @@ const UPGRADE_PER_POINT = 6; // rebalanced Health++ / Armour++: $ per point of h
 // Repair kits: bought in the shop, used with R instead of firing that turn
 const REPAIR_COST = 450;
 const WINGS_GLIDE = 3; // Ikaros's fall speed cap (world units a frame)
-const REPAIR_MAX = 2;
+const REPAIR_MAX = 1;
 const REPAIR_FRAC = 0.7; // of max health and of max armour
 // Prize money counts only damage that actually came off a target (no overkill, no damage past
 // armour), and acid drip at a reduced rate: acid's many small hits used to flood the payout.
@@ -1239,6 +1239,7 @@ class Game {
   // A3 Character.Damage: armour soaks hits until it is gone, then health takes them
   damage(t, amt, owner, quiet = false, def = null, hit = null) {
     if (!t.alive || amt <= 0) return;
+    if (owner && owner.isMob && t.isMob) return; // hostiles never hurt each other
     if (owner && owner.isMob) owner = null; // mob attacks count as the environment
     if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
     if (t.isSat) { this.damageSat(t, amt, owner, hit); return; }
