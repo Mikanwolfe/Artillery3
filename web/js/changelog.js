@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['5187307', 'CPUs actually buy air defence now: anti-air when their rivals have planes (or drones are about), point defence against rockets, from up to half their money, and they trade up as the rounds go on.'],
   ['fb05bb5', 'AA mounts show on the girls’ backs: flak barrels that swing onto their targets and kick, rocket boxes, radomes, pods and lenses. November’s starting flak is much stronger (about two of a starter squad’s three planes a pass), and all anti-air focuses on the plane with the least left. AA mounts are bought, not mounted, in the shop.'],
   ['438d74a', 'Hits on planes, and point defence’s hits on rockets, show the same damage popups as any other hit (with AA, POINT DEFENCE or ARMOUR tags) instead of plain numbers and percentages.'],
   ['06f8fe9', 'The skyrail train looks like a Melbourne Metro train now: silver stainless with a blue band, blue doors edged in yellow and blue cab fronts.'],
