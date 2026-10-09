@@ -87,16 +87,20 @@ function codexWorth(w) {
 function codexMeta(w) {
   const lines = [];
   const worth = codexWorth(w);
-  if (!w.starter) {
+  if (w.sig) { // a girl's final weapon: one of a kind, and the set piece does the damage (see its notes)
+    const v = VEHICLES.find((x) => x.id === w.sig);
+    lines.push(['Value', `${v ? v.name : 'Her'} only: her final weapon, no peers to rank it against`]);
+  } else if (!w.starter) {
     const peers = WEAPONS.filter((x) => x.rarity === w.rarity && !x.sig);
     const per = (x) => codexWorth(x) / x.cost;
     const par = peers.reduce((a, x) => a + per(x), 0) / peers.length;
     const rank = peers.slice().sort((a, b) => per(b) - per(a)).indexOf(w) + 1;
     lines.push(['Value', `${(per(w) / par).toFixed(2)}× the ${RARITY[w.rarity].word} average per ¢ (#${rank} of ${peers.length})`]);
   } else lines.push(['Value', 'Free starter, never reloads, can’t be sold']);
-  lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
+  if (w.sig) lines.push(['Per firing turn', 'the set piece’s, see below (the marker round itself barely scratches)']);
+  else lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
   const R = reloadOf(w);
-  if (R) lines.push(['Tempo', `Fires every ${R + 1} turns on its own, about ${Math.round(worth / (R + 1))} a turn; rotate it with other guns`]);
+  if (R) lines.push(['Tempo', w.sig ? `Fires every ${R + 1} turns` : `Fires every ${R + 1} turns on its own, about ${Math.round(worth / (R + 1))} a turn; rotate it with other guns`]);
   const el = Math.min(45, w.elevMax);
   const reach = (w.maxCharge * w.maxCharge * Math.sin(2 * rad(el))) / GRAV;
   lines.push(['Reach', `${Math.round(reach).toLocaleString('en-US')} units at ${el}° (the map is ${WORLD_W.toLocaleString('en-US')})`]);
@@ -110,7 +114,7 @@ function codexMeta(w) {
 const KIND_COL = { shell: '#c3b0ff', gun: '#aab0c8', laser: '#78c8ff', acid: '#8ad86a', flak: '#78d8c4', rocket: '#ff7c66' };
 function codexChart(sel) {
   const W = 400, H = 210, L = 40, R = 10, T = 10, B = 26;
-  const guns = WEAPONS.map((w) => ({ w, c: w.cost, v: codexWorth(w) }));
+  const guns = WEAPONS.filter((w) => !w.sig).map((w) => ({ w, c: w.cost, v: codexWorth(w) })); // (final weapons are set pieces, off the scale)
   const lx = Math.log10;
   const x0 = lx(500), x1 = lx(60000), y0 = lx(Math.min(...guns.map((g) => g.v)) * 0.8), y1 = lx(Math.max(...guns.map((g) => g.v)) * 1.2);
   const X = (c) => L + ((lx(c) - x0) / (x1 - x0)) * (W - L - R);
@@ -281,7 +285,7 @@ Object.assign(UI, {
       <div class="stats">${this.weaponStats(w)}</div>
       <dl class="cx-dl">${codexMeta(w).map(([k, val]) => `<dt>${k}</dt><dd>${esc(val)}</dd>`).join('')}</dl>
       ${gn ? `<p class="cx-meta"><span class="chip ${gn[0]}">${gn[0]}</span> ${esc(gn[1])}</p>` : ''}
-      <p class="mgh">Price against worth per firing turn (log) · click a dot</p>${codexChart(w)}`;
+      ${w.sig ? '' : `<p class="mgh">Price against worth per firing turn (log) · click a dot</p>${codexChart(w)}`}`;
     $('cx-wpn').querySelectorAll('rect[data-w]').forEach((r) => { r.onclick = () => { c.wid = r.dataset.w; this.renderCodex(); this.game.startRange(c.vid, c.wid); this.codexReadout(); }; });
     const r = this.game.range;
     $('cx-dist').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.d === (r ? r.dist : 'mid')));

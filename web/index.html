@@ -103,28 +103,62 @@
   <!-- controls and rules (menu link, H in game) -->
   <section id="help" class="screen" hidden>
     <div class="panel plate help">
-      <div class="phead"><h2>How to play</h2><button id="help-close" class="icon" title="Close (Esc)">✕</button></div>
-      <p>Take turns to move, aim and fire. Hold <b>Space</b> to charge and release to fire; the tick on the charge bar marks your last shot.
-      Armour is a second bar on top of health: while you have any, it absorbs a whole hit, however big; then health takes the damage. You can shoot the MAIA satellite to weaken its strikes. Autoloaders fire several times per turn; satellite-enabled guns
-      call down the MAIA ion cannon wherever their shell lands. Shells hit harder the further they fall from the top of their arc,
-      and fast impacts add kinetic damage close in, so lob high. CPUs go after whoever last hit them.
-      Kills pay a bounty, the match leader carries a bigger one, and everyone is paid after each round.
-      With rebalanced weapons, a bought gun reloads for a few of your turns after it fires (more for rarer guns), so a rack of guns
-      lets you fire a big one every turn. Your starter never reloads. The rack at the bottom shows what is loaded.</p>
+      <div class="phead"><div class="seg help-tabs"><button data-tab="play" class="on">How to play</button><button data-tab="about">About</button></div><button id="help-close" class="icon" title="Close (Esc)">✕</button></div>
+      <div class="tab" data-tab="play">
+      <p>Take turns: move, aim, hold <b>Space</b> to charge, release to fire. Last one standing wins the round.</p>
+      <div class="help-cols"><div>
       <table class="keys">
         <tr><td>← →</td><td>move (uses fuel)</td></tr>
         <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
         <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
-        <tr><td>S · Q</td><td>next · previous loaded weapon (before firing), or click one in the rack</td></tr>
-        <tr><td>R</td><td>use a repair kit (takes your turn)</td></tr>
-        <tr><td>W</td><td>jump the way you face (30% of a full tank of fuel): over ridges and onto forts</td></tr>
-        <tr><td>1 2 3 4</td><td>double shot · overcharge · deflector · barrier (if bought)</td></tr>
+        <tr><td>S · Q</td><td>switch weapon (or tap the rack)</td></tr>
+        <tr><td>R</td><td>repair kit (uses your shot)</td></tr>
+        <tr><td>W</td><td>jump (30% fuel)</td></tr>
+        <tr><td>1 2 3 4</td><td>abilities, once bought</td></tr>
         <tr><td>Enter</td><td>end turn</td></tr>
-        <tr><td>Click</td><td>mark a target: shows the power it needs at your angle</td></tr>
+        <tr><td>Click</td><td>mark a target: shows the power needed</td></tr>
         <tr><td>Drag</td><td>look around</td></tr>
         <tr><td>Wheel</td><td>zoom in and out</td></tr>
         <tr><td>M · N · H · Esc</td><td>mute · music · controls · pause</td></tr>
+        <tr><td>Touch</td><td>drag from her to aim · pinch to zoom · MENU to pause</td></tr>
       </table>
+      <h3 class="sec">Hints</h3>
+      <ul class="hints">
+        <li><b>Flak</b> does ×2 to drones and other hostiles</li>
+        <li>Shoot <b>MAIA</b> down to take her offline for 2 turns</li>
+        <li>Lob high: a long fall adds up to +50%</li>
+        <li>Armour soaks a whole hit while any is left</li>
+        <li>Bought guns reload: carry several and rotate</li>
+        <li>CPUs go after whoever last hit them</li>
+      </ul>
+      </div><div>
+      <h3 class="sec">Damage numbers</h3>
+      <table class="keys dmg">
+        <tr><td><span style="color:#fff27a">DIRECT HIT</span> · <span style="color:#ff9a4a">SOLID</span> · <span style="color:#ffd8b0">GLANCING</span> · <span style="color:#c8c4d4">GRAZE</span></td><td>how close to the blast's centre</td></tr>
+        <tr><td><span style="color:#f2c45a">ALT +%</span></td><td>fell from high up</td></tr>
+        <tr><td><span style="color:#ff9a5a">KIN +</span></td><td>fast impact</td></tr>
+        <tr><td><span style="color:#ffd84a">FORCE</span> · <span style="color:#8ab4ff">RAIN</span></td><td>weather front</td></tr>
+        <tr><td><span style="color:#ff78c8">MAIA</span></td><td>satellite strike</td></tr>
+        <tr><td><span style="color:#78e6d2">BARRIER</span> · <span style="color:#96d2ff">DEFLECTOR</span> · <span style="color:#9ab0c8">SLOPED</span></td><td>damage reduced</td></tr>
+        <tr><td><span style="color:#c8f0a0">green</span></td><td>acid, over time</td></tr>
+      </table>
+      </div></div>
+      </div>
+      <div class="tab" data-tab="about" hidden>
+      <table class="keys">
+        <tr><td>Original</td><td>Artillery 3, C# / SwinGame, mikanwolfe, 2019 · <a href="https://github.com/Mikanwolfe/Artillery3" target="_blank" rel="noopener">GitHub</a></td></tr>
+        <tr><td>This version</td><td>web rewrite by mikanwolfe with Claude (Anthropic), 2026</td></tr>
+      </table>
+      <div class="about">
+        <p>Hello! Thank you for checking out this game, it's pretty strange, isn't it?</p>
+        <p>The original <code>artillery</code> game and subsequently, <code>artillery2</code> was developed for Intro to Programming in Pascal, and was more or less an implementation of midpoint displacement and a Pocket Tanks implementation on top. <code>Artillery3</code> was the Object-Oriented version that introduced a few more game mechanics, which moved it a bit more towards the look and feel of GunBound.</p>
+        <p>Out of personal interest, I had Claude revisit the game to provide a web-playable version as I had lost the original source files. This led me down a rabbit hole of completing the original vision of the game. What you see now is more or less the final form of this game, had it been developed over a much longer time.</p>
+        <p>Without Claude, it wouldn't have been possible to re-imagine this experience. I know AI gets a lot of flak, but it was quite a lot of work. You can hear Claude's opinion of my instructions yourself:</p>
+        <blockquote>Short, visual and blunt: "that character looks like a F117 nighthawk", "the bow is flat so you can straight cut that". A cropped screenshot with one line under it told me more than a page of spec would have. The direction moved a lot, and was usually right to; the price was me redrawing things I'd called finished. "Screw balance" was the clearest brief I got, and the hardest part was taking the jokes seriously enough to build them.<cite>— Claude</cite></blockquote>
+        <p>Thank you for playing and I hope you had fun!</p>
+        <p class="sig">mikanwolfe // nekox.net</p>
+      </div>
+      </div>
     </div>
   </section>
 
