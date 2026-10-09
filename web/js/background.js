@@ -174,6 +174,24 @@ class Background {
         box(x - 0.5, dir < 0 ? yy - 6 : yy, 1, 6, f * 0.9); // its mast
         lights.push({ x, y: dir < 0 ? yy - 7 : yy + 6, ph: hash2(Math.round(x), 61) * 6.28, red: hash2(Math.round(x), 62) > 0.35 });
       };
+      // the far side of the ring behind it: one darker silhouette, no texture, just big blocks and
+      // towers jutting in and out, sitting a little higher so it shows round the near side
+      const back = (f) => `rgba(${tone.map((v, i) => Math.round(lerp(v * f, sky[i], 0.3))).join(',')},0.95)`;
+      c.fillStyle = back(0.62);
+      for (let bx = 0; bx < RW;) {
+        const bw = 8 + Math.round(hash2(bx, 131) * 26);
+        const up = Math.round((hash2(bx, 132) - 0.3) * 30), dn = Math.round((hash2(bx, 133) - 0.5) * 16);
+        for (let xx = bx; xx < Math.min(RW, bx + bw); xx += 3) {
+          const y = yAt(xx) - 14;
+          c.fillRect(xx, Math.round(y - 22 - up), 3, Math.round(44 + up + dn));
+        }
+        if (hash2(bx, 134) > 0.72) { // a tower block on its back
+          const th = 12 + Math.round(hash2(bx, 135) * 34), tw = Math.max(4, Math.round(bw * 0.4));
+          c.fillRect(Math.round(bx + bw / 2 - tw / 2), Math.round(yAt(bx) - 36 - up - th), tw, th + 2);
+          c.fillRect(Math.round(bx + bw / 2 - 1), Math.round(yAt(bx) - 36 - up - th - 8), 2, 8);
+        }
+        bx += bw;
+      }
       const BAND = 30; // nominal thickness
       let x = 0, sec = 0;
       while (x < RW) {
