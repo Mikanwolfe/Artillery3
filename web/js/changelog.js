@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['910ff14', 'Background life: radio towers and power lines on the ridges, and on Alstroemeria a skyrail with a blue and yellow train rocking by now and then.'],
   ['15cb8e6', 'Giants to hide under: a great pine, oak, dead tree or giant toadstool by map. Shoot the canopy away, or break the stem and the top crushes whoever is beneath.'],
   ['81cc56c', 'A spy plane sometimes crosses overhead and drops a golden crate: 70% repair, ¢1200 (+300 a round) or a 3-turn MAIA uplink.'],
   ['81cc56c', 'Weather fronts push twice as hard, and all of them (bar Rain) make shells hit harder; Force up to +80%.'],
