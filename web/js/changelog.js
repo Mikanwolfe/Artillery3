@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['ad05c64', 'Hostiles fight planes: every flying hostile has a static discharge field that zaps planes that come close, and a new AA tank drives in once anyone flies planes. Better drones carry shielding that shrugs off flak and fighters. Fighters that attack fighters get shot back at. Alban Eiler’s Knight telemetry now adds a rocket to every salvo. Ikaros has Mechanical affinity: her laser drone climbs much higher and hits 25% harder. Drone tanks on a slope no longer look italic.'],
   ['bb88091', 'Recall your planes: X (or the Recall button on the rack while a squad is out) sends the selected plane weapon’s squads home at once instead of leaving them hovering to be shot at; they rearm as usual and it doesn’t use your turn. CPUs recall theirs each turn unless they can count on a kill or a bounty.'],
   ['5187307', 'CPUs actually buy air defence now: anti-air when their rivals have planes (or drones are about), point defence against rockets, from up to half their money, and they trade up as the rounds go on.'],
   ['fb05bb5', 'AA mounts show on the girls’ backs: flak barrels that swing onto their targets and kick, rocket boxes, radomes, pods and lenses. November’s starting flak is much stronger (about two of a starter squad’s three planes a pass), and all anti-air focuses on the plane with the least left. AA mounts are bought, not mounted, in the shop.'],
