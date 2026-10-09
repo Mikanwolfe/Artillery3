@@ -63,7 +63,6 @@ const SLIDE_FRAMES = 75;
 const KILL_BOUNTY = 250;
 const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
 const STARTER_SELL = 250; // what her starting gun or mount fetches if she sells it
-const AA_SHARE = 0.2; // most of its money a CPU puts into one air-defence mount
 const AA_SHARE_BURNED = 0.4; // ... once planes have killed it
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs once a turn cycle (every n turns)
 const SAT_DOWN_CYCLES = 2; // shot down, MAIA stays offline this many turn cycles (2n turns for n players)
@@ -1673,19 +1672,24 @@ class Game {
         if (slot >= 0 && best.cost <= t.money) { t.money -= best.cost; t.aa[slot] = best.id; }
       }
     }
-    if (t.type !== 'easy') {
-      const rivals = this.tanks.filter((x) => x !== t).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
-      const missiles = rivals.some((w) => w.kind === 'rocket' || w.carpet);
-      const air = rivals.some((w) => w.air) || this.round >= 2;
-      for (let slot = aaSlotFor(t), n = 0; slot >= 0 && n < 2; slot = aaSlotFor(t), n++) {
-        const have = mounts();
-        const role = have.length ? (have[0].role === 'missile' ? 'air' : 'missile') : burned ? 'air' : missiles ? 'missile' : air ? 'air' : null;
-        if (!role) break;
-        slot = aaSlotFor(t, role);
-        const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost <= t.money * AA_SHARE).sort((a, b) => b.cost - a.cost)[0];
-        const old = AA_BY_ID[t.aa[slot]]; // (her starter, if it is in that slot: only for something clearly better)
-        if (!pick || (old && aaPower(pick) < aaPower(old) * 1.3)) break;
-        t.money -= pick.cost;
+    // then by what its rivals field: planes call for anti-air, rockets and carpets for point
+    // defence (drones from round 2 count as aircraft); the bigger threat first, the other for a
+    // second slot. A share of its money (more on Hard), and only for something clearly better than
+    // what sits in that slot (her own starter is swapped out; a bought one is sold back first)
+    {
+      const rivals = this.tanks.filter((x) => x !== t && x.alive !== false).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
+      const threat = { air: rivals.filter((w) => w.air).length * 2 + (this.round >= 2 ? 1 : 0), missile: rivals.filter((w) => w.kind === 'rocket' || w.carpet).length * 1.5 };
+      const roles = ['air', 'missile'].filter((r) => threat[r] > 0).sort((a, b) => threat[b] - threat[a]);
+      const share = t.money * (t.type === 'hard' ? 0.6 : t.type === 'normal' ? 0.5 : 0.3);
+      let spent = 0;
+      for (const role of roles) {
+        const fit = t.aa.findIndex((id) => !id || AA_BY_ID[id].role === role), slot = fit >= 0 ? fit : aaSlotFor(t, role);
+        if (slot < 0) continue;
+        const old = AA_BY_ID[t.aa[slot]];
+        const refund = old ? this.aaSellValue(t, old.id) : 0;
+        const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost <= share - spent + refund).sort((a, b) => b.cost - a.cost)[0];
+        if (!pick || (old && aaPower(pick) < aaPower(old) * 1.3)) continue;
+        t.money += refund; t.money -= pick.cost; spent += pick.cost - refund;
         t.aa[slot] = pick.id;
       }
     }
