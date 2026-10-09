@@ -516,10 +516,9 @@ class Game {
     t.fuel = t.maxFuel;
     t.shield = false; // a Deflector lasts until its owner's next turn
     t.barrier = null; // so does a Bulwark Barrier
-    if (t.upgrades.workshop && t.armour < t.maxArmour) { // field workshop: patch some armour each turn
-      const ar = Math.round(Math.min(t.maxArmour - t.armour, t.maxArmour * 0.05 * t.upgrades.workshop)); // whole points
-      t.armour += ar;
-      this.particles.text(t.x, t.y - 40, `+${ar}`, '#8fe0a0');
+    if (t.upgrades.workshop && (t.hp < t.maxHp || t.armour < t.maxArmour)) { // field workshop: patch her up a little each turn
+      const got = t.heal(Math.round(t.maxArmour * 0.05 * t.upgrades.workshop)); // (health first, like every heal)
+      if (got > 0) this.particles.text(t.x, t.y - 40, `+${got}`, '#8fe0a0');
     }
     this.fogDamage(t);
     this.lavaDamage(t);
@@ -781,10 +780,7 @@ class Game {
     if (c.kind === 'golden') { // one of three, each well worth the detour
       const r = rng.int(0, 2);
       if (r === 0) {
-        const hp = Math.min(t.maxHp - t.hp, Math.round(t.maxHp * 0.7));
-        const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.7));
-        t.hp += hp; t.armour += ar;
-        desc = `golden repair (+${hp + ar})`;
+        desc = `golden repair (+${t.heal(Math.round((t.maxHp + t.maxArmour) * 0.7))})`; // (health first, then armour)
       } else if (r === 1) {
         const amt = GOLDEN_CASH + GOLDEN_CASH_ROUND * (this.round - 1);
         t.money += amt;
@@ -794,11 +790,7 @@ class Game {
         desc = `a MAIA uplink for ${GOLDEN_UPLINK} turns`;
       }
     } else if (c.kind === 'repair') {
-      const hp = Math.min(t.maxHp - t.hp, Math.round(t.maxHp * 0.3));
-      const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * 0.2));
-      t.hp += hp;
-      t.armour += ar;
-      desc = `field repair (+${hp + ar})`;
+      desc = `field repair (+${t.heal(Math.round(t.maxHp * 0.3 + t.maxArmour * 0.2))})`;
     } else if (c.kind === 'cash') {
       const amt = rng.int(3, 8) * 100;
       t.money += amt;
@@ -1802,11 +1794,8 @@ class Game {
   useRepair(t) {
     if (this.phase !== 'aim' || t !== this.active || t.kits <= 0 || t.firedThisTurn) { this.sfx.deny(); return false; }
     t.kits--;
-    const hp = Math.min(t.maxHp - t.hp, Math.round(t.maxHp * REPAIR_FRAC));
-    const ar = Math.min(t.maxArmour - t.armour, Math.round(t.maxArmour * REPAIR_FRAC));
-    t.hp += hp;
-    t.armour += ar;
-    this.particles.text(t.x, t.y - 40, `+${hp + ar}`, '#8fe0a0', true);
+    const got = t.heal(Math.round((t.maxHp + t.maxArmour) * REPAIR_FRAC)); // (health first, then armour)
+    this.particles.text(t.x, t.y - 40, `+${got}`, '#8fe0a0', true);
     for (let i = 0; i < 16; i++) {
       this.particles.add({ x: t.x + (Math.random() - 0.5) * 30, y: t.y - Math.random() * 20, vx: 0, vy: -0.6 - Math.random(), g: 0, drag: 0.99, life: 0.9, size: 4, color: [90, 200, 120] });
     }
