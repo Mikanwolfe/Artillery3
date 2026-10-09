@@ -174,7 +174,7 @@ class CpuController {
     // weapon is locked once the clip has started; otherwise pick by difficulty
     let options = t.firedThisTurn ? [t.weapon] : t.weapons.filter((id) => t.weaponReady(id)).map((id) => WEAPON_BY_ID[id]);
     if (!options.length) return null; // everything rearming: nothing to fire this turn
-    options = options.slice().sort((a, b) => weaponValue(b) - weaponValue(a));
+    options = options.slice().sort((a, b) => cpuValue(b, t) - cpuValue(a, t)); // (her own line first, lasers last)
     if (t.type === 'easy') options = rng.chance(0.6) ? [rng.pick(options)] : options.slice(-1);
     else if (t.type === 'normal' && rng.chance(0.4)) options = [rng.pick(options)];
     let best = null;

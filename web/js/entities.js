@@ -228,6 +228,7 @@ class Tank {
   update(dt) {
     this.blink = (this.blink || 0) + dt;
     this.recoil = Math.max(0, this.recoil - dt * 2.5);
+    if (this.aaKick) for (let i = 0; i < this.aaKick.length; i++) this.aaKick[i] = Math.max(0, (this.aaKick[i] || 0) - dt * 5);
     this.walking = Math.max(0, (this.walking || 0) - 1);
     this.poseT = (this.poseT || 0) + dt;
     this.barrierHit = Math.max(0, (this.barrierHit || 0) - dt * 3);
@@ -260,6 +261,7 @@ class Tank {
       const off = girlPivotOffset(o); // the victory hop lifts her rigging
       drawGun(ctx, this.weapon, { x: x + (a.pivot[0] + off[0]) * f, y: y + a.pivot[1] + off[1] }, this.aimVec(), f, this.recoil, shade(this.color, -0.5), this.blink || 0, active ? this.charge / this.chargeCap() : 0);
       drawGirlMount(ctx, o);
+      drawAAMounts(ctx, this, x + (a.pivot[0] + off[0]) * f, y + a.pivot[1] + off[1], f); // (her air defence, on her back)
     }
     ctx.restore();
     if (!this.alive) return;
@@ -322,23 +324,23 @@ class Tank {
     const bw = 100, iw = bw - 12;
     const by = Math.round(fy + 6);
     ctx.fillStyle = HUD.plate;
-    ctx.fillRect(Math.round(sx - bw / 2), by, bw, 20);
+    ctx.fillRect(Math.round(sx - bw / 2), by, bw, 17);
     ctx.fillStyle = HUD.line;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 5, iw, 10);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 6, iw, 5);
     ctx.fillStyle = HUD.cool;
-    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 5, Math.round(iw * clamp(this.hp / this.maxHp, 0, 1)), 10);
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 6, Math.round(iw * clamp(this.hp / this.maxHp, 0, 1)), 5);
     if (this.armour > 0) {
       ctx.fillStyle = HUD.accent;
-      ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 5, Math.round(iw * clamp(this.armour / this.maxArmour, 0, 1)), 10);
-      if (this.armour > this.maxArmour) { ctx.fillStyle = HUD.bright; ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 3, Math.round(iw * clamp(this.armour / this.maxArmour - 1, 0, 1)), 2); } // (plating over the top)
+      ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 6, Math.round(iw * clamp(this.armour / this.maxArmour, 0, 1)), 5);
+      if (this.armour > this.maxArmour) { ctx.fillStyle = HUD.bright; ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 4, Math.round(iw * clamp(this.armour / this.maxArmour - 1, 0, 1)), 1); } // (plating over the top)
     }
     ctx.font = `13px ${HUD_FONT}`;
-    plateText(ctx, Math.ceil(this.armour + this.hp), Math.round(sx + bw / 2 + 2), by + 16, this.armour > 0 ? HUD.accent : HUD.cool, 'left');
+    plateText(ctx, Math.ceil(this.armour + this.hp), Math.round(sx + bw / 2 + 2), by + 13, this.armour > 0 ? HUD.accent : HUD.cool, 'left');
     ctx.textAlign = 'center';
     ctx.font = `13px ${HUD_FONT}`;
     const title = this.name;
     const tw = ctx.measureText(title).width + 20;
-    const ty = by + 24;
+    const ty = by + 21;
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(Math.round(sx - tw / 2), ty, Math.round(tw), 19);
     if (active) {

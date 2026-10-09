@@ -273,12 +273,12 @@ Object.assign(Game.prototype, {
   },
 
   // a drill target took a hit: tally it, and keep it flying
-  drillHit(p, amt) {
+  drillHit(p, amt, hit) {
     const r = this.range;
     r.last += amt; r.total += amt; r.best = Math.max(r.best, r.last);
     p.flash = 1;
     p.taken = (p.taken || 0) + amt;
-    this.particles.text(p.sx, p.sy - 26, String(Math.round(amt)), '#ffffff');
+    this.hitPopup(p.sx, p.sy - 26, amt, hit, p);
     if (!p.downed && p.taken >= p.maxHp) { p.downed = true; r.downs++; this.particles.text(p.sx, p.sy - 44, 'DOWNED', '#ffd84a', true); }
     this.ui.codexReadout();
   },

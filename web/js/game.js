@@ -63,7 +63,6 @@ const SLIDE_FRAMES = 75;
 const KILL_BOUNTY = 250;
 const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
 const STARTER_SELL = 250; // what her starting gun or mount fetches if she sells it
-const AA_SHARE = 0.2; // most of its money a CPU puts into one air-defence mount
 const AA_SHARE_BURNED = 0.4; // ... once planes have killed it
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs once a turn cycle (every n turns)
 const SAT_DOWN_CYCLES = 2; // shot down, MAIA stays offline this many turn cycles (2n turns for n players)
@@ -168,6 +167,7 @@ class Input {
       case 'KeyS': if (down && !e.repeat) this.queue.push({ drop: true }); break;
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
+      case 'KeyX': if (down && !e.repeat) this.queue.push({ recall: true }); break;
       case 'KeyW': case 'KeyJ': if (down && !e.repeat) this.queue.push({ jump: true }); break;
       case 'KeyL': if (down && !e.repeat) this.queue.push({ jump: 'leap' }); break;
       case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': {
@@ -529,6 +529,7 @@ class Game {
     if (this.range) { t.reload = {}; for (const id in t.wings) for (const q of t.wings[id]) if (q.state === 'rearm') q.turns = 1; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting (squads rearm at once, but are still the squads she has)
     t.tickReloads();
     t.drill = hasTrait(t, 'drill');
+    if (t.isCpu && !this.range) this.cpuRecall(t); // (a CPU keeps a squad out only for a sure kill or a bounty)
     t.shotsLeft = t.shotsFor(t.weapon); // autoloaders reload every turn (planes: the squads she has left)
     t.firedThisTurn = false;
     this.startAim();
@@ -885,6 +886,8 @@ class Game {
         } else if (a.repair) {
           this.useRepair(t);
           return;
+        } else if (a.recall) { // X: her squads home (the selected plane weapon's, else all of them)
+          this.recallSquads(t, t.weapon.air && this.recallable(t, t.weapon).length ? t.weapon : null);
         } else if (a.ability) {
           this.useAbility(t, a.ability);
         } else if (a.endTurn) {
@@ -1226,6 +1229,9 @@ class Game {
     if (h.shield) chips.push(['DEFLECTOR ½', '#96d2ff']);
     if (h.capped) chips.push(['REDUNDANCY CAP', '#c3b0ff']);
     if (h.flak) chips.push(['FLAK ×2', '#78d8c4']);
+    if (h.aa) chips.push(['AA', '#e8d8a0']);
+    if (h.pd) chips.push(['POINT DEFENCE', '#9ae0ff']);
+    if (h.armour) chips.push(['ARMOUR', '#c8d2e4']);
     const tag = n > 1 ? `${HIT_TIERS[tier].tag} · ${n} HITS` : HIT_TIERS[tier].tag;
     const life = HIT_POPUP_LIFE + h.q + chips.length * 0.15;
     if (live) Object.assign(live, { q, total, n, str: String(Math.round(total)), color, size, tag, chips, punchAt: live.age, life: Math.max(live.life, live.age + life) });
@@ -1670,48 +1676,54 @@ class Game {
         if (slot >= 0 && best.cost <= t.money) { t.money -= best.cost; t.aa[slot] = best.id; }
       }
     }
-    if (t.type !== 'easy') {
-      const rivals = this.tanks.filter((x) => x !== t).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
-      const missiles = rivals.some((w) => w.kind === 'rocket' || w.carpet);
-      const air = rivals.some((w) => w.air) || this.round >= 2;
-      for (let slot = aaSlotFor(t), n = 0; slot >= 0 && n < 2; slot = aaSlotFor(t), n++) {
-        const have = mounts();
-        const role = have.length ? (have[0].role === 'missile' ? 'air' : 'missile') : burned ? 'air' : missiles ? 'missile' : air ? 'air' : null;
-        if (!role) break;
-        slot = aaSlotFor(t, role);
-        const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost <= t.money * AA_SHARE).sort((a, b) => b.cost - a.cost)[0];
-        const old = AA_BY_ID[t.aa[slot]]; // (her starter, if it is in that slot: only for something clearly better)
-        if (!pick || (old && aaPower(pick) < aaPower(old) * 1.3)) break;
-        t.money -= pick.cost;
+    // then by what its rivals field: planes call for anti-air, rockets and carpets for point
+    // defence (drones from round 2 count as aircraft); the bigger threat first, the other for a
+    // second slot. A share of its money (more on Hard), and only for something clearly better than
+    // what sits in that slot (her own starter is swapped out; a bought one is sold back first)
+    {
+      const rivals = this.tanks.filter((x) => x !== t && x.alive !== false).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
+      const threat = { air: rivals.filter((w) => w.air).length * 2 + (this.round >= 2 ? 1 : 0), missile: rivals.filter((w) => w.kind === 'rocket' || w.carpet).length * 1.5 };
+      const roles = ['air', 'missile'].filter((r) => threat[r] > 0).sort((a, b) => threat[b] - threat[a]);
+      const share = t.money * (t.type === 'hard' ? 0.6 : t.type === 'normal' ? 0.5 : 0.3);
+      let spent = 0;
+      for (const role of roles) {
+        const fit = t.aa.findIndex((id) => !id || AA_BY_ID[id].role === role), slot = fit >= 0 ? fit : aaSlotFor(t, role);
+        if (slot < 0) continue;
+        const old = AA_BY_ID[t.aa[slot]];
+        const refund = old ? this.aaSellValue(t, old.id) : 0;
+        const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost <= share - spent + refund).sort((a, b) => b.cost - a.cost)[0];
+        if (!pick || (old && aaPower(pick) < aaPower(old) * 1.3)) continue;
+        t.money += refund; t.money -= pick.cost; spent += pick.cost - refund;
         t.aa[slot] = pick.id;
       }
     }
+    const worth = (w) => cpuValue(w, t); // (her own line counts for more, lasers for less)
     for (let n = 0; n < 4; n++) {
       const owned = t.weapons.map((id) => WEAPON_BY_ID[id]);
-      const bestOwned = Math.max(...owned.map(weaponValue));
+      const bestOwned = Math.max(...owned.map(worth));
       const sellable = owned.filter((w) => this.canSell(t, w.id) && !w.starter); // (a CPU keeps the gun that never reloads)
-      const weakest = (sellable.length ? sellable : owned).slice().sort((a, b) => weaponValue(a) - weaponValue(b))[0];
+      const weakest = (sellable.length ? sellable : owned).slice().sort((a, b) => worth(a) - worth(b))[0];
       const full = t.weapons.length >= MAX_WEAPONS;
       const budget = t.money + (full ? this.sellValue(weakest) : 0);
-      const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id) && forVehicle(w, t.vehicle.id)).sort((a, b) => weaponValue(b) - weaponValue(a));
+      const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id) && forVehicle(w, t.vehicle.id)).sort((a, b) => worth(b) - worth(a));
       let pick = shop.find((w) => w.cost <= budget);
       if (!pick) break;
       // not too clinical: any affordable gun within CPU_PICK_SPREAD of the best one's worth will do
-      const close = shop.filter((w) => w.cost <= budget && weaponValue(w) >= weaponValue(pick) * CPU_PICK_SPREAD);
+      const close = shop.filter((w) => w.cost <= budget && worth(w) >= worth(pick) * CPU_PICK_SPREAD);
       pick = rng.pick(close);
       if (t.type === 'easy' && rng.chance(0.4)) pick = rng.pick(shop.filter((w) => w.cost <= budget));
       else {
         const later = shop.find((w) => w.cost <= budget + horizon);
         // save only when what it can afford now is a small step up; a big jump is bought straight away
-        if (later && later !== pick && weaponValue(later) > weaponValue(pick) * 1.4 && weaponValue(pick) < bestOwned * 1.6 && t.type !== 'easy') {
+        if (later && later !== pick && worth(later) > worth(pick) * 1.4 && worth(pick) < bestOwned * 1.6 && t.type !== 'easy') {
           reserve = Math.min(t.money, later.cost - (full ? this.sellValue(weakest) : 0)); // save up for it
           break;
         }
       }
       // classic: a gun must beat the best one owned; rebalanced: reloads make a rack of guns worth
       // having, so it only has to beat the one it replaces (or the starter, for an empty slot)
-      const bar = BALANCE === 'rebalanced' ? weaponValue(full ? weakest : t.vehicle.weapon) : bestOwned;
-      if (weaponValue(pick) < bar * 1.15) break; // not worth a slot
+      const bar = BALANCE === 'rebalanced' ? worth(full ? weakest : t.vehicle.weapon) : bestOwned;
+      if (worth(pick) < bar * 1.15) break; // not worth a slot
       if (full) {
         t.money += this.sellValue(weakest);
         t.weapons = t.weapons.filter((id) => id !== weakest.id);

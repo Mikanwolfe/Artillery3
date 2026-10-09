@@ -338,6 +338,7 @@ const UI = {
       if (b.dataset.i !== undefined) g.input.queue.push({ select: +b.dataset.i });
       else if (b.dataset.ab) g.input.queue.push({ ability: b.dataset.ab });
       else if (b.dataset.rep) g.input.queue.push({ repair: true });
+      else if (b.dataset.recall) g.input.queue.push({ recall: true });
       else if (b.dataset.jump) g.input.queue.push({ jump: b.dataset.jump === 'leap' ? 'leap' : true });
     };
   },
@@ -385,6 +386,8 @@ const UI = {
     const leapCost = Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1));
     ab.push(`<button class="slot a" data-jump="leap" title="Leap: bound far the way you face and land softly, for ${Math.round(LEAP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= leapCost && !t.falling && !t.upgrades.deck ? '' : 'disabled'}><span class="kb">L</span><span class="txt"><span class="nm">Leap</span><span class="st">${Math.round(LEAP_FUEL * 100)}% fuel</span></span></button>`);
     if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% of health and armour together (health first), takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
+    const rc = g.recallable ? g.recallable(t, t.weapon.air && g.recallable(t, t.weapon).length ? t.weapon : null) : [];
+    if (rc.length) ab.push(`<button class="slot a" data-recall="1" title="Recall: ${rc.length > 1 ? 'these squads fly' : 'this squad flies'} home now, loadout unspent, instead of waiting over the zone to be shot at; rearms as usual. Doesn't use your turn"><span class="kb">X</span><span class="txt"><span class="nm">Recall</span><span class="st">${rc.length > 1 ? rc.length + ' squads' : esc(shortName(rc[0].w))}</span></span></button>`);
     for (const id of t.aa || []) {
       const a = AA_BY_ID[id];
       if (a) ab.push(`<span class="slot a passive" title="${esc(a.name)}: ${esc(a.long)}"><span class="kb">AA</span><span class="txt"><span class="nm">${esc(a.name.replace(/^(SI|NXi|LFS|Kotona) /, ''))}</span><span class="st">${a.role === 'missile' ? 'point defence' : 'anti-air'} · auto</span></span></span>`);
@@ -465,7 +468,7 @@ const UI = {
             <p title="${esc(a.long)}">${esc(a.short)}</p>
             <div class="stats">${this.weaponStats(a)}</div>
             <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(a.cost)}</span>
-            <button data-aa="${a.id}" ${can ? '' : 'disabled'}>${owned ? 'Mounted' : freeSlot < 0 ? 'Slots full' : afford ? 'Mount' : 'Short ' + money(a.cost - tank.money)}</button></div></div></div>`;
+            <button data-aa="${a.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : freeSlot < 0 ? 'Slots full' : afford ? 'Buy' : 'Short ' + money(a.cost - tank.money)}</button></div></div></div>`;
         }).join('');
         $('shop-grid').querySelectorAll('[data-aa]').forEach((b) => { b.onclick = () => { g.buy(tank, 'aa', b.dataset.aa); render(); }; });
       } else $('shop-grid').innerHTML = list.map((w) => {
@@ -495,7 +498,7 @@ const UI = {
       }).join('');
       $('shop-aa').innerHTML = tank.aa.map((id, i) => {
         const a = AA_BY_ID[id];
-        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty mount${i ? ' (second)' : ''}: buy one under AA</span></div>`;
+        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty AA slot${i ? ' (second)' : ''}: buy one under AA</span></div>`;
         const st = this.game.canSellAA(tank, id);
         return `<div class="owned">${this.badge(a, true)}<span>${esc(a.name)}</span>
           <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(this.game.aaSellValue(tank, id)) : 'Hers'}</button></div>`;

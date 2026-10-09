@@ -4,6 +4,12 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['bb88091', 'Recall your planes: X (or the Recall button on the rack while a squad is out) sends the selected plane weapon’s squads home at once instead of leaving them hovering to be shot at; they rearm as usual and it doesn’t use your turn. CPUs recall theirs each turn unless they can count on a kill or a bounty.'],
+  ['5187307', 'CPUs actually buy air defence now: anti-air when their rivals have planes (or drones are about), point defence against rockets, from up to half their money, and they trade up as the rounds go on.'],
+  ['fb05bb5', 'AA mounts show on the girls’ backs: flak barrels that swing onto their targets and kick, rocket boxes, radomes, pods and lenses. November’s starting flak is much stronger (about two of a starter squad’s three planes a pass), and all anti-air focuses on the plane with the least left. AA mounts are bought, not mounted, in the shop.'],
+  ['438d74a', 'Hits on planes, and point defence’s hits on rockets, show the same damage popups as any other hit (with AA, POINT DEFENCE or ARMOUR tags) instead of plain numbers and percentages.'],
+  ['06f8fe9', 'The skyrail train looks like a Melbourne Metro train now: silver stainless with a blue band, blue doors edged in yellow and blue cab fronts.'],
+  ['1201391', 'A thinner health and armour bar. CPUs favour their own girl’s line when buying and choosing guns (her makers, and her starter’s kind), and only Ikaros’s CPU likes lasers, since CPUs aim them badly.'],
   ['b18ec08', 'Fixed a crash when using a repair kit. Starting guns and mounts can be sold (for ¢250 scrap) to free their slot, and a bought mount replaces a girl’s own one, Zuihou’s Type 96 included. Torpedo jets get two passes instead of one.'],
   ['07ca353', 'FPV kamikazes come in high and spend their first cycle flying in from the edge without attacking, so they can no longer appear next to you at the map edge and blow you up at once. After that they get over their target and dive onto it from the sky.'],
   ['ac3cfcf', 'One bar under each girl: health, with armour laid over it (armour goes first and uncovers the health under it), and one number, armour and health together. Every heal (repair kits, crates, the field workshop) goes to health first, then armour. Fortress planes show their armour the same way.'],
