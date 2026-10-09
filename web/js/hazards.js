@@ -13,20 +13,27 @@
 
 // Fronts: strength s = width / 100 (about 0.6 at level I up to 2 at level III)
 const FRONT_TYPES = {
-  force: { name: 'Force', col: [255, 216, 74], tip: 'shells hit harder' },
-  storm: { name: 'Storm', col: [150, 210, 255], tip: 'shells throw lightning' },
-  updraft: { name: 'Updraft', col: [255, 170, 120], tip: 'lifts shells' },
-  gale: { name: 'Gale', col: [200, 222, 232], tip: 'blows shells sideways' },
-  blizzard: { name: 'Blizzard', col: [240, 244, 255], tip: 'slows shells' },
+  force: { name: 'Force', col: [255, 216, 74], tip: 'shells hit far harder' },
+  storm: { name: 'Storm', col: [150, 210, 255], tip: 'shells throw lightning and hit harder' },
+  updraft: { name: 'Updraft', col: [255, 170, 120], tip: 'lifts shells, which hit harder' },
+  gale: { name: 'Gale', col: [200, 222, 232], tip: 'blows shells sideways, and they hit harder' },
+  blizzard: { name: 'Blizzard', col: [240, 244, 255], tip: 'slows shells, which hit harder' },
   rain: { name: 'Rain', col: [110, 150, 214], tip: 'damps blasts' },
-  sandstorm: { name: 'Sandstorm', col: [206, 160, 100], tip: 'buffets shells' },
+  sandstorm: { name: 'Sandstorm', col: [206, 160, 100], tip: 'buffets shells, which hit harder' },
 };
+const FRONT_POWER = 2; // how hard fronts push shells about (x their original strength)
+const FRONT_FORCE = 0.8; // Force: +80% damage at full width (strength 1)
+const FRONT_BUFF = 0.2; // every other front (bar Rain) also adds +20% at full width
 const FRONT_WIDTH = [null, [60, 90], [100, 140], [150, 200]];
 const FRONT_DRIFT = 1200; // world units of drift per turn per unit of wind
 const FOG_RISE = 45; // world units per turn cycle (+5 per stage)
 const FOG_DMG = 0.1; // of max health + max armour, at the start of each turn spent in it
 const LAVA_DMG = 60; // at the start of each turn spent standing in lava (Ikaros' Apollon), at full melt
 const ROMAN = ['', 'I', 'II', 'III'];
+// The NXi fleet's running battle overhead (round 2 on): once a round has gone DEBRIS_FROM cycles,
+// burning wreckage falls on every hostile turn, more each cycle, onto and around the players
+const DEBRIS_FROM = 2;
+const DEBRIS_SRC = { isMob: true, name: 'NXi fleet debris', alive: false, x: 0, y: -2000, center() { return { x: this.x, y: this.y }; } };
 
 Object.assign(Game.prototype, {
   // 1..8 across a finite match; the round number in infinite mode
@@ -50,6 +57,8 @@ Object.assign(Game.prototype, {
   setupHazards() {
     this.fronts = [];
     this.mobs = [];
+    this.fleetFight = false;
+    this.skyFlashes = [];
     this.fogY = null;
     this.fogStart = 0;
     this.reinforceAt = 0;
@@ -62,11 +71,11 @@ Object.assign(Game.prototype, {
       for (let i = 0; i < this.frontTarget(); i++) this.spawnFront(true);
       notes.push(this.fronts.map((f) => `a ${this.frontName(f)} front (${FRONT_TYPES[f.kind].tip})`).join(' and '));
     }
-    if (st >= 3) {
-      const n = st >= 7 ? 3 : st >= 5 ? 2 : 1;
-      for (let i = 0; i < n; i++) this.addMob(st >= 4 && i === n - 1 ? 'gunner' : 'drone', this.mobSpot(150));
-      this.reinforceAt = Math.max(2, 7 - Math.floor(st / 2));
-      notes.push(`${n} drone${n > 1 ? 's' : ''}, with more after ${this.reinforceAt} cycles`);
+    if (this.round >= 2) { // several drones from round 2, more each round
+      const n = clamp(2 + Math.floor(st / 2), 3, 6);
+      for (let i = 0; i < n; i++) this.addMob(st >= 4 && i === n - 1 ? 'gunner' : st >= 5 && i === n - 2 ? 'fpv' : 'drone', this.mobSpot(150));
+      this.reinforceAt = Math.max(1, 5 - Math.floor(st / 2));
+      notes.push(`${n} drones, with more (and worse) after ${this.reinforceAt} cycle${this.reinforceAt > 1 ? 's' : ''}`);
     }
     if (st >= 4) {
       const n = st >= 6 ? 2 : 1;
@@ -140,14 +149,15 @@ Object.assign(Game.prototype, {
       if (Math.abs(p.x - f.x) > f.w / 2) continue;
       const s = this.frontStrength(f);
       if (!s) continue;
+      if (f.kind !== 'rain') p.forceMult = Math.max(p.forceMult || 1, 1 + (f.kind === 'force' ? FRONT_FORCE : FRONT_BUFF) * s);
+      const k = FRONT_POWER * s;
       switch (f.kind) {
-        case 'force': p.forceMult = Math.max(p.forceMult || 1, 1 + 0.35 * s); break;
         case 'storm': p.storm = Math.max(p.storm || 0, s); break;
         case 'rain': p.rainMult = Math.min(p.rainMult || 1, 1 - 0.18 * s); break;
-        case 'updraft': p.vy -= GRAV * 0.35 * s; break;
-        case 'gale': p.vx += f.dir * 0.05 * s; break;
-        case 'blizzard': p.vx *= 1 - 0.007 * s; p.vy *= 1 - 0.004 * s; break;
-        case 'sandstorm': p.vx += (rng.next() - 0.5) * 0.3 * s; p.vy += (rng.next() - 0.5) * 0.3 * s; break;
+        case 'updraft': p.vy -= GRAV * 0.35 * k; break;
+        case 'gale': p.vx += f.dir * 0.05 * k; break;
+        case 'blizzard': p.vx *= 1 - 0.007 * k; p.vy *= 1 - 0.004 * k; break;
+        case 'sandstorm': p.vx += (rng.next() - 0.5) * 0.3 * k; p.vy += (rng.next() - 0.5) * 0.3 * k; break;
         default: break;
       }
       if (p.age % 3 === 0) {
@@ -249,6 +259,11 @@ Object.assign(Game.prototype, {
       this.fogY -= FOG_RISE + 5 * Math.round(this.stage());
     }
     this.reinforce(cycles);
+    this.debrisDue = 0;
+    if (this.round >= 2 && cycles >= DEBRIS_FROM) {
+      this.debrisDue = Math.min(12, 1 + Math.floor((cycles - DEBRIS_FROM) * 1.2) + Math.floor(this.stage() / 3));
+      if (!this.fleetFight) { this.fleetFight = true; this.ui.notice('The NXi fleet is fighting overhead: wreckage is coming down.'); this.events.push('Wreckage from the NXi fleet starts to fall.'); }
+    }
     if (this.shipAt && cycles >= this.shipAt && !this.mobs.some((m) => m.kind === 'mothership')) {
       const m = this.addMob('mothership', rng.chance(0.5) ? 160 : WORLD_W - 160);
       this.ui.notice(`The ${m.name} has arrived! ¢${m.bounty} to whoever brings it down.`);
@@ -256,7 +271,7 @@ Object.assign(Game.prototype, {
       this.events.push(`The ${m.name} arrives.`);
       this.sfx.satPrep();
     }
-    if (!this.planMobs()) return false;
+    if (!this.planMobs() && !this.debrisDue) return false;
     this.phase = 'hazard';
     this.hazard = { t: 0, fired: false };
     const lead = this.mobs.find((m) => m.alive && m.kind === 'mothership') || this.mobs.find((m) => m.alive && m.dest);
@@ -273,7 +288,7 @@ Object.assign(Game.prototype, {
     if (!h.fired && (live.every((m) => m.arrived()) || h.t > 200)) {
       h.fired = true;
       for (const m of live) m.dest = null;
-      const shots = this.mobAttacks();
+      const shots = this.mobAttacks() + this.dropDebris();
       if (this.projectiles.length) this.cam.follow(this.projectiles[0]);
       if (shots) this.sfx.shot({ kind: 'shell' });
       // let the normal resolve loop play the shots out, then hand back to nextTurn
@@ -284,6 +299,29 @@ Object.assign(Game.prototype, {
       this.resolveSteps = 0;
       this.quiet = 0;
     }
+  },
+
+  // the fleet's wreckage: burning plates that fall at an angle, aimed loosely at the players
+  dropDebris() {
+    const n = this.debrisDue || 0;
+    this.debrisDue = 0;
+    if (!n) return 0;
+    const st = clamp(Math.round(this.stage()), 1, 12);
+    const w = { kind: 'shell', salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 60, id: 'debris', name: 'Fleet debris', debris: true, dmg: 22 + 6 * st, dmgR: 55, explR: 8 };
+    const victims = this.tanks.filter((t) => t.alive);
+    for (let i = 0; i < n; i++) {
+      const v = rng.pick(victims);
+      const tx = clamp(v.x + rng.range(-320, 320), 20, WORLD_W - 20);
+      const vx = rng.range(-5, 5);
+      const y0 = -1600;
+      const fall = this.terrain.hAt(tx) - y0;
+      const tFall = Math.sqrt((2 * fall) / GRAV);
+      const p = new Projectile(this, w, DEBRIS_SRC, tx - vx * tFall, y0, vx, 0, false);
+      p.delay = i * 7;
+      this.projectiles.push(p);
+    }
+    this.events.push(`${n} piece${n > 1 ? 's' : ''} of wreckage fall.`);
+    return n;
   },
 
   // start of a vehicle's turn standing in lava (Ikaros' Apollon)
@@ -306,6 +344,18 @@ Object.assign(Game.prototype, {
   // ------------------------------------------------------------ drawing
   drawHazardsBack(ctx, cam) {
     const top = cam.y - 40;
+    if (this.fleetFight) { // the battle up there: far-off lance shots and bursts at the top of the sky
+      const fl = this.skyFlashes;
+      if (Math.random() < 0.05) fl.push({ x: cam.x + Math.random() * cam.w, y: cam.y + cam.h * (0.04 + Math.random() * 0.16), len: 60 + Math.random() * 220, dir: Math.random() < 0.5 ? -1 : 1, life: 1, burst: Math.random() < 0.35 });
+      for (const f of fl) {
+        f.life -= 0.06;
+        ctx.globalAlpha = clamp(f.life, 0, 1) * 0.7;
+        if (f.burst) { ctx.fillStyle = '#ffd8a0'; sq(ctx, f.x, f.y, 6 + 10 * (1 - f.life)); ctx.fillStyle = '#ff9040'; sq(ctx, f.x, f.y, 4); }
+        else { ctx.fillStyle = '#9ad8ff'; ctx.fillRect(Math.round(Math.min(f.x, f.x + f.dir * f.len)), Math.round(f.y), Math.round(f.len), 2); }
+      }
+      ctx.globalAlpha = 1;
+      this.skyFlashes = fl.filter((f) => f.life > 0);
+    }
     for (const f of this.fronts) {
       const T = FRONT_TYPES[f.kind];
       const col = T.col;

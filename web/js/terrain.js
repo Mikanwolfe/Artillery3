@@ -56,6 +56,9 @@ class Terrain {
     this.sootColor = biome.soot;
     this.treeKind = biome.tree;
     this.treeDensity = biome.trees;
+    this.style = biome.style || null;
+    this.frost = 0;
+    this.ahu = null;
     this.height = generateHeights(0.62 * WORLD_BOTTOM, g.rough, g.disp);
     this.trees = [];
     this.forts = [];
@@ -75,6 +78,16 @@ class Terrain {
       }
     }
     for (let i = 0; i < WORLD_W; i++) this.height[i] = clamp(this.height[i], 150, WORLD_BOTTOM - 140);
+    if (g.terrace) { // the deck: built in levels, flat plates joined by ramps (gentle enough to drive)
+      const q = g.terrace;
+      const sm = this.height.slice();
+      for (let i = 0; i < WORLD_W; i++) { // smooth first, so each step is a ramp, not a cliff
+        let a = 0, n = 0;
+        for (let k = -40; k <= 40; k += 4) { const j = clamp(i + k, 0, WORLD_W - 1); a += sm[j]; n++; }
+        const h = a / n, b = Math.floor(h / q), f = h / q - b;
+        this.height[i] = q * (b + clamp((f - 0.55) / 0.45, 0, 1));
+      }
+    }
   }
 
   hAt(x) {
@@ -202,6 +215,7 @@ class Terrain {
         continue;
       }
       drawTree(ctx, this.treeKind, t.x, base, t.h, t.autumn);
+      if (this.frost > 0.05) frostTree(ctx, this.treeKind, t.x, base, t.h, this.frost); // the Warm Meadows gone cold
     }
   }
 
@@ -221,6 +235,14 @@ class Terrain {
       ctx.fillStyle = this.color;
       fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
     }
+    if (this.frost > 0 && this.cap) { // frost creeping over the crust (the Warm Meadows gone cold)
+      const m = this.cap.match(/\d+/g).map(Number);
+      ctx.fillStyle = `rgb(${m.map((v) => Math.round(lerp(v, 240, this.frost))).join(',')})`;
+      fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
+      ctx.fillStyle = this.color;
+      fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, Math.round(7 + 5 * this.frost));
+    }
+    if (this.style) this.drawStyle(ctx, x0, x1);
     for (const f of this.forts) f.draw(ctx);
     if (this.lava) this.drawLava(ctx, x0, x1);
     if (this.voids && this.voids.length) this.drawVoids(ctx, x0, x1);
@@ -236,6 +258,45 @@ class Terrain {
       if (s > 0.35 && hash2(x, 3) < s * 0.6) { // flecks thrown a little further down
         ctx.fillStyle = rgb(this.sootColor || SOOT_RGB, 0.35 * s);
         ctx.fillRect(x + 1, top + Math.round(5 + 14 * s), 3, 3);
+      }
+    }
+  }
+
+  // the AESR / ASTM-G grounds: deck plating (seams and hazard striping on the plate edges), the
+  // roots' rock with warm veins, or the ground's fracture lines. Fixed per column (hash2), so they
+  // stay put as the camera moves and go with the ground when it is blasted away.
+  drawStyle(ctx, x0, x1) {
+    const H = (x) => this.height[clamp(Math.round(x), 0, WORLD_W - 1)];
+    const a = Math.max(0, Math.floor(x0 / 8) * 8), b = Math.min(WORLD_W, x1 + 8);
+    if (this.style === 'deck') {
+      for (let x = Math.ceil(a / 96) * 96; x < b; x += 96) { // plate seams and rivets
+        const t = Math.round(H(x));
+        ctx.fillStyle = 'rgba(30,32,44,0.55)'; ctx.fillRect(x, t + 7, 2, 70);
+        ctx.fillStyle = 'rgba(200,204,216,0.35)'; ctx.fillRect(x - 10, t + 16, 3, 3); ctx.fillRect(x + 9, t + 16, 3, 3);
+      }
+      for (let x = a; x < b; x += 8) { // hazard stripes where the deck steps down (the ramps)
+        const s = Math.abs(H(x + 8) - H(x));
+        if (s < 3) continue;
+        ctx.fillStyle = ((x / 8) | 0) % 2 ? 'rgb(214,170,60)' : 'rgb(40,40,48)';
+        ctx.fillRect(x, Math.round(Math.min(H(x), H(x + 8))), 8, 5);
+      }
+    } else if (this.style === 'veins') {
+      for (let x = a; x < b; x += 8) { // warm seams in the rock, the AHUs' gift breathing through
+        const r = hash2(x, 41);
+        if (r > 0.12) continue;
+        const t = Math.round(H(x));
+        ctx.fillStyle = `rgba(255,${130 + Math.round(r * 600)},60,${(0.25 + 0.4 * (0.12 - r) / 0.12).toFixed(2)})`;
+        let y = t + 14 + Math.round(hash2(x, 7) * 30), vx = x;
+        for (let k = 0; k < 6; k++) { ctx.fillRect(vx, y, 3, 6); y += 5; vx += Math.round((hash2(x, k) - 0.5) * 8); }
+      }
+    } else if (this.style === 'fractured') {
+      for (let x = a; x < b; x += 8) { // fracture lines running down from the surface
+        if (hash2(x, 53) > 0.06) continue;
+        const t = Math.round(H(x));
+        ctx.fillStyle = 'rgba(40,34,32,0.55)';
+        let y = t + 3, vx = x;
+        const n = 6 + Math.round(hash2(x, 9) * 10);
+        for (let k = 0; k < n; k++) { ctx.fillRect(vx, y, 2, 5); y += 4; vx += Math.round((hash2(x + k, 5) - 0.5) * 6); }
       }
     }
   }

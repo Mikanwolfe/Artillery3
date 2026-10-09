@@ -68,7 +68,7 @@
         <span class="mgh">Rounds</span><div class="seg" data-opt="rounds"><button data-v="3">3</button><button data-v="5">5</button><button data-v="7">7</button><button data-v="10">10</button><button data-v="0" title="Endless">∞</button></div>
         <span class="mgh">Weapons</span><div class="seg" data-opt="balance"><button data-v="rebalanced">Rebalanced</button><button data-v="classic">Classic</button></div>
         <span class="mgh">Events</span><div class="seg" data-opt="events"><button data-v="on">On</button><button data-v="off">Off</button></div>
-        <span class="mgh">Map</span><div class="seg wrap" data-opt="map"><button data-v="random">Random</button><button data-v="snow">Snow</button><button data-v="forest">Forest</button><button data-v="desert">Dunes</button><button data-v="alstroemeria">Alstroemeria</button></div>
+        <span class="mgh">Map</span><div class="seg wrap" data-opt="map"><button data-v="random">Random</button><button data-v="snow">Far Territories</button><button data-v="forest">Forest</button><button data-v="desert">Dunes</button><button data-v="alstroemeria">Warm Meadows</button><button data-v="aesru">AESR-U</button><button data-v="aesrl">AESR-L</button><button data-v="astmg">ASTM-G</button></div>
       </div>
 
       <div class="go">
@@ -104,7 +104,7 @@
   <!-- controls and rules (menu link, H in game) -->
   <section id="help" class="screen" hidden>
     <div class="panel plate help">
-      <div class="phead"><div class="seg help-tabs"><button data-tab="play" class="on">How to play</button><button data-tab="about">About</button></div><button id="help-close" class="icon" title="Close (Esc)">✕</button></div>
+      <div class="phead"><div class="seg help-tabs"><button data-tab="play" class="on">How to play</button><button data-tab="about">About</button><button data-tab="changes">Changelog</button></div><button id="help-close" class="icon" title="Close (Esc)">✕</button></div>
       <div class="tab" data-tab="play">
       <p>Take turns: move, aim, hold <b>Space</b> to charge, release to fire. Last one standing wins the round.</p>
       <div class="help-cols"><div>
@@ -114,7 +114,7 @@
         <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
         <tr><td>S · Q</td><td>switch weapon (or tap the rack)</td></tr>
         <tr><td>R</td><td>repair kit (uses your shot)</td></tr>
-        <tr><td>W</td><td>jump (30% fuel)</td></tr>
+        <tr><td>W · L</td><td>jump (30% fuel) · leap (90%, soft landing)</td></tr>
         <tr><td>1 2 3 4</td><td>abilities, once bought</td></tr>
         <tr><td>Enter</td><td>end turn</td></tr>
         <tr><td>Click</td><td>mark a target: shows the power needed</td></tr>
@@ -126,7 +126,7 @@
       <h3 class="sec">Hints</h3>
       <ul class="hints">
         <li><b>Flak</b> does ×2 to drones and other hostiles</li>
-        <li>Shoot <b>MAIA</b> down to take her offline for 2 turns</li>
+        <li>Shoot <b>MAIA</b> down: offline for two full rounds of turns</li>
         <li>Lob high: a long fall adds up to +50%</li>
         <li>Armour soaks a whole hit while any is left</li>
         <li>Bought guns reload: carry several and rotate</li>
@@ -137,8 +137,8 @@
       <table class="keys dmg">
         <tr><td><span style="color:#fff27a">DIRECT HIT</span> · <span style="color:#ff9a4a">SOLID</span> · <span style="color:#ffd8b0">GLANCING</span> · <span style="color:#c8c4d4">GRAZE</span></td><td>how close to the blast's centre</td></tr>
         <tr><td><span style="color:#f2c45a">ALT +%</span></td><td>fell from high up</td></tr>
-        <tr><td><span style="color:#ff9a5a">KIN +</span></td><td>fast impact</td></tr>
-        <tr><td><span style="color:#ffd84a">FORCE</span> · <span style="color:#8ab4ff">RAIN</span></td><td>weather front</td></tr>
+        <tr><td><span style="color:#ff9a5a">KIN +%</span></td><td>fast impact (up to +50%)</td></tr>
+        <tr><td><span style="color:#ffd84a">FRONT</span> · <span style="color:#8ab4ff">RAIN</span></td><td>weather front: harder · damped</td></tr>
         <tr><td><span style="color:#ff78c8">MAIA</span></td><td>satellite strike</td></tr>
         <tr><td><span style="color:#78e6d2">BARRIER</span> · <span style="color:#96d2ff">DEFLECTOR</span> · <span style="color:#9ab0c8">SLOPED</span></td><td>damage reduced</td></tr>
         <tr><td><span style="color:#c8f0a0">green</span></td><td>acid, over time</td></tr>
@@ -159,6 +159,9 @@
         <p>Thank you for playing and I hope you had fun!</p>
         <p class="sig">mikanwolfe // nekox.net</p>
       </div>
+      </div>
+      <div class="tab" data-tab="changes" hidden>
+      <div id="changelog" class="changelog"></div>
       </div>
     </div>
   </section>
@@ -245,9 +248,11 @@
 <script src="js/mobs.js"></script>
 <script src="js/hazards.js"></script>
 <script src="js/infra.js"></script>
+<script src="js/cover.js"></script>
 <script src="js/lasers.js"></script>
 <script src="js/finals.js"></script>
 <script src="js/codex.js"></script>
+<script src="js/changelog.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

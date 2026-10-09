@@ -159,7 +159,7 @@ Object.assign(Game.prototype, {
     this.round = 1;
     this.events = [];
     if (!this.terrain.height || !this.biome) this.newEnvironment();
-    this.projectiles = []; this.drops = []; this.lasers = []; this.traces = []; this.crates = []; this.slides = [];
+    this.projectiles = []; this.drops = []; this.lasers = []; this.traces = []; this.crates = []; this.flyovers = []; this.cinematic = 0; this.slides = [];
     this.salvo = this.satSeq = this.satTarget = null;
     this.particles.clear();
     this.setupHazards();
@@ -167,6 +167,8 @@ Object.assign(Game.prototype, {
     this.terrain.bridges = [];
     this.terrain.lines = [];
     this.terrain.towers = [];
+    this.terrain.giants = [];
+    this.terrain.ahu = null;
     this.placeRange();
     this.setWind();
     if (this.range.calm) this.wind = { x: 0, y: 0 };

@@ -336,10 +336,10 @@ function badgeText(w) {
 // with their key and spent on the next shot; Deflector switches on at once and lasts until your
 // next turn. None of them uses up the turn.
 const ABILITIES = [
-  { id: 'double', key: '1', tag: 'x2', name: 'Double Shot', cost: 3000, cd: 4, desc: 'Arm, then fire: the shot is fired twice.' },
-  { id: 'over', key: '2', tag: 'OVR', name: 'Overcharge', cost: 1800, cd: 3, desc: 'Arm, then charge: the bar goes 35% further, for range and kinetic damage.' },
-  { id: 'shield', key: '3', tag: 'SHD', name: 'Deflector', cost: 2400, cd: 4, desc: 'Halves all damage you take until your next turn.' },
-  { id: 'barrier', key: '4', tag: 'BAR', name: 'Bulwark Barrier', cost: 2600, cd: 3, late: true, desc: 'Late game: raise a wall toward where you are aiming; it blocks 80% of blast damage from that side until your next turn.' },
+  { id: 'double', key: '1', tag: 'x2', name: 'Double Shot', cost: 1500, cd: 4, desc: 'Arm, then fire: the shot is fired twice.' },
+  { id: 'over', key: '2', tag: 'OVR', name: 'Overcharge', cost: 900, cd: 3, desc: 'Arm, then charge: the bar goes 35% further, for range and kinetic damage.' },
+  { id: 'shield', key: '3', tag: 'SHD', name: 'Deflector', cost: 1200, cd: 4, desc: 'Halves all damage you take until your next turn.' },
+  { id: 'barrier', key: '4', tag: 'BAR', name: 'Bulwark Barrier', cost: 1300, cd: 3, late: true, desc: 'Late game: raise a wall toward where you are aiming; it blocks 80% of blast damage from that side until your next turn.' },
 ];
 const ABILITY_BY_ID = Object.fromEntries(ABILITIES.map((a) => [a.id, a]));
 const OVERCHARGE = 1.35;
@@ -552,7 +552,7 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
     if (p.x >= 0 && p.x < WORLD_W) {
       const gy = terrain.hAt(p.x);
       // a piercing slug (the Zero Point) spends p.pierce going through ground and cover
-      const solid = p.y >= gy || (terrain.forts.length && terrain.fortAt(p.x, p.y)) || (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(p.x, p.y)) || (terrain.towers && terrain.towers.length && terrain.towerAt(p.x, p.y));
+      const solid = p.y >= gy || (terrain.forts.length && terrain.fortAt(p.x, p.y)) || (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(p.x, p.y)) || (terrain.towers && terrain.towers.length && terrain.towerAt(p.x, p.y)) || (terrain.giants && terrain.giants.length && terrain.giantAt(p.x, p.y)) || (terrain.ahu && terrain.ahuAt(p.x, p.y));
       if (solid && p.pierce > 0) { p.pierce -= Math.hypot(sx, sy); p.inside = true; continue; }
       if (p.y >= gy) return { hit: 'terrain' };
       if (p.y > gy - TREE_MAX_H) {
@@ -562,9 +562,12 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
       if (terrain.forts.length && terrain.fortAt(p.x, p.y)) return { hit: 'fort' };
       if (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(p.x, p.y)) return { hit: 'bridge' };
       if (terrain.towers && terrain.towers.length && terrain.towerAt(p.x, p.y)) return { hit: 'tower' };
+      if (terrain.giants && terrain.giants.length && terrain.giantAt(p.x, p.y)) return { hit: 'giant' };
+      if (terrain.ahu && terrain.ahuAt(p.x, p.y)) return { hit: 'ahu' };
     }
     for (const t of tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;
+      if (t.isMob && owner && owner.isMob) continue; // hostiles' fire passes through other hostiles
       const hw = t.hw || TANK_W / 2 + 2; // mobs carry their own hitbox
       const hh = t.hh || TANK_H + 2;
       const by = t.hitY === undefined ? t.y : t.hitY; // the satellite's box hangs around its centre
@@ -600,9 +603,9 @@ function altitudeBonus(drop, launch) {
   return Math.min(ALTITUDE_MAX, Math.max(0, drop) * ALTITUDE_RATE) * (0.5 + 0.5 * Math.max(0, Math.sin(launch)));
 }
 
-function bonusFactor(w, drop, speed, close, launch = Math.PI / 4) {
+function bonusFactor(w, drop, speed, launch = Math.PI / 4) {
   if (w.kind === 'laser') return 1;
   const alt = altitudeBonus(drop, launch);
-  const kin = close ? Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED : 0;
-  return 1 + alt + kin;
+  const kin = Math.min(KINETIC_MAX, Math.max(0, speed - KINETIC_MIN_SPEED) * KINETIC_PER_SPEED * (w.kin || 1));
+  return (1 + alt) * (1 + kin);
 }

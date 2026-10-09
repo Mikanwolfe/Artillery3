@@ -37,6 +37,8 @@ function beamTrace(terrain, targets, owner, x0, y0, x1, y1, solid = false) {
     if (terrain.forts.length && terrain.fortAt(x, y)) return { x, y, hit: 'fort' };
     if (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(x, y)) return { x, y, hit: 'bridge' };
     if (terrain.towers && terrain.towers.length && terrain.towerAt(x, y)) return { x, y, hit: 'tower' };
+    if (terrain.giants && terrain.giants.length && terrain.giantAt(x, y)) return { x, y, hit: 'giant' };
+    if (terrain.ahu && terrain.ahuAt(x, y)) return { x, y, hit: 'ahu' };
     if (solid) continue;
     for (const t of targets) {
       if (!t.alive || t === owner) continue;
