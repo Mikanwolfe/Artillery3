@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['06f8fe9', 'The skyrail train looks like a Melbourne Metro train now: silver stainless with a blue band, blue doors edged in yellow and blue cab fronts.'],
   ['1201391', 'A thinner health and armour bar. CPUs favour their own girl’s line when buying and choosing guns (her makers, and her starter’s kind), and only Ikaros’s CPU likes lasers, since CPUs aim them badly.'],
   ['b18ec08', 'Fixed a crash when using a repair kit. Starting guns and mounts can be sold (for ¢250 scrap) to free their slot, and a bought mount replaces a girl’s own one, Zuihou’s Type 96 included. Torpedo jets get two passes instead of one.'],
   ['07ca353', 'FPV kamikazes come in high and spend their first cycle flying in from the edge without attacking, so they can no longer appear next to you at the map edge and blow you up at once. After that they get over their target and dive onto it from the sky.'],
