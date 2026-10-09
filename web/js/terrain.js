@@ -57,6 +57,8 @@ class Terrain {
     this.treeKind = biome.tree;
     this.treeDensity = biome.trees;
     this.style = biome.style || null;
+    this.frost = 0;
+    this.ahu = null;
     this.height = generateHeights(0.62 * WORLD_BOTTOM, g.rough, g.disp);
     this.trees = [];
     this.forts = [];
@@ -231,6 +233,13 @@ class Terrain {
     } else {
       ctx.fillStyle = this.color;
       fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
+    }
+    if (this.frost > 0 && this.cap) { // frost creeping over the crust (the Warm Meadows gone cold)
+      const m = this.cap.match(/\d+/g).map(Number);
+      ctx.fillStyle = `rgb(${m.map((v) => Math.round(lerp(v, 240, this.frost))).join(',')})`;
+      fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, 0);
+      ctx.fillStyle = this.color;
+      fillSteps(ctx, this.height, x0, x1, TERRAIN_STEP, 0, Math.round(7 + 5 * this.frost));
     }
     if (this.style) this.drawStyle(ctx, x0, x1);
     for (const f of this.forts) f.draw(ctx);

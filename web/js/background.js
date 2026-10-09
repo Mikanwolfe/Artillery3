@@ -62,7 +62,7 @@ class Background {
   }
 
   newFlake(anywhere) {
-    const p = this.biome.particles;
+    const p = this.particleOverride || this.biome.particles;
     const sand = p.kind === 'sand';
     const rising = p.kind === 'steam' || p.kind === 'motes'; // the deck's steam and the roots' warm motes go up
     return {
@@ -100,7 +100,7 @@ class Background {
         if (tr.dir > 0 ? tr.x > WORLD_W + 500 : tr.x < -500) { rail.train = null; rail.next = 18 + Math.random() * 35; }
       }
     }
-    const kind = this.biome.particles.kind;
+    const kind = (this.particleOverride || this.biome.particles).kind;
     // ambient particles ride the wind: n is -1..1 (full wind left .. right), each flake has its own
     // weight (f.k) and eases toward the wind speed, and gusts come and go, so a strong wind drives
     // snow nearly sideways and calm air lets it fall
@@ -123,14 +123,73 @@ class Background {
   }
 
   // sky in screen space
+  // the Warm Meadows' AHU is gone: the snow comes in as the old particles blow away (cover.js)
+  letItSnow() {
+    this.particleOverride = BIOMES.snow.particles;
+    for (let i = this.flakes.length; i < BIOMES.snow.particles.n; i++) this.flakes.push(this.newFlake(true));
+  }
+
   drawSky(ctx, cam) {
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, rgb(this.biome.sky[0]));
-    g.addColorStop(1, rgb(this.biome.sky[1]));
+    const cold = this.cold || 0, cs = [[176, 186, 210], [214, 220, 234]]; // the sky goes grey-blue as the warmth leaves
+    g.addColorStop(0, rgb(this.biome.sky[0].map((v, i) => lerp(v, cs[0][i], cold))));
+    g.addColorStop(1, rgb(this.biome.sky[1].map((v, i) => lerp(v, cs[1][i], cold))));
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
     const art = this.biome.skyArt;
     if (art) this.drawSkyArt(ctx, art, cam ? cam.x * 0.02 : 0);
+  }
+
+  // The exo-surface ring as seen from the ground: a vast lattice arcing over half the sky, thickest
+  // overhead. A sunlit rim; decks laid in grid bays, some open so the sky shows through; city lights
+  // scattered across them; a darker structural band of ribs underneath; spires hanging off its
+  // underside. Thousands of boxes, so it is drawn once into an offscreen canvas and blitted.
+  drawRing(ctx, ox, opt) {
+    const k = ctx.getTransform().a || 1;
+    const PAD = 160, RW = W + PAD * 2, RH = Math.round(H * 0.62);
+    const key = `${W}|${H}|${k}`;
+    if (!this.ringCache || this.ringKey !== key) {
+      this.ringKey = key;
+      const cv = document.createElement('canvas');
+      cv.width = Math.ceil(RW * k); cv.height = Math.ceil(RH * k);
+      const c = cv.getContext('2d');
+      c.scale(k, k);
+      const tone = Array.isArray(opt) ? opt : [150, 154, 184]; // the structure's grey, tinted to the sky
+      const sh = (f, a = 1) => `rgba(${tone.map((v) => Math.round(clamp(v * f, 0, 255))).join(',')},${a})`;
+      const cx = RW * 0.6, cy = H * 2.2, R = H * 2.05;
+      const step = 2;
+      for (let s = -R * 1.2; s < R * 1.2; s += step) {
+        const a = s / R;
+        const x = cx + Math.sin(a) * R, y = cy - Math.cos(a) * R;
+        if (x < -10 || x > RW + 10) continue;
+        const T = Math.round(64 * (0.5 + 0.5 * Math.cos(a * 1.5))); // thickest overhead, foreshortened toward the horizons
+        const cell = Math.floor(s / 26), u = ((s % 26) + 26) % 26;
+        const X = Math.round(x);
+        c.fillStyle = 'rgba(236,240,255,0.85)'; c.fillRect(X, Math.round(y), step, 2); // the lit rim
+        const open = hash2(cell, 7) > 0.7 && u > 4 && u < 22; // an open bay: the sky shows through
+        const deck = Math.round(T * 0.48);
+        if (!open) {
+          c.fillStyle = sh(hash2(cell, 3) > 0.5 ? 1 : 0.86, 0.9);
+          c.fillRect(X, Math.round(y + 2), step, deck);
+          if (u < 2) { c.fillStyle = sh(0.6, 0.9); c.fillRect(X, Math.round(y + 2), step, deck); } // the bay's frame
+          if (hash2(Math.round(s), 11) > 0.82) { // city lights on the deck
+            const hc = hash2(Math.round(s), 12);
+            c.fillStyle = hc > 0.8 ? 'rgba(255,214,150,0.95)' : hc > 0.4 ? 'rgba(220,236,255,0.95)' : 'rgba(150,190,255,0.9)';
+            c.fillRect(X, Math.round(y + 3 + hash2(Math.round(s), 13) * (deck - 4)), 1, 1);
+          }
+        } else { c.fillStyle = sh(0.6, 0.9); c.fillRect(X, Math.round(y + 2), step, 2); c.fillRect(X, Math.round(y + deck), step, 2); }
+        c.fillStyle = sh(0.62, 0.92); // the structural band, with ribs
+        c.fillRect(X, Math.round(y + 2 + deck), step, T - deck);
+        if (((s / step) | 0) % 4 === 0) { c.fillStyle = sh(0.45, 0.9); c.fillRect(X, Math.round(y + 2 + deck), 1, T - deck); }
+        if (hash2(cell, 21) > 0.55 && u >= 10 && u < 14) { // a spire hanging off the underside
+          const len = Math.round((10 + hash2(cell, 22) * 70) * (T / 64));
+          for (let q = 0; q < len; q += 2) { c.fillStyle = sh(0.5 - 0.15 * q / len, 0.9); c.fillRect(X + 1 - Math.round(2 * (1 - q / len)), Math.round(y + 2 + T + q), Math.max(1, Math.round(4 * (1 - q / len))), 2); }
+        }
+        if (cell % 9 === 0 && u < 2) { c.fillStyle = sh(0.4, 0.9); c.fillRect(X, Math.round(y), 2, T + 2); } // segment joints
+      }
+      this.ringCache = cv;
+    }
+    ctx.drawImage(this.ringCache, -PAD - ox, 0, RW, RH);
   }
 
   // screen space, behind everything: stars, a dim M-dwarf, the exo-surface ring across the sky,
@@ -147,22 +206,7 @@ class Background {
       ctx.fillStyle = rgb(c); sq(ctx, x, y, r * 2);
       ctx.fillStyle = 'rgb(255,200,170)'; sq(ctx, x, y, r);
     }
-    if (art.ring) { // the exo-surface ring: a broad banded arc over half the sky
-      const cx = W * 0.62 - ox, cy = H * 2.2, R = H * 2.05;
-      const da = 3 / R; // a column every 3 px, each 4 wide: a solid band
-      for (let a = -1.15; a < 1.15; a += da) {
-        const x = cx + Math.sin(a) * R, y = cy - Math.cos(a) * R;
-        if (x < -40 || x > W + 40) continue;
-        const band = [[150, 150, 176, 0.55], [196, 192, 214, 0.6], [120, 122, 150, 0.5], [210, 206, 226, 0.45]];
-        let off = 0;
-        for (const [r2, g2, b2, al] of band) {
-          ctx.fillStyle = `rgba(${r2},${g2},${b2},${al})`;
-          ctx.fillRect(Math.round(x), Math.round(y + off), 4, 12);
-          off += 12;
-        }
-        if (Math.abs(((a + 2) * 18) % 1) < da * 18) { ctx.fillStyle = 'rgba(80,80,104,0.5)'; ctx.fillRect(Math.round(x), Math.round(y), 2, 48); } // segment joints
-      }
-    }
+    if (art.ring) this.drawRing(ctx, ox, art.ring);
     if (art.ceiling) { // the ring's underside: trusses, hangers and work lights in the dark above
       ctx.fillStyle = 'rgb(16,14,16)'; ctx.fillRect(0, 0, W, Math.round(H * 0.16));
       ctx.fillStyle = 'rgb(30,26,26)';
@@ -444,8 +488,9 @@ class Background {
 
   // ambient particles (screen pixels)
   drawSnow(ctx) {
-    const sand = this.biome.particles.kind === 'sand';
-    const steam = this.biome.particles.kind === 'steam';
+    const pk = (this.particleOverride || this.biome.particles).kind;
+    const sand = pk === 'sand';
+    const steam = pk === 'steam';
     if (steam) ctx.globalAlpha = 0.22; // the deck's exhaust: soft wisps
     for (const f of this.flakes) {
       ctx.fillStyle = f.c;

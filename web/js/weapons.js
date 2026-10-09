@@ -552,7 +552,7 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
     if (p.x >= 0 && p.x < WORLD_W) {
       const gy = terrain.hAt(p.x);
       // a piercing slug (the Zero Point) spends p.pierce going through ground and cover
-      const solid = p.y >= gy || (terrain.forts.length && terrain.fortAt(p.x, p.y)) || (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(p.x, p.y)) || (terrain.towers && terrain.towers.length && terrain.towerAt(p.x, p.y)) || (terrain.giants && terrain.giants.length && terrain.giantAt(p.x, p.y));
+      const solid = p.y >= gy || (terrain.forts.length && terrain.fortAt(p.x, p.y)) || (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(p.x, p.y)) || (terrain.towers && terrain.towers.length && terrain.towerAt(p.x, p.y)) || (terrain.giants && terrain.giants.length && terrain.giantAt(p.x, p.y)) || (terrain.ahu && terrain.ahuAt(p.x, p.y));
       if (solid && p.pierce > 0) { p.pierce -= Math.hypot(sx, sy); p.inside = true; continue; }
       if (p.y >= gy) return { hit: 'terrain' };
       if (p.y > gy - TREE_MAX_H) {
@@ -563,6 +563,7 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
       if (terrain.bridges && terrain.bridges.length && terrain.bridgeAt(p.x, p.y)) return { hit: 'bridge' };
       if (terrain.towers && terrain.towers.length && terrain.towerAt(p.x, p.y)) return { hit: 'tower' };
       if (terrain.giants && terrain.giants.length && terrain.giantAt(p.x, p.y)) return { hit: 'giant' };
+      if (terrain.ahu && terrain.ahuAt(p.x, p.y)) return { hit: 'ahu' };
     }
     for (const t of tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;

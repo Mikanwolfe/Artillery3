@@ -219,3 +219,99 @@ function drawGiantTop(ctx, G, C, x0, y0, w, h) {
     for (const [ax, ay, bx, by] of bs) for (let k = 0; k <= 1; k += 0.08) sq(ctx, x0 + lerp(ax, bx, k) * w, y0 + lerp(ay, by, k) * h, 6 - 3 * k);
   }
 }
+
+// ------------------------------------------------------------------ the Warm Meadows' AHU
+// An old-world air-handling unit near the middle of the map, older than anyone's records, keeping
+// the meadow warm (not what an AHU does: nobody has ever explained this one). Shells stop on it and
+// blasts wear it down; destroy it and the warmth goes: the sky cools, snow starts to fall and frost
+// creeps over the meadow for the rest of the round (Background.cold, Terrain.frost).
+const AHU_HP = 900;
+const AHU_W = 96, AHU_H = 62;
+
+Object.assign(Terrain.prototype, {
+  ahuAt(x, y) {
+    const A = this.ahu;
+    if (!A || !A.alive) return null;
+    const g = this.hAt(A.x);
+    return Math.abs(x - A.x) < AHU_W / 2 && y <= g && y > g - AHU_H ? A : null;
+  },
+});
+
+Object.assign(Game.prototype, {
+  placeAhu(avoid) {
+    const T = this.terrain;
+    T.ahu = null;
+    if (!this.biome.ahu) return;
+    for (let d = 0; d < 900; d += 30) for (const x of [WORLD_W / 2 + d, WORLD_W / 2 - d]) {
+      if (T.ahu) break;
+      if ((avoid || []).some((a) => Math.abs(a - x) < 110)) continue;
+      if ((T.bridges || []).some((b) => x > b.x0 - 80 && x < b.x1 + 80) || (T.towers || []).some((t) => Math.abs(t.x - x) < 140)) continue;
+      T.flatten(x, AHU_W / 2 + 12);
+      T.ahu = { x, hp: AHU_HP, alive: true };
+    }
+    if (T.ahu) T.fellTrees(T.ahu.x, T.hAt(T.ahu.x) - 20, AHU_W / 2 + 10);
+  },
+
+  blastAhu(x, y, def) {
+    const A = this.terrain.ahu;
+    if (!A || !A.alive) return;
+    const g = this.terrain.hAt(A.x);
+    const dx = Math.max(0, Math.abs(x - A.x) - AHU_W / 2), dy = Math.max(0, g - AHU_H - y, y - g);
+    const r = Math.max(30, def.dmgR * 0.7), d = Math.hypot(dx, dy);
+    if (d >= r) return;
+    A.hp -= (def.dmg * 0.5 + 40) * (1 - d / r);
+    A.flash = 1;
+    if (A.hp > 0) return;
+    A.alive = false;
+    this.particles.explosion(A.x, g - AHU_H / 2, 140, 'shell');
+    this.shake = Math.max(this.shake, 10);
+    this.sfx.explosion(45);
+    this.bg.coldSnap = true;
+    this.ui.notice('The AHU is down. The warmth is going: snow is coming.');
+    this.events.push('The old-world AHU was destroyed. The meadow goes cold.');
+  },
+
+  // the cold settles over a few seconds once the AHU is gone
+  stepCold() {
+    const bg = this.bg;
+    if (!bg.coldSnap || bg.cold >= 1) return;
+    bg.cold = Math.min(1, (bg.cold || 0) + 0.0025);
+    this.terrain.frost = bg.cold;
+    if (bg.cold > 0.15 && !bg.particleOverride) bg.letItSnow();
+  },
+
+  drawAhu(ctx) {
+    const A = this.terrain.ahu;
+    if (!A) return;
+    const g = Math.round(this.terrain.hAt(A.x)), x = Math.round(A.x), t = this.time;
+    if (!A.alive) { // a burnt-out shell, still smoking
+      ctx.fillStyle = 'rgb(46,40,40)'; ctx.fillRect(x - AHU_W / 2, g - 26, AHU_W, 26);
+      ctx.fillStyle = 'rgb(30,26,26)'; ctx.fillRect(x - AHU_W / 2 + 10, g - 38, 30, 12); ctx.fillRect(x + 8, g - 32, 22, 6);
+      if (Math.random() < 0.08) this.particles.puff(x + (Math.random() - 0.5) * 60, g - 30, [70, 66, 70]);
+      return;
+    }
+    const breathe = 0.5 + 0.5 * Math.sin(t * 1.3); // its warmth comes and goes, slowly
+    for (let k = 4; k >= 1; k--) { ctx.fillStyle = `rgba(255,170,90,${(0.035 * (5 - k) * (0.6 + 0.4 * breathe)).toFixed(3)})`; ctx.fillRect(x - AHU_W / 2 - k * 26, g - AHU_H - k * 22, AHU_W + k * 52, AHU_H + k * 22); }
+    const white = A.flash > 0.3;
+    A.flash = Math.max(0, (A.flash || 0) - 0.08);
+    const C = (c) => (white ? '#ffffff' : c);
+    ctx.fillStyle = C('#6e6a62'); ctx.fillRect(x - AHU_W / 2, g - AHU_H, AHU_W, AHU_H); // the casing, weathered
+    ctx.fillStyle = C('#878278'); ctx.fillRect(x - AHU_W / 2, g - AHU_H, AHU_W, 5);
+    ctx.fillStyle = C('#4e4a44'); ctx.fillRect(x - AHU_W / 2, g - 6, AHU_W, 6); // its plinth
+    ctx.fillStyle = C('#3a3632'); // the intake louvres
+    for (let i = 0; i < 6; i++) ctx.fillRect(x - AHU_W / 2 + 8, g - AHU_H + 12 + i * 7, 30, 3);
+    ctx.fillStyle = C('#2e2a28'); ctx.fillRect(x + 4, g - AHU_H + 10, 38, 38); // the fan housing
+    ctx.fillStyle = `rgba(255,170,90,${(0.5 + 0.4 * breathe).toFixed(2)})`; ctx.fillRect(x + 8, g - AHU_H + 14, 30, 30); // warm light through it
+    ctx.fillStyle = C('#3a3632'); // the fan, turning
+    const f = (t * 6 | 0) % 2;
+    ctx.fillRect(x + 21, g - AHU_H + 14, 4, 30); ctx.fillRect(x + 8, g - AHU_H + 27, 30, 4);
+    if (f) { for (let i = 0; i < 4; i++) { sq(ctx, x + 13 + i * 7, g - AHU_H + 19 + i * 7, 3); sq(ctx, x + 34 - i * 7, g - AHU_H + 19 + i * 7, 3); } }
+    ctx.fillStyle = C('#5a564e'); ctx.fillRect(x - AHU_W / 2 - 10, g - 20, 12, 20); ctx.fillRect(x + AHU_W / 2 - 2, g - 28, 12, 28); // pipes into the ground
+    ctx.fillStyle = 'rgba(230,226,214,0.8)'; ctx.font = `8px ${HUD_FONT}`; ctx.textAlign = 'left';
+    ctx.fillText('AHU · ????', x - AHU_W / 2 + 8, g - 10); // no date on the plate
+    if (A.hp < AHU_HP) { // its health, once it has been hit
+      ctx.fillStyle = 'rgba(18,17,25,0.8)'; ctx.fillRect(x - 30, g - AHU_H - 14, 60, 6);
+      ctx.fillStyle = '#ff9a4a'; ctx.fillRect(x - 29, g - AHU_H - 13, Math.round(58 * clamp(A.hp / AHU_HP, 0, 1)), 4);
+    }
+  },
+});

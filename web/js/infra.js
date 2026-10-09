@@ -103,7 +103,8 @@ Object.assign(Game.prototype, {
     }
     if (round >= 3) this.placeHighway(avoid, mat, style);
     if (round >= 2) this.placeTowers(avoid, mat, round >= 4 ? 2 : 1, Math.min(360, 220 + 20 * round));
-    this.placeGiants(avoid); // cover.js
+    this.placeAhu(avoid); // cover.js (the Warm Meadows only)
+    this.placeGiants((avoid || []).concat(this.terrain.ahu ? [this.terrain.ahu.x, this.terrain.ahu.x - 300, this.terrain.ahu.x + 300] : [])); // cover.js
     // a power line somewhere clear of the vehicles and the bridge
     const nPoles = rng.int(3, 5);
     const len = (nPoles - 1) * POLE_GAP;

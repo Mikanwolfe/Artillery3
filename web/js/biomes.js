@@ -10,7 +10,7 @@ const BIOMES = {
     // where all you see of the cooperative is the ring across the sky
     id: 'snow', name: 'The Far Territories',
     sky: [[166, 160, 204], [188, 172, 210]],
-    skyArt: { ring: true },
+    skyArt: { ring: [150, 150, 186] },
     layers: [
       { color: 'rgb(3,21,46)', rough: 0.7, parallax: 0.45, lift: 60 },
       { color: 'rgb(52,51,50)', rough: 0.65, parallax: 0.6, lift: 90 },
@@ -57,8 +57,11 @@ const BIOMES = {
     fort: { stone: '#c49a64', light: '#dcb47c', dark: '#9a744a', cap: '#e8c890' },
   },
   alstroemeria: {
-    id: 'alstroemeria', name: 'Alstroemeria',
+    // (the id stays 'alstroemeria' from when it was the lily meadow; in the lore it is one of the
+    // pockets of Alstroemeria an old-world AHU keeps warm, under the ring)
+    id: 'alstroemeria', name: 'Warm Meadows',
     sky: [[248, 206, 210], [255, 234, 218]],
+    skyArt: { ring: [200, 168, 178] }, ahu: true,
     layers: [
       { color: 'rgb(150,112,160)', rough: 0.6, parallax: 0.45, lift: 60 },
       { color: 'rgb(214,150,178)', rough: 0.55, parallax: 0.6, lift: 90 },
