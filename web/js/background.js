@@ -140,16 +140,17 @@ class Background {
     if (art) this.drawSkyArt(ctx, art, cam ? cam.x * 0.02 : 0);
   }
 
-  // The exo-surface ring as seen from the ground, far off: a long, shallow arc of rings. Two big
-  // rings built from blocky modules joined end to end, two thinner rings between them, trusses
-  // tying the lot together, and a few spires hanging under the lower ring, all fogged toward the sky
-  // so it reads as distant. Thousands of boxes, so it is pre-rendered once into an offscreen canvas
-  // and blitted; only the beacons along it (blinking) are drawn live.
+  // The exo-surface ring as seen from the ground, far off: a long, shallow arc, mostly grey and
+  // fogged by distance. Its band is built of blocks that jut in and out, top and bottom, and it runs
+  // in sections, each for its own equipment: city (about half of it: lights packed in, with dark
+  // closed windows between), radio (a thicket of masts up and down, beacons on their tips),
+  // connectors (little but truss between two rails) and industrial (tanks and blocks on top, towers
+  // hanging below). Pre-rendered once into an offscreen canvas; only the beacons blink live.
   drawRing(ctx, ox, opt) {
     const k = ctx.getTransform().a || 1;
     const PAD = 160, RW = W + PAD * 2, RH = Math.round(H * 0.7);
-    const R = H * 7, apex = H * 0.14, cx = RW * 0.55, cy = apex + R;
-    const yAt = (x) => cy - Math.sqrt(Math.max(0, R * R - (x - cx) * (x - cx))); // the arc's top edge
+    const R = H * 7, apex = H * 0.17, cx = RW * 0.55, cy = apex + R;
+    const yAt = (x) => cy - Math.sqrt(Math.max(0, R * R - (x - cx) * (x - cx))); // the band's centre line
     const key = `${W}|${H}|${k}`;
     if (!this.ringCache || this.ringKey !== key) {
       this.ringKey = key;
@@ -157,58 +158,87 @@ class Background {
       cv.width = Math.ceil(RW * k); cv.height = Math.ceil(RH * k);
       const c = cv.getContext('2d');
       c.scale(k, k);
-      const tone = Array.isArray(opt) ? opt : [150, 154, 184];
+      const tone = Array.isArray(opt) ? opt : [150, 154, 170];
       const sky = this.biome.sky[0];
-      const FOG = 0.5; // half the way to the sky: it is a long way off
-      const col = (f, a = 1) => `rgba(${tone.map((v, i) => Math.round(lerp(clamp(v * f, 0, 255), sky[i], FOG))).join(',')},${a})`;
-      this.ringLights = [];
-      // the bands: offset below the arc's top edge, thickness, and whether it is a big modular ring
-      const bands = [{ o: 0, t: 22, big: true }, { o: 30, t: 6 }, { o: 42, t: 6 }, { o: 54, t: 18, big: true }];
-      const COL = 4; // pixel columns: each box steps along the curve, so it stays square to the grid
-      for (const b of bands) {
-        let x = 0, mod = 0;
-        while (x < RW) {
-          const len = b.big ? 24 + Math.round(hash2(mod, b.o + 1) * 48) : 40 + Math.round(hash2(mod, b.o + 2) * 60);
-          const lift = b.big ? Math.round((hash2(mod, b.o + 3) - 0.5) * 6) : 0; // modules a little proud or sunk
-          const shade = b.big ? 0.8 + 0.3 * hash2(mod, b.o + 4) : 0.7;
-          for (let cxl = x; cxl < Math.min(RW, x + len - 2); cxl += COL) {
-            const y = Math.round(yAt(cxl) + b.o - lift);
-            c.fillStyle = col(shade, 0.85); c.fillRect(cxl, y, COL, b.t + lift);
-            if (b.big) {
-              c.fillStyle = col(shade * 1.25, 0.9); c.fillRect(cxl, y, COL, 2); // its lit top
-              c.fillStyle = col(shade * 0.7, 0.85); c.fillRect(cxl, y + b.t + lift - 3, COL, 3); // its shadowed underside
-              if (hash2(cxl, b.o + 9) > 0.7) { c.fillStyle = col(1.5, 0.8); c.fillRect(cxl + 1, y + 6 + Math.round(hash2(cxl, 3) * (b.t - 10)), 1, 1); } // a lit window
+      const grey = (f, a = 0.9) => `rgba(${tone.map((v, i) => Math.round(lerp(clamp(v * f, 0, 255), sky[i], 0.42))).join(',')},${a})`; // fogged toward the sky
+      const lights = [];
+      const box = (x, y, w, h, f) => { c.fillStyle = grey(f); c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+      // a stepped tower (dir -1 up, +1 down) from the band's edge at (x, y)
+      const tower = (x, y, h, w, dir, f) => {
+        let ww = w, yy = y;
+        for (let seg = 0; seg < 4 && h > 2; seg++) {
+          const sh = Math.max(2, Math.round(h * 0.35));
+          box(x - ww / 2, dir < 0 ? yy - sh : yy, ww, sh, f);
+          yy += dir * sh; h -= sh; ww = Math.max(1, Math.round(ww * 0.62));
+        }
+        box(x - 0.5, dir < 0 ? yy - 6 : yy, 1, 6, f * 0.9); // its mast
+        lights.push({ x, y: dir < 0 ? yy - 7 : yy + 6, ph: hash2(Math.round(x), 61) * 6.28, red: hash2(Math.round(x), 62) > 0.35 });
+      };
+      const BAND = 30; // nominal thickness
+      let x = 0, sec = 0;
+      while (x < RW) {
+        const r = hash2(sec, 51);
+        const kind = r < 0.5 ? 'city' : r < 0.66 ? 'radio' : r < 0.84 ? 'connector' : 'industrial';
+        const len = kind === 'connector' ? 60 + Math.round(hash2(sec, 52) * 60) : 110 + Math.round(hash2(sec, 53) * 120);
+        const x1 = Math.min(RW, x + len);
+        if (kind === 'connector') { // two rails and the truss between them
+          for (let xx = x; xx < x1; xx += 2) { const y = yAt(xx); box(xx, y - 10, 2, 3, 0.8); box(xx, y + 8, 2, 3, 0.75); }
+          for (let xx = x; xx < x1 - 12; xx += 12) {
+            const y = yAt(xx);
+            box(xx, y - 8, 1, 17, 0.7);
+            for (let f = 0; f <= 1; f += 0.1) { box(xx + f * 12, y - 8 + f * 16, 1, 1, 0.7); box(xx + f * 12, y + 8 - f * 16, 1, 1, 0.7); }
+          }
+        } else {
+          // the band: blocks 6-22 wide, each jutting up or down a little from its neighbours
+          let bx = x, m = 0;
+          while (bx < x1) {
+            const bw = Math.min(x1 - bx, 6 + Math.round(hash2(bx, sec + 3) * 16));
+            const up = Math.round((hash2(bx, 71) - 0.5) * 12), dn = Math.round((hash2(bx, 72) - 0.5) * 12);
+            const f = 0.82 + 0.22 * hash2(bx, 73);
+            for (let xx = bx; xx < bx + bw; xx += 3) {
+              const y = yAt(xx), top = y - BAND / 2 - up, bot = y + BAND / 2 + dn;
+              box(xx, top, 3, bot - top, f);
+              box(xx, top, 3, 1, f * 1.18); // the lit top
+              if (kind === 'city') { // a billion lights, some windows dark
+                for (let wy = top + 3; wy < bot - 2; wy += 3) {
+                  const h = hash2(xx * 7 + m, Math.round(wy));
+                  if (h < 0.45) continue;
+                  c.fillStyle = h > 0.93 ? 'rgba(255,200,130,0.95)' : h > 0.7 ? 'rgba(236,242,255,0.9)' : 'rgba(255,226,170,0.75)';
+                  c.fillRect(Math.round(xx + (h * 10 % 3)), Math.round(wy), 1, 1);
+                }
+              }
+            }
+            box(bx + bw - 1, yAt(bx + bw) - BAND / 2 - up, 1, BAND + up + dn, f * 0.7); // the seam to the next block
+            bx += bw; m++;
+          }
+          // what stands on it
+          if (kind === 'radio') for (let tx = x + 6; tx < x1 - 4; tx += 8 + Math.round(hash2(tx, 81) * 10)) {
+            const y = yAt(tx);
+            tower(tx, y - BAND / 2 - 4, 10 + hash2(tx, 82) * 30, 4, -1, 0.8);
+            if (hash2(tx, 83) > 0.4) tower(tx + 3, y + BAND / 2 + 4, 8 + hash2(tx, 84) * 22, 4, 1, 0.75);
+          }
+          if (kind === 'industrial') {
+            for (let tx = x + 10; tx < x1 - 16; tx += 22 + Math.round(hash2(tx, 91) * 16)) {
+              const y = yAt(tx);
+              box(tx, y - BAND / 2 - 12, 14, 12, 0.9); box(tx + 2, y - BAND / 2 - 15, 10, 3, 1); // tanks on top
+              if (hash2(tx, 92) > 0.5) tower(tx + 7, y + BAND / 2 + 4, 16 + hash2(tx, 93) * 34, 8, 1, 0.75);
             }
           }
-          // the joint to the next module: a dark collar
-          const jy = Math.round(yAt(x + len - 2) + b.o);
-          c.fillStyle = col(0.45, 0.85); c.fillRect(x + len - 2, jy - (b.big ? 2 : 0), 2, b.t + (b.big ? 4 : 0));
-          if (b.big && hash2(mod, b.o + 7) > 0.55) this.ringLights.push({ x: x + len - 1, y: jy - 4, ph: hash2(mod, b.o + 8) * 6.28, red: hash2(mod, b.o + 11) > 0.4 });
-          x += len; mod++;
+          if (kind === 'city') for (let tx = x + 20; tx < x1 - 20; tx += 40 + Math.round(hash2(tx, 95) * 50)) { // spires over the city, and its roots under it
+            const y = yAt(tx);
+            tower(tx, y - BAND / 2 - 4, 18 + hash2(tx, 96) * 40, 10, -1, 0.85);
+            if (hash2(tx, 97) > 0.5) tower(tx + 8, y + BAND / 2 + 4, 14 + hash2(tx, 98) * 36, 9, 1, 0.75);
+          }
         }
-      }
-      // trusses from the upper big ring to the lower one, through the thin rings: posts and diagonals
-      for (let x = 10; x < RW; x += 36) {
-        const y0 = yAt(x) + 22, y1 = yAt(x) + 54;
-        c.fillStyle = col(0.55, 0.75);
-        c.fillRect(x, Math.round(y0), 2, Math.round(y1 - y0));
-        for (let f = 0; f <= 1; f += 0.06) { // a diagonal to the next post, of squares
-          const xx = x + f * 36, yy = lerp(y0, yAt(x + 36) + 54, f);
-          c.fillRect(Math.round(xx), Math.round(yy), 1, 1);
-        }
-      }
-      // a few spires hanging under the lower ring
-      for (let x = 30; x < RW; x += 70 + Math.round(hash2(x, 41) * 90)) {
-        const len = 10 + Math.round(hash2(x, 42) * 34), y = yAt(x) + 72;
-        for (let q = 0; q < len; q += 2) { c.fillStyle = col(0.55, 0.8); const w = Math.max(1, Math.round(5 * (1 - q / len))); c.fillRect(x - (w >> 1), Math.round(y + q), w, 2); }
+        x = x1; sec++;
       }
       this.ringCache = cv;
+      this.ringLights = lights;
     }
     ctx.drawImage(this.ringCache, -PAD - ox, 0, RW, RH);
-    for (const L of this.ringLights) { // beacons along the big rings, each on its own beat
-      const on = Math.sin(this.t * 2.2 + L.ph) > 0.55;
-      if (!on) continue;
-      ctx.fillStyle = L.red ? 'rgba(255,90,80,0.85)' : 'rgba(235,240,255,0.85)';
+    for (const L of this.ringLights) { // beacons on the towers, each on its own beat
+      if (Math.sin(this.t * 2.2 + L.ph) < 0.55) continue;
+      ctx.fillStyle = L.red ? 'rgba(255,90,80,0.9)' : 'rgba(235,240,255,0.9)';
       ctx.fillRect(Math.round(L.x - PAD - ox), Math.round(L.y), 2, 2);
     }
   }
