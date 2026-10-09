@@ -4,6 +4,8 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['58b9683', 'The ring rebuilt: a vast, shallow arc of blocky modules in rings within rings, trussed together, fogged by distance, beacons blinking along it.'],
+  ['58b9683', 'When the Warm Meadows go cold, the flowers frost over and droop.'],
   ['73b26a3', 'The ring in the sky is a full lattice now: deck bays open to the sky, city lights, ribs and spires hanging off its underside.'],
   ['73b26a3', 'The lily meadow is now Warm Meadows, under the ring, kept warm by an old-world AHU. Destroy it and the snow comes.'],
   ['b1ce804', 'Three faces of Alstroemeria: AESR-U The Deck, AESR-L The Roots and ASTM-G The Ground, each with its own sky, scenery, giants and sudden death.'],
