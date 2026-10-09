@@ -37,8 +37,13 @@ const RANGE_ERR_SCALE = 650;
 // the solver's miss distance, so it will take a somewhat worse shot to hit back.
 const RETALIATE = { easy: 180, normal: 260, hard: 320 };
 const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
+// spread the fire: a rival other CPUs have already gone after this turn cycle is less attractive, per
+// CPU, so a table of CPUs doesn't all pile onto one player (a grudge still outweighs one of these)
+const CROWD = 150;
 const AI_MOBS = 2; // mobs (drones, motherships) a CPU weighs as targets: the nearest few
 const AI_BUDGET_MS = 8; // planning time per frame, so a CPU's aim search never stalls a frame
+const DODGE = { easy: 0.35, normal: 0.75, hard: 0.95 }; // chance it drives out from under a drone
+const MOB_AIM = 0.6; // aim error against hostiles (they hold still, and CPUs practise on them)
 const MOB_DISLIKE = 90; // score penalty for going after a mob instead of a player (less for big bounties / with flak)
 const SAT_DISLIKE = 220; // score penalty for shooting at MAIA rather than a rival (less when it is healthy)
 
@@ -152,6 +157,8 @@ class CpuController {
     const ownUplink = t.weapons.some((id) => WEAPON_BY_ID[id].sat);
     if (sat && sat.alive && rivalsUplink && !ownUplink && sat.health > 0.6 && rng.chance(0.3)) enemies.push(sat);
     const grudge = t.lastAttacker && t.lastAttacker.alive && t.lastAttacker !== t ? t.lastAttacker : null;
+    const cycle = g.tanks.filter((x) => x.alive).length;
+    const crowd = (e) => g.tanks.filter((o) => o !== t && o.isCpu && o.alive && o.planTarget === e && g.turnCount - (o.planTurn ?? -99) < cycle).length;
     // weapon is locked once the clip has started; otherwise pick by difficulty
     let options = t.firedThisTurn ? [t.weapon] : t.weapons.filter((id) => t.weaponReady(id)).map((id) => WEAPON_BY_ID[id]);
     options = options.slice().sort((a, b) => weaponValue(b) - weaponValue(a));
@@ -176,6 +183,7 @@ class CpuController {
         let score = s.score - (e.isSat ? 0 : (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1) - (e.bounty || 0) * BOUNTY_PULL;
         if (e.isSat) score += SAT_DISLIKE - sat.health * 60;
         if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
+        if (!e.isMob && !e.isSat) score += CROWD * crowd(e);
         if (e.isMob) score += MOB_DISLIKE - Math.min(150, e.bounty * 0.03) - (w.kind === 'flak' ? 120 : 0);
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
       }
@@ -186,12 +194,13 @@ class CpuController {
     // aim error grows with range: sharp up close, increasingly loose across the map
     const range = Math.abs(best.target.x - t.x);
     const m = memo.get(best.target);
-    const f = clamp(RANGE_ERR_BASE + range / RANGE_ERR_SCALE, RANGE_ERR_BASE, 3) * (t.upgrades.computer ? 0.7 : 1) * LEARN[Math.min(m.shots, LEARN.length - 1)];
+    const f = clamp(RANGE_ERR_BASE + range / RANGE_ERR_SCALE, RANGE_ERR_BASE, 3) * (t.upgrades.computer ? 0.7 : 1) * LEARN[Math.min(m.shots, LEARN.length - 1)] * (best.target.isMob ? MOB_AIM : 1);
     m.shots++;
     best.elev = clamp(best.elev + rng.gauss() * k.se * f, w.elevMin, w.elevMax);
     best.v = clamp(best.v * (1 + rng.gauss() * k.sc * f), w.maxCharge * 0.05, w.maxCharge);
     best.revenge = best.target === grudge;
     t.planTarget = best.target;
+    t.planTurn = g.turnCount;
     return best;
   }
 
@@ -248,6 +257,20 @@ class CpuController {
           this.moveFrames = 160;
           this.state = 'move';
           return;
+        }
+        // a bomber, carrier or kamikaze close by: get out from under it before it gets its turn
+        if (!this.moved && t.fuel > 40) {
+          const g = this.game;
+          const threat = g.mobs.filter((m) => m.alive && (m.kind === 'drone' || m.kind === 'carrier' || m.kind === 'fpv') && Math.abs(m.x - t.x) < (m.kind === 'fpv' ? 260 : 150))
+            .sort((a, b) => Math.abs(a.x - t.x) - Math.abs(b.x - t.x))[0];
+          if (threat && rng.chance(DODGE[t.type] || DODGE.normal)) {
+            this.moved = true;
+            this.moveDir = t.x >= threat.x ? 1 : -1;
+            if (t.x + this.moveDir * 160 < 40 || t.x + this.moveDir * 160 > WORLD_W - 40) this.moveDir = -this.moveDir;
+            this.moveFrames = rng.int(70, 130);
+            this.state = 'move';
+            return;
+          }
         }
         // Bulwark Barrier toward whoever it expects fire from (its grudge, else the nearest rival),
         // tilted up because most of that fire comes down in an arc

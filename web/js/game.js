@@ -58,8 +58,8 @@ const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
 const KILL_BOUNTY = 250;
 const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
-const SAT_HEAL = 0.25; // share of its max health MAIA repairs every turn
-const SAT_DOWN_TURNS = 2; // shot down, MAIA stays offline this many turns
+const SAT_HEAL = 0.25; // share of its max health MAIA repairs once a turn cycle (every n turns)
+const SAT_DOWN_CYCLES = 2; // shot down, MAIA stays offline this many turn cycles (2n turns for n players)
 const SAT_REBOOT = 0.5; // and comes back with this share of its health
 // damage popup tiers by accuracy (share of the blast radius from dead centre)
 const HIT_TIERS = [
@@ -159,6 +159,7 @@ class Input {
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
       case 'KeyW': case 'KeyJ': if (down && !e.repeat) this.queue.push({ jump: true }); break;
+      case 'KeyL': if (down && !e.repeat) this.queue.push({ jump: 'leap' }); break;
       case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': {
         const ab = ABILITIES.find((a) => a.key === e.code.slice(5));
         if (down && !e.repeat && ab) this.queue.push({ ability: ab.id });
@@ -584,7 +585,8 @@ class Game {
           if (t.vy >= 0) {
             t.vy = 0; t.jvx = 0; t.jumping = false; t.falling = false;
             this.particles.puff(t.x, t.y);
-            this.landed(t, t.y - t.fallFrom);
+            this.landed(t, t.leaping ? 0 : t.y - t.fallFrom); // a leap lands softly (a void still takes her)
+            t.leaping = false;
           }
         }
         continue;
@@ -774,12 +776,15 @@ class Game {
   }
 
   // W: hop in the facing direction for JUMP_FUEL of a full tank
-  jump(t) {
-    const cost = Math.ceil(t.maxFuel * JUMP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)); // Ikaros's wings: half
+  // L: leap, the same arc on a far bigger scale, for LEAP_FUEL of a full tank; she lands softly
+  jump(t, leap = false) {
+    const cost = Math.ceil(t.maxFuel * (leap ? LEAP_FUEL : JUMP_FUEL) * (hasTrait(t, 'wings') ? 0.5 : 1)); // Ikaros's wings: half
     if (this.phase !== 'aim' || t !== this.active || t.falling || t.fuel < cost) { this.sfx.deny(); return false; }
     t.fuel -= cost;
-    t.vy = JUMP_VY;
-    t.jvx = t.facing * JUMP_VX;
+    t.vy = leap ? LEAP_VY : JUMP_VY;
+    t.jvx = t.facing * (leap ? LEAP_VX : JUMP_VX);
+    t.leaping = leap;
+    if (leap) { for (let i = 0; i < 10; i++) this.particles.puff(t.x + (Math.random() - 0.5) * 30, t.y); this.shake = Math.max(this.shake, 3); }
     t.fallFrom = t.y;
     t.jumping = true;
     t.falling = true; // (no driving mid-air, and the turn waits for her to land)
@@ -813,7 +818,7 @@ class Game {
           t.facing = dx < 0 ? -1 : 1;
           t.elev = deg(Math.atan2(-dy, Math.abs(dx))) - t.hullAngle(t.facing);
         } else if (a.jump) {
-          this.jump(t);
+          this.jump(t, a.jump === 'leap');
         } else if (a.repair) {
           this.useRepair(t);
           return;
@@ -1095,15 +1100,16 @@ class Game {
     if (!sat.alive) {
       this.particles.explosion(c.x, c.y, 160, 'laser');
       this.shake = Math.max(this.shake, 8);
-      // it stays down for SAT_DOWN_TURNS turns, then reboots at half health
-      sat.downUntil = this.turnCount + SAT_DOWN_TURNS;
-      this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline for ${SAT_DOWN_TURNS} turns.`);
+      // it stays down for SAT_DOWN_CYCLES turn cycles (2n turns), then reboots at half health
+      const down = SAT_DOWN_CYCLES * Math.max(1, this.tanks.filter((t) => t.alive).length);
+      sat.downUntil = this.turnCount + down;
+      this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline for ${down} turns.`);
       this.events.push('MAIA is offline.');
     } else this.events.push(`${owner ? owner.name : 'Something'} hit MAIA (${reg.tag.toLowerCase()}): ${Math.round(sat.health * 100)}%.`);
   }
 
-  // every turn: MAIA's max health follows the average toughness of the vehicles still standing,
-  // and it repairs SAT_HEAL of that
+  // every turn: MAIA's max health follows the average toughness of the vehicles still standing;
+  // once a turn cycle (every n turns, n players standing) it repairs SAT_HEAL of that
   satTurn(fresh = false) {
     const sat = this.satellite;
     const alive = this.tanks.filter((t) => t.alive);
@@ -1111,7 +1117,8 @@ class Game {
     const max = alive.reduce((a, t) => a + t.maxHp + t.maxArmour, 0) / alive.length;
     const was = sat.alive;
     if (!fresh && !was && this.turnCount < (sat.downUntil || 0)) { sat.maxHp = max; return; } // still offline
-    sat.hp = fresh ? max : !was ? max * SAT_REBOOT : clamp(sat.hp * (max / sat.maxHp) + max * SAT_HEAL, 0, max);
+    const heal = this.turnCount % alive.length === 0 ? max * SAT_HEAL : 0;
+    sat.hp = fresh ? max : !was ? max * SAT_REBOOT : clamp(sat.hp * (max / sat.maxHp) + heal, 0, max);
     sat.maxHp = max;
     if (!was && sat.alive) this.ui.notice('MAIA is back online.');
   }

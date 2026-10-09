@@ -589,6 +589,16 @@ const GIRL_DEFS = {
   },
 };
 
+// the Hatsuyuki android (mobs.js): the hostiles' final ground unit, built on November's frame in
+// drone black and silver, with glowing pink eyes and no blush
+GIRL_DEFS.android = Object.assign({}, GIRL_DEFS.nxi, {
+  pal: Object.assign({}, GIRL_DEFS.nxi.pal, {
+    h: '#d8dce6', H: '#9aa0b4', L: '#ffffff', I: '#ff2a7a', i: '#ff9ad0',
+    s: '#eef0f6', S: '#c4c8d8', b: '#c4c8d8', m: '#9a9eb0',
+    c: '#2a2a34', C: '#1a1a22', u: '#1a1a22', U: '#0e0e14', z: '#3a3a48', x: '#14141a', X: '#2a2a34',
+    r: '#3c3c48', R: '#24242e', g: '#6a6a7a', a: '#ff78c8', v: '#ff3a8a', N: '#ff78c8', y: '#c8ccd8', Y: '#8a8ea0',
+  }),
+});
 const GIRL_ART = {};
 for (const id in GIRL_DEFS) {
   const d = GIRL_DEFS[id];
@@ -602,7 +612,7 @@ for (const id in GIRL_DEFS) {
   };
 }
 
-const GIRL_PHASE = { gwt: 0, obj: 0.37, int: 0.71, nxi: 0.53, alb: 0.19, ang: 0.88 };
+const GIRL_PHASE = { gwt: 0, obj: 0.37, int: 0.71, nxi: 0.53, alb: 0.19, ang: 0.88, android: 0.42 };
 const GIRL_POSE_LEN = { fire: 0.35, hit: 0.5 };
 
 // ---- composition (cached) ----

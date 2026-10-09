@@ -17,6 +17,10 @@ const TANK_CLIMB = 3.2; // steepest slope (dy/dx) a vehicle can drive up
 const JUMP_FUEL = 0.3;
 const JUMP_VY = -12; // up to about 120 units high: enough to top a fort from the ground beside it
 const JUMP_VX = 3.2; // and about 100 along
+// leap (L): a long bound across the map for most of a tank, landing without fall damage
+const LEAP_FUEL = 0.9;
+const LEAP_VY = -19; // about 300 up
+const LEAP_VX = 11; // and about 700 along on the flat
 
 // Vehicle upgrades beyond A3's Health++ / Armour++ (which use Game.upgradeCost's curve). Each level
 // is bought in turn from `costs`.
@@ -730,7 +734,7 @@ class Satellite {
     this.t = 0;
     this.bob = 0;
     // MAIA can be shot down: its strike damage scales with its health; it heals SAT_HEAL of its max
-    // every turn, and its max tracks the average toughness of the vehicles left (Game.satTurn)
+    // once a turn cycle, and its max tracks the average toughness of the vehicles left (Game.satTurn)
     this.isSat = true;
     this.maxHp = 300;
     this.hp = 300;
