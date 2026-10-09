@@ -114,7 +114,7 @@ function codexMeta(w) {
   if (w.sig) lines.push(['Per firing turn', 'the set piece’s, see below (the marker round itself barely scratches)']);
   else lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
   const R = reloadOf(w);
-  if (w.air) lines.push(['Tempo', `${w.clip} squad${w.clip > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck), then ${R} turn${R > 1 ? 's' : ''} rearming. Strikes ${w.air.delay || 1} of her turns after the dot lands`]);
+  if (w.air) lines.push(['Tempo', `One squad of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck): first strike ${w.air.delay || 1} of her turns after the dot lands, then it pursues its target and strikes on each of her turns, ${w.fleet ? 1 : AIR_PASSES[w.air.type]} pass${(w.fleet ? 1 : AIR_PASSES[w.air.type]) > 1 ? 'es' : ''} in all, before flying home to rearm for ${R} turns`]);
   else if (R) lines.push(['Tempo', w.sig ? `Fires every ${R + 1} turns` : `Fires every ${R + 1} turns on its own, about ${Math.round(worth / (R + 1))} a turn; rotate it with other guns`]);
   const el = Math.min(45, w.elevMax);
   const reach = (w.maxCharge * w.maxCharge * Math.sin(2 * rad(el))) / GRAV;
@@ -297,7 +297,7 @@ Object.assign(UI, {
       <ul class="traits">${(v.traits || []).map((id) => `<li><b>${esc(TRAITS[id].name)}</b> ${esc(TRAITS[id].desc)}</li>`).join('')}</ul>
       ${note ? `<p class="cx-meta">${esc(note.plays)}</p>` : ''}`;
     // weapons: filter, list, then the chosen one
-    const list = [v.weapon].concat(WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) => forVehicle(w, v.id))).filter((w) =>
+    const list = [v.weapon, ...(v.extra || [])].concat(WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) => forVehicle(w, v.id))).filter((w) =>
       c.filter === 'all' || (c.filter === 'hybrid' ? w.hybrid : c.filter === 'NXi' ? makerOf(w) === 'NXi' : w.kind === c.filter));
     $('cx-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === c.filter));
     $('cx-list').innerHTML = list.map((w) => `<button class="cx-w${w.id === c.wid ? ' on' : ''}" data-w="${w.id}">${this.badge(w, true)}<span>${esc(w.name)}</span><small>${w.starter ? 'starter' : money(w.cost)}</small></button>`).join('');

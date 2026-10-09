@@ -525,7 +525,7 @@ class Game {
     this.infraTurn(t);
     if (!t.alive) { this.nextTurn(); return; }
     for (const id in t.cooldown) if (t.cooldown[id] > 0) t.cooldown[id]--;
-    if (this.range) { t.reload = {}; t.sorties = {}; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting
+    if (this.range) { t.reload = {}; t.deployed = {}; for (const id in t.cooldown) t.cooldown[id] = 0; } // the Codex range: no waiting
     t.tickReloads();
     t.drill = hasTrait(t, 'drill');
     t.shotsLeft = t.shotsFor(t.weapon); // autoloaders reload every turn (planes: the squads she has left)
@@ -928,10 +928,8 @@ class Game {
   fire(t) {
     const w = t.weapon;
     if (this.range) { this.range.shots++; this.range.last = 0; }
-    if (w.air) { // a squad flies; with the last one gone the weapon rearms
-      t.sorties[w.id] = t.sortiesLeft(w) - 1;
-      if (t.sorties[w.id] <= 0) t.reload[w.id] = reloadOf(w) + 1;
-    } else if (!t.firedThisTurn && reloadOf(w)) t.reload[w.id] = reloadOf(w) + 1; // sits out reloadOf(w) of its owner's turns
+    if (w.air) t.deployed[w.id] = true; // its squad is out until it comes home (then it rearms: planes.js)
+    else if (!t.firedThisTurn && reloadOf(w)) t.reload[w.id] = reloadOf(w) + 1; // sits out reloadOf(w) of its owner's turns
     // a golden crate's long uplink: the first shot of each of her next few turns calls MAIA
     const linked = !!t.uplink || (t.uplinkTurns > 0 && !t.firedThisTurn);
     if (t.uplinkTurns > 0 && !t.firedThisTurn) t.uplinkTurns--;
@@ -1038,7 +1036,11 @@ class Game {
     }
     if (this.strikeResolve) { // her planes have hit: now her turn proper
       this.strikeResolve = false;
-      for (const G of this.airGroups) G.striking = false;
+      const alive = this.tanks.filter((x) => x.alive).length;
+      for (const G of this.airGroups) { // a squad that struck comes again on her next turn
+        G.striking = false;
+        if (G.struck) { G.struck = false; G.due = (G.owner.turnsTaken || 0) + 1; G.dueTurn = this.turnCount + alive; }
+      }
       this.react(this.report);
       this.report = null;
       if (this.tanks.filter((x) => x.alive).length <= 1) this.endRound();
@@ -1861,7 +1863,7 @@ class Game {
       t.upgrades = { hp: s.upgrades?.hp | 0, armour: s.upgrades?.armour | 0 };
       for (const u of VEHICLE_UPGRADES) t.upgrades[u.id] = clamp(s.upgrades?.[u.id] | 0, 0, u.costs.length);
       const ws = (s.weapons || []).filter((id) => WEAPON_BY_ID[id]).slice(0, MAX_WEAPONS);
-      t.weapons = ws.length ? ws : [t.vehicle.weapon.id];
+      t.weapons = ws.length ? ws : [t.vehicle.weapon, ...(t.vehicle.extra || [])].map((w) => w.id);
       t.kits = clamp(s.kits | 0, 0, REPAIR_MAX);
       if (Array.isArray(s.aa)) t.aa = t.aa.map((v, i) => (AA_BY_ID[s.aa[i]] ? s.aa[i] : v));
       for (const a of ABILITIES) t.abilities[a.id] = clamp(s.abilities?.[a.id] | 0, 0, 1);

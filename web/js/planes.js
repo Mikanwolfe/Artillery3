@@ -20,7 +20,13 @@ const PLANE_GAP = 44; // between planes in a squad's line
 const AIR_ANGLE = { dive: 80, heavy: 75, fighter: 50, rocket: 40, torpedo: 25 }; // approach angle over the horizon, by type
 const TORPEDO_SPEED = 7;
 const TORPEDO_RUN = 760; // how far a torpedo runs before it goes off anyway
-const DIVE_KIN = 6; // a dive-released bomb's kinetic multiplier (it leaves the plane at the dive's speed)
+const DIVE_KIN = 6;
+// a plane's loadout: how many of her turns it attacks on before it flies home to rearm
+const AIR_PASSES = { dive: 3, torpedo: 1, fighter: 6, rocket: 2, heavy: 1 };
+// how far from its mark a plane's seeker looks for something to attack when the strike starts
+// (rivals first, then hostiles), like a rocket's; out of reach, it hits the mark
+const AIR_SEEK = { dive: 240, torpedo: 300, fighter: 300, rocket: 280, heavy: 260 };
+const BOMB_GUIDE = { arm: 2, burn: 120, seek: 999, apex: false, turn: 1.6, range: 90, cone: 120, lift: 0, brake: false }; // a dive bomb's fins: a nudge, not a seeker // a dive-released bomb's kinetic multiplier (it leaves the plane at the dive's speed)
 
 // how a type looks: body colours, length, the NXi stripe
 const PLANE_LOOK = {
@@ -55,6 +61,7 @@ class Plane {
     this.t = 0;
     this.vx = 0; this.vy = 0;
     this.ang = 0; // bank: the heading's angle below the horizon
+    this.passes = group.w.fleet ? 1 : AIR_PASSES[kind] || 1; // attacks left before it goes home
     this.flash = 0;
     this.dir = group.dir;
     this.x = group.from.x; this.y = group.from.y;
@@ -128,6 +135,27 @@ class Plane {
     if (moving && Math.abs(this.vx) > 0.3) this.dir = Math.sign(this.vx);
     const want = moving ? clamp(Math.atan2(this.vy, Math.abs(this.vx)), -1.45, 1.45) : 0;
     this.ang += (want - this.ang) * 0.25;
+  }
+
+  // a pass done: back round to wait over its target for her next turn, or (loadout spent) home
+  endPass() {
+    this.passes--;
+    this.strikeDone = true;
+    this.attack = null;
+    if (this.passes > 0) {
+      const G = this.group, s = G.slot(this.i), h = Math.hypot(this.vx, this.vy) || 6;
+      this.state = 'inbound';
+      this.fly({ x: this.x + this.vx * 10, y: this.y + this.vy * 10 - 60 }, { x: s.x - G.side * 200, y: s.y - 160 }, s, h, 2.5, () => { this.state = 'hover'; this.t = 0; this.dir = Math.sign(G.mark.x - s.x) || G.side; });
+    } else this.goHome();
+  }
+
+  // to her deck to rearm (it lands and is gone); with her gone, away off the map
+  goHome() {
+    const o = this.owner;
+    if (!o.alive) { this.leave(); return; }
+    const d = Math.sign(o.x - this.x) || 1, h = Math.hypot(this.vx, this.vy) || 6;
+    this.state = 'leave'; this.attack = null;
+    this.fly({ x: this.x + this.vx * 10, y: this.y + this.vy * 10 - 120 }, { x: o.x - d * 260, y: o.y - 320 }, { x: o.x, y: o.y - TANK_H }, Math.max(h, 10), 6);
   }
 
   // off it goes: up and away out of sight
@@ -247,17 +275,32 @@ class AirStrike {
   constructor(game, groups) {
     this.game = game; this.groups = groups; this.t = 0;
     this.queue = [];
-    for (const G of groups) for (const p of G.planes) if (p.alive && p.state !== 'attack' && p.state !== 'leave') this.queue.push(p); // (any still on the way join when they arrive)
+    for (const G of groups) {
+      // it pursues its target: the one it locked last time if still alive, else the nearest rival
+      // near where it was (rivals first, then hostiles)
+      if (!(G.target && G.target.alive)) {
+        let best = null, bd = 420;
+        for (const e of game.targets()) {
+          if (!e.alive || e === G.owner || e.isSat || e.isPlane || (e.isMob && e.flying)) continue;
+          const d = Math.abs(e.x - G.mark.x) + (e.isMob ? 200 : 0);
+          if (d < bd) { bd = d; best = e; }
+        }
+        G.target = best;
+      }
+      if (G.target) G.mark = { x: G.target.x, y: G.target.y };
+      for (const p of G.planes) if (p.alive && p.state !== 'attack' && p.state !== 'leave') { p.strikeDone = false; this.queue.push(p); } // (any still on the way join when they arrive)
+    }
     this.queue.forEach((p, i) => { p.go = i * PLANE_STAGGER; });
     this.focus = { x: groups[0].mark.x, y: groups[0].mark.y - 160 };
+    this.game = game;
   }
 
   update() {
     const g = this.game;
     this.t++;
-    for (const p of this.queue) if (p.alive && p.state === 'hover' && this.t >= p.go) startAttack(g, p);
+    for (const p of this.queue) if (p.alive && !p.strikeDone && p.state === 'hover' && this.t >= p.go) startAttack(g, p);
     g.cam.follow(this.focus);
-    return this.queue.some((p) => p.alive && p.state !== 'leave') && this.t < 60 * 16;
+    return this.queue.some((p) => p.alive && !p.strikeDone) && this.t < 60 * 16;
   }
   draw() {}
 }
@@ -283,8 +326,18 @@ function startAttack(g, p) {
   p.t = 0;
   p.ord = G.w.fleet ? (p.kind === 'fighter' ? 6 : 1) : G.w.air.ord;
   const gunDmg = G.w.dmg * G.mult * (G.w.fleet ? 0.15 : 1); // a fighter's burst (a fleet's are a fraction of its bombs)
-  const jit = (rng.next() - 0.5) * (G.w.disp * 22 + 30) + (p.i - (G.planes.length - 1) / 2) * 10;
-  const gx = clamp(m.x + jit, 4, WORLD_W - 4), gy = g.terrain.hAt(gx);
+  // the seeker: the nearest rival within reach of the mark (else a hostile), where it is now
+  const reach = (G.w.air.seek || AIR_SEEK[p.kind] || 240);
+  let lock = null, best = Infinity;
+  for (const e of g.targets()) {
+    if (!e.alive || e === p.owner || e.isSat || e.isPlane || (e.isMob && e.flying && p.kind !== 'fighter')) continue;
+    const d = Math.abs(e.x - m.x) + (e.isMob ? reach * 0.5 : 0); // (rivals first)
+    if (Math.abs(e.x - m.x) < reach && d < best) { best = d; lock = e; }
+  }
+  p.lock = lock;
+  const aim = lock ? lock.x : m.x;
+  const jit = (rng.next() - 0.5) * (G.w.disp * 14 + (lock ? 10 : 30)) + (p.i - (G.planes.length - 1) / 2) * (lock ? 6 : 10);
+  const gx = clamp(aim + jit, 4, WORLD_W - 4), gy = g.terrain.hAt(gx);
   const a = rad(AIR_ANGLE[p.kind] || 60), ax = Math.cos(a) * side, ay = Math.sin(a); // the approach line, toward the mark
   const at = (r) => ({ x: gx - ax * r, y: gy - ay * r }); // a point r back up the line from the mark
   const heading = () => { const sp = Math.hypot(p.vx, p.vy) || 1; return { x: p.vx / sp, y: p.vy / sp, sp }; };
@@ -296,17 +349,17 @@ function startAttack(g, p) {
     p.fly({ x: p.x + side * 50, y: p.y - 70 }, at(heavy ? 420 : 360), rel, 5, heavy ? 18 : 22, () => {
       drop = 0;
       const h = heading();
-      p.fly({ x: p.x + h.x * 120, y: p.y + h.y * 120 }, { x: p.x + side * 260, y: p.y + 10 }, { x: p.x + side * 520, y: p.y - 180 }, h.sp, 12, () => p.leave());
+      p.fly({ x: p.x + h.x * 120, y: p.y + h.y * 120 }, { x: p.x + side * 260, y: p.y + 10 }, { x: p.x + side * 520, y: p.y - 180 }, h.sp, 12, () => p.endPass());
     });
     p.attack = () => {
       if (drop < 0 || p.ord <= 0) return;
       if (drop++ % 5) return;
       p.ord--;
       const h = heading(), sp = Math.min(22, h.sp);
-      const guide = heavy ? { arm: 2, burn: 300, seek: 999, apex: false, turn: 5, range: G.w.air.seek || 220, cone: 180, lift: 0.4, brake: false } : null;
+      const guide = heavy ? { arm: 2, burn: 300, seek: 999, apex: false, turn: 5, range: G.w.air.seek || 220, cone: 180, lift: 0.4, brake: false } : BOMB_GUIDE;
       const b = new Projectile(g, planeOrd(G, { kin: DIVE_KIN, ...(guide ? { guide, visR: G.w.dmgR * 2.2 } : {}) }), p.owner, p.x, p.y + 6, h.x * sp, h.y * sp, p.i === 0);
       b.launch = Math.PI / 2;
-      if (guide) { b.prefer = 'rival'; b.wseed = rng.int(0, 1e9); }
+      b.prefer = 'rival'; b.wseed = rng.int(0, 1e9);
       g.projectiles.push(b);
       g.sfx.click();
     };
@@ -316,7 +369,7 @@ function startAttack(g, p) {
     low.y = g.terrain.hAt(low.x) - 34;
     p.fly(at(520), { x: low.x - side * 180, y: low.y - 10 }, low, 8, 12, () => {
       if (p.ord > 0) { p.ord--; g.projectiles.push(new Torpedo(g, p.owner, planeOrd(G), p.x, side)); g.sfx.click(); }
-      p.fly({ x: p.x + side * 140, y: p.y - 6 }, { x: p.x + side * 320, y: p.y - 120 }, { x: p.x + side * 600, y: p.y - 420 }, 12, 12, () => p.leave());
+      p.fly({ x: p.x + side * 140, y: p.y - 6 }, { x: p.x + side * 320, y: p.y - 120 }, { x: p.x + side * 600, y: p.y - 420 }, 12, 12, () => p.endPass());
     });
     p.attack = () => {};
   } else if (p.kind === 'rocket') {
@@ -325,7 +378,7 @@ function startAttack(g, p) {
     p.fly({ x: p.x + side * 40, y: p.y - 30 }, at(420), at(260), 6, 14, () => {
       fire = 0;
       const h = heading();
-      p.fly({ x: p.x + h.x * 140, y: p.y + h.y * 140 }, { x: p.x + side * 260, y: p.y - 40 }, { x: p.x + side * 560, y: p.y - 300 }, h.sp, 12, () => p.leave());
+      p.fly({ x: p.x + h.x * 140, y: p.y + h.y * 140 }, { x: p.x + side * 260, y: p.y - 40 }, { x: p.x + side * 560, y: p.y - 300 }, h.sp, 12, () => p.endPass());
     });
     p.attack = () => {
       if (fire < 0 || p.ord <= 0 || fire++ % 6) return;
@@ -353,14 +406,14 @@ function startAttack(g, p) {
           g.lasers.push(new Laser(p.x, p.y, q.x, q.y, '#ffe8a0', 2, 6));
           if (rng.next() < 0.85) g.damage(prey, gunDmg * 3, p.owner, { aa: true });
         }
-        if (p.ord <= 0 || k > 240) p.leave();
+        if (p.ord <= 0 || k > 240) p.endPass();
         return;
       }
       if (!strafing) { // down the line and along the ground past the mark
         strafing = true;
         const s0 = at(300), s1 = { x: clamp(gx + side * 280, 10, WORLD_W - 10) };
         s1.y = g.terrain.hAt(s1.x) - 80;
-        p.fly(s0, { x: gx - side * 120, y: gy - 90 }, s1, 9, 12, () => p.leave());
+        p.fly(s0, { x: gx - side * 120, y: gy - 90 }, s1, 9, 12, () => p.endPass());
       }
       if (k % 4 === 0 && p.ord > 0 && Math.abs(p.x - m.x) < 240 && p.path) {
         p.ord--;
@@ -429,7 +482,14 @@ Object.assign(Game.prototype, {
     if (!this.planes) return;
     for (const p of this.planes) p.update();
     this.planes = this.planes.filter((p) => p.alive || p.falling);
-    this.airGroups = this.airGroups.filter((G) => G.planes.some((p) => p.alive));
+    this.airGroups = this.airGroups.filter((G) => {
+      if (G.planes.some((p) => p.alive)) return true;
+      // all home (or shot down): the weapon rearms for its turns
+      const o = G.owner;
+      o.deployed[G.w.id] = false;
+      if (o.alive) o.reload[G.w.id] = reloadOf(G.w) + 1;
+      return false;
+    });
   },
 
   // start of a turn: squads whose owner is gone turn for home; this owner's due squads strike.
@@ -446,7 +506,7 @@ Object.assign(Game.prototype, {
     this.salvo = null;
     this.report = { shooter: t, blasts: [], dmg: new Map(), fall: new Map(), kills: [] };
     this.projectiles.push(new AirStrike(this, due));
-    for (const G of due) G.striking = true;
+    for (const G of due) { G.striking = true; G.struck = true; }
     const who = [...new Set(due.map((G) => G.owner.name))].join(' and ');
     this.events.push(`${who}'s planes attack.`);
     this.ui.notice(`${who}'s squadron attacks!`);
@@ -503,7 +563,8 @@ Object.assign(Game.prototype, {
       const live = G.planes.filter((p) => p.alive && p.state === 'hover');
       if (!live.length || G.striking) continue;
       const left = Math.max(0, G.due - (G.owner.turnsTaken || 0));
-      const txt = `${G.owner.name} · ${live.length} plane${live.length > 1 ? 's' : ''} · ${left <= 1 ? 'strikes next turn' : `strikes in ${left} turns`}`;
+      const passes = Math.max(...live.map((p) => p.passes));
+      const txt = `${G.owner.name} · ${live.length} plane${live.length > 1 ? 's' : ''} · ${passes} pass${passes > 1 ? 'es' : ''} left · ${left <= 1 ? 'strikes next turn' : `strikes in ${left} turns`}`;
       const c = squadCentre(G);
       const x = Math.round(cam.sx(c.x)), y = Math.round(cam.sy(c.y - 40) - 30);
       const w = ctx.measureText(txt).width + 12;
