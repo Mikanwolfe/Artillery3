@@ -4,6 +4,10 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['81cc56c', 'A spy plane sometimes crosses overhead and drops a golden crate: 70% repair, ¢1200 (+300 a round) or a 3-turn MAIA uplink.'],
+  ['81cc56c', 'Weather fronts push twice as hard, and all of them (bar Rain) make shells hit harder; Force up to +80%.'],
+  ['81cc56c', 'Kinetic damage is a percentage on the whole blast, up to +50%.'],
+  ['81cc56c', 'Radio towers broken low swing over away from the blast and crush what they land on.'],
   ['7b6a3ba', 'Hostiles never hit each other; bomber drones toss bombs from up to 260 away; drone tanks sit on slopes; the FPV is a proper quad that pitches into its dive.'],
   ['7b6a3ba', 'One repair kit at a time; abilities cost half.'],
   ['7b6a3ba', 'Changelog lines carry the commit that made them.'],
