@@ -4,6 +4,9 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['d2f5c27', 'Plane squads work like autoloader rounds: each dot of a turn takes the next squad (launch, or redirect one already out), one squad per strike zone, pips on the rack. Squads only hit what is inside their zone. Fixed extra squads in the Codex range.'],
+  ['d2f5c27', 'Planes fly for real: speed, thrust, gravity and a turn radius, so bombers climb, tip over into the dive and loop back up to hover. Every plane shows its health, tougher with rarity; plane bombs and rockets actually steer now.'],
+  ['d2f5c27', "New Sengoku 'Fortissimo' Flying Fortress: level bombers that walk a stick of bombs across a wide zone, with armour that takes a whole hit (the Taufaun has some too)."],
   ['cc86f17', 'Plane squads are ammo: one early, up to four late. A shot sends a squad, or with none in reserve redirects one already out to the new dot. Lost or spent squads rearm and come back.'],
   ['32b1e58', 'Planes hunt like drones: a squad locks onto the nearest rival and strikes on each of your turns until its loadout is spent (bombers three, torpedo jets one, fighters six), then flies home to rearm. Zuihou gets a deck gun for meanwhile.'],
   ['0e28912', 'Planes fly smooth curves and bank as they turn; all jets but the starter. Each type waits on its own approach line and attacks down it, dive bombers steep and fast enough for a kinetic bonus.'],
