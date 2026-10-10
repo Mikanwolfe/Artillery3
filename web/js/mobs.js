@@ -36,7 +36,7 @@ const FPV_HIGH = 320; // how far over the hover height it comes in, and dives fr
 const TANK_MOVE = 150; // how far a drone tank drives in one cycle (the android: 1.5x)
 const PARACHUTE_VY = 2.2; // an airdropped tank's descent speed
 const FLAK_MOB_MULT = 2; // flak does double damage to mobs
-const MOB_BOUNTY_SCALE = 0.7;
+const MOB_BOUNTY_SCALE = 1; // (bounties are shared by the damage each player did: payMobBounty)
 const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'fpv', 'mothership']);
 const SHIELD_RESIST = 0.5; // what share of a flak or fighter hit tells on a drone's shielding
 const DRONE_FIELD = 60, DRONE_FIELD_DMG = 2; // every flying hostile's static discharge field: a plane inside it is zapped (+½ a stage, to stage 8)
@@ -443,8 +443,39 @@ Object.assign(Game.prototype, {
     return x;
   },
 
+  // a hostile takes a hit: tally how much of it each player has taken off (shield, armour and
+  // health alike), and when it goes down its bounty is shared out by those tallies
   damageMob(m, amt, owner, def, hit) {
     if (!m.alive) return;
+    const left = () => Math.max(0, m.hp) + m.armour + (m.shield || 0), before = left();
+    this.damageMobRaw(m, amt, owner, def, hit);
+    const took = before - left();
+    if (owner && !owner.isMob && took > 0) (m.dmgBy || (m.dmgBy = new Map())).set(owner, (m.dmgBy.get(owner) || 0) + took);
+    if (!m.alive) this.payMobBounty(m, owner);
+  },
+
+  // its bounty, to each player in proportion to how much of it she took off (do 30% of the work,
+  // get 30% of the bounty; what the hazards and its own kind did pays nobody)
+  payMobBounty(m, killer) {
+    const pool = m.maxHp + m.maxArmour + (m.maxShield || 0) || 1;
+    const shares = [];
+    for (const [t, d] of m.dmgBy || []) {
+      const cut = Math.round(m.bounty * Math.min(1, d / pool));
+      if (cut <= 0) continue;
+      t.money += cut;
+      t.mobCash = (t.mobCash || 0) + cut;
+      shares.push(`${t.name} ¢${cut}`);
+      if (t.isCpu && t === killer && Math.random() < 0.6) this.banter(t, 'hit_big');
+    }
+    const c = m.center();
+    if (shares.length) {
+      this.particles.text(c.x, c.y - 40, shares.length > 1 ? `¢${m.bounty} shared` : `+${shares[0].replace(/^.* ¢/, '¢')}`, '#ffd84a', true);
+      this.events.push(`The ${m.name} is down${killer && !killer.isMob ? ` (${killer.name})` : ''}: its ¢${m.bounty} bounty goes ${shares.join(', ')}.`);
+      this.ui.notice(`The ${m.name} is down! ${shares.join(' · ')}`);
+    } else this.events.push(`The ${m.name} was destroyed.`);
+  },
+
+  damageMobRaw(m, amt, owner, def, hit) {
     const flakish = def && (def.kind === 'flak' || def.airburst), guns = def && (def.fighter || (def.ord && def.kind === 'gun'));
     if (m.shield > 0) { // its shielding takes the hit first, and flak and fighters' guns barely dent it
       const resist = flakish || guns ? SHIELD_RESIST : 1;
@@ -471,13 +502,6 @@ Object.assign(Game.prototype, {
     if (m.kind === 'mothership') {
       for (let i = 0; i < 6; i++) this.particles.explosion(c.x + rng.range(-110, 110), c.y + rng.range(-30, 30), 120, 'shell');
     }
-    if (owner && !owner.isMob) {
-      owner.money += m.bounty;
-      this.particles.text(c.x, c.y - 40, `+¢${m.bounty}`, '#ffd84a', true);
-      this.events.push(`${owner.name} destroyed the ${m.name} (+¢${m.bounty}).`);
-      this.ui.notice(`${owner.name} destroyed the ${m.name}! +¢${m.bounty}`);
-      if (owner.isCpu && Math.random() < 0.6) this.banter(owner, 'hit_big');
-    } else this.events.push(`The ${m.name} was destroyed.`);
   },
 
   // Plan this cycle's mob actions: flyers pick their nearest vehicle and move toward it (at most

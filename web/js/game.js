@@ -61,7 +61,7 @@ const SLIDE_RATE = 0.25;
 const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
 const KILL_BOUNTY = 250; // and a quarter of the victim's max health and armour on top (killPay)
-const KILL_SHARE = 0.5;
+const KILL_SHARE = 1; // (all of the victim's max health and armour, on top of KILL_BOUNTY)
 // the round's pay: the flat ROUND_BASE (+ROUND_STEP a round), then each player's own damage to rivals
 // at PAY_OWN, everyone a PAY_SHARED cut of the round's total, and the last two standing a placement bonus
 const PAY_OWN = 2.5, PAY_SHARED = 0.25, PLACE_PAY = 600, PLACE_STEP = 150;
@@ -79,7 +79,8 @@ const HIT_TIERS = [
   { tag: 'DIRECT HIT', color: '#fff27a' },
 ];
 const HIT_POPUP_LIFE = 4; // seconds a damage popup stays up (more for a good hit and its chips); further hits add to it
-const LEADER_BOUNTY = 400; // per round-win of lead over the runner-up
+const LEADER_BOUNTY = 600; // per round-win of lead over the runner-up
+const WEALTH_BOUNTY = 0.3; // and on anyone this share of her worth over the table's average, paid out of her own purse when she falls
 // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
 
 // Proportional-control camera: every frame it closes 1/CAM_EASE of the distance to its target.
@@ -1432,6 +1433,7 @@ class Game {
       owner.stats.kills++;
       this.events.push(`${owner.name} destroyed ${t.name}!`);
       const pay = KILL_BOUNTY + Math.round(KILL_SHARE * (t.maxHp + t.maxArmour)) + (t.bounty || 0); // (a tougher girl pays more)
+      if (t.bountyWealth) { const fee = Math.min(t.money, t.bountyWealth); t.money -= fee; t.bountyWealth = 0; if (fee) this.events.push(`${t.name} pays ¢${fee} of the bounty on her out of her own purse.`); } // (a rich girl's price, paid by her)
       owner.money += pay;
       this.particles.text(t.x, t.y - 90, `+¢${pay}`, '#ffd84a', true);
       if (t.bounty) {
@@ -1854,13 +1856,21 @@ class Game {
   }
 
   // The match leader (sole most round wins) carries a bounty for whoever destroys them.
+  // bounties for the round: on the leader in wins, LEADER_BOUNTY a round-win of lead; and on anyone
+  // much richer than the table (cash and half what her guns cost), WEALTH_BOUNTY of the difference,
+  // which comes out of her own purse when she is killed (so a fat lead is a fat target)
   updateBounties() {
-    for (const t of this.tanks) t.bounty = 0;
+    const worth = (t) => t.money + t.weapons.reduce((s, id) => s + (WEAPON_BY_ID[id].starter ? 0 : WEAPON_BY_ID[id].cost * 0.5), 0);
+    const avg = this.tanks.reduce((s, t) => s + worth(t), 0) / Math.max(1, this.tanks.length);
+    for (const t of this.tanks) {
+      t.bountyWealth = this.round > 1 ? Math.round((Math.max(0, worth(t) - avg) * WEALTH_BOUNTY) / 50) * 50 : 0;
+      t.bounty = t.bountyWealth;
+    }
     const st = this.tanks.slice().sort((a, b) => b.wins - a.wins);
-    if (st.length > 1 && st[0].wins > st[1].wins) {
-      st[0].bounty = LEADER_BOUNTY * (st[0].wins - st[1].wins);
-      this.events.push(`There is a ¢${st[0].bounty} bounty on ${st[0].name}.`);
-      if (this.round > 1) this.ui.notice(`Bounty: ¢${st[0].bounty} on ${st[0].name}.`);
+    if (st.length > 1 && st[0].wins > st[1].wins) st[0].bounty += LEADER_BOUNTY * (st[0].wins - st[1].wins);
+    for (const t of this.tanks.filter((x) => x.bounty > 0).sort((a, b) => b.bounty - a.bounty)) {
+      this.events.push(`There is a ¢${t.bounty} bounty on ${t.name}.`);
+      if (this.round > 1) this.ui.notice(`Bounty: ¢${t.bounty} on ${t.name}.`);
     }
   }
 
