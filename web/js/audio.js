@@ -174,13 +174,15 @@ class Sfx {
 
   // A3 Utilities.PlayRandomExplosionSound: one of three samples, louder for bigger blasts
   explosion(size) {
-    if (this.ctx && (this.voices >= MAX_EXPLOSIONS || this.ctx.currentTime - this.lastExpl < 0.05)) return;
+    // (voices are counted by when they will be done, not by 'ended' events: a sample the browser
+    // refused to play never ends, and enough of those used to silence every explosion after)
+    const now = this.ctx ? this.ctx.currentTime : 0;
+    this.explEnds = (this.explEnds || []).filter((e) => e > now);
+    if (this.ctx && (this.explEnds.length >= MAX_EXPLOSIONS || now - this.lastExpl < 0.05)) return;
     const s = this.play(`expl${1 + Math.floor(Math.random() * 3)}`, clamp(0.45 + size / 70, 0.45, 1.1));
     if (s) {
-      this.lastExpl = this.ctx.currentTime;
-      this.voices++;
-      const done = () => { this.voices = Math.max(0, this.voices - 1); };
-      if (s.addEventListener) s.addEventListener('ended', done); else setTimeout(done, 3000);
+      this.lastExpl = now;
+      this.explEnds.push(now + Math.min(1.5, (s.buffer && s.buffer.duration) || 1.5));
       return;
     }
     const d = 0.35 + size * 0.012;

@@ -501,7 +501,7 @@ const UI = {
       }).join('');
       $('shop-aa').innerHTML = tank.aa.map((id, i) => {
         const a = AA_BY_ID[id];
-        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty AA slot${i ? ' (second)' : ''}: buy one under AA</span></div>`;
+        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty AA slot: buy one under AA</span></div>`;
         const st = this.game.canSellAA(tank, id);
         return `<div class="owned">${this.badge(a, true)}<span>${esc(a.name)}</span>
           <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(this.game.aaSellValue(tank, id)) : 'Hers'}</button></div>`;

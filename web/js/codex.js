@@ -81,7 +81,7 @@ const GIRL_NOTES = {
   nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, comes with two air-defence mounts of her own, and can’t be one-shot.' },
   alb: { plays: 'The rocketeer. Her seekers find the nearest thing from further out and turning harder than anyone else’s, and every rocket salvo she fires has one more rocket in it. Lighter hits, few misses.' },
   ang: { plays: 'The guardian angel. Light armour, but grace saves her from one killing blow a round, and her wings make her the most mobile girl: half-price jumps and no fall damage, so she can take high ground no one else can. Her halo lance needs a line of sight.' },
-  zui: { plays: 'The light carrier. She marks a spot; her squadron flies over and strikes it in the same turn, then hovers there, a target, until her next dot sends it on. A full deck (one more plane a squad, and no slower lift-fan rearm) and two AA mounts make her the best defended girl in the air.' },
+  zui: { plays: 'The light carrier. She marks a spot; her squadron flies over and strikes it in the same turn, then hovers there, a target, until her next dot sends it on. A full deck (one more plane a squad, and no slower lift-fan rearm) and the Type 96 on her deck make her a hard girl to bomb.' },
   int: { plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
 };
 

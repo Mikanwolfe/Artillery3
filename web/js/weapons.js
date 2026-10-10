@@ -69,10 +69,10 @@ const VEHICLES = [
       short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the pod, in very small letters.", long: 'Starting weapon for Alban Eiler.' }),
   },
   // Sengoku Inc. (after KanColle's carriers): the light carrier. Her gun is a laser designator;
-  // what it marks, her planes come back and hit (planes.js). Two AA mounts keep her deck clear.
+  // what it marks, her planes come back and hit (planes.js). Her Type 96 keeps her deck clear.
   {
     id: 'zui', name: 'Zuihou', hp: 115, armour: 120, fuel: 0.9, blurb: 'A Sengoku light-carrier girl: she marks a spot, and her squadron is over it and hitting it moments later.',
-    traits: ['flightdeck', 'twinaa'], aa: ['aa96'],
+    traits: ['flightdeck'], aa: ['aa96'],
     // and a gun of her own for while her squadron is away
     extra: [weapon('zui1', "SI 12.7cm Twin High-Angle Gun", 'shell', -5, 80, {
       salvo: 2, disp: 1.4, maxCharge: 60, dmg: 60, dmgR: 55, explR: 7,
@@ -94,7 +94,7 @@ const VEHICLES = [
 
 // Character traits: two passives per girl, so they play differently beyond stats and starter gun.
 // Hooks: Game.finishShot (drill), spreadOf (geschutz), explode (sloped), designation /
-// stepBallistic (designator), damage (redundancy), aaSlots (defsuite, twinaa), startSatellite /
+// stepBallistic (designator), damage (redundancy), aaSlots (defsuite), startSatellite /
 // updateSatellite (uplink, retarget), jump / stepTanks / landed (wings), damage (grace).
 const TRAITS = {
   wings: { name: 'Wings', desc: 'Her jump costs half the fuel, and she glides down: no fall damage.' },
@@ -105,13 +105,12 @@ const TRAITS = {
   sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
   designator: { name: 'Laser designator', desc: 'A laser dot goes out ahead of every shot onto her selected target (mark it with a click): her rounds steer for it on the way up and home on it on the way down.' },
   redundancy: { name: 'Triple redundancy', desc: 'No single hit takes more than 40% of her max health.' },
-  defsuite: { name: 'Defensive Suite', desc: 'Two air-defence slots, both filled from the start: NXi point defence and flak of her own.' },
+  defsuite: { name: 'Defensive Suite', desc: 'Three air-defence slots, two filled from the start: NXi point defence and flak of her own.' },
   uplink: { name: 'Priority uplink', desc: 'MAIA strikes she calls have a 30% bigger blast.' },
   retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA nudges its aim onto them.' },
   firecontrol: { name: 'Lymilark fire control', desc: 'Her rockets’ seekers see 40% further and turn 30% faster.' },
   telemetry: { name: 'Knight telemetry', desc: 'Her rocket weapons fire one more rocket in every salvo.' },
   flightdeck: { name: 'Flight deck', desc: 'Her planes take off from her deck, not straight up: they rearm a turn or two sooner than lift-fan launches, and every squad has one more plane.' },
-  twinaa: { name: 'Twin AA mounts', desc: 'Two air-defence slots instead of one, for two different mounts. The second is empty in round one.' },
 };
 const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
 // a gun's spread in her hands (G.W. Tiger's Geschützwagen halves it)
@@ -722,10 +721,11 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;
       if (t.isMob && owner && owner.isMob) continue; // hostiles' fire passes through other hostiles
       if (t.isPlane && t.owner === owner) continue; // and a player's through her own planes
-      const hw = t.hw || TANK_W / 2 + 2; // mobs carry their own hitbox
-      const hh = t.hh || TANK_H + 2;
+      const pad = t.pad || 0; // (a flying hostile's proximity margin)
+      const hw = (t.hw || TANK_W / 2 + 2) + pad; // mobs carry their own hitbox
+      const hh = (t.hh || TANK_H + 2) + pad;
       const by = t.hitY === undefined ? t.y : t.hitY; // the satellite's box hangs around its centre
-      if (Math.abs(p.x - t.x) < hw && p.y > by - hh && p.y < by + 2) return { hit: 'tank', tank: t };
+      if (Math.abs(p.x - t.x) < hw && p.y > by - hh && p.y < by + 2 + pad) return { hit: 'tank', tank: t };
     }
   }
   p.age++;

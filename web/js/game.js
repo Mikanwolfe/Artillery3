@@ -1337,7 +1337,8 @@ class Game {
     for (const t of this.targets()) {
       if (!t.alive) continue;
       const c = t.center();
-      const d = dist(c.x, c.y, x, y);
+      // (a hostile: from the nearest point of its body, so a hit on a long hull counts as one)
+      const d = t.isMob ? Math.hypot(Math.max(0, Math.abs(x - t.x) - t.hw), Math.max(0, t.y - t.hh - y, y - t.y)) : dist(c.x, c.y, x, y);
       let amt = d < def.dmgR ? def.dmg * (1 - d / def.dmgR) : 0;
       // what went into the hit, for the damage popup: accuracy (1 = dead centre) and each modifier
       const hit = { px: x, py: y, q: def.dmgR ? clamp(1 - d / def.dmgR, 0, 1) : 0, alt: def.alt || 0, front: def.front || 1, kin: def.kinPct || 0, sat: !!def.maia };

@@ -69,7 +69,7 @@ const AA_ROUND_SPEED = { air: 26, missile: 60 }; // world units a frame (point d
 function vtolRearm(w) { return w.rarity >= 4 ? 2 : 1; }
 
 // how many mounts she can carry
-function aaSlots(t) { return hasTrait(t, 'twinaa') || hasTrait(t, 'defsuite') ? 2 : 1; }
+function aaSlots(t) { return hasTrait(t, 'defsuite') ? 3 : 2; } // (two each; November's Defensive Suite, three)
 // roughly what a mount is worth a turn, to compare like with unlike
 function aaPower(A) { return A.role === 'air' ? A.dmg * A.acc * A.perTurn * (A.splash ? 1.5 : 1) : A.stop * 100 + A.range * 0.05; }
 // where a mount she buys goes: a free slot, else the slot her own starter mount sits in
@@ -233,8 +233,14 @@ Object.assign(Game.prototype, {
 
   // a round on its way: it bursts where the target will be, or at the end of its range
   aaFire(t, A, target, kind) {
-    const c = t.center(), from = { x: c.x, y: c.y - 14 };
     const q = target.center ? target.center() : { x: target.x, y: target.y };
+    const c = t.center();
+    let from = { x: c.x, y: c.y - 14 };
+    if (t.aaPoints) { // (the mothership: the mount nearest it fires, and swings onto it)
+      const a = t.aaPoints.reduce((b, a) => (dist(t.x + a.lx, t.y + a.ly, q.x, q.y) < dist(t.x + b.lx, t.y + b.ly, q.x, q.y) ? a : b));
+      from = { x: t.x + a.lx, y: t.y + a.ly };
+      a.ang = Math.atan2(q.y - from.y, q.x - from.x); a.kick = 1;
+    }
     const slot = t.isMob ? -1 : t.aa.indexOf(A.id); // (its barrels swing onto it, and kick)
     if (t.isMob) { t.aaAng = Math.atan2(q.y - from.y, q.x - from.x); t.aaKick = 1; }
     if (slot >= 0) { (t.aaAim || (t.aaAim = []))[slot] = Math.atan2(q.y - from.y, q.x - from.x); (t.aaKick || (t.aaKick = []))[slot] = 1; }

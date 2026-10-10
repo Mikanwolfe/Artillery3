@@ -39,6 +39,9 @@ const FLAK_MOB_MULT = 2; // flak does double damage to mobs
 const MOB_BOUNTY_SCALE = 1; // (bounties are shared by the damage each player did: payMobBounty)
 const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'fpv', 'mothership']);
 const SHIELD_RESIST = 0.5; // what share of a flak or fighter hit tells on a drone's shielding
+const MOB_PAD = 16, MOB_PAD_SHIP = 20; // (see Mob: a flying hostile's proximity margin)
+const SHIP_AA = [[-96, -58], [-44, -66], [8, -70], [58, -66], [104, -58]]; // the mothership's AA mounts, from its anchor
+const SHIP_ESCORTS = 3; // support drones arriving with it (+1 every three stages, to 5)
 const DRONE_FIELD_BACK = 330; // how far it arcs back at a fighter that is attacking it
 const DRONE_FIELD = 150, DRONE_FIELD_DMG = 14, DRONE_FIELD_STAGE = 1; // every flying hostile's static discharge field: reaches a fighter on its gun run, and zaps it (+1 a stage, to stage 8)
 
@@ -60,7 +63,7 @@ class Mob {
       drone: { name: 'Hatsuyuki drone', hp: 50 + 20 * stage, hw: 18, hh: 16, bounty: 250 + 60 * stage },
       gunner: { name: 'Hatsuyuki gunner', hp: 45 + 18 * stage, hw: 18, hh: 16, bounty: 300 + 70 * stage },
       turret: { name: 'Shore battery', hp: 150 + 30 * stage, hw: 24, hh: 22, bounty: 500 + 80 * stage },
-      mothership: { name: 'Mothership Shirayuki', hp: 1500 + 300 * stage, hw: 120, hh: 46, bounty: 4000 + 600 * stage },
+      mothership: { name: 'Mothership Shirayuki', hp: 1500 + 300 * stage, hw: 142, hh: 88, bounty: 4000 + 600 * stage },
       fpv: { name: 'FPV kamikaze', hp: 25 + 8 * stage, hw: 12, hh: 10, bounty: 150 + 40 * stage },
       carrier: { name: 'Hatsuyuki carrier', hp: 90 + 25 * stage, hw: 30, hh: 20, bounty: 350 + 70 * stage },
       dtank: { name: 'Hatsuyuki drone tank', hp: 70 + 25 * stage, armour: 30 + 12 * stage, hw: 22, hh: 20, bounty: 450 + 80 * stage },
@@ -77,6 +80,14 @@ class Mob {
     this.shield = this.maxShield = DRONE_SHIELDED.has(kind) ? (kind === 'mothership' ? 80 : 8) * sh : 0;
     // the AA tank's mount: flak at the players' planes while shots play out (aa.js), levelling off by stage 8
     if (kind === 'aatank') this.aaMount = { id: 'mob_aa', role: 'air', range: 340, rof: 8, dmg: 16 + 2 * Math.min(stage, 8), acc: 0.7, pk: 0.04, perTurn: 4, splash: 0 };
+    // the mothership's AA: five radar-laid flak mounts along its deck, firing from whichever is nearest
+    if (kind === 'mothership') {
+      this.aaMount = { id: 'ship_aa', role: 'air', range: 430, rof: 5, dmg: 22 + 3 * Math.min(stage, 8), acc: 0.75, pk: 0.05, perTurn: 10, splash: 0 };
+      this.aaPoints = SHIP_AA.map(([lx, ly]) => ({ lx, ly, ang: -Math.PI / 2, kick: 0 }));
+    }
+    // a proximity margin: a shell coming within this of a flying hostile's body counts as a hit,
+    // and bursts there (so it does less than one dead on it: blasts measure to the body)
+    this.pad = Mob.GROUND.has(kind) ? 0 : kind === 'mothership' ? MOB_PAD_SHIP : MOB_PAD;
     this.facing = -1;
     this.vy = 0;
     this.aim = { x: 1, y: 0 };
@@ -91,6 +102,7 @@ class Mob {
     this.t++;
     this.flash = Math.max(0, this.flash - 0.08);
     this.aaKick = Math.max(0, (this.aaKick || 0) - 0.15);
+    if (this.aaPoints) for (const a of this.aaPoints) a.kick = Math.max(0, a.kick - 0.15);
     if (!this.alive) return;
     if (this.kind === 'turret') { this.y = game.terrain.hAt(this.x); return; }
     if (this.mover) {
@@ -309,41 +321,56 @@ class Mob {
     ctx.restore();
   }
 
-  // the mothership: a long box-built airship hull, gondola and drone bay, a glowing core,
-  // engines at the back, and running lights
+  // the mothership: an automated destroyer, bow to the left. No bridge, nobody aboard: a flat
+  // armoured deckhouse with sensor domes and antenna masts, a turret fore and aft, five flak mounts
+  // along the deck that track their targets, the glowing core in its side, the drone bay
+  // underneath, and engines at the stern
   drawShip(ctx, x, y, c, blink) {
-    const top = y - 92;
-    ctx.fillStyle = c('#4a4660');
-    ctx.fillRect(x - 120, top + 20, 240, 40);
-    ctx.fillRect(x - 100, top + 10, 200, 10);
-    ctx.fillRect(x - 100, top + 60, 200, 10);
-    ctx.fillStyle = c('#5e5a78');
-    ctx.fillRect(x - 120, top + 20, 240, 6);
-    ctx.fillRect(x - 136, top + 28, 16, 24); // nose
-    ctx.fillStyle = c('#38344a');
-    for (let i = -100; i <= 90; i += 30) ctx.fillRect(x + i, top + 30, 4, 22); // hull ribs
-    ctx.fillStyle = c('#2c2838'); // gondola and drone bay
-    ctx.fillRect(x - 50, top + 70, 100, 16);
-    ctx.fillStyle = blink ? 'rgb(255,120,200)' : 'rgb(190,70,150)';
-    ctx.fillRect(x - 40, top + 82, 80, 4);
-    // glowing core
+    const P = (pts, col) => { ctx.fillStyle = col; ctx.beginPath(); pts.forEach(([lx, ly], k) => ctx[k ? 'lineTo' : 'moveTo'](x + lx, y + ly)); ctx.closePath(); ctx.fill(); };
+    const R = (lx, ly, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x + lx, y + ly, w, h); };
+    const HULL = c('#3e3a52'), DARK = c('#2a2638'), DECK = c('#4c4864'), EDGE = c('#6a6488');
+    // hull: the bow raked forward and rising, a flat run aft, the keel sweeping up to the stem
+    P([[-150, -60], [-110, -52], [132, -52], [140, -34], [132, -14], [-60, -8], [-118, -22]], HULL);
+    P([[-118, -22], [-60, -8], [132, -14], [136, -22], [-104, -26]], DARK);
+    P([[-150, -60], [-110, -52], [132, -52], [132, -50], [-110, -50], [-148, -58]], EDGE); // the deck edge
+    for (let i = -80; i <= 110; i += 24) R(i, -46, 3, 26, DARK); // armour seams
+    // the deckhouse: low and flat, with sensor domes and antenna masts instead of a bridge
+    R(-70, -64, 150, 12, DECK);
+    R(-50, -72, 96, 8, DECK);
+    R(-50, -72, 96, 2, EDGE);
+    R(-30, -80, 14, 8, EDGE); R(-28, -84, 10, 4, EDGE); // radome
+    R(20, -80, 14, 8, EDGE); R(22, -84, 10, 4, EDGE);
+    R(-6, -92, 2, 20, EDGE); R(-12, -88, 14, 2, EDGE); // antenna masts
+    R(46, -90, 2, 18, EDGE); R(42, -84, 10, 2, EDGE);
+    R(-6, -94, 2, 2, blink ? '#ff5aa0' : '#7a2a52'); R(46, -92, 2, 2, blink ? '#7a2a52' : '#ff5aa0');
+    // a turret fore and aft
+    R(-112, -60, 22, 8, DECK); R(-108, -64, 12, 4, EDGE); R(-136, -59, 24, 2, DARK); R(-136, -55, 24, 2, DARK);
+    R(100, -60, 22, 8, DECK); R(104, -64, 12, 4, EDGE); R(122, -59, 22, 2, DARK);
+    // the flak mounts: a little twin-barrel turret each, on its target
+    for (const a of this.aaPoints || []) {
+      R(a.lx - 5, a.ly + 2, 10, 5, DARK);
+      ctx.save(); ctx.translate(x + a.lx, y + a.ly); ctx.rotate(a.ang);
+      ctx.fillStyle = c('#1c1a26'); ctx.fillRect(2 - a.kick * 3, -3, 12, 2); ctx.fillRect(2 - a.kick * 3, 1, 12, 2);
+      ctx.restore();
+      R(a.lx - 3, a.ly - 2, 6, 5, EDGE);
+    }
+    // the glowing core, set into the hull's side
     const pulse = 0.6 + 0.4 * Math.sin(this.t / 10);
     ctx.fillStyle = `rgba(255,120,200,${pulse})`;
-    ctx.fillRect(x - 12, top + 32, 24, 16);
+    ctx.fillRect(x - 12, y - 44, 24, 14);
     ctx.fillStyle = '#ffe0f0';
-    ctx.fillRect(x - 5, top + 37, 10, 6);
-    // engines with flickering exhaust at the back (right), fins
-    ctx.fillStyle = c('#38344a');
-    ctx.fillRect(x + 118, top + 14, 22, 14);
-    ctx.fillRect(x + 118, top + 52, 22, 14);
-    ctx.fillRect(x + 104, top - 4, 12, 16);
+    ctx.fillRect(x - 5, y - 40, 10, 6);
+    // the drone bay underneath
+    R(-50, -12, 100, 8, DARK);
+    ctx.fillStyle = blink ? 'rgb(255,120,200)' : 'rgb(190,70,150)';
+    ctx.fillRect(x - 40, y - 6, 80, 3);
+    // engines at the stern, flickering
+    R(132, -48, 14, 12, DARK); R(132, -30, 14, 12, DARK);
     ctx.fillStyle = `rgba(255,180,90,${0.5 + Math.random() * 0.4})`;
-    ctx.fillRect(x + 140, top + 17, 6 + Math.random() * 6, 8);
-    ctx.fillRect(x + 140, top + 55, 6 + Math.random() * 6, 8);
+    ctx.fillRect(x + 146, y - 45, 5 + Math.random() * 6, 6);
+    ctx.fillRect(x + 146, y - 27, 5 + Math.random() * 6, 6);
     ctx.fillStyle = blink ? '#ff5a46' : '#7a2a22';
-    ctx.fillRect(x - 118, top + 22, 4, 4);
-    ctx.fillStyle = blink ? '#7a2a22' : '#ff5a46';
-    ctx.fillRect(x + 114, top + 22, 4, 4);
+    ctx.fillRect(x - 146, y - 60, 4, 3);
   }
 
   // screen space: a health bar (the boss gets a long one with its name)
