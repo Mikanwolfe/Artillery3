@@ -1655,7 +1655,33 @@ class Game {
   // on its best one (selling the weakest when all four slots are full), and save up rather than
   // settle when something much stronger is within one more round's pay (Easy doesn't plan ahead and
   // sometimes buys at random); then abilities, then Health++ / Armour++ with what's left.
+  // a CPU's strategy for the coming round, from the field it faces (see CPU_STRATEGIES): each one
+  // scores from what its rivals carry and fly (and what it carries itself); Hard takes the best,
+  // Normal usually does, Easy goes with its gut more often than not
+  pickStrategy(t) {
+    const rivals = this.tanks.filter((x) => x !== t && x.alive !== false);
+    const guns = rivals.flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
+    const mine = t.weapons.map((id) => WEAPON_BY_ID[id]);
+    const rivalAA = rivals.reduce((s, x) => s + (x.aa || []).filter((id) => AA_BY_ID[id] && AA_BY_ID[id].role === 'air').reduce((a, id) => a + aaPower(AA_BY_ID[id]), 0), 0) / Math.max(1, rivals.length);
+    const big = guns.filter((w) => !w.air && weaponValue(w) > 2500).length;
+    const score = {
+      antiair: guns.filter((w) => w.air).length * 2 + rivals.filter((x) => hasTrait(x, 'flightdeck')).length * 3 + (t.airDowned ? 3 : 0),
+      pointdef: guns.filter((w) => w.kind === 'rocket' || w.carpet).length * 1.5 + rivals.filter((x) => hasTrait(x, 'firecontrol')).length * 2,
+      airpower: (hasTrait(t, 'flightdeck') ? 4 : 0) + mine.filter((w) => w.air).length * 2 - rivalAA / 40,
+      fortress: big * 1.5 + (t.hp < t.maxHp * 0.5 ? 1 : 0),
+      hunter: this.events_on ? 1.5 + this.round * 0.5 + (this.mobs || []).filter((m) => m.alive).length * 0.5 : 0,
+      balanced: 2.5,
+    };
+    const ranked = Object.entries(score).sort((a, b) => b[1] - a[1]);
+    const gut = t.type === 'easy' ? 0.6 : t.type === 'normal' ? 0.25 : 0;
+    const pick = rng.chance(gut) ? rng.pick(ranked.slice(0, 3))[0] : ranked[0][0];
+    if (pick !== t.strategy) this.events.push(`${t.name} goes for ${CPU_STRATEGIES[pick].name}.`);
+    return pick;
+  }
+
   autoBuy(t) {
+    t.strategy = this.pickStrategy(t);
+    const S = CPU_STRATEGIES[t.strategy];
     const kitsWanted = REPAIR_MAX;
     while (t.kits < kitsWanted && t.money >= REPAIR_COST * 2) { t.money -= REPAIR_COST; t.kits++; }
     // a flight deck once it flies planes (VTOL squads rearm longer): the more of its rack is planes,
@@ -1663,7 +1689,7 @@ class Game {
     const planes = t.weapons.filter((id) => WEAPON_BY_ID[id].air).length;
     if (planes && !hasTrait(t, 'flightdeck') && !t.upgrades.deck && (t.type !== 'easy' || planes >= 2)) {
       const u = VEHICLE_UPGRADES.find((x) => x.id === 'deck');
-      const need = planes >= 2 ? 1 : 1.3; // (cash in hand over its price)
+      const need = planes >= 2 || S.deck ? 1 : 1.3; // (cash in hand over its price)
       if (t.money >= u.costs[0] * need) { t.money -= u.costs[0]; t.upgrades.deck = 1; }
     }
     const horizon = (this.lastAward || 500) * (t.type === 'hard' ? 2 : 1); // how far ahead it saves
@@ -1692,8 +1718,9 @@ class Game {
     {
       const rivals = this.tanks.filter((x) => x !== t && x.alive !== false).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
       const threat = { air: rivals.filter((w) => w.air).length * 2 + (this.round >= 2 ? 1 : 0), missile: rivals.filter((w) => w.kind === 'rocket' || w.carpet).length * 1.5 };
+      if (S.role) threat[S.role] += 100; // (its strategy says which comes first)
       const roles = ['air', 'missile'].filter((r) => threat[r] > 0).sort((a, b) => threat[b] - threat[a]);
-      const share = t.money * (t.type === 'hard' ? 0.6 : t.type === 'normal' ? 0.5 : 0.3);
+      const share = t.money * Math.min(0.8, (t.type === 'hard' ? 0.6 : t.type === 'normal' ? 0.5 : 0.3) * S.aa);
       let spent = 0;
       for (const role of roles) {
         const fit = t.aa.findIndex((id) => !id || AA_BY_ID[id].role === role), slot = fit >= 0 ? fit : aaSlotFor(t, role);
@@ -1705,6 +1732,11 @@ class Game {
         t.money += refund; t.money -= pick.cost; spent += pick.cost - refund;
         t.aa[slot] = pick.id;
       }
+    }
+    if (S.armour) for (let n = 0; n < S.armour; n++) { // (a fortress: health and armour levels before guns)
+      const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour', cost = this.upgradeCost(t, stat);
+      if (t.upgrades[stat] >= 2 || t.money < cost * 1.6) break;
+      t.money -= cost; t.upgrades[stat]++;
     }
     const worth = (w) => cpuValue(w, t); // (her own line counts for more, lasers for less)
     for (let n = 0; n < 4; n++) {
@@ -1743,6 +1775,7 @@ class Game {
     }
     // abilities: Hard keeps a Double Shot and a Deflector, Normal a Double Shot, Easy now and then
     const wants = t.type === 'hard' ? ['double', 'shield'] : t.type === 'normal' ? ['double'] : rng.chance(0.4) ? [rng.pick(['double', 'shield'])] : [];
+    if (S.armour && !wants.includes('shield')) wants.unshift('shield'); // (a fortress wants its Deflector)
     if (this.isLate() && t.type !== 'easy') wants.unshift('barrier'); // late game: a barrier first
     for (const id of wants) {
       const ab = ABILITIES.find((a) => a.id === id);

@@ -463,8 +463,26 @@ function cpuValue(w, t) {
   const own = (CPU_LINES[vid] || []).some((m) => maker.includes(m)) || (start && w.kind === start.kind && (w.kind !== 'shell' || vid === 'gwt' || vid === 'int')) || (vid === 'int' && w.sat) || w.sig === vid;
   if (own) v *= CPU_OWN_LINE;
   if (w.kind === 'laser' && !(start && start.kind === 'laser')) v *= CPU_LASER;
+  const S = t.strategy && CPU_STRATEGIES[t.strategy]; // (and what its strategy for the round wants)
+  if (S && S.w) v *= S.w[w.air ? (w.air.type === 'fighter' ? 'fighter' : 'air') : w.kind] || 1;
   return v;
 }
+
+// A CPU's plan for a round, picked in the shop from who it is up against (Game.pickStrategy):
+//   antiair   rivals fly planes (Zuihou, plane weapons): anti-air first and dear, flak and fighters
+//   pointdef  rivals throw rockets and carpets: point defence first, health and armour
+//   airpower  it flies planes itself and the rivals' skies are open: more planes, a deck first
+//   fortress  the rivals hit very hard: health and armour levels first, a Deflector
+//   hunter    hostiles are about and pay better than rivals: flak and seekers, and it goes for them
+//   balanced  nothing stands out
+const CPU_STRATEGIES = {
+  antiair: { name: 'anti-air', aa: 1.4, role: 'air', w: { flak: 1.35, fighter: 1.3 } },
+  pointdef: { name: 'point defence', aa: 1.3, role: 'missile' },
+  airpower: { name: 'air power', aa: 0.7, deck: true, w: { air: 1.35, fighter: 1.2 } },
+  fortress: { name: 'fortress', aa: 0.9, armour: 2, w: { shell: 1.1 } },
+  hunter: { name: 'bounty hunting', aa: 1, bounty: 2.5, w: { flak: 1.3, rocket: 1.2 } },
+  balanced: { name: 'balanced', aa: 1 },
+};
 
 // Rough worth of a weapon per turn, used by CPUs to rank, buy and pick weapons: damage over the
 // whole clip and salvo, scaled by blast radius (easier to hit with) and spread (harder), plus acid
