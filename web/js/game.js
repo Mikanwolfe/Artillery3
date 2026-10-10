@@ -632,7 +632,7 @@ class Game {
           if (t.vy >= 0) {
             t.vy = 0; t.jvx = 0; t.jumping = false; t.falling = false;
             this.particles.puff(t.x, t.y);
-            this.landed(t, t.leaping ? 0 : t.y - t.fallFrom); // a leap lands softly (a void still takes her)
+            this.landed(t, 0); // a jump or leap lands softly, however far down (a void still takes her)
             t.leaping = false;
           }
         }
