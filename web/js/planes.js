@@ -2,7 +2,7 @@
 // Planes (Sengoku Inc.; the weapons are in weapons.js, kind 'air'). The gun is a laser designator.
 // A plane weapon has a fixed set of squads (air.squads), its autoloader rounds (Tank.wing): each
 // dot of a turn takes the next one. A squad on her deck takes off (along a flight deck, or
-// straight up on its lift fan: VTOL, 30% softer) and flies over the dot's strike zone; a squad
+// straight up on its lift fan: VTOL, rearming a turn or two longer) and flies over the dot's strike zone; a squad
 // already out (hovering over an earlier zone) is redirected to it. Either way it attacks there and
 // then, and the turn waits for it (AirStrike). So one squad is one zone a turn, and a squad shot
 // down is one zone fewer until it has rearmed. Anything in the zone (airZone) is found and hit
@@ -642,7 +642,7 @@ Object.assign(Game.prototype, {
     for (let dx = -160; dx <= 160; dx += 20) top = Math.min(top, this.terrain.hAt(clamp(mark.x + dx, 0, WORLD_W - 1)));
     const side = owner.x <= mark.x ? 1 : -1; // they come in from the owner's side (torpedoes run away from her)
     const G = {
-      owner, w, mark, side, ceil, deck: o.deck, mult: o.deck ? 1 : VTOL_MULT, hp: o.hp || w.air.hp, armour: w.air.armour || 0,
+      owner, w, mark, side, ceil, deck: o.deck, mult: 1, hp: o.hp || w.air.hp, armour: w.air.armour || 0,
       planes: [],
       hoverY: Math.max(ceil + 120, top - PLANE_HOVER),
       dir: owner.facing || 1,
@@ -689,7 +689,7 @@ Object.assign(Game.prototype, {
         return true;
       }
       // all home (or shot down): its squad rearms, and is back on her deck after its turns
-      if (q && (q.state === 'out' || q.state === 'home')) { q.state = 'rearm'; q.turns = reloadOf(G.w); }
+      if (q && (q.state === 'out' || q.state === 'home')) { q.state = 'rearm'; q.turns = reloadOf(G.w) + (G.deck ? 0 : vtolRearm(G.w)); } // (VTOL squads take longer)
       return false;
     });
   },

@@ -110,7 +110,7 @@ const TRAITS = {
   retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA nudges its aim onto them.' },
   firecontrol: { name: 'Lymilark fire control', desc: 'Her rockets’ seekers see 40% further and turn 30% faster.' },
   telemetry: { name: 'Knight telemetry', desc: 'Her rocket weapons fire one more rocket in every salvo.' },
-  flightdeck: { name: 'Flight deck', desc: 'Her planes take off from her deck, not straight up: no VTOL penalty, and one more plane in every squad.' },
+  flightdeck: { name: 'Flight deck', desc: 'Her planes take off from her deck, not straight up: they rearm a turn or two sooner than lift-fan launches, and every squad has one more plane.' },
   twinaa: { name: 'Twin AA mounts', desc: 'Two air-defence slots instead of one, for two different mounts. The second is empty in round one.' },
 };
 const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
@@ -258,8 +258,8 @@ const WEAPONS = [
   // there, where anyone can shoot it; with none on deck, the squad out longest on its orders is
   // redirected (and attacks the new zone). A squad attacks once a dot, until its loadout is spent (AIR_PASSES: bombers
   // several passes, torpedo jets two, fighters many), then flies home and rearms for air.reload
-  // turns; one shot down rearms too. Planes that take off straight up (no flight deck) hit 30%
-  // softer. dmg is per bomb, torpedo or rocket; hp per plane (armour: it takes a whole hit).
+  // turns; one shot down rearms too. Planes that take off straight up (no flight deck) rearm a turn longer (two from Epic up).
+  // dmg is per bomb, torpedo or rocket; hp per plane (armour: it takes a whole hit).
   //   dive     each plane drops air.ord bombs almost straight down onto the mark
   //   torpedo  each runs in low and drops a torpedo that skims the ground through the mark
   //   fighter  guns: aircraft and drones near the mark first (triple damage), else a strafing run

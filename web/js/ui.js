@@ -229,7 +229,7 @@ const UI = {
     if (w.air) { // planes: what a squad is, and how often it flies
       const A = w.air, F = w.fleet;
       const rows = [['Dmg', `${w.dmg}${A.ord > 1 ? '×' + A.ord : ''}`], ['Rad', w.dmgR], ['Planes', F ? F.dive + F.torpedo + F.fighter : A.planes], ['Squads', A.squads || 1], ['Passes', F ? '2–6' : AIR_PASSES[A.type]],
-        ['Rearm', `${reloadOf(w)} turns`], ['Type', F ? 'fleet' : A.type], ['Zone', airZone(w)], ['Plane HP', A.hp]];
+        ['Rearm', F ? `${reloadOf(w)} turns` : `${reloadOf(w)} (+${vtolRearm(w)} VTOL)`], ['Type', F ? 'fleet' : A.type], ['Zone', airZone(w)], ['Plane HP', A.hp]];
       if (A.armour) rows.push(['Armour', A.armour]);
       if (A.jet) rows.push(['Jet', 'AA ½']);
       if (w.guide) rows.push(['Seek', w.guide.range]);
@@ -368,7 +368,7 @@ const UI = {
         st = parts.map(([k, s]) => `${k} ${s}`).join(' · ');
       }
       else st = on ? (w.clip > 1 ? `${w.clip} shots` : 'in hand') : 'loaded';
-      const reloadNote = w.air ? `${w.air.squads} squad${w.air.squads > 1 ? 's' : ''}, one dot each a turn: one on deck takes off, else one already out is redirected; each back or lost rearms for ${reloadOf(w)} turns` : reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
+      const reloadNote = w.air ? `${w.air.squads} squad${w.air.squads > 1 ? 's' : ''}, one dot each a turn: one on deck takes off, else one already out is redirected; each back or lost rearms for ${reloadOf(w) + (w.fleet || hasTrait(t, 'flightdeck') || (t.upgrades && t.upgrades.deck) ? 0 : vtolRearm(w))} turns${w.fleet || hasTrait(t, 'flightdeck') || (t.upgrades && t.upgrades.deck) ? '' : ' (lift-fan launch: a flight deck saves ' + vtolRearm(w) + ')'}` : reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
       const pips = w.air ? `<span class="pips">${t.wing(w).map((q) => `<i class="${q.state === 'rearm' || q.state === 'home' ? 'r' : q.tasked ? '' : q.state === 'out' ? 'o' : 'f'}"></i>`).join('')}</span>` : on && w.clip > 1 ? `<span class="pips">${Array.from({ length: w.clip }, (_, k) => `<i class="${k < (t.firedThisTurn || w.air ? t.shotsLeft : w.clip) ? 'f' : ''}"></i>`).join('')}</span>` : '';
       return `<button class="slot w${on ? ' on' : ''}${left > 0 ? ' rl' : ''}" data-i="${i}" title="${esc(w.name)} · ${reloadNote}" ${left > 0 || !t.weaponReady(id) || (t.firedThisTurn && !on) ? 'disabled' : ''}>
         ${this.badge(w, true)}<span class="txt"><span class="nm">${esc(w.name)}</span><span class="st">${st}</span></span>${pips}

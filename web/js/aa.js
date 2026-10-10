@@ -64,7 +64,9 @@ const DRONE_ZAP_EVERY = 20; // frames between a hostile's discharges (see stepAA
 const AA_GRAZE = 0.25; // an anti-air burst that misses still grazes for this much
 function aaMaker(a) { return a.name.startsWith('NXi') ? 'NXi' : a.name.startsWith('LFS') ? 'Lymilark' : a.name.startsWith('Kotona') ? 'Kotona' : 'Sengoku Inc.'; }
 const AA_ROUND_SPEED = { air: 26, missile: 60 }; // world units a frame (point defence is near enough hitscan)
-const VTOL_MULT = 0.7; // planes launched straight up (no flight deck) hit this much as hard
+// planes launched straight up on their lift fans (no flight deck) take longer to turn round: their
+// squads rearm for this many more of her turns (one for Commons to Rares, two from Epic up)
+function vtolRearm(w) { return w.rarity >= 4 ? 2 : 1; }
 
 // how many mounts she can carry
 function aaSlots(t) { return hasTrait(t, 'twinaa') || hasTrait(t, 'defsuite') ? 2 : 1; }

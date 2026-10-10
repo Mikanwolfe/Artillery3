@@ -28,8 +28,8 @@ const VEHICLE_UPGRADES = [
   { id: 'engine', name: 'Engine & tracks', costs: [900, 1800, 3200], desc: '+40% fuel and steeper climbs per level.' },
   { id: 'computer', name: 'Ballistic computer', costs: [2800], desc: 'The aim guide and target marker account for wind, and the guide arc runs further.' },
   { id: 'workshop', name: 'Field workshop', costs: [1200, 2400, 4200], desc: 'Repairs 5% of max armour per level at the start of each of your turns.' },
-  // planes.js: without a deck, planes take off straight up on their lift fans and hit 30% softer
-  { id: 'deck', name: 'Flight deck', costs: [3000], desc: 'Your planes launch off a deck, not straight up: no 30% VTOL penalty. It is heavy: 40% less fuel, and no Leap.', notFor: 'flightdeck' },
+  // planes.js: without a deck, planes take off straight up on their lift fans and rearm longer (vtolRearm)
+  { id: 'deck', name: 'Flight deck', costs: [3000], desc: 'Your planes launch off a deck, not straight up: their squads rearm 1 turn sooner (2 from Epic up). It is heavy: 40% less fuel, and no Leap.', notFor: 'flightdeck' },
 ];
 const DECK_FUEL = 0.6; // fuel left to a girl carrying a flight deck
 const PLAYER_COLORS = ['#3d6fa8', '#b8433a', '#3e8a5a', '#7a4d9a'];
