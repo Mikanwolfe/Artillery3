@@ -1658,6 +1658,14 @@ class Game {
   autoBuy(t) {
     const kitsWanted = REPAIR_MAX;
     while (t.kits < kitsWanted && t.money >= REPAIR_COST * 2) { t.money -= REPAIR_COST; t.kits++; }
+    // a flight deck once it flies planes (VTOL squads rearm longer): the more of its rack is planes,
+    // the keener (two or more and even Easy buys one, ahead of guns and air defence)
+    const planes = t.weapons.filter((id) => WEAPON_BY_ID[id].air).length;
+    if (planes && !hasTrait(t, 'flightdeck') && !t.upgrades.deck && (t.type !== 'easy' || planes >= 2)) {
+      const u = VEHICLE_UPGRADES.find((x) => x.id === 'deck');
+      const need = planes >= 2 ? 1 : 1.3; // (cash in hand over its price)
+      if (t.money >= u.costs[0] * need) { t.money -= u.costs[0]; t.upgrades.deck = 1; }
+    }
     const horizon = (this.lastAward || 500) * (t.type === 'hard' ? 2 : 1); // how far ahead it saves
     let reserve = 0;
     // air defence first (not Easy), from a share of its money: point defence if rivals carry rockets
@@ -1747,10 +1755,6 @@ class Game {
       const u = VEHICLE_UPGRADES.find((x) => x.id === id);
       const lvl = t.upgrades[id] | 0;
       if (lvl < 1 && t.money - reserve >= u.costs[lvl] * 1.5) { t.money -= u.costs[lvl]; t.upgrades[id] = lvl + 1; }
-    }
-    if (t.type !== 'easy' && !hasTrait(t, 'flightdeck') && !t.upgrades.deck && t.weapons.some((id) => WEAPON_BY_ID[id].air)) {
-      const u = VEHICLE_UPGRADES.find((x) => x.id === 'deck');
-      if (t.money - reserve >= u.costs[0] * 1.5) { t.money -= u.costs[0]; t.upgrades.deck = 1; }
     }
     for (let n = 0; n < 6; n++) {
       const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour';

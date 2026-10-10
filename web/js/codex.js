@@ -81,7 +81,7 @@ const GIRL_NOTES = {
   nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, comes with two air-defence mounts of her own, and can’t be one-shot.' },
   alb: { plays: 'The rocketeer. Her seekers find the nearest thing from further out and turning harder than anyone else’s, and every rocket salvo she fires has one more rocket in it. Lighter hits, few misses.' },
   ang: { plays: 'The guardian angel. Light armour, but grace saves her from one killing blow a round, and her wings make her the most mobile girl: half-price jumps and no fall damage, so she can take high ground no one else can. Her halo lance needs a line of sight.' },
-  zui: { plays: 'The light carrier. She marks a spot; her squadron flies over and strikes it in the same turn, then hovers there, a target, until her next dot sends it on. A full deck (one more plane a squad, no VTOL penalty) and two AA mounts make her the best defended girl in the air.' },
+  zui: { plays: 'The light carrier. She marks a spot; her squadron flies over and strikes it in the same turn, then hovers there, a target, until her next dot sends it on. A full deck (one more plane a squad, and no slower lift-fan rearm) and two AA mounts make her the best defended girl in the air.' },
   int: { plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
 };
 
@@ -119,7 +119,7 @@ function codexMeta(w) {
   if (w.sig) lines.push(['Per firing turn', 'the set piece’s, see below (the marker round itself barely scratches)']);
   else lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
   const R = reloadOf(w);
-  if (w.air) { const S = w.air.squads || 1, P = w.fleet ? AIR_PASSES.dive : AIR_PASSES[w.air.type]; lines.push(['Tempo', `${S} squad${S > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck), one dot each a turn. A squad strikes its zone as soon as it gets there, and again for each later dot it is redirected by, ${P} pass${P > 1 ? 'es' : ''} in all, before flying home to rearm for ${R} turns`]); }
+  if (w.air) { const S = w.air.squads || 1, P = w.fleet ? AIR_PASSES.dive : AIR_PASSES[w.air.type]; lines.push(['Tempo', `${S} squad${S > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck), one dot each a turn. A squad strikes its zone as soon as it gets there, and again for each later dot it is redirected by, ${P} pass${P > 1 ? 'es' : ''} in all, before flying home to rearm for ${R} turns${w.fleet ? '' : ` (${R + vtolRearm(w)} launched straight up, without a flight deck)`}`]); }
   else if (R) lines.push(['Tempo', w.sig ? `Fires every ${R + 1} turns` : `Fires every ${R + 1} turns on its own, about ${Math.round(worth / (R + 1))} a turn; rotate it with other guns`]);
   const el = Math.min(45, w.elevMax);
   const reach = (w.maxCharge * w.maxCharge * Math.sin(2 * rad(el))) / GRAV;
