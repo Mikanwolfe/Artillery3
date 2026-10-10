@@ -490,7 +490,7 @@ Object.assign(Game.prototype, {
     for (const [t, d] of m.dmgBy || []) {
       const cut = Math.round(m.bounty * Math.min(1, d / pool));
       if (cut <= 0) continue;
-      t.money += cut;
+      t.money += cut + this.cpuCredit(t, cut);
       t.mobCash = (t.mobCash || 0) + cut;
       shares.push(`${t.name} ¢${cut}`);
       if (t.isCpu && t === killer && Math.random() < 0.6) this.banter(t, 'hit_big');

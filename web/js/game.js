@@ -66,6 +66,9 @@ const KILL_SHARE = 1; // (all of the victim's max health and armour, on top of K
 // at PAY_OWN, everyone a PAY_SHARED cut of the round's total, and the last two standing a placement bonus
 const PAY_OWN = 2.5, PAY_SHARED = 0.25, PLACE_PAY = 600, PLACE_STEP = 150;
 const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
+// what a CPU earns on top of a player's pay, round pay and bounties, by difficulty (never shown:
+// the pay screen and the bounty pop-ups show the base)
+const CPU_CREDIT = { easy: 1.1, normal: 1.3, hard: 1.6 };
 const STARTER_SELL = 250; // what her starting gun or mount fetches if she sells it
 const AA_SHARE_BURNED = 0.4; // ... once planes have killed it
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs once a turn cycle (every n turns)
@@ -1435,7 +1438,7 @@ class Game {
       this.events.push(`${owner.name} destroyed ${t.name}!`);
       const pay = KILL_BOUNTY + Math.round(KILL_SHARE * (t.maxHp + t.maxArmour)) + (t.bounty || 0); // (a tougher girl pays more)
       if (t.bountyWealth) { const fee = Math.min(t.money, t.bountyWealth); t.money -= fee; t.bountyWealth = 0; if (fee) this.events.push(`${t.name} pays ¢${fee} of the bounty on her out of her own purse.`); } // (a rich girl's price, paid by her)
-      owner.money += pay;
+      owner.money += pay + this.cpuCredit(owner, pay);
       this.particles.text(t.x, t.y - 90, `+¢${pay}`, '#ffd84a', true);
       if (t.bounty) {
         this.events.push(`${owner.name} collects the ¢${t.bounty} bounty on ${t.name}.`);
@@ -1552,7 +1555,7 @@ class Game {
       const bonus = t === winner ? place : t === second ? Math.round(place / 2) : 0;
       t.roundPay = award + own + bonus;
       t.roundPayParts = { award, own, bonus };
-      t.money += t.roundPay;
+      t.money += t.roundPay + this.cpuCredit(t, t.roundPay); // (a CPU's difficulty bonus: silent, not on the pay screen)
     }
     this.lastAward = Math.round(this.tanks.reduce((s, t) => s + t.roundPay, 0) / this.tanks.length); // (what a CPU plans its savings around)
     this.awardMult += 0.08;
@@ -1610,6 +1613,7 @@ class Game {
     const cur = stat === 'hp' ? tank.maxHp : tank.maxArmour;
     return Math.max(100, Math.round((cur * 0.3 * UPGRADE_PER_POINT) / 10) * 10);
   }
+  cpuCredit(t, amt) { return t && t.isCpu ? Math.round(amt * ((CPU_CREDIT[t.type] || 1) - 1)) : 0; }
   sellValue(w) { return w.starter ? STARTER_SELL : w.cost; } // a full refund: trying a new gun should cost nothing (a starter: a little scrap)
   // what a gun costs her: a starter she sold comes back for what she got for it
   costOf(w) { return w.starter ? STARTER_SELL : w.cost; }
