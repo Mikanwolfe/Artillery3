@@ -41,6 +41,7 @@ const BOUNTY_PULL = 0.1; // score bonus per $ of bounty on a target
 // CPU, so a table of CPUs doesn't all pile onto one player (a grudge still outweighs one of these)
 const CROWD = 150;
 const AI_MOBS = 2; // mobs (drones, motherships) a CPU weighs as targets: the nearest few
+const AI_RECHECK = 3; // targets each further weapon is tried against (the first weapon's best)
 const AI_BUDGET_MS = 6; // planning time per frame, so a CPU's aim search never stalls a frame
 const AI_WINDOW_MS = 16; // ...measured by the clock: a slow frame runs several steps, and they share one budget
 const aiClock = { win: -Infinity, spent: 0 };
@@ -187,8 +188,13 @@ class CpuController {
       }
       return m;
     };
+    const firstScore = new Map(); // (each target's score with the first weapon tried)
     for (const w of options) {
-      for (const e of enemies) {
+      // after the first weapon, only its best few targets are worth a full search with the others:
+      // every weapon against every target was thousands of simulated shots, seconds of thinking
+      const pool = firstScore.size ? enemies.filter((e) => firstScore.has(e)).sort((a, b) => firstScore.get(a) - firstScore.get(b)).slice(0, AI_RECHECK) : enemies;
+      for (const e of pool) {
+        if (e.isPlane && (w.air ? w.air.type !== 'fighter' : false)) continue; // (bombers don't hunt planes)
         const m = learn(e);
         const k = Math.min(m.shots, LEARN.length - 1);
         const wf = 1 + m.werr * LEARN[k] / LEARN[0]; // the wind as it judges it, closer each shot
@@ -199,7 +205,7 @@ class CpuController {
         if (!e.isMob && !e.isSat) score += CROWD * crowd(e);
         if (e.isMob) score += MOB_DISLIKE - Math.min(150, e.bounty * 0.03) - (w.kind === 'flak' ? 120 : 0);
         if (e.isPlane) score += 60 - (w.kind === 'flak' || w.airburst ? 120 : 0) - (w.air && w.air.type === 'fighter' ? 150 : 0);
-        if (w.air && e.isPlane && w.air.type !== 'fighter') continue; // (bombers don't hunt planes)
+        if (!firstScore.has(e) && w === options[0]) firstScore.set(e, score);
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
       }
       if (best && best.err < 40) break; // good enough with the strongest usable weapon

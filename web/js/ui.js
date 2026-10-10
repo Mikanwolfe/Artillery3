@@ -457,8 +457,9 @@ const UI = {
       const full = tank.weapons.length >= 4;
       const f = this.shopFilter;
       $('shop-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === f));
-      const list = WEAPONS.slice().sort((a, b) => a.cost - b.cost).filter((w) => forVehicle(w, tank.vehicle.id)).filter((w) =>
-        f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= w.cost : f === 'NXi' ? makerOf(w) === 'NXi' : f === 'hybrid' ? w.hybrid : f === 'Sengoku' ? makerOf(w).includes('Sengoku') : w.kind === f);
+      const sold = g.ownStarters(tank).filter((w) => !tank.weapons.includes(w.id)); // (her own, sold: she can have them back)
+      const list = [...sold, ...WEAPONS.slice().sort((a, b) => a.cost - b.cost)].filter((w) => forVehicle(w, tank.vehicle.id)).filter((w) =>
+        f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= g.costOf(w) : f === 'NXi' ? makerOf(w) === 'NXi' : f === 'hybrid' ? w.hybrid : f === 'Sengoku' ? makerOf(w).includes('Sengoku') : w.kind === f);
       if (f === 'aa') { // air-defence mounts: their own slots
         const freeSlot = aaSlotFor(tank);
         $('shop-grid').innerHTML = AA_WEAPONS.map((a) => {
@@ -476,7 +477,7 @@ const UI = {
       } else $('shop-grid').innerHTML = list.map((w) => {
         const r = RARITY[w.rarity];
         const owned = tank.weapons.includes(w.id);
-        const afford = tank.money >= w.cost;
+        const cost = g.costOf(w), afford = tank.money >= cost;
         const can = !owned && !full && afford;
         const maker = makerOf(w);
         const nxi = maker === 'NXi';
@@ -485,8 +486,8 @@ const UI = {
           <h4 style="color:${r.ui}">${esc(w.name)}</h4>
           <p title="${esc(w.long)}">${esc(w.short)}</p>
           <div class="stats">${this.weaponStats(w)}</div>
-          <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(w.cost)}</span>
-          <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : full ? 'Slots full' : afford ? 'Buy' : 'Short ' + money(w.cost - tank.money)}</button></div></div></div>`;
+          <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(cost)}</span>
+          <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : full ? 'Slots full' : afford ? (w.starter ? 'Buy back' : 'Buy') : 'Short ' + money(cost - tank.money)}</button></div></div></div>`;
       }).join('') || '<div class="none">Nothing here. Try another filter.</div>';
       $('shop-count').textContent = `${tank.weapons.length}/4`;
       $('shop-note').textContent = BALANCE === 'rebalanced'
