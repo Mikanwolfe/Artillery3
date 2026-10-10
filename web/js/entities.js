@@ -596,7 +596,9 @@ class Projectile {
       if (!t.alive || t === this.owner || !(t.isPlane || (t.isMob && t.flying))) continue;
       if (t.isPlane && t.owner === this.owner) continue;
       if (this.owner && this.owner.isMob && t.isMob) continue;
-      const R = (flak ? clamp(this.w.dmgR * 0.4, 20, 48) : 10) + (t.hw || 16) * 0.5;
+      // flak bursts well short of a plane (the bigger the gun, the further), so its fragments
+      // fan out over the whole squadron; short of a drone, closer in
+      const R = (flak ? (t.isPlane ? clamp(this.w.dmgR * 0.9, 40, 120) : clamp(this.w.dmgR * 0.4, 20, 48)) : 10) + (t.hw || 16) * 0.5;
       const c = t.center(), fx = this.x - c.x, fy = this.y - c.y;
       // first s in [0, 1] with |p + s d - c| = R
       const b = fx * dx + fy * dy, cc = fx * fx + fy * fy - R * R;

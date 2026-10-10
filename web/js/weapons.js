@@ -444,7 +444,7 @@ const BARRIER_BLOCK = 0.8; // share of blast damage a Bulwark Barrier stops from
 const BARRIER_COS = Math.cos(Math.PI * 0.3); // it covers +-54 degrees around its direction
 
 const WEAPON_BY_ID = Object.fromEntries(ALL_WEAPONS.map((w) => [w.id, w]));
-const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
+const MAX_WEAPONS = 3; // (A3 Character._weaponCapacity was 4)
 // final weapons (w.sig) are only for their own girl
 function forVehicle(w, vid) { return !w.sig || w.sig === vid; }
 
