@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['a2410d6', 'The Mothership Shirayuki is now an automated destroyer with five flak mounts on its deck and an escort of support drones, and shots no longer pass through its upper half. Shells that come close to a flying hostile burst by it (a near miss does less than a direct hit). Explosions no longer go silent partway through a game. Everyone has two AA slots, November three.'],
   ['01526a3', 'A drone’s discharge field only zaps planes making an attack run: a squad hovering over its mark between turns, or flying in or home, is left alone.'],
   ['c2429ae', 'Seeker rockets locked on a drone or plane burst as they pass it instead of turning back up and hanging under it. Each fighter takes one aircraft a pass (its squadmates pick others), has 20% less health and goes after aircraft from 30% less far. Every drone’s discharge field now reaches further, hits harder, and arcs back at the fighter attacking it.'],
   ['aac3ec2', 'Jumps (W) land softly now, like leaps: no fall damage however far down. Ground knocked out from under you still hurts.'],
