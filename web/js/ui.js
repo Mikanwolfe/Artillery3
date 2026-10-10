@@ -425,11 +425,13 @@ const UI = {
     $('re-title').innerHTML = winner
       ? `<span style="color:${winner.color}">${esc(winner.name)}</span> wins the round`
       : 'Mutual destruction';
-    $('re-award').innerHTML = `Everyone is paid <b>${money(award)}</b> for this round.`;
+    $('re-award').innerHTML = `Everyone is paid <b>${money(award)}</b>, plus their own damage to rivals and a bonus for the last two standing.`;
     $('re-table').className = 'data';
-    $('re-table').innerHTML = '<tr><th>Player</th><th>Character</th><th>Damage</th><th>Wins</th><th>Money</th></tr>' + tanks.map((t) =>
-      `<tr class="${t === winner ? 'win' : ''}"><td><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</td>
-       <td>${esc(t.vehicle.name)}</td><td>${Math.round(t.roundDealt)}</td><td>${t.wins}</td><td>${money(t.money)}</td></tr>`).join('');
+    $('re-table').innerHTML = '<tr><th>Player</th><th>Character</th><th>Damage</th><th>Pay</th><th>Wins</th><th>Money</th></tr>' + tanks.map((t) => {
+      const P = t.roundPayParts || { own: 0, bonus: 0 };
+      return `<tr class="${t === winner ? 'win' : ''}"><td><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</td>
+       <td>${esc(t.vehicle.name)}</td><td>${Math.round(t.roundDealt)}</td><td title="base ${money(award)} · own damage ${money(P.own)} · placement ${money(P.bonus)}">${money(t.roundPay || award)}</td><td>${t.wins}</td><td>${money(t.money)}</td></tr>`;
+    }).join('');
     $('re-quips').innerHTML = '';
     $('re-next').textContent = last ? 'Final results ▸' : 'To the shop ▸';
     $('re-end').hidden = last;

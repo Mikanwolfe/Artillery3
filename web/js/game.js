@@ -60,7 +60,11 @@ const SLIDE_TALUS = 0.9;
 const SLIDE_RATE = 0.25;
 const SLIDE_FRAMES = 75;
 // Bounties: a kill pays the killer KILL_BOUNTY at once, plus the bounty on the match leader
-const KILL_BOUNTY = 250;
+const KILL_BOUNTY = 250; // and a quarter of the victim's max health and armour on top (killPay)
+const KILL_SHARE = 1; // (all of the victim's max health and armour, on top of KILL_BOUNTY)
+// the round's pay: the flat ROUND_BASE (+ROUND_STEP a round), then each player's own damage to rivals
+// at PAY_OWN, everyone a PAY_SHARED cut of the round's total, and the last two standing a placement bonus
+const PAY_OWN = 2.5, PAY_SHARED = 0.25, PLACE_PAY = 600, PLACE_STEP = 150;
 const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
 const STARTER_SELL = 250; // what her starting gun or mount fetches if she sells it
 const AA_SHARE_BURNED = 0.4; // ... once planes have killed it
@@ -75,7 +79,8 @@ const HIT_TIERS = [
   { tag: 'DIRECT HIT', color: '#fff27a' },
 ];
 const HIT_POPUP_LIFE = 4; // seconds a damage popup stays up (more for a good hit and its chips); further hits add to it
-const LEADER_BOUNTY = 400; // per round-win of lead over the runner-up
+const LEADER_BOUNTY = 600; // per round-win of lead over the runner-up
+const WEALTH_BOUNTY = 0.3; // and on anyone this share of her worth over the table's average, paid out of her own purse when she falls
 // A3 wind is 0..0.5 px/frame^2; scaled down so it nudges rather than dominates
 
 // Proportional-control camera: every frame it closes 1/CAM_EASE of the distance to its target.
@@ -443,6 +448,8 @@ class Game {
     this.setupHazards();
     this.turnCount = 0;
     this.roundDamage = 0;
+    this.deathOrder = [];
+    this.resetZone();
     // A3 cycles players in order; the starting player rotates each round
     this.saveMatch('round');
     this.order = this.tanks.map((_, i) => (i + this.round - 1) % this.tanks.length);
@@ -471,7 +478,8 @@ class Game {
   placeTanks() {
     const n = this.tanks.length;
     const slot = (WORLD_W - 200) / n;
-    const xs = this.tanks.map((_, i) => 100 + slot * (i + 0.5) + rng.range(-slot * 0.25, slot * 0.25));
+    const jit = 0.25 / Math.max(1, this.round); // (later rounds start them further apart: each nearer the middle of its own stretch)
+    const xs = this.tanks.map((_, i) => 100 + slot * (i + 0.5) + rng.range(-slot * jit, slot * jit));
     rng.shuffle(xs);
     this.tanks.forEach((t, i) => {
       this.terrain.flatten(xs[i], 14);
@@ -493,6 +501,7 @@ class Game {
   }
 
   nextTurn() {
+    this.zoneStrike(this.active); // her turn is over: the fleet fires if she ended it on its marks (zone.js)
     const alive = this.tanks.filter((t) => t.alive);
     if (alive.length <= 1) { this.endRound(); return; }
     if (this.hazardStep()) return; // drones' bombing run / rising fog, once per cycle
@@ -504,6 +513,7 @@ class Game {
     this.sfx.newTurn();
     this.turnSerial++;
     this.turnCount++;
+    if (this.turnCount % alive.length === 0) this.zoneCycle(this.turnCount / alive.length); // (once a cycle: the fleet marks more ground)
     const windChanged = this.turnCount > 1 && this.turnCount % 12 === 0;
     if (windChanged) {
       this.setWind();
@@ -1229,6 +1239,7 @@ class Game {
     if (h.shield) chips.push(['DEFLECTOR ½', '#96d2ff']);
     if (h.capped) chips.push(['REDUNDANCY CAP', '#c3b0ff']);
     if (h.flak) chips.push(['FLAK ×2', '#78d8c4']);
+    if (h.zone) chips.push(['HATSUYUKI FLEET', '#ff6070']);
     if (h.shieldHit) chips.push(['SHIELDING', '#9ae0ff']);
     if (h.aa) chips.push(['AA', '#e8d8a0']);
     if (h.pd) chips.push(['POINT DEFENCE', '#9ae0ff']);
@@ -1413,6 +1424,7 @@ class Game {
     t.alive = false;
     t.speech = null;
     if (this.report) this.report.kills.push({ victim: t, killer: owner && owner !== t ? owner : null });
+    if (!t.isMob && !t.dummy) (this.deathOrder || (this.deathOrder = [])).push(t); // (for placement pay)
     this.particles.explosion(t.x, t.y - 8, 160, 'shell');
     this.sfx.explosion(55);
     this.sfx.die();
@@ -1420,7 +1432,8 @@ class Game {
     if (owner && owner !== t) {
       owner.stats.kills++;
       this.events.push(`${owner.name} destroyed ${t.name}!`);
-      const pay = KILL_BOUNTY + (t.bounty || 0);
+      const pay = KILL_BOUNTY + Math.round(KILL_SHARE * (t.maxHp + t.maxArmour)) + (t.bounty || 0); // (a tougher girl pays more)
+      if (t.bountyWealth) { const fee = Math.min(t.money, t.bountyWealth); t.money -= fee; t.bountyWealth = 0; if (fee) this.events.push(`${t.name} pays ¢${fee} of the bounty on her out of her own purse.`); } // (a rich girl's price, paid by her)
       owner.money += pay;
       this.particles.text(t.x, t.y - 90, `+¢${pay}`, '#ffd84a', true);
       if (t.bounty) {
@@ -1528,10 +1541,20 @@ class Game {
     // counted raw damage, so overkill and acid floods inflated it; we count only damage that came
     // off a target (acid drip at ACID_PAY_RATE), and so count it in full to keep the same pace.
     // a flat ROUND_BASE that grows by ROUND_STEP each round, so progression keeps pace over a run
-    const award = Math.round(ROUND_BASE + ROUND_STEP * (this.round - 1) + this.roundDamage * this.awardMult);
-    this.lastAward = award;
+    // each player: the flat base and a share of the round's damage, plus her own damage to rivals and
+    // a placement bonus for the last two standing (the battle royale pays the fighters)
+    const award = Math.round(ROUND_BASE + ROUND_STEP * (this.round - 1) + this.roundDamage * this.awardMult * PAY_SHARED);
+    const place = PLACE_PAY + PLACE_STEP * (this.round - 1);
+    const second = (this.deathOrder || []).slice(-1)[0];
+    for (const t of this.tanks) {
+      const own = Math.round((t.roundDealt || 0) * this.awardMult * PAY_OWN);
+      const bonus = t === winner ? place : t === second ? Math.round(place / 2) : 0;
+      t.roundPay = award + own + bonus;
+      t.roundPayParts = { award, own, bonus };
+      t.money += t.roundPay;
+    }
+    this.lastAward = Math.round(this.tanks.reduce((s, t) => s + t.roundPay, 0) / this.tanks.length); // (what a CPU plans its savings around)
     this.awardMult += 0.08;
-    for (const t of this.tanks) t.money += award;
     const last = this.isLastRound();
     if (last) this.clearSave();
     else this.saveMatch('shop');
@@ -1655,7 +1678,33 @@ class Game {
   // on its best one (selling the weakest when all four slots are full), and save up rather than
   // settle when something much stronger is within one more round's pay (Easy doesn't plan ahead and
   // sometimes buys at random); then abilities, then Health++ / Armour++ with what's left.
+  // a CPU's strategy for the coming round, from the field it faces (see CPU_STRATEGIES): each one
+  // scores from what its rivals carry and fly (and what it carries itself); Hard takes the best,
+  // Normal usually does, Easy goes with its gut more often than not
+  pickStrategy(t) {
+    const rivals = this.tanks.filter((x) => x !== t && x.alive !== false);
+    const guns = rivals.flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
+    const mine = t.weapons.map((id) => WEAPON_BY_ID[id]);
+    const rivalAA = rivals.reduce((s, x) => s + (x.aa || []).filter((id) => AA_BY_ID[id] && AA_BY_ID[id].role === 'air').reduce((a, id) => a + aaPower(AA_BY_ID[id]), 0), 0) / Math.max(1, rivals.length);
+    const big = guns.filter((w) => !w.air && weaponValue(w) > 2500).length;
+    const score = {
+      antiair: guns.filter((w) => w.air).length * 2 + rivals.filter((x) => hasTrait(x, 'flightdeck')).length * 3 + (t.airDowned ? 3 : 0),
+      pointdef: guns.filter((w) => w.kind === 'rocket' || w.carpet).length * 1.5 + rivals.filter((x) => hasTrait(x, 'firecontrol')).length * 2,
+      airpower: (hasTrait(t, 'flightdeck') ? 4 : 0) + mine.filter((w) => w.air).length * 2 - rivalAA / 40,
+      fortress: big * 1.5 + (t.hp < t.maxHp * 0.5 ? 1 : 0),
+      hunter: this.events_on ? 0.5 + this.round * 0.3 + (this.mobs || []).filter((m) => m.alive).length * 0.3 : 0,
+      balanced: 2.5,
+    };
+    const ranked = Object.entries(score).sort((a, b) => b[1] - a[1]);
+    const gut = t.type === 'easy' ? 0.6 : t.type === 'normal' ? 0.25 : 0;
+    const pick = rng.chance(gut) ? rng.pick(ranked.slice(0, 3))[0] : ranked[0][0];
+    if (pick !== t.strategy) this.events.push(`${t.name} goes for ${CPU_STRATEGIES[pick].name}.`);
+    return pick;
+  }
+
   autoBuy(t) {
+    t.strategy = this.pickStrategy(t);
+    const S = CPU_STRATEGIES[t.strategy];
     const kitsWanted = REPAIR_MAX;
     while (t.kits < kitsWanted && t.money >= REPAIR_COST * 2) { t.money -= REPAIR_COST; t.kits++; }
     // a flight deck once it flies planes (VTOL squads rearm longer): the more of its rack is planes,
@@ -1663,7 +1712,7 @@ class Game {
     const planes = t.weapons.filter((id) => WEAPON_BY_ID[id].air).length;
     if (planes && !hasTrait(t, 'flightdeck') && !t.upgrades.deck && (t.type !== 'easy' || planes >= 2)) {
       const u = VEHICLE_UPGRADES.find((x) => x.id === 'deck');
-      const need = planes >= 2 ? 1 : 1.3; // (cash in hand over its price)
+      const need = planes >= 2 || S.deck ? 1 : 1.3; // (cash in hand over its price)
       if (t.money >= u.costs[0] * need) { t.money -= u.costs[0]; t.upgrades.deck = 1; }
     }
     const horizon = (this.lastAward || 500) * (t.type === 'hard' ? 2 : 1); // how far ahead it saves
@@ -1692,8 +1741,9 @@ class Game {
     {
       const rivals = this.tanks.filter((x) => x !== t && x.alive !== false).flatMap((x) => x.weapons.map((id) => WEAPON_BY_ID[id]));
       const threat = { air: rivals.filter((w) => w.air).length * 2 + (this.round >= 2 ? 1 : 0), missile: rivals.filter((w) => w.kind === 'rocket' || w.carpet).length * 1.5 };
+      if (S.role) threat[S.role] += 100; // (its strategy says which comes first)
       const roles = ['air', 'missile'].filter((r) => threat[r] > 0).sort((a, b) => threat[b] - threat[a]);
-      const share = t.money * (t.type === 'hard' ? 0.6 : t.type === 'normal' ? 0.5 : 0.3);
+      const share = t.money * Math.min(0.8, (t.type === 'hard' ? 0.6 : t.type === 'normal' ? 0.5 : 0.3) * S.aa);
       let spent = 0;
       for (const role of roles) {
         const fit = t.aa.findIndex((id) => !id || AA_BY_ID[id].role === role), slot = fit >= 0 ? fit : aaSlotFor(t, role);
@@ -1705,6 +1755,11 @@ class Game {
         t.money += refund; t.money -= pick.cost; spent += pick.cost - refund;
         t.aa[slot] = pick.id;
       }
+    }
+    if (S.armour) for (let n = 0; n < S.armour; n++) { // (a fortress: health and armour levels before guns)
+      const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour', cost = this.upgradeCost(t, stat);
+      if (t.upgrades[stat] >= 2 || t.money < cost * 1.6) break;
+      t.money -= cost; t.upgrades[stat]++;
     }
     const worth = (w) => cpuValue(w, t); // (her own line counts for more, lasers for less)
     for (let n = 0; n < 4; n++) {
@@ -1743,6 +1798,7 @@ class Game {
     }
     // abilities: Hard keeps a Double Shot and a Deflector, Normal a Double Shot, Easy now and then
     const wants = t.type === 'hard' ? ['double', 'shield'] : t.type === 'normal' ? ['double'] : rng.chance(0.4) ? [rng.pick(['double', 'shield'])] : [];
+    if (S.armour && !wants.includes('shield')) wants.unshift('shield'); // (a fortress wants its Deflector)
     if (this.isLate() && t.type !== 'easy') wants.unshift('barrier'); // late game: a barrier first
     for (const id of wants) {
       const ab = ABILITIES.find((a) => a.id === id);
@@ -1800,13 +1856,21 @@ class Game {
   }
 
   // The match leader (sole most round wins) carries a bounty for whoever destroys them.
+  // bounties for the round: on the leader in wins, LEADER_BOUNTY a round-win of lead; and on anyone
+  // much richer than the table (cash and half what her guns cost), WEALTH_BOUNTY of the difference,
+  // which comes out of her own purse when she is killed (so a fat lead is a fat target)
   updateBounties() {
-    for (const t of this.tanks) t.bounty = 0;
+    const worth = (t) => t.money + t.weapons.reduce((s, id) => s + (WEAPON_BY_ID[id].starter ? 0 : WEAPON_BY_ID[id].cost * 0.5), 0);
+    const avg = this.tanks.reduce((s, t) => s + worth(t), 0) / Math.max(1, this.tanks.length);
+    for (const t of this.tanks) {
+      t.bountyWealth = this.round > 1 ? Math.round((Math.max(0, worth(t) - avg) * WEALTH_BOUNTY) / 50) * 50 : 0;
+      t.bounty = t.bountyWealth;
+    }
     const st = this.tanks.slice().sort((a, b) => b.wins - a.wins);
-    if (st.length > 1 && st[0].wins > st[1].wins) {
-      st[0].bounty = LEADER_BOUNTY * (st[0].wins - st[1].wins);
-      this.events.push(`There is a ¢${st[0].bounty} bounty on ${st[0].name}.`);
-      if (this.round > 1) this.ui.notice(`Bounty: ¢${st[0].bounty} on ${st[0].name}.`);
+    if (st.length > 1 && st[0].wins > st[1].wins) st[0].bounty += LEADER_BOUNTY * (st[0].wins - st[1].wins);
+    for (const t of this.tanks.filter((x) => x.bounty > 0).sort((a, b) => b.bounty - a.bounty)) {
+      this.events.push(`There is a ¢${t.bounty} bounty on ${t.name}.`);
+      if (this.round > 1) this.ui.notice(`Bounty: ¢${t.bounty} on ${t.name}.`);
     }
   }
 

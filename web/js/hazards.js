@@ -404,6 +404,7 @@ Object.assign(Game.prototype, {
   },
 
   drawHazardsFront(ctx, cam) {
+    this.drawZone(ctx); // (the Hatsuyuki fleet's target area, zone.js)
     for (const m of this.mobs) m.draw(ctx);
     if (this.chainBolts) {
       for (const b of this.chainBolts) { this.drawBolt(ctx, b, 5); b.life--; }

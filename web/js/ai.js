@@ -193,7 +193,7 @@ class CpuController {
         const k = Math.min(m.shots, LEARN.length - 1);
         const wf = 1 + m.werr * LEARN[k] / LEARN[0]; // the wind as it judges it, closer each shot
         const s = yield* solveShotGen(g, t, w, e, { x: g.wind.x * wf, y: g.wind.y * wf }, LOB_TRUST[k]);
-        let score = s.score - (e.isSat ? 0 : (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1) - (e.bounty || 0) * BOUNTY_PULL;
+        let score = s.score - (e.isSat ? 0 : (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1) - (e.bounty || 0) * BOUNTY_PULL * (t.strategy === 'hunter' ? 2.5 : 1); // (a bounty hunter goes for them)
         if (e.isSat) score += SAT_DISLIKE - sat.health * 60;
         if (e === grudge) score -= RETALIATE[t.type] || RETALIATE.normal;
         if (!e.isMob && !e.isSat) score += CROWD * crowd(e);
@@ -249,6 +249,15 @@ class CpuController {
             this.state = 'move';
             return;
           }
+        }
+        // on the Hatsuyuki fleet's marks: drive for clear ground before anything else (zone.js)
+        if (!this.moved && this.game.zoneMarked(t.x) && t.fuel > 10) {
+          const z = this.game.zone, to = t.x < z.tl ? z.tl + 60 : z.tr - 60;
+          this.moved = true;
+          this.moveDir = to > t.x ? 1 : -1;
+          this.moveFrames = Math.ceil(Math.abs(to - t.x) / TANK_SPEED) + 6;
+          this.state = 'move';
+          return;
         }
         // a landed crate within driving range: go and get it first
         if (!this.moved && t.fuel > 30) {

@@ -182,6 +182,7 @@ Object.assign(Game.prototype, {
     if (!this.terrain.height || !this.biome) this.newEnvironment();
     this.projectiles = []; this.drops = []; this.lasers = []; this.traces = []; this.crates = []; this.flyovers = []; this.cinematic = 0; this.slides = []; this.planes = []; this.airGroups = []; this.aaRounds = []; this.strikeResolve = false;
     this.salvo = this.satSeq = this.satTarget = null;
+    this.zone = null;
     this.particles.clear();
     this.setupHazards();
     this.terrain.forts = [];
