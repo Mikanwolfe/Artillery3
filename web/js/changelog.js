@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['c2429ae', 'Seeker rockets locked on a drone or plane burst as they pass it instead of turning back up and hanging under it. Each fighter takes one aircraft a pass (its squadmates pick others), has 20% less health and goes after aircraft from 30% less far. Every drone’s discharge field now reaches further, hits harder, and arcs back at the fighter attacking it.'],
   ['aac3ec2', 'Jumps (W) land softly now, like leaps: no fall damage however far down. Ground knocked out from under you still hurts.'],
   ['d581142', 'The Hatsuyuki fleet’s ships are proper destroyers now (raked bow, turrets, conning tower) and their bomb bays drop bombs on the marked ground. A starting gun you sold is back in the shop to buy back. Object 15X’s designator homes less hard. CPUs think about a third as long.'],
   ['c43ea29', 'New icon: G.W. Tiger, head and shoulders.'],
