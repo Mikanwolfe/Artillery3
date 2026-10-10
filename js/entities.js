@@ -1,0 +1,1146 @@
+'use strict';
+// Game objects. Everything is drawn as plain axis-aligned boxes (no rotation): a vehicle is a pixel
+// turret girl with her rigging and a barrel of squares, the MAIA satellite is built from squares, and
+// a laser is a line of squares. Tanks hold per-player state (money, wins, weapons, upgrades).
+
+const TANK_W = 34; // hitbox / footprint (world units)
+// girls.js draws the turret girls 64-72 tall; in the world they're scaled down to about the size
+// the original vehicles were (34 x 20), so the map keeps its sense of scale
+const GIRL_SCALE = 0.6;
+const TANK_H = 34; // hitbox height: her body and rigging at GIRL_SCALE
+const LABEL_LIFT = 38; // HUD labels sit this much lower than they did over full-size girls
+const TANK_FUEL = 250; // A3 Character._maxFuel (frames of movement)
+const TANK_SPEED = 2; // A3 Constants.PlayerSpeed was 1.5; quicker, so there's time to reach cover
+const TANK_CLIMB = 3.2; // steepest slope (dy/dx) a vehicle can drive up
+// jump (W): a hop in the facing direction for a share of the tank's full fuel; clears ridges and
+// lands on fort tops
+const JUMP_FUEL = 0.3;
+const JUMP_VY = -12; // up to about 120 units high: enough to top a fort from the ground beside it
+const JUMP_VX = 3.2; // and about 100 along
+// leap (L): a long bound across the map for most of a tank, landing without fall damage
+const LEAP_FUEL = 0.9;
+const LEAP_VY = -19; // about 300 up
+const LEAP_VX = 11; // and about 700 along on the flat
+
+// Vehicle upgrades beyond A3's Health++ / Armour++ (which use Game.upgradeCost's curve). Each level
+// is bought in turn from `costs`.
+const VEHICLE_UPGRADES = [
+  { id: 'engine', name: 'Engine & tracks', costs: [900, 1800, 3200], desc: '+40% fuel and steeper climbs per level.' },
+  { id: 'computer', name: 'Ballistic computer', costs: [2800], desc: 'The aim guide and target marker account for wind, and the guide arc runs further.' },
+  { id: 'workshop', name: 'Field workshop', costs: [1200, 2400, 4200], desc: 'Repairs 5% of max armour per level at the start of each of your turns.' },
+  // planes.js: without a deck, planes take off straight up on their lift fans and rearm longer (vtolRearm)
+  { id: 'deck', name: 'Flight deck', costs: [3000], desc: 'Your planes launch off a deck, not straight up: their squads rearm 1 turn sooner (2 from Epic up). It is heavy: 40% less fuel, and no Leap.', notFor: 'flightdeck' },
+];
+const DECK_FUEL = 0.6; // fuel left to a girl carrying a flight deck
+const PLAYER_COLORS = ['#3d6fa8', '#b8433a', '#3e8a5a', '#7a4d9a'];
+
+// Vehicles are drawn as turret girls (girls.js) carrying their weapon's skin (weaponskins.js).
+
+// average slope of the ground under a vehicle's footprint (dy/dx), used to tilt it
+function groundSlope(terrain, x) {
+  return clamp((terrain.hAt(x + 18) - terrain.hAt(x - 18)) / 36, -1.2, 1.2);
+}
+
+class Tank {
+  constructor(idx, cfg) {
+    this.idx = idx;
+    this.name = cfg.name;
+    this.type = cfg.type; // 'human' | 'easy' | 'normal' | 'hard'
+    this.vehicle = VEHICLES.find((v) => v.id === cfg.vehicle) || VEHICLES[0];
+    this.color = PLAYER_COLORS[idx % PLAYER_COLORS.length];
+    this.money = 0;
+    this.wins = 0;
+    this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0, deck: 0 };
+    this.weapons = [this.vehicle.weapon, ...(this.vehicle.extra || [])].map((w) => w.id);
+    this.kits = 0; // repair kits carried (consumable)
+    // air-defence mounts (aa.js): a slot each (Zuihou two), the vehicle's own mount in the first
+    this.aa = Array.from({ length: aaSlots(this) }, (_, i) => (this.vehicle.aa || [])[i] || null);
+    this.abilities = { double: 0, over: 0, shield: 0, barrier: 0 }; // 1 = owned (see ABILITIES)
+    this.lastAttacker = null; // CPUs go after whoever last hurt them
+    this.weaponIdx = 0;
+    this.stats = { dealt: 0, kills: 0 };
+    this.lastCharge = 0;
+    this.lastTrail = null;
+    this.speech = null;
+    this.pose = 'idle';
+    this.poseT = 0;
+    this.resetRound(WORLD_W / 2);
+  }
+
+  get isCpu() { return this.type !== 'human'; }
+  // A3 shop: Health++ / Armour++ multiply by 1.3 per level
+  get maxHp() { return Math.round(this.vehicle.hp * Math.pow(1.3, this.upgrades.hp)); }
+  // a heal: health first, then armour with what's left over; returns how much it restored
+  heal(amt) {
+    const hp = Math.min(this.maxHp - this.hp, Math.max(0, amt));
+    this.hp += hp;
+    const ar = Math.max(0, Math.min(this.maxArmour - this.armour, amt - hp));
+    this.armour += ar;
+    return Math.round(hp + ar);
+  }
+
+  get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)); }
+  get maxFuel() { return Math.round(TANK_FUEL * (this.vehicle.fuel || 1) * (1 + 0.4 * this.upgrades.engine) * (this.upgrades.deck ? DECK_FUEL : 1)); }
+  get climb() { return TANK_CLIMB + 0.5 * this.upgrades.engine; }
+  get weapon() { return WEAPON_BY_ID[this.weapons[this.weaponIdx]] || WEAPON_BY_ID[this.weapons[0]]; }
+  // full-charge muzzle speed for the next shot (Overcharge raises it)
+  // owned and recharged
+  abilityReady(id) { return this.abilities[id] > 0 && !(this.cooldown[id] > 0); }
+  // reloads (rebalanced): own turns until a gun can fire again; 0 = ready
+  reloadLeft(id) { return this.reload[id] | 0; }
+  // planes: while one of its squads can still take a dot this turn (planes.js)
+  weaponReady(id = this.weapon.id) {
+    const w = WEAPON_BY_ID[id];
+    if (w.air) return this.squadsFree(w) > 0;
+    return !(this.reload[id] > 0);
+  }
+  // a plane weapon's squads: a fixed set of air.squads, each on her deck, out (its group in the
+  // sky, planes.js: G.squad), flying home with its loadout spent, or rearming (turns: own turns
+  // left). They are the weapon's autoloader
+  // rounds: each dot takes one (tasked) until her next turn, so one squad is one zone.
+  wing(w) {
+    return this.wings[w.id] || (this.wings[w.id] = Array.from({ length: w.air.squads || 1 }, (_, i) => ({ i, state: 'deck', turns: 0, tasked: false, orders: 0 })));
+  }
+  // squads that can still take a dot this turn: on deck, or out and not given one yet
+  squadsFree(w) { return this.wing(w).filter((q) => !q.tasked && (q.state === 'deck' || q.state === 'out')).length; }
+  shotsFor(w) { return w.air ? this.squadsFree(w) : w.clip; }
+  chargeCap() { return this.weapon.maxCharge * (this.armed.over ? OVERCHARGE : 1); }
+
+  resetRound(x, terrain) {
+    this.x = x;
+    this.drone = null;
+    this.graceUsed = false;
+    this.y = terrain ? terrain.hAt(x) : 1000;
+    this.vy = 0;
+    this.alive = true;
+    this.hp = this.maxHp;
+    this.armour = this.maxArmour;
+    this.fuel = this.maxFuel;
+    this.facing = x < WORLD_W / 2 ? 1 : -1;
+    this.weaponIdx = Math.min(this.weaponIdx, this.weapons.length - 1);
+    this.elev = (this.weapon.elevMin + this.weapon.elevMax) / 2;
+    this.charge = 0;
+    this.recoil = 0;
+    this.flash = 0;
+    this.tilt = terrain ? groundSlope(terrain, x) : 0;
+    this.falling = false;
+    this.jvx = 0; // sideways speed during a jump
+    this.fallFrom = 0;
+    this.pose = 'idle';
+    this.armed = { double: false, over: false };
+    this.mark = null; // target marker (humans): the HUD shows the power needed to land on it
+    this.aimMemo = null; // CPUs: ranging-in memory per target (ai.js)
+    this.cooldown = { double: 0, over: 0, shield: 0, barrier: 0 }; // own turns until each ability is ready again
+    this.reload = {}; // weapon id -> own turns until it can fire again (every gun starts the round loaded)
+    this.wings = {}; // plane weapon id -> its squads (wing())
+    this.turnsTaken = 0; // own turns this round (a squad strikes on a later one)
+    this.aaGuns = null;
+    this.barrier = null; // Bulwark Barrier direction (unit vector), until the next turn
+    this.shield = false;
+    this.shotsLeft = 0;
+    this.roundDealt = 0;
+    this.speech = null;
+  }
+
+  clampElev() {
+    const w = this.weapon;
+    this.elev = clamp(this.elev, w.elevMin, w.elevMax);
+  }
+
+  // next loaded gun in that direction (reloading ones are skipped)
+  cycleWeapon(dir) {
+    const n = this.weapons.length;
+    for (let k = 1; k <= n; k++) {
+      const i = (this.weaponIdx + dir * k + n * k) % n;
+      if (this.weaponReady(this.weapons[i])) { this.selectWeapon(i); return true; }
+    }
+    return false;
+  }
+
+  selectWeapon(i) {
+    if (!this.weapons[i] || !this.weaponReady(this.weapons[i])) return false;
+    this.weaponIdx = i;
+    this.charge = 0;
+    this.shotsLeft = this.shotsFor(this.weapon);
+    this.clampElev();
+    return true;
+  }
+
+  // start of an own turn: count reloads down; if the gun in hand is still reloading, take the
+  // best loaded one (the starter never reloads, but a sold starter or an old save might leave none)
+  tickReloads() {
+    for (const id in this.reload) if (this.reload[id] > 0) this.reload[id]--;
+    for (const id in this.wings) for (const q of this.wings[id]) { // squads: a new turn's orders; rearmed ones back on deck
+      q.tasked = false;
+      if (q.state === 'rearm' && --q.turns <= 0) q.state = 'deck';
+    }
+    // (planes never skip their rearming: a carrier with nothing else may have a turn with nothing to fly)
+    const guns = this.weapons.filter((id) => !WEAPON_BY_ID[id].air);
+    if (!this.weapons.some((id) => this.weaponReady(id)) && guns.length) {
+      const soonest = guns.slice().sort((a, b) => this.reloadLeft(a) - this.reloadLeft(b))[0];
+      this.reload[soonest] = 0;
+    }
+    if (!this.weaponReady()) {
+      const ready = this.weapons.map((id, i) => [WEAPON_BY_ID[id], i]).filter(([w]) => this.weaponReady(w.id));
+      if (!ready.length) return;
+      ready.sort((a, b) => weaponValue(b[0]) - weaponValue(a[0]));
+      this.weaponIdx = ready[0][1];
+      this.clampElev();
+    }
+  }
+
+  // girls.js poses: 'fire' and 'hit' play once, 'win' loops
+  setPose(pose) { if (this.pose !== 'win' || pose === 'idle') { this.pose = pose; this.poseT = 0; } }
+
+  say(text, secs, delay = 0) {
+    this.speech = { text, age: -delay, dur: secs || Math.max(3.2, 1.6 + text.length * 0.055) };
+  }
+
+  center() { return { x: this.x, y: this.y - TANK_H / 2 }; }
+  // the gun is mounted at the back of the superstructure (these are SPGs, not tanks)
+  // (vehicles sit on slopes by shearing their boxes vertically, so the mount moves with the tilt)
+  // (the girls stand upright on slopes, so the mount doesn't shift with the tilt; the hull angle
+  // still pitches the elevation range, see aimVec)
+  pivot(facing = this.facing) {
+    const a = GIRL_ART[this.vehicle.id] || GIRL_ART.gwt;
+    return { x: this.x + facing * a.pivot[0] * GIRL_SCALE, y: this.y + a.pivot[1] * GIRL_SCALE };
+  }
+
+  // hull pitch in degrees for the given facing (+ = nose up), from the ground-slope tilt
+  hullAngle(facing = this.facing) {
+    return deg(Math.atan(-(this.tilt || 0) * facing));
+  }
+
+  // A3 measured elevation from the hull, not from level ground (Weapon._relativeAngle), so on a
+  // slope the whole elevation range pitches with the vehicle
+  aimVec(elev = this.elev, facing = this.facing) {
+    const e = rad(elev + this.hullAngle(facing));
+    return { x: facing * Math.cos(e), y: -Math.sin(e) };
+  }
+
+  muzzle(elev = this.elev, facing = this.facing) {
+    const p = this.pivot(facing);
+    const v = this.aimVec(elev, facing);
+    const len = gunLength(this.weapon) * GIRL_SCALE;
+    return { x: p.x + v.x * len, y: p.y + v.y * len };
+  }
+
+  update(dt) {
+    this.blink = (this.blink || 0) + dt;
+    this.recoil = Math.max(0, this.recoil - dt * 2.5);
+    if (this.aaKick) for (let i = 0; i < this.aaKick.length; i++) this.aaKick[i] = Math.max(0, (this.aaKick[i] || 0) - dt * 5);
+    this.walking = Math.max(0, (this.walking || 0) - 1);
+    this.poseT = (this.poseT || 0) + dt;
+    this.barrierHit = Math.max(0, (this.barrierHit || 0) - dt * 3);
+    this.flash = Math.max(0, this.flash - dt * 4);
+    if (this.speech) {
+      this.speech.age += dt;
+      if (this.speech.age > this.speech.dur) this.speech = null;
+    }
+  }
+
+  // world space. Box helper takes facing-right local coords (lx = left edge, ty = top edge
+  // relative to the ground point) and mirrors them when the vehicle faces left. Boxes never
+  // rotate: to sit on a slope each box is shifted vertically by tilt * its offset from centre.
+  draw(ctx, active) {
+    if (this.dummy) { this.drawDummy(ctx); return; }
+    const f = this.facing;
+    const x = Math.round(this.x);
+    const y = Math.round(this.y);
+    const state = !this.alive ? 'wreck' : this.hp < this.maxHp * 0.5 ? 'damaged' : 'ok';
+    const o = { id: this.vehicle.id, x, y, facing: f, color: this.color, state, t: this.blink || 0, walking: this.walking > 0, flash: this.flash, pose: this.pose || 'idle', poseT: this.poseT || 0 };
+    // a turret girl (girls.js) with her rigging; the gun is the equipped weapon's skin (weaponskins.js)
+    // drawn at full size in girls.js units, scaled down about her feet
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(GIRL_SCALE, GIRL_SCALE);
+    ctx.translate(-x, -y);
+    drawGirl(ctx, o);
+    if (this.alive) {
+      const a = GIRL_ART[this.vehicle.id] || GIRL_ART.gwt;
+      const off = girlPivotOffset(o); // the victory hop lifts her rigging
+      drawGun(ctx, this.weapon, { x: x + (a.pivot[0] + off[0]) * f, y: y + a.pivot[1] + off[1] }, this.aimVec(), f, this.recoil, shade(this.color, -0.5), this.blink || 0, active ? this.charge / this.chargeCap() : 0);
+      drawGirlMount(ctx, o);
+      drawAAMounts(ctx, this, x + (a.pivot[0] + off[0]) * f, y + a.pivot[1] + off[1], f); // (her air defence, on her back)
+    }
+    ctx.restore();
+    if (!this.alive) return;
+    if (this.barrier) {
+      // Bulwark Barrier: an arc of plates on the side it faces, pulsing; brighter when it just blocked
+      const b = this.barrier;
+      const base = Math.atan2(b.y, b.x);
+      const pulse = 0.55 + 0.25 * Math.sin((this.blink || 0) * 4) + (this.barrierHit || 0) * 0.4;
+      for (let i = -6; i <= 6; i++) {
+        const a = base + (i / 6) * Math.PI * 0.3;
+        ctx.fillStyle = i % 2 ? `rgba(120,230,210,${pulse})` : `rgba(255,214,120,${pulse})`;
+        sq(ctx, x + Math.cos(a) * 36, y - 18 + Math.sin(a) * 36, 5);
+      }
+    }
+    if (this.shield) {
+      // Deflector: a ring of pale squares around the hull, pulsing
+      const a = 0.45 + 0.2 * Math.sin((this.blink || 0) * 5);
+      ctx.fillStyle = `rgba(150,210,255,${a})`;
+      for (let i = 0; i < 20; i++) {
+        const t = (i / 20) * TAU;
+        sq(ctx, x + Math.cos(t) * 30, y - 19 + Math.sin(t) * 28, 4);
+      }
+    }
+    if (active) {
+      // A3 sight: green marks at the elevation limits
+      ctx.fillStyle = '#2e8b57';
+      const p = this.pivot();
+      for (const e of [this.weapon.elevMin, this.weapon.elevMax]) {
+        const u = this.aimVec(e);
+        for (let d = 26; d <= 40; d += 7) sq(ctx, p.x + u.x * d, p.y + u.y * d, 3);
+      }
+    }
+  }
+
+  // the Codex's training dummy: a post with a bullseye board, that shakes when hit
+  drawDummy(ctx) {
+    const x = Math.round(this.x + (this.flash > 0 ? (Math.random() - 0.5) * 4 * this.flash : 0));
+    const y = Math.round(this.y);
+    ctx.fillStyle = '#6a4a32';
+    ctx.fillRect(x - 2, y - 30, 5, 30);
+    ctx.fillRect(x - 9, y - 3, 19, 3);
+    const rings = [['#f4f0e6', 15], ['#c8433a', 12], ['#f4f0e6', 8], ['#c8433a', 4]];
+    for (const [c, r] of rings) { ctx.fillStyle = c; ctx.fillRect(x - r, y - 34 - r, r * 2, r * 2); }
+    if (this.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.6})`; ctx.fillRect(x - 15, y - 49, 30, 30); }
+  }
+
+  // screen space (1600x900 HUD units); sx, sy = ground point on screen
+  // under her feet (fy: the screen y of her feet), so nothing sits over where she aims: armour and
+  // health bars, then her name, then (her turn) the gun in hand by its short name
+  drawLabel(ctx, sx, fy, active) {
+    if (!this.alive) return;
+    if (this.dummy) {
+      ctx.textAlign = 'center';
+      ctx.font = `13px ${HUD_FONT}`;
+      plateText(ctx, 'TRAINING DUMMY', Math.round(sx), Math.round(fy + 22), HUD.dim, 'center');
+      return;
+    }
+    // one bar: health, with the armour laid over it (armour goes first, uncovering the health under
+    // it), and one number, armour and health together, in armour's colour while there is any
+    const bw = 100, iw = bw - 12;
+    const by = Math.round(fy + 6);
+    ctx.fillStyle = HUD.plate;
+    ctx.fillRect(Math.round(sx - bw / 2), by, bw, 17);
+    ctx.fillStyle = HUD.line;
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 6, iw, 5);
+    ctx.fillStyle = HUD.cool;
+    ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 6, Math.round(iw * clamp(this.hp / this.maxHp, 0, 1)), 5);
+    if (this.armour > 0) {
+      ctx.fillStyle = HUD.accent;
+      ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 6, Math.round(iw * clamp(this.armour / this.maxArmour, 0, 1)), 5);
+      if (this.armour > this.maxArmour) { ctx.fillStyle = HUD.bright; ctx.fillRect(Math.round(sx - bw / 2 + 6), by + 4, Math.round(iw * clamp(this.armour / this.maxArmour - 1, 0, 1)), 1); } // (plating over the top)
+    }
+    ctx.font = `13px ${HUD_FONT}`;
+    plateText(ctx, Math.ceil(this.armour + this.hp), Math.round(sx + bw / 2 + 2), by + 13, this.armour > 0 ? HUD.accent : HUD.cool, 'left');
+    ctx.textAlign = 'center';
+    ctx.font = `13px ${HUD_FONT}`;
+    const title = this.name;
+    const tw = ctx.measureText(title).width + 20;
+    const ty = by + 21;
+    ctx.fillStyle = HUD.plate;
+    ctx.fillRect(Math.round(sx - tw / 2), ty, Math.round(tw), 19);
+    if (active) {
+      ctx.fillStyle = this.color;
+      ctx.fillRect(Math.round(sx - tw / 2), ty, 4, 19);
+    }
+    ctx.fillStyle = active ? HUD.bright : HUD.dim;
+    ctx.fillText(title, Math.round(sx), ty + 14);
+    // a CPU's grudge: a square in the colour of whoever it is out for
+    if (this.isCpu && this.lastAttacker && this.lastAttacker.alive) {
+      ctx.fillStyle = this.lastAttacker.color;
+      ctx.fillRect(Math.round(sx + tw / 2 + 4), ty + 4, 11, 11);
+    }
+    // bounty on the match leader
+    if (this.bounty > 0) {
+      ctx.fillStyle = HUD.gold;
+      ctx.fillRect(Math.round(sx - tw / 2 - 52), ty, 48, 19);
+      ctx.fillStyle = HUD.plateInk;
+      ctx.font = `12px ${HUD_FONT}`;
+      ctx.fillText(`¢${this.bounty}`, Math.round(sx - tw / 2 - 28), ty + 14);
+      ctx.font = `13px ${HUD_FONT}`;
+    }
+    if (active) {
+      const w = this.weapon, nm = shortName(w);
+      ctx.font = `13px ${HUD_FONT}`;
+      ctx.textAlign = 'center';
+      const ww = ctx.measureText(nm).width + 16;
+      const wy = ty + 23;
+      // A3 badge: rarity + type letters in a square outlined in the rarity colour
+      const bx = Math.round(sx - (ww + 24) / 2);
+      const rc = RARITY[w.rarity].ui;
+      ctx.fillStyle = HUD.plate;
+      ctx.fillRect(bx, wy, 22, 20);
+      ctx.fillRect(bx + 24, wy, Math.round(ww), 20);
+      ctx.fillStyle = rc;
+      ctx.fillRect(bx, wy, 22, 1); ctx.fillRect(bx, wy + 19, 22, 1); ctx.fillRect(bx, wy, 1, 20); ctx.fillRect(bx + 21, wy, 1, 20);
+      ctx.font = `11px ${HUD_FONT}`;
+      ctx.fillText(badgeText(w), bx + 11, wy + 14);
+      ctx.font = `13px ${HUD_FONT}`;
+      ctx.fillText(nm, Math.round(bx + 24 + ww / 2), wy + 14);
+      // autoloader rounds left this turn; planes: one pip a squad (filled: can take a dot this turn,
+      // her colour: out on an earlier one, dark: rearming or spent this turn)
+      if (w.air) {
+        const sq = this.wing(w), n = sq.length;
+        sq.forEach((q, i) => {
+          const x = Math.round(sx - (n * 10) / 2 + i * 10);
+          ctx.fillStyle = q.state === 'deck' && !q.tasked ? HUD.accent : q.state === 'out' ? this.color : HUD.plate;
+          ctx.fillRect(x, wy + 24, 7, 7);
+          if (q.state === 'out' && !q.tasked) { ctx.fillStyle = HUD.accent; ctx.fillRect(x + 2, wy + 26, 3, 3); }
+        });
+      } else for (let i = 0; i < w.clip; i++) {
+        ctx.fillStyle = i < this.shotsLeft ? HUD.accent : HUD.plate;
+        ctx.fillRect(Math.round(sx - (w.clip * 10) / 2 + i * 10), wy + 24, 7, 7);
+      }
+    }
+  }
+
+  drawSpeech(ctx, sx, sy) {
+    const s = this.speech;
+    if (!s || !this.alive || s.age < 0) return;
+    ctx.font = `13px ${HUD_FONT}`;
+    const maxW = 260;
+    const words = s.text.split(/\s+/);
+    const lines = [];
+    let cur = '';
+    for (const w of words) {
+      const test = cur ? cur + ' ' + w : w;
+      if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test;
+    }
+    if (cur) lines.push(cur);
+    const lh = 19;
+    const bw = Math.round(Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width))) + 20);
+    const bh = lines.length * lh + 10;
+    const bx = Math.round(clamp(sx - bw / 2, 8, VIEW_W - bw - 8));
+    const by = Math.round(sy - 140 + LABEL_LIFT - bh);
+    ctx.globalAlpha = clamp((s.dur - s.age) * 3, 0, 1);
+    ctx.fillStyle = HUD.plate;
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = this.color;
+    ctx.fillRect(bx, by, 5, bh);
+    sq(ctx, sx, by + bh + 5, 8);
+    ctx.fillStyle = HUD.fg;
+    ctx.textAlign = 'center';
+    lines.forEach((l, i) => ctx.fillText(l, bx + 3 + bw / 2, by + 6 + lh * (i + 0.75)));
+    ctx.globalAlpha = 1;
+  }
+}
+
+function shade(hex, k) {
+  const c = hexToRgb(hex);
+  return k >= 0 ? rgb(mixRgb(c, [255, 255, 255], k)) : rgb(mixRgb(c, [0, 0, 0], -k));
+}
+
+const SHELL_EDGE = 'rgba(18,14,26,0.9)';
+
+class Projectile {
+  constructor(game, w, owner, x, y, vx, vy, main) {
+    this.game = game;
+    this.w = w;
+    this.owner = owner;
+    this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+    this.drift = w.drift === undefined ? 1 : w.drift; // how hard the wind pushes it (weapon stat)
+    this.pierce = w.pierce || 0; // the Zero Point railgun: how much ground and cover it can go through
+    this.age = 0;
+    this.main = main;
+    this.trail = [];
+    this.peak = y; // highest point reached (smallest y), for the altitude bonus
+    this.guide = guideFor(w, owner); // rockets: seeker settings (null for shells)
+    if (this.guide) {
+      this.wseed = rng.int(0, 1e9); // its own fin quirks (see finFor)
+      // and its seeker's error: it homes on a point up to SEEKER_SPREAD x its spread off the target
+      this.aimOff = (rng.next() * 2 - 1) * spreadOf(w, owner) * SEEKER_SPREAD;
+    }
+    this.prefer = preferFor(owner);
+  }
+
+  update() {
+    const g = this.game;
+    if (this.dead) return false; // shot down by a point-defence mount (aa.js)
+    if (this.aaHit && this.age % 3 === 0) this.game.particles.add({ x: this.x, y: this.y, vx: 0, vy: -0.3, g: 0, drag: 0.95, life: 0.8, size: 4 + Math.random() * 3, color: [70, 66, 72] }); // hit by point defence: it smokes
+    if (this.delay > 0) { this.delay--; return true; } // waiting its turn in a burst
+    if (this.w.lance && this.lanceStep(g)) { this.age++; return true; }
+    // proximity fuse against aircraft: flak and rockets go off short of a drone or plane they are
+    // about to pass (or hit), not on it, so the blast and the fragments catch it
+    if ((this.w.kind === 'flak' || this.w.airburst || this.w.kind === 'rocket') && this.age >= 6 && !this.w.bomblet && this.airFuse(g)) { g.impact(this, { hit: 'air' }); return false; }
+    const r = stepBallistic(this, g.terrain, g.wind, g.targets(), this.owner, this.guide ? g.seekables() : undefined);
+    g.frontCheck(this);
+    if (!r && this.transform(g)) return false;
+    if (!r && (this.w.kind === 'flak' || this.w.airburst) && this.fuse(g)) { g.impact(this, { hit: 'air' }); return false; }
+    if (this.y < this.peak) this.peak = this.y;
+    g.trace(this, this.x, this.y);
+    // soot flecks shed in flight: they fall away behind the shell and fade
+    if (this.age % 3 === 0) {
+      const dark = Math.random() < 0.5;
+      g.particles.add({
+        x: this.x, y: this.y, vx: this.vx * 0.15 + (Math.random() - 0.5), vy: this.vy * 0.15 + Math.random() * 0.5,
+        g: 0.12, drag: 0.97, life: 0.5 + Math.random() * 0.6, size: 2 + Math.random() * 3,
+        color: dark ? [58, 44, 34] : [110, 78, 52],
+      });
+    }
+    if (this.age % 2 === 0) {
+      this.trail.push(this.x, this.y);
+      if (this.trail.length > 24) this.trail.splice(0, 2);
+    }
+    if (!r) return true;
+    // a carpet rocket that hits something mid-drop throws out the rest of its bomblets
+    if (this.dropped && this.dropped < this.w.carpet.n) for (let i = this.dropped; i < this.w.carpet.n; i++) this.dropBomblet(g, i, 4);
+    if (r.hit !== 'out') g.impact(this, r);
+    return false;
+  }
+
+  // rockets that change in flight: a carpet rocket opens over its target (or once its motor is out
+  // and it starts to fall) into a line of bomblets; a split rocket breaks into seekers that each
+  // go for the nearest target. Returns true when this projectile has been replaced.
+  transform(g) {
+    const w = this.w;
+    // timed: so a rocket has to be lobbed long or high enough to open over its target; one that
+    // hits first does only half damage (see Game.bodyFactor)
+    // a carpet rocket starts dropping its bomblets at carpet.at, one every carpet.every frames as it
+    // flies on, and is spent with the last. Each bomblet steers for the nearest target in reach: let
+    // go high, they have time to all bend onto one; let go low, they land along the rocket's path.
+    if (w.carpet && this.age >= w.carpet.at) {
+      const c = w.carpet;
+      const i = (this.age - c.at) / c.every;
+      if (i % 1) return false;
+      this.dropBomblet(g, i, 0);
+      g.particles.puff(this.x, this.y + 4, [200, 200, 205]);
+      g.sfx.click();
+      if (i < c.n - 1) return false;
+      g.particles.explosion(this.x, this.y, 20, 'shell'); // spent
+      return true;
+    }
+    if (w.split && this.age === w.split.at) {
+      const sp = w.split;
+      const child = { ...w, split: null, dmg: w.dmg * (sp.boost || 1), guide: { ...w.guide, seek: 0 } }; // the children seek at once, and still dive on the nearest past their apex
+      const speed = Math.hypot(this.vx, this.vy);
+      const a0 = Math.atan2(this.vy, this.vx);
+      for (let i = 0; i < sp.n; i++) {
+        const a = a0 + rad((i - (sp.n - 1) / 2) * sp.spread);
+        const c = new Projectile(g, child, this.owner, this.x, this.y, Math.cos(a) * speed, Math.sin(a) * speed, this.main && i === 0);
+        c.age = this.age;
+        c.peak = this.peak;
+        c.launch = this.launch;
+        g.projectiles.push(c);
+      }
+      g.particles.explosion(this.x, this.y, 24, 'shell');
+      return true;
+    }
+    return false;
+  }
+
+  dropBomblet(g, i, scatter) {
+    const w = this.w, c = w.carpet;
+    const bomb = { id: w.id + '_b', name: 'Bomblet', kind: 'shell', dmg: w.dmg * c.frac, dmgR: c.r, explR: 4, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false,
+      rarity: w.rarity, maxCharge: 10, bomblet: true, drift: BOMBLET_DRIFT, guide: BOMBLET_GUIDE };
+    const b = new Projectile(g, bomb, this.owner, this.x - this.vx, this.y - this.vy - 4,
+      this.vx * 0.5 + (rng.next() - 0.5) * (1 + scatter), Math.min(Math.max(this.vy, 0) * 0.5 + 1, 6) - scatter * rng.next(), this.main && i === 0);
+    b.peak = this.peak;
+    b.launch = this.launch;
+    b.prefer = this.prefer;
+    g.projectiles.push(b);
+    this.dropped = i + 1;
+  }
+
+  // the Demigod: at lance.at it stops dead and hovers, picks the nearest target in any direction
+  // (rivals first), then charges it in a straight line at lance.speed with no gravity or wind.
+  // Returns true while it is hovering (it doesn't move).
+  lanceStep(g) {
+    const L = this.w.lance;
+    if (this.hover > 0) {
+      this.hover--;
+      if (this.hover === 0) {
+        const lock = this.lance;
+        const q = lock && lock.alive ? seekCenter(lock) : { x: this.x + Math.sign(this.vx || 1) * 100, y: this.y + 100 };
+        const d = Math.hypot(q.x - this.x, q.y - this.y) || 1;
+        this.vx = ((q.x - this.x) / d) * L.speed;
+        this.vy = ((q.y - this.y) / d) * L.speed;
+        this.charging = true;
+        g.sfx.laser();
+      }
+      return true;
+    }
+    if (!this.charging && this.age === L.at) {
+      this.hover = L.hover;
+      this.guide = null;
+      this.noGrav = true;
+      this.drift = 0;
+      const seek = g.seekables();
+      let best = null, bd = L.range, rival = null, rd = L.range;
+      for (const c of seek) {
+        if (!c.alive || c === this.owner) continue;
+        const q = seekCenter(c);
+        const d = Math.hypot(q.x - this.x, q.y - this.y);
+        if (d < bd) { bd = d; best = c; }
+        if (c.vehicle && !c.isMob && d < rd) { rd = d; rival = c; }
+      }
+      this.lance = rival || best;
+      this.vx = this.vy = 0;
+      g.particles.explosion(this.x, this.y, 20, 'laser');
+      return true;
+    }
+    return false;
+  }
+
+  // the look-ahead fuse: will this frame's flight carry it within its burst distance of an
+  // aircraft? If so, move it to where it first gets that close and report the aircraft
+  airFuse(g) {
+    const flak = this.w.kind === 'flak' || this.w.airburst;
+    const ex = this.x + this.vx, ey = this.y + this.vy + GRAV;
+    const dx = ex - this.x, dy = ey - this.y, L2 = dx * dx + dy * dy || 1;
+    for (const t of g.targets()) {
+      if (!t.alive || t === this.owner || !(t.isPlane || (t.isMob && t.flying))) continue;
+      if (t.isPlane && t.owner === this.owner) continue;
+      if (this.owner && this.owner.isMob && t.isMob) continue;
+      const R = (flak ? clamp(this.w.dmgR * 0.4, 20, 48) : 10) + (t.hw || 16) * 0.5;
+      const c = t.center(), fx = this.x - c.x, fy = this.y - c.y;
+      // first s in [0, 1] with |p + s d - c| = R
+      const b = fx * dx + fy * dy, cc = fx * fx + fy * fy - R * R;
+      if (cc <= 0) { this.fuseTarget = t; return true; } // already inside
+      const disc = b * b - L2 * cc;
+      if (disc < 0) continue;
+      const s = (-b - Math.sqrt(disc)) / L2;
+      if (s < 0 || s > 1) continue;
+      this.x += dx * s; this.y += dy * s;
+      this.fuseTarget = t;
+      return true;
+    }
+    return false;
+  }
+
+  // flak proximity fuse: bursts near a mob or an enemy vehicle, or just above the ground on the way down
+  fuse(g) {
+    if (this.age < 10) return false;
+    const r = 30 + this.w.dmgR * 0.25;
+    for (const t of g.targets()) {
+      if (!t.alive || t === this.owner) continue;
+      const c = t.center();
+      if (t.isPlane || (t.isMob && t.flying)) continue; // (aircraft: the look-ahead fuse, airFuse)
+      if (dist(c.x, c.y, this.x, this.y) < (t.isMob ? r + t.hw * 0.5 : r * 0.6)) return true;
+    }
+    return this.vy > 0 && this.y > g.terrain.hAt(this.x) - 60;
+  }
+
+  draw(ctx) {
+    if (this.delay > 0) return;
+    if (this.w.tower) { this.game.drawTowerFall(ctx, this, (this.game.terrain.material || MATERIALS.steel).pole); return; }
+    const sk = shellSkin(this.w);
+    const col = sk.body;
+    for (let i = 0; i < this.trail.length; i += 2) {
+      const a = (i + 2) / this.trail.length;
+      ctx.fillStyle = rgb([200, 200, 214], a * 0.6);
+      sq(ctx, this.trail[i], this.trail[i + 1], 2 + a * 5);
+    }
+    // a shell is a body square with a lighter nose square pointing the way it flies
+    const sp = Math.hypot(this.vx, this.vy) || 1;
+    const nx = this.vx / sp;
+    const ny = this.vy / sp;
+    if (this.w.lance && (this.hover > 0 || this.charging)) {
+      // the Demigod: hovering, a lance of light gathers (pointing at its target); charging, it is a
+      // white spear with a long fading tail
+      const L = this.w.lance;
+      const lock = this.lance && this.lance.alive ? seekCenter(this.lance) : null;
+      const dir = this.charging ? { x: this.vx / L.speed, y: this.vy / L.speed } : lock ? (() => { const d = Math.hypot(lock.x - this.x, lock.y - this.y) || 1; return { x: (lock.x - this.x) / d, y: (lock.y - this.y) / d }; })() : { x: 0, y: 1 };
+      const grow = this.charging ? 1 : 1 - this.hover / L.hover;
+      for (let k = -4; k <= 6; k++) {
+        ctx.fillStyle = k > 3 ? '#ffffff' : `rgba(255,240,200,${0.5 + 0.08 * k})`;
+        sq(ctx, this.x + dir.x * k * 5 * grow, this.y + dir.y * k * 5 * grow, k > 3 ? 7 : 5);
+      }
+      if (this.charging) for (let k = 1; k <= 10; k++) {
+        ctx.fillStyle = `rgba(255,230,160,${0.6 - k * 0.055})`;
+        sq(ctx, this.x - dir.x * k * 9, this.y - dir.y * k * 9, 6 - k * 0.4);
+      } else if (this.age % 4 < 2) {
+        ctx.fillStyle = 'rgba(255,250,220,0.5)';
+        sq(ctx, this.x, this.y, 18 + 10 * grow);
+      }
+      return;
+    }
+    if (this.w.kind === 'rocket') {
+      // a rocket: a longer body (three squares) and, while the motor burns, a flickering flame
+      const G = this.guide;
+      const burning = G && this.age <= G.arm + G.burn;
+      if (burning) {
+        for (let k = 0; k < 3; k++) {
+          ctx.fillStyle = k ? `rgba(255,${140 + k * 40},60,${0.8 - k * 0.2})` : 'rgba(255,250,200,0.95)';
+          sq(ctx, this.x - nx * (sk.size * 1.6 + k * 4) + (Math.random() - 0.5) * 2, this.y - ny * (sk.size * 1.6 + k * 4) + (Math.random() - 0.5) * 2, sk.size * (0.8 - k * 0.15) + Math.random() * 2);
+        }
+      }
+      ctx.fillStyle = SHELL_EDGE; // (a dark outline, so bright rounds read against any sky)
+      for (const d of [-sk.size * 0.9, 0]) sq(ctx, this.x + nx * d, this.y + ny * d, sk.size * 0.8 + 2);
+      sq(ctx, this.x + nx * (sk.size * 0.8), this.y + ny * (sk.size * 0.8), Math.max(2, sk.size * 0.55) + 2);
+      ctx.fillStyle = rgb(col);
+      for (const d of [-sk.size * 0.9, 0]) sq(ctx, this.x + nx * d, this.y + ny * d, sk.size * 0.8);
+      ctx.fillStyle = rgb(sk.nose);
+      sq(ctx, this.x + nx * (sk.size * 0.8), this.y + ny * (sk.size * 0.8), Math.max(2, sk.size * 0.55));
+      if (this.lock && burning && this.age % 10 < 5) { // a blinking seeker light when locked
+        ctx.fillStyle = '#ff4a4a';
+        sq(ctx, this.x, this.y, 2);
+      }
+      return;
+    }
+    ctx.fillStyle = SHELL_EDGE; // (a dark outline, so bright rounds read against any sky)
+    sq(ctx, this.x - nx * 3, this.y - ny * 3, sk.size + 2);
+    sq(ctx, this.x + nx * (sk.size / 2 + 1), this.y + ny * (sk.size / 2 + 1), Math.max(2, sk.size * 0.6) + 2);
+    ctx.fillStyle = rgb(col);
+    sq(ctx, this.x - nx * 3, this.y - ny * 3, sk.size);
+    ctx.fillStyle = rgb(sk.nose);
+    sq(ctx, this.x + nx * (sk.size / 2 + 1), this.y + ny * (sk.size / 2 + 1), Math.max(2, sk.size * 0.6));
+  }
+}
+
+class AcidDrop {
+  constructor(game, owner, x, y, vx, vy, dmg, fire = false) {
+    this.game = game;
+    this.owner = owner;
+    this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+    this.dmg = dmg;
+    // acid is orange, yellow and green; fire (incendiary fragments) is red, orange and white-hot
+    this.color = (fire ? [[255, 90, 30], [255, 170, 40], [255, 236, 170]] : [[255, 165, 0], [240, 220, 40], [60, 160, 50]])[Math.floor(Math.random() * 3)];
+    this.size = 5 + rng.next() * 5;
+    this.stuck = false;
+    this.life = 90 + Math.floor(rng.next() * 90);
+    this.tick = 0;
+  }
+
+  update() {
+    const g = this.game;
+    this.tick++;
+    if (!this.stuck) {
+      this.vy += 0.3;
+      this.vx += g.wind.x;
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x < -50 || this.x > WORLD_W + 50 || this.y > WORLD_BOTTOM) return false;
+      for (const t of g.tanks) {
+        if (t.alive && Math.abs(this.x - t.x) < TANK_W / 2 + 3 && this.y > t.y - TANK_H - 3 && this.y < t.y + 3) {
+          g.damage(t, this.dmg * 6, this.owner, true);
+          return false;
+        }
+      }
+      if (this.x >= 0 && this.x < WORLD_W && this.y >= g.terrain.hAt(this.x)) {
+        this.stuck = true;
+        g.terrain.erode(this.x, 2);
+      }
+      return true;
+    }
+    this.y = g.terrain.hAt(this.x);
+    if (this.tick % 6 === 0) g.terrain.erode(this.x, 0.4);
+    for (const t of g.tanks) {
+      if (t.alive && Math.abs(this.x - t.x) < TANK_W / 2 + 4 && Math.abs(this.y - t.y) < 10) g.damage(t, this.dmg * 0.15, this.owner, true);
+    }
+    return --this.life > 0;
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = rgb(this.color, this.stuck ? clamp(this.life / 40, 0, 1) : 1);
+    sq(ctx, this.x, this.y - (this.stuck ? this.size / 2 : 0), this.size);
+  }
+}
+
+// A line of squares from (x0,y0) to (x1,y1) that fades out (A3 Laser).
+class Laser {
+  constructor(x0, y0, x1, y1, color, width = 14, life = 70) {
+    Object.assign(this, { x0, y0, x1, y1, color: hexToRgb(color), width, life, max: life });
+  }
+
+  update() { return --this.life > 0; }
+
+  draw(ctx) {
+    const t = this.life / this.max;
+    const len = dist(this.x0, this.y0, this.x1, this.y1);
+    const n = Math.max(1, Math.floor(len / 10));
+    ctx.fillStyle = rgb(this.color, 0.55 * t);
+    for (let i = 0; i <= n; i++) sq(ctx, lerp(this.x0, this.x1, i / n), lerp(this.y0, this.y1, i / n), this.width * (0.4 + 0.6 * t));
+    ctx.fillStyle = `rgba(255,255,255,${t})`;
+    for (let i = 0; i <= n; i++) sq(ctx, lerp(this.x0, this.x1, i / n), lerp(this.y0, this.y1, i / n), this.width * 0.3);
+  }
+}
+
+// MAIA-class Low Orbit Ion Cannon. Sits above the map and fires at wherever a satellite-enabled
+// weapon's shell lands. It is upgraded as the match goes on: three tiers spread across the rounds,
+// each hitting harder and wider (and, as in A3, creeping up a little every turn within a round).
+// Box-art but round: a stepped-disc body (the original's nested plum/navy circles), arms that curl
+// around it, and antenna spars flaring out on one side like a wing; each tier adds rings and wing.
+// Every part is placed in the satellite's own frame, so the whole thing turns to face its target;
+// the squares themselves never rotate.
+const SAT_TIERS = [null,
+  { dmg: 91, dmgR: 130, explR: 12 }, // x1.3 of the first rebalance (70 / 120 / 190)
+  { dmg: 156, dmgR: 165, explR: 16 },
+  { dmg: 247, dmgR: 210, explR: 22 },
+];
+const SAT_TURN_GAIN = 0.5; // A3 Constants.SatelliteDamageIncPerTurn
+
+// which tier is active for a given round: thirds of the match (infinite mode, rounds = 0: level 2
+// from round 3, level 3 from round 6)
+function satelliteTier(round, rounds) {
+  if (!rounds) return round >= 6 ? 3 : round >= 3 ? 2 : 1;
+  return clamp(1 + Math.floor(((round - 1) * 3) / Math.max(1, rounds)), 1, 3);
+}
+
+// MAIA's own look, and the variants a sky full of them is drawn from: blends of what the game
+// already has (MAIA's tiers, the CLS-T, Kotona, LFS and NXi drones, Ikaros' halo, the Void's spikes)
+// so a Constellation never reads as one satellite stamped out sixty times.
+const MAIA_BASE = { main: 'rgb(120,32,78)', accent: 'rgb(23,23,47)', light: 'rgb(176,74,128)', gold: 'rgb(232,190,90)', metal: '#9aa0b4',
+  ring: 'rgba(140,50,100,0.8)', feather: 'rgba(62,78,150,0.9)', tip: '#ff8fd0', core: '255,190,230' };
+const MAIA_PALETTES = [
+  MAIA_BASE, MAIA_BASE, MAIA_BASE, // she's still most of them
+  { ...MAIA_BASE, main: 'rgb(84,18,40)', light: 'rgb(200,60,90)', ring: 'rgba(160,40,70,0.8)' }, // crimson
+  { ...MAIA_BASE, main: '#8a6a3a', accent: '#3a2a1a', light: '#c8a058', ring: 'rgba(200,160,88,0.8)', feather: 'rgba(200,160,88,0.9)', tip: '#fff0b0', core: '255,240,176' }, // Kotona bronze
+  { ...MAIA_BASE, main: '#1e2a48', accent: '#0e1426', light: '#2a3a60', gold: '#d8b048', ring: 'rgba(216,176,72,0.8)', feather: 'rgba(80,110,180,0.9)', tip: '#8ad8ff', core: '138,216,255' }, // NXi navy and gold
+  { ...MAIA_BASE, main: '#6a7078', accent: '#2a2e34', light: '#8a9098', ring: 'rgba(138,144,152,0.8)', feather: 'rgba(216,200,160,0.9)', tip: '#9ae8ff', core: '154,232,255' }, // CLS-T grey and tape
+  { ...MAIA_BASE, main: '#2a2050', accent: '#14102a', light: '#5a4a90', ring: 'rgba(90,74,144,0.8)', feather: 'rgba(138,138,168,0.9)', tip: '#bfe8ff', core: '191,232,255' }, // the Void
+  { ...MAIA_BASE, main: '#d8d4e8', accent: '#8a86a0', light: '#ff8ad8', ring: 'rgba(255,138,216,0.7)', feather: 'rgba(255,184,216,0.9)', tip: '#ff6aa8', core: '255,176,240' }, // Neko white and pink
+];
+const MAIA_WINGS = [
+  [[131, 90], [146, 110], [161, 90]],
+  [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]],
+  [[110, 90], [122, 130], [134, 160], [146, 176], [158, 160], [170, 130], [182, 90]],
+  [[140, 150], [160, 150]],
+];
+function makeMaiaVariant(seed) {
+  const h = (k) => hash2(seed * 7 + 3, k * 13 + 1);
+  const pal = MAIA_PALETTES[Math.floor(h(1) * MAIA_PALETTES.length)];
+  return {
+    ...pal,
+    spars: h(2) < 0.25 ? null : MAIA_WINGS[Math.floor(h(3) * MAIA_WINGS.length)], span: 0.8 + h(4) * 0.5, twin: h(5) < 0.45,
+    arms: ['claw', 'stub', 'ring', 'claw'][Math.floor(h(6) * 4)], lenses: h(7) < 0.3 ? 3 : 1, masts: h(8) < 0.35,
+    spikes: h(9) < 0.15, halo: h(10) < 0.12, rotors: h(11) < 0.2, band: h(12) < 0.5,
+  };
+}
+
+class Satellite {
+  constructor() {
+    this.name = 'Maia';
+    this.x = WORLD_W / 2;
+    this.y = -300;
+    this.tier = 1;
+    this.turns = 0;
+    this.angle = Math.PI / 2;
+    this.angleDest = Math.PI / 2;
+    this.charge = 0; // 0..1 while powering up for a strike
+    this.unfold = 0; // 0..1: wings and antenna opened for a Hatsuyuki barrage
+    this.barrage = false;
+    this.t = 0;
+    this.bob = 0;
+    // MAIA can be shot down: its strike damage scales with its health; it heals SAT_HEAL of its max
+    // once a turn cycle, and its max tracks the average toughness of the vehicles left (Game.satTurn)
+    this.isSat = true;
+    this.maxHp = 300;
+    this.hp = 300;
+    this.flash = 0;
+    this.hw = 50; // hitbox for shells: the body (100 x 100), so lobs passing near don't clip it
+    this.hh = 100;
+  }
+
+  get alive() { return this.hp > 0; }
+  get hitY() { return this.y + this.bob + 50; } // bottom of the hitbox (stepBallistic)
+  center() { return this.toWorld(0, 0); }
+  get health() { return clamp(this.hp / this.maxHp, 0, 1); }
+  // where a blast at (px, py) caught it, in its own frame (+x points down the emitter): the core
+  // and the antenna wings at the back take the most, the curled side arms the least
+  region(px, py) {
+    const c = this.center();
+    const dx = px - c.x, dy = py - c.y;
+    const co = Math.cos(this.angle), s = Math.sin(this.angle);
+    const lx = dx * co + dy * s, ly = -dx * s + dy * co;
+    const r = Math.hypot(lx, ly);
+    if (r < 44) return { mult: 1.25, tag: 'CORE' };
+    if (lx < -20 && r < 200) return { mult: 1.0, tag: 'WING' };
+    if (lx > 30 && Math.abs(ly) < 18) return { mult: 0.8, tag: 'EMITTER' };
+    return { mult: 0.5, tag: 'SIDE' };
+  }
+
+  setTier(tier) {
+    this.tier = tier;
+    this.turns = 0;
+  }
+
+  get damage() { return (SAT_TIERS[this.tier].dmg + SAT_TURN_GAIN * this.turns) * this.health; }
+  get dmgR() { return SAT_TIERS[this.tier].dmgR; }
+  get explR() { return SAT_TIERS[this.tier].explR; }
+  get level() { return this.tier; }
+  newTurn() { this.turns++; }
+  lookAt(pt) { this.angleDest = Math.atan2(pt.y - this.y, pt.x - this.x); }
+  update() {
+    this.t++;
+    this.flash = Math.max(0, this.flash - 0.08);
+    this.bob = Math.sin(this.t / 50) * 5;
+    this.unfold = this.barrage ? Math.min(1, this.unfold + 0.025) : Math.max(0, this.unfold - 0.02);
+    // turns toward its target, with a slow idle sway so it never sits perfectly still
+    this.angle += (this.angleDest + 0.07 * Math.sin(this.t / 80) - this.angle) / 20;
+  }
+
+  // local frame -> world: +x is the emitter direction
+  toWorld(lx, ly) {
+    const c = Math.cos(this.angle);
+    const s = Math.sin(this.angle);
+    return { x: this.x + lx * c - ly * s, y: this.y + this.bob + lx * s + ly * c };
+  }
+
+  // emitter tip, where the beam leaves
+  lens() { return this.toWorld(104, 0); }
+
+  draw(ctx) {
+    const tier = this.tier;
+    const V = this.v || MAIA_BASE; // a variant (makeMaiaVariant): palette and parts; MAIA herself by default
+    const main = V.main;
+    const accent = V.accent;
+    const light = V.light;
+    const gold = V.gold;
+    const metal = V.metal;
+    const dot = (lx, ly, size, col) => {
+      const p = this.toWorld(lx, ly);
+      ctx.fillStyle = col;
+      sq(ctx, p.x, p.y, size);
+    };
+    const polar = (r, deg) => [Math.cos(rad(deg)) * r, Math.sin(rad(deg)) * r];
+    const c = this.toWorld(0, 0);
+
+    // orbiting rings (tier II: one; tier III: two, counter-rotating). They spin on their own,
+    // independent of where the satellite is pointing.
+    const ring = (r, n, size, speed, col) => {
+      ctx.fillStyle = col;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * TAU + this.t * speed;
+        sq(ctx, c.x + Math.cos(a) * r, c.y + Math.sin(a) * r * 0.45, i % 3 === 0 ? size + 3 : size);
+      }
+    };
+    if (tier >= 2) ring(150, 26, 6, 0.004, V.ring);
+    if (tier >= 3) ring(185, 34, 5, -0.006, 'rgba(214,160,50,0.9)');
+    if (V.halo) ring(110, 22, 7, 0.01, 'rgba(255,214,90,0.95)'); // a gold halo (after Ikaros' Gloria)
+
+    // wing: antenna spars fanning out from a hub at the back, on one side only
+    const fan = (hub, spars, scale, feathers, tipCol) => {
+      spars.forEach(([deg, len], k) => {
+        const L = len * scale;
+        const [ux, uy] = polar(1, deg);
+        for (let d = 10; d <= L; d += 6) {
+          dot(hub[0] + ux * d, hub[1] + uy * d, 4, metal);
+          if (feathers && d > 24 && d < L * 0.75 && (d / 6) % 2 < 1) dot(hub[0] + ux * d - uy * 6, hub[1] + uy * d + ux * 6, 7, V.feather);
+        }
+        const tipOn = ((this.t >> 4) + k) % spars.length === 0;
+        dot(hub[0] + ux * (L + 6), hub[1] + uy * (L + 6), 7, tipOn ? V.tip : tipCol);
+      });
+      dot(hub[0], hub[1], 12, accent);
+    };
+    // a Hatsuyuki barrage opens everything: the wings spread wider, a mirrored wing unfolds on the
+    // other side and two antenna masts extend from the back
+    const u = this.unfold, grow = 1 + 0.35 * u;
+    const mirror = (spars) => spars.map(([deg, len]) => [-deg, len]);
+    if (V.spars) { // a variant's own wing, mirrored on some
+      fan([-34, 18], V.spars, grow * V.span, true, light);
+      if (V.twin) fan([-34, -18], V.spars.map(([deg, len]) => [-deg, len]), grow * V.span, true, gold);
+    } else {
+      if (tier >= 3) fan([-46, 30], [[122, 120], [137, 150], [152, 170], [167, 150], [182, 116]], grow, true, gold);
+      if (tier === 1) fan([-34, 18], [[131, 90], [146, 110], [161, 90]], grow, u > 0.5, light);
+      else fan([-34, 18], [[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]], grow, true, light);
+    }
+    if (V.masts) for (const side of [-1, 1]) { // antenna masts off the back
+      for (let d = 0; d <= 70; d += 7) dot(-50 - d, side * (30 + d * 0.6), 3, metal);
+      dot(-120, side * 72, 7, (this.t >> 4) % 2 ? V.tip : light);
+    }
+    if (V.spikes) for (const a of [0, 90, 180, 270]) { // tesla spikes (after the NXi Void Between Stars)
+      const [sx, sy] = polar(1, a + 45);
+      for (let d = 50; d <= 92; d += 7) dot(sx * d, sy * d, 4, '#8a8aa8');
+      dot(sx * 98, sy * 98, 8, (this.t >> 2) % 3 ? '#bfe8ff' : '#ffffff');
+    }
+    if (u > 0.02) {
+      fan([-34, -18], mirror([[116, 104], [131, 136], [146, 152], [161, 136], [176, 102]]), u * grow, u > 0.4, gold);
+      for (const side of [-1, 1]) {
+        const L = 110 * u;
+        for (let d = 0; d <= L; d += 7) dot(-40 - d * 0.94, side * (12 + d * 0.34), 4, metal);
+        dot(-40 - L * 0.94, side * (12 + L * 0.34), 9, (this.t >> 3) % 2 ? '#bfe8ff' : '#ffffff');
+      }
+    }
+
+    // arms curling around the body (tier I: short stubs; II: full to claws; III: doubled, gold claws)
+    for (const side of [-1, 1]) {
+      const end = V.arms === 'stub' ? 95 : V.arms === 'ring' ? 10 : tier === 1 ? 95 : 38;
+      for (let deg = 160; deg >= end; deg -= 7.5) {
+        const [ox, oy] = polar(64, deg * side);
+        const [ix, iy] = polar(54, deg * side);
+        dot(ix, iy, 5, accent);
+        dot(ox, oy, 10, main);
+        if (tier >= 3 && deg < 150) {
+          const [qx, qy] = polar(78, deg * side);
+          dot(qx, qy, 6, light);
+        }
+      }
+      if (tier >= 2) {
+        const [cx, cy] = polar(66, 32 * side);
+        const clawCol = tier >= 3 ? gold : light;
+        dot(cx, cy, 14, clawCol);
+        dot(cx + 8, cy + side * -4, 6, clawCol);
+        if ((this.t >> 5) % 2 === (side < 0 ? 0 : 1)) dot(cx, cy, 5, side < 0 ? '#ff4040' : '#40ff80');
+      }
+      if (V.rotors) { // rotor pods on the arms (after the CLS-T drones)
+        const [px, py] = polar(84, 70 * side);
+        dot(px, py, 12, accent);
+        const k = (this.t >> 1) % 2;
+        dot(px + (k ? 9 : -9), py, 6, '#2a2e34');
+      }
+    }
+
+    // round body as stepped discs (unrotated rows of boxes)
+    const disc = (r, col) => {
+      ctx.fillStyle = col;
+      for (let y = -r; y < r; y += 6) {
+        const yy = y + 3;
+        const w = 2 * Math.sqrt(Math.max(0, r * r - yy * yy));
+        ctx.fillRect(Math.round(c.x - w / 2), Math.round(c.y + y), Math.round(w), 6);
+      }
+    };
+    disc(44, main);
+    disc(37, accent);
+    disc(28, main);
+    if (tier >= 3 || V.band) disc(18, light);
+    const pulse = 0.5 + 0.5 * Math.sin(this.t / 12);
+    ctx.fillStyle = `rgba(${V.core},${0.45 + 0.35 * pulse + this.charge * 0.2})`;
+    sq(ctx, c.x, c.y, 14 + this.charge * 16);
+
+    // battle damage: smoke and sparks below half health, a white flash when hit, dark when down
+    if (this.health < 0.5 && this.t % 6 < 3) {
+      ctx.fillStyle = this.alive ? 'rgba(60,50,60,0.7)' : 'rgba(30,26,34,0.85)';
+      for (let i = 0; i < 4; i++) sq(ctx, c.x - 20 + ((this.t * 3 + i * 17) % 40), c.y - 30 - ((this.t + i * 11) % 30), 6 + i);
+      ctx.fillStyle = '#ffb040';
+      sq(ctx, c.x + ((this.t * 7) % 50) - 25, c.y + ((this.t * 5) % 30) - 15, 3);
+    }
+    if (this.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${this.flash * 0.7})`; sq(ctx, c.x, c.y, 90); }
+    // emitter barrel and lens (heavier at higher tiers)
+    for (let i = 0; i < 6; i++) dot(40 + i * 11, 0, 16 - i + (tier - 1) * 2, accent);
+    if (tier >= 2) { dot(60, -10, 5, light); dot(60, 10, 5, light); }
+    dot(104, 0, 12 + (tier - 1) * 3, tier >= 3 ? gold : main);
+    if (V.lenses === 3) for (const s of [-1, 1]) { for (let i = 0; i < 4; i++) dot(44 + i * 10, s * 22, 9 - i, accent); dot(86, s * 22, 9, light); } // a triple emitter
+    // charging: sparks spiral into the lens and the tip whitens
+    if (this.charge > 0) {
+      const l = this.lens();
+      for (let i = 0; i < 10 + tier * 4; i++) {
+        const an = i * 0.63 + this.t * 0.15;
+        const r = 70 * (1 - ((this.charge * 3 + i / 10) % 1));
+        ctx.fillStyle = `rgba(255,240,250,${0.4 + this.charge * 0.6})`;
+        sq(ctx, l.x + Math.cos(an) * r, l.y + Math.sin(an) * r, 5);
+      }
+      ctx.fillStyle = `rgba(255,255,255,${this.charge})`;
+      sq(ctx, l.x, l.y, 6 + this.charge * 16);
+    }
+  }
+}
+
+// Supply drop (A3's design notes listed crates and item drops as entities that never got built).
+// Parachutes in mid-round, drifting with the wind; claimed by driving into it or by catching it in
+// any blast. Contents stay hidden until it is claimed.
+const CRATE_KINDS = [
+  { id: 'repair', w: 3 }, { id: 'cash', w: 3 }, { id: 'armour', w: 2 }, { id: 'uplink', w: 2 },
+];
+
+class Crate {
+  constructor(x, kind, y = -150) {
+    this.x = x;
+    this.y = y;
+    this.kind = kind;
+    this.golden = kind === 'golden';
+    this.landed = false;
+    this.alive = true;
+    this.t = 0;
+  }
+
+  update(game) {
+    this.t++;
+    if (!this.landed) {
+      this.y += this.golden ? 5 : 2.2; // the spy plane's drop comes down fast from a long way up
+      this.x = clamp(this.x + game.wind.x * (this.golden ? 10 : 30), 40, WORLD_W - 40);
+      const gy = game.terrain.hAt(this.x);
+      if (this.y >= gy) {
+        this.y = gy;
+        this.landed = true;
+        game.particles.puff(this.x, this.y);
+      }
+    } else this.y = game.terrain.hAt(this.x);
+  }
+
+  draw(ctx) {
+    const x = Math.round(this.x);
+    const y = Math.round(this.y);
+    if (!this.landed) {
+      // striped canopy as a stepped dome, with rigging lines of squares down to the crate
+      const cy = y - 62;
+      for (let i = -4; i <= 4; i++) {
+        const h = Math.round(Math.sqrt(Math.max(0, 25 - i * i)) * 3.2);
+        ctx.fillStyle = this.golden ? (i % 2 ? '#f2c45a' : '#fff3c4') : i % 2 ? '#d8402c' : '#f4f4f8';
+        ctx.fillRect(x + i * 6 - 3, cy - h, 6, h);
+      }
+      ctx.fillStyle = '#6b6f78';
+      for (const ex of [-27, 0, 27]) {
+        for (let k = 1; k < 6; k++) sq(ctx, lerp(x + ex, x, k / 6), lerp(cy, y - 18, k / 6), 2);
+      }
+    }
+    const [dk, lt] = this.golden ? ['rgb(150,104,24)', 'rgb(242,196,90)'] : ['rgb(96,72,48)', 'rgb(176,136,84)'];
+    ctx.fillStyle = dk;
+    ctx.fillRect(x - 10, y - 18, 20, 18);
+    ctx.fillStyle = lt;
+    ctx.fillRect(x - 8, y - 16, 16, 14);
+    ctx.fillStyle = dk;
+    ctx.fillRect(x - 8, y - 10, 16, 2);
+    ctx.fillRect(x - 1, y - 16, 2, 14);
+    if (this.golden && (this.t >> 3) % 3 === 0) { // a glint
+      ctx.fillStyle = '#ffffff';
+      sq(ctx, x - 5 + ((this.t >> 3) % 6), y - 13, 2);
+    }
+    if (this.landed && (this.t >> 4) % 2 === 0) {
+      ctx.fillStyle = '#ffd84a';
+      sq(ctx, x, y - 22, this.golden ? 6 : 4);
+    }
+  }
+}
+
+// The spy plane (a rare event, Game.spyPlane): a long-winged high-altitude jet that crosses the top of
+// the sky with a contrail and lets a golden crate go over dropX
+class SpyPlane {
+  constructor(x, dir, dropX) {
+    this.x = x;
+    this.y = -720;
+    this.dir = dir;
+    this.dropX = dropX;
+    this.dropped = null;
+    this.alive = true;
+    this.trail = [];
+  }
+
+  update(game) {
+    this.x += this.dir * 9;
+    if ((game.time * 60 | 0) % 3 === 0) this.trail.push({ x: this.x - this.dir * 50, y: this.y + 2, life: 1 });
+    for (const c of this.trail) c.life -= 0.006;
+    this.trail = this.trail.filter((c) => c.life > 0);
+    if (!this.dropped && (this.x - this.dropX) * this.dir >= 0) {
+      this.dropped = new Crate(this.x, 'golden', this.y + 24);
+      game.crates.push(this.dropped);
+      game.cam.follow(this.dropped);
+      game.sfx.click();
+    }
+    if (this.x < -400 || this.x > WORLD_W + 400) this.alive = this.trail.length > 0;
+  }
+
+  draw(ctx) {
+    for (const c of this.trail) { // the contrail
+      ctx.fillStyle = `rgba(255,255,255,${(c.life * 0.55).toFixed(3)})`;
+      sq(ctx, c.x, c.y, 6 + (1 - c.life) * 10);
+    }
+    const x = Math.round(this.x), y = Math.round(this.y), f = this.dir;
+    const S = 1.6; // drawn big: it is a long way up
+    const R = (lx, ty, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x + (f < 0 ? -lx - w : lx) * S), Math.round(y + ty * S), Math.round(w * S), Math.round(h * S)); };
+    R(-48, -4, 96, 8, '#2a2c34'); // fuselage
+    R(40, -3, 14, 5, '#2a2c34'); // nose
+    R(52, -1, 6, 2, '#1a1c22');
+    R(18, -7, 14, 4, '#7ab8d8'); // canopy
+    R(-30, -2, 70, 2, '#3c3e48');
+    R(-16, 2, 40, 3, '#3c3e48'); // the long glider wing, seen edge on
+    R(-70, 1, 54, 2, '#3c3e48');
+    R(24, 1, 46, 2, '#3c3e48');
+    R(-48, -16, 10, 12, '#2a2c34'); // tail fin
+    R(-50, -2, 12, 4, '#1a1c22'); // exhaust
+    if (((this.x | 0) >> 3) % 2) R(-44, -16, 3, 3, '#ff3a3a');
+  }
+}

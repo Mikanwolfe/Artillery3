@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Artillery 3</title>
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#121119">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="rotate">
+  <div class="phone"></div>
+  <p>Turn your phone sideways</p>
+  <button id="rotate-full" hidden>Play fullscreen, landscape</button>
+  <button id="rotate-skip" class="ghost">Play in portrait anyway</button>
+</div>
+<div id="stage">
+  <canvas id="view" width="1024" height="576"></canvas>
+
+  <!-- in-game HUD (the rest is drawn on the canvas, as in the original) -->
+  <div id="hud" hidden>
+    <div id="topleft">
+      <span id="roundinfo" class="chip"></span>
+      <span id="turn" class="chip"></span>
+      <button class="icon" id="btn-mute" title="Mute (M)">♪</button>
+      <button class="icon" id="btn-music" title="Music on/off (N)">♫</button>
+      <button class="icon" id="btn-keys" title="Controls (H)">?</button>
+      <button class="icon" id="btn-pause" title="Pause (Esc)">Ⅱ</button>
+      <button class="icon" id="btn-full" title="Fullscreen" hidden>⛶</button>
+    </div>
+    <div id="chat"></div>
+    <div id="dock">
+      <div id="hints"><span><b>←→</b> move</span><span><b>↑↓</b> aim</span><span><b>Space</b> hold to fire</span><span><b>Enter</b> end turn</span><span><b>H</b> all controls</span></div>
+      <div id="rack"><div id="rack-w" class="rack-group"></div><div id="rack-a" class="rack-group"></div></div>
+    </div>
+    <div id="touch">
+      <div class="pad">
+        <button data-k="up" class="up">▲</button>
+        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
+      </div>
+      <div class="pad r">
+        <button data-menu="1">MENU</button>
+        <button data-k="charge" class="fire">FIRE</button>
+      </div>
+    </div>
+    <div id="banner"></div>
+    <div id="dispatch" hidden><b id="dispatch-title"></b><span id="dispatch-text"></span></div>
+  </div>
+
+  <!-- main menu: a rail on the left, the live map behind it -->
+  <section id="menu" class="screen left">
+    <div class="side">
+      <header class="brand">
+        <h1>Artillery<em>3</em></h1>
+        <p class="by mgh">by mikanwolfe · <a id="version" target="_blank" rel="noopener"></a></p>
+      </header>
+
+      <h2 class="sec">Crew <span class="grip"></span></h2>
+      <div id="players"></div>
+      <button id="add-player" class="ghost">+ add player</button>
+
+      <h2 class="sec">Match <span class="grip"></span></h2>
+      <div class="opts">
+        <span class="mgh">Rounds</span><div class="seg" data-opt="rounds"><button data-v="3">3</button><button data-v="5">5</button><button data-v="7">7</button><button data-v="10">10</button><button data-v="0" title="Endless">∞</button></div>
+        <span class="mgh">Weapons</span><div class="seg" data-opt="balance"><button data-v="rebalanced">Rebalanced</button><button data-v="classic">Classic</button></div>
+        <span class="mgh">Events</span><div class="seg" data-opt="events"><button data-v="on">On</button><button data-v="off">Off</button></div>
+        <span class="mgh">Map</span><div class="seg wrap" data-opt="map"><button data-v="random">Random</button><button data-v="snow">Far Territories</button><button data-v="forest">Forest</button><button data-v="desert">Dunes</button><button data-v="alstroemeria">Warm Meadows</button><button data-v="aesru">AESR-U</button><button data-v="aesrl">AESR-L</button><button data-v="astmg">ASTM-G</button></div>
+      </div>
+
+      <div class="go">
+        <button id="start" class="primary">Start match ▸</button>
+        <button id="load" class="ghost" hidden>Resume</button>
+      </div>
+      <div class="go2"><button id="codex-open" class="ghost">Codex · test range</button><button id="how" class="link">How to play</button></div>
+    </div>
+  </section>
+
+  <!-- the Codex: characters and weapons, with a test range on the terrain to the right -->
+  <section id="codex" class="screen left" hidden>
+    <div class="side codex-side">
+      <div class="phead"><h2>Codex</h2><button id="codex-close" class="ghost">◂ Menu</button></div>
+      <h3 class="sec">Character <span class="grip"></span></h3>
+      <div id="cx-chars"></div>
+      <div id="cx-char" class="cx-card"></div>
+      <h3 class="sec">Weapon <span class="grip"></span></h3>
+      <div class="seg wrap" id="cx-filter"><button data-f="all">All</button><button data-f="shell">Shell</button><button data-f="gun">Gun</button><button data-f="laser">Laser</button><button data-f="acid">Acid</button><button data-f="flak">Flak</button><button data-f="rocket">Rocket</button><button data-f="air">Air</button><button data-f="hybrid">Hybrid</button><button data-f="NXi">NXi</button><button data-f="aa">AA</button></div>
+      <div id="cx-list"></div>
+      <div id="cx-wpn" class="cx-card"></div>
+      <h3 class="sec">Test range <span class="grip"></span></h3>
+      <div class="opts">
+        <span class="mgh">Dummy</span><div class="seg" id="cx-dist"><button data-d="near">Near</button><button data-d="mid">Mid</button><button data-d="far">Far</button></div>
+        <span class="mgh">Wind</span><div class="seg" id="cx-wind"><button data-w="live">Live</button><button data-w="calm">Calm</button></div>
+        <span class="mgh">Ground</span><div><button id="cx-regen" class="ghost">Reset range</button></div>
+      </div>
+      <div id="cx-readout"></div>
+      <p class="mgh cx-hint">Space fire · ←→ move · ↑↓ aim · 1–4 abilities · click to mark · Esc back <button id="cx-reset" class="link">reset tally</button></p>
+    </div>
+  </section>
+
+  <!-- controls and rules (menu link, H in game) -->
+  <section id="help" class="screen" hidden>
+    <div class="panel plate help">
+      <div class="phead"><div class="seg help-tabs"><button data-tab="play" class="on">How to play</button><button data-tab="about">About</button><button data-tab="changes">Changelog</button></div><button id="help-close" class="icon" title="Close (Esc)">✕</button></div>
+      <div class="tab" data-tab="play">
+      <p>Take turns: move, aim, hold <b>Space</b> to charge, release to fire. Last one standing wins the round.</p>
+      <div class="help-cols"><div>
+      <table class="keys">
+        <tr><td>← →</td><td>move (uses fuel)</td></tr>
+        <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
+        <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
+        <tr><td>Q · E</td><td>switch weapon (or tap the rack)</td></tr>
+        <tr><td>S</td><td>drop off a bridge to the ground below</td></tr>
+        <tr><td>R</td><td>repair kit (uses your shot)</td></tr>
+        <tr><td>X</td><td>recall your squads (the selected plane weapon's, else all): home now, loadout unspent</td></tr>
+        <tr><td>W · L</td><td>jump (30% fuel) · leap (90%, soft landing)</td></tr>
+        <tr><td>1 2 3 4</td><td>abilities, once bought</td></tr>
+        <tr><td>Enter</td><td>end turn</td></tr>
+        <tr><td>Click</td><td>mark a target: shows the power needed</td></tr>
+        <tr><td>Drag</td><td>look around</td></tr>
+        <tr><td>Wheel</td><td>zoom in and out</td></tr>
+        <tr><td>M · N · H · Esc</td><td>mute · music · controls · pause</td></tr>
+        <tr><td>Touch</td><td>drag from her to aim · pinch to zoom · MENU to pause</td></tr>
+      </table>
+      <h3 class="sec">Hints</h3>
+      <ul class="hints">
+        <li><b>Flak</b> does ×2 to drones and other hostiles</li>
+        <li>Shoot <b>MAIA</b> down: offline for two full rounds of turns</li>
+        <li>Lob high: a long fall adds up to +50%</li>
+        <li>Armour soaks a whole hit while any is left</li>
+        <li>Bought guns reload: carry several and rotate</li>
+        <li>CPUs go after whoever last hit them</li>
+        <li><b>Planes</b> strike their zone the turn they are called, then hover over it until the next call: shoot them down while they wait</li>
+        <li><b>AA</b> mounts fire on their own: point defence stops rockets, anti-air stops planes</li>
+      </ul>
+      </div><div>
+      <h3 class="sec">Damage numbers</h3>
+      <table class="keys dmg">
+        <tr><td><span style="color:#fff27a">DIRECT HIT</span> · <span style="color:#ff9a4a">SOLID</span> · <span style="color:#ffd8b0">GLANCING</span> · <span style="color:#c8c4d4">GRAZE</span></td><td>how close to the blast's centre</td></tr>
+        <tr><td><span style="color:#f2c45a">ALT +%</span></td><td>fell from high up</td></tr>
+        <tr><td><span style="color:#ff9a5a">KIN +%</span></td><td>fast impact (up to +50%)</td></tr>
+        <tr><td><span style="color:#ffd84a">FRONT</span> · <span style="color:#8ab4ff">RAIN</span></td><td>weather front: harder · damped</td></tr>
+        <tr><td><span style="color:#ff78c8">MAIA</span></td><td>satellite strike</td></tr>
+        <tr><td><span style="color:#78e6d2">BARRIER</span> · <span style="color:#96d2ff">DEFLECTOR</span> · <span style="color:#9ab0c8">SLOPED</span></td><td>damage reduced</td></tr>
+        <tr><td><span style="color:#c8f0a0">green</span></td><td>acid, over time</td></tr>
+      </table>
+      </div></div>
+      </div>
+      <div class="tab" data-tab="about" hidden>
+      <table class="keys">
+        <tr><td>Original</td><td>Artillery 3, C# / SwinGame, mikanwolfe, 2019 · <a href="https://github.com/Mikanwolfe/Artillery3" target="_blank" rel="noopener">GitHub</a></td></tr>
+        <tr><td>This version</td><td>web rewrite by mikanwolfe with Claude (Anthropic), 2026</td></tr>
+      </table>
+      <div class="about">
+        <p>Hello! Thank you for checking out this game, it's pretty strange, isn't it?</p>
+        <p>The original <code>artillery</code> game and subsequently, <code>artillery2</code> was developed for Intro to Programming in Pascal, and was more or less an implementation of midpoint displacement and a Pocket Tanks implementation on top. <code>Artillery3</code> was the Object-Oriented version that introduced a few more game mechanics, which moved it a bit more towards the look and feel of GunBound.</p>
+        <p>Out of personal interest, I had Claude revisit the game to provide a web-playable version as I had lost the original source files. This led me down a rabbit hole of completing the original vision of the game. What you see now is more or less the final form of this game, had it been developed over a much longer time.</p>
+        <p>Without Claude, it wouldn't have been possible to re-imagine this experience. I know AI gets a lot of flak, but it was quite a lot of work. You can hear Claude's opinion of my instructions yourself:</p>
+        <blockquote>Short, visual and blunt: "that character looks like a F117 nighthawk", "the bow is flat so you can straight cut that". A cropped screenshot with one line under it told me more than a page of spec would have. The direction moved a lot, and was usually right to; the price was me redrawing things I'd called finished. "Screw balance" was the clearest brief I got, and the hardest part was taking the jokes seriously enough to build them.<cite>— Claude</cite></blockquote>
+        <p>Thank you for playing and I hope you had fun!</p>
+        <p class="sig">mikanwolfe // nekox.net</p>
+      </div>
+      </div>
+      <div class="tab" data-tab="changes" hidden>
+      <div id="changelog" class="changelog"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- A3 "Select a Character" -->
+  <section id="vehicles" class="screen" hidden>
+    <div class="panel plate wide">
+      <div class="phead"><h2>Select a character</h2><span id="veh-player" class="who"></span><button id="veh-back" class="ghost">◂ Back</button></div>
+      <div id="veh-grid"></div>
+      <p class="mgh foot">Click a card, or press 1–<span id="veh-n">5</span></p>
+    </div>
+  </section>
+
+  <section id="roundend" class="screen" hidden>
+    <div class="panel plate">
+      <p id="re-kicker" class="mgh"></p>
+      <h2 id="re-title" class="big"></h2>
+      <p id="re-award" class="sub"></p>
+      <table id="re-table"></table>
+      <div id="re-quips"></div>
+      <div class="actions"><button id="re-end" class="ghost">End match</button><button id="re-next" class="primary">Continue</button></div>
+    </div>
+  </section>
+
+  <section id="shop" class="screen" hidden>
+    <div class="panel plate shop-panel">
+      <div class="shop-head">
+        <h2 id="shop-title"></h2>
+        <div class="seg" id="shop-filter"><button data-f="all">All</button><button data-f="buy">Affordable</button><button data-f="shell">Shell</button><button data-f="gun">Gun</button><button data-f="laser">Laser</button><button data-f="acid">Acid</button><button data-f="flak">Flak</button><button data-f="rocket">Rocket</button><button data-f="air">Air</button><button data-f="aa">AA</button><button data-f="hybrid">Hybrid</button><button data-f="NXi">NXi</button><button data-f="Sengoku">Sengoku</button></div>
+        <div id="shop-cash"></div>
+      </div>
+      <div class="shop-body">
+        <div id="shop-grid"></div>
+        <div class="shop-side">
+          <div class="side-scroll">
+            <h3 class="sec">Loadout <span id="shop-count"></span></h3>
+            <p id="shop-note" class="note"></p>
+            <div id="shop-owned"></div>
+            <h3 class="sec">Air defence</h3>
+            <div id="shop-aa"></div>
+            <h3 class="sec">Upgrades</h3>
+            <div id="shop-upg"></div>
+            <h3 class="sec">Supplies</h3>
+            <div id="shop-kits"></div>
+            <h3 class="sec">Abilities</h3>
+            <div id="shop-abil"></div>
+          </div>
+          <button id="shop-done" class="primary">Done ▸</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gameend" class="screen" hidden>
+    <div class="panel plate">
+      <p class="mgh">Final results</p>
+      <h2 id="ge-title" class="big"></h2>
+      <table id="ge-table"></table>
+      <div id="ge-quips"></div>
+      <div class="actions"><button id="ge-again" class="primary">Back to menu</button></div>
+    </div>
+  </section>
+
+  <section id="pause" class="screen" hidden>
+    <div class="panel plate small"><h2 class="big">Paused</h2><div class="stack"><button id="resume" class="primary">Resume</button><button id="pause-turn" class="ghost" hidden>End turn</button><button id="pause-keys" class="ghost">Controls</button><button id="pause-end" class="ghost danger">End match</button></div><p id="pause-seed" class="mgh seed"></p></div>
+  </section>
+</div>
+
+<script src="js/version.js"></script>
+<script src="js/util.js"></script>
+<script src="js/biomes.js"></script>
+<script src="js/terrain.js"></script>
+<script src="js/background.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/weapons.js"></script>
+<script src="js/weaponskins.js"></script>
+<script src="js/girls.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/taunts.js"></script>
+<script src="js/story.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+<script src="js/forts.js"></script>
+<script src="js/mobs.js"></script>
+<script src="js/hazards.js"></script>
+<script src="js/zone.js"></script>
+<script src="js/infra.js"></script>
+<script src="js/cover.js"></script>
+<script src="js/lasers.js"></script>
+<script src="js/aa.js"></script>
+<script src="js/planes.js"></script>
+<script src="js/finals.js"></script>
+<script src="js/codex.js"></script>
+<script src="js/changelog.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
