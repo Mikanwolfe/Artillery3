@@ -545,9 +545,9 @@ function windAccel(p, wind) {
 const SEEK_FRAMES = 150; // how long a locked seeker can keep steering (no endless loitering)
 function seekCenter(c) { return c.center ? c.center() : { x: c.x, y: c.y - 9 }; }
 const DESIGNATE_SNAP = 70; // how close to a target her marker must be to designate it
-const DESIGNATE_PULL = 0.07; // how hard a designated shot veers toward the dot on the way up, per frame
-const DESIGNATE_TURN = 0.05; // and on the way down: rad/frame it turns to home on the dot
-const DESIGNATE_RANGE = 520; // (from this close)
+const DESIGNATE_PULL = 0.04; // how hard a designated shot veers toward the dot on the way up, per frame
+const DESIGNATE_TURN = 0.03; // and on the way down: rad/frame it turns to home on the dot
+const DESIGNATE_RANGE = 420; // (from this close)
 function designPoint(d) { return d.point ? d : seekCenter(d); }
 function findLock(p, seek, owner) {
   const G = p.guide;

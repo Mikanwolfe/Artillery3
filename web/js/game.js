@@ -1610,12 +1610,16 @@ class Game {
     return Math.max(100, Math.round((cur * 0.3 * UPGRADE_PER_POINT) / 10) * 10);
   }
   sellValue(w) { return w.starter ? STARTER_SELL : w.cost; } // a full refund: trying a new gun should cost nothing (a starter: a little scrap)
+  // what a gun costs her: a starter she sold comes back for what she got for it
+  costOf(w) { return w.starter ? STARTER_SELL : w.cost; }
+  // her own starting guns: in the shop again once she has sold them
+  ownStarters(tank) { return [tank.vehicle.weapon, ...(tank.vehicle.extra || [])]; }
 
   buy(tank, kind, id) {
     if (kind === 'weapon') {
       const w = WEAPON_BY_ID[id];
-      if (tank.weapons.includes(id) || tank.weapons.length >= MAX_WEAPONS || tank.money < w.cost || !forVehicle(w, tank.vehicle.id)) { this.sfx.deny(); return false; }
-      tank.money -= w.cost;
+      if (!w || tank.weapons.includes(id) || tank.weapons.length >= MAX_WEAPONS || tank.money < this.costOf(w) || !forVehicle(w, tank.vehicle.id) || (w.starter && !this.ownStarters(tank).includes(w))) { this.sfx.deny(); return false; }
+      tank.money -= this.costOf(w);
       tank.weapons.push(id);
       this.sfx.buyWeapon();
       return true;
