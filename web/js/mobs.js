@@ -36,6 +36,7 @@ const FPV_HIGH = 320; // how far over the hover height it comes in, and dives fr
 const TANK_MOVE = 150; // how far a drone tank drives in one cycle (the android: 1.5x)
 const PARACHUTE_VY = 2.2; // an airdropped tank's descent speed
 const FLAK_MOB_MULT = 2; // flak does double damage to mobs
+const MOB_BOUNTY_SCALE = 0.7;
 const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'fpv', 'mothership']);
 const SHIELD_RESIST = 0.5; // what share of a flak or fighter hit tells on a drone's shielding
 const DRONE_FIELD = 60, DRONE_FIELD_DMG = 2; // every flying hostile's static discharge field: a plane inside it is zapped (+½ a stage, to stage 8)
@@ -66,6 +67,7 @@ class Mob {
       android: { name: 'Hatsuyuki android', hp: 260 + 50 * stage, armour: 160 + 30 * stage, hw: 14, hh: 42, bounty: 2500 + 300 * stage },
     }[kind];
     Object.assign(this, S);
+    this.bounty = Math.round(this.bounty * MOB_BOUNTY_SCALE); // (rivals pay their share now: hostiles a little less)
     this.maxHp = this.hp;
     this.maxArmour = this.armour;
     // better drones (from stage 4) carry a little shielding, which shrugs off flak and fighters'

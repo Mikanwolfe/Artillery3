@@ -250,6 +250,15 @@ class CpuController {
             return;
           }
         }
+        // on the Hatsuyuki fleet's marks: drive for clear ground before anything else (zone.js)
+        if (!this.moved && this.game.zoneMarked(t.x) && t.fuel > 10) {
+          const z = this.game.zone, to = t.x < z.tl ? z.tl + 60 : z.tr - 60;
+          this.moved = true;
+          this.moveDir = to > t.x ? 1 : -1;
+          this.moveFrames = Math.ceil(Math.abs(to - t.x) / TANK_SPEED) + 6;
+          this.state = 'move';
+          return;
+        }
         // a landed crate within driving range: go and get it first
         if (!this.moved && t.fuel > 30) {
           const reach = t.fuel * TANK_SPEED * 0.9;
