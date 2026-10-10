@@ -4,6 +4,13 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['9fe6af4', 'Zuihou’s final weapon, the Kidō Butai, is now the SI Parallel Night, badge Ab (Ascendant Bomber).'],
+  ['a0bdb90', 'Flak bursts well short of a squadron and fans its fragments over every plane in it: a good burst from a big gun takes out the lot. CPUs go after shots that pay and hit hard. Three gun slots instead of four.'],
+  ['482f00d', 'CPUs on Normal and Hard are better at keeping their war chest full.'],
+  ['a2410d6', 'The Mothership Shirayuki is now an automated destroyer with five flak mounts on its deck and an escort of support drones, and shots no longer pass through its upper half. Shells that come close to a flying hostile burst by it (a near miss does less than a direct hit). Explosions no longer go silent partway through a game. Everyone has two AA slots, November three.'],
+  ['01526a3', 'A drone’s discharge field only zaps planes making an attack run: a squad hovering over its mark between turns, or flying in or home, is left alone.'],
+  ['c2429ae', 'Seeker rockets locked on a drone or plane burst as they pass it instead of turning back up and hanging under it. Each fighter takes one aircraft a pass (its squadmates pick others), has 20% less health and goes after aircraft from 30% less far. Every drone’s discharge field now reaches further, hits harder, and arcs back at the fighter attacking it.'],
+  ['aac3ec2', 'Jumps (W) land softly now, like leaps: no fall damage however far down. Ground knocked out from under you still hurts.'],
   ['d581142', 'The Hatsuyuki fleet’s ships are proper destroyers now (raked bow, turrets, conning tower) and their bomb bays drop bombs on the marked ground. A starting gun you sold is back in the shop to buy back. Object 15X’s designator homes less hard. CPUs think about a third as long.'],
   ['c43ea29', 'New icon: G.W. Tiger, head and shoulders.'],
   ['4d09243', 'Hostile bounties are back to full size and shared by damage: do 30% of the work on a drone, get 30% of its bounty. A kill now pays ¢250 plus the victim’s whole health and armour. The leader’s bounty is ¢600 a round-win of lead, and anyone much richer than the table carries a bounty of 30% of the difference, paid out of her own purse when she falls.'],

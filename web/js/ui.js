@@ -454,7 +454,7 @@ const UI = {
     const render = () => {
       $('shop-title').innerHTML = `<span class="dot" style="background:${tank.color}"></span>${esc(tank.name)}<small>${esc(tank.vehicle.name)}</small>`;
       $('shop-cash').innerHTML = `<span class="mgh">Funds</span><b>${money(tank.money)}</b>`;
-      const full = tank.weapons.length >= 4;
+      const full = tank.weapons.length >= MAX_WEAPONS;
       const f = this.shopFilter;
       $('shop-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === f));
       const sold = g.ownStarters(tank).filter((w) => !tank.weapons.includes(w.id)); // (her own, sold: she can have them back)
@@ -489,7 +489,7 @@ const UI = {
           <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(cost)}</span>
           <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : full ? 'Slots full' : afford ? (w.starter ? 'Buy back' : 'Buy') : 'Short ' + money(cost - tank.money)}</button></div></div></div>`;
       }).join('') || '<div class="none">Nothing here. Try another filter.</div>';
-      $('shop-count').textContent = `${tank.weapons.length}/4`;
+      $('shop-count').textContent = `${tank.weapons.length}/${MAX_WEAPONS}`;
       $('shop-note').textContent = BALANCE === 'rebalanced'
         ? 'Bought guns reload for 1–3 of your turns after firing (by rarity); your starter never does. Planes fly their squads, then rearm (even a starter). Own several to fire something big every turn.'
         : '';
@@ -501,7 +501,7 @@ const UI = {
       }).join('');
       $('shop-aa').innerHTML = tank.aa.map((id, i) => {
         const a = AA_BY_ID[id];
-        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty AA slot${i ? ' (second)' : ''}: buy one under AA</span></div>`;
+        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty AA slot: buy one under AA</span></div>`;
         const st = this.game.canSellAA(tank, id);
         return `<div class="owned">${this.badge(a, true)}<span>${esc(a.name)}</span>
           <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(this.game.aaSellValue(tank, id)) : 'Hers'}</button></div>`;

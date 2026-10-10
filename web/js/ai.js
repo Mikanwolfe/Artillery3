@@ -47,7 +47,30 @@ const AI_WINDOW_MS = 16; // ...measured by the clock: a slow frame runs several 
 const aiClock = { win: -Infinity, spent: 0 };
 const DODGE = { easy: 0.35, normal: 0.75, hard: 0.95 }; // chance it drives out from under a drone
 const MOB_AIM = 0.6; // aim error against hostiles (they hold still, and CPUs practise on them)
-const MOB_DISLIKE = 90; // score penalty for going after a mob instead of a player (less for big bounties / with flak)
+// money: what a shot would earn counts toward it (score per ¢), the shrewder the CPU the more
+const CASH_PULL = { easy: 0.02, normal: 0.05, hard: 0.08 };
+// roughly what a hit with w on e earns, scaled by how close the solution lands: a hostile pays its
+// bounty by damage share; a rival pays for damage dealt at round's end, and a kill pays the kill
+// bounty (and any bounty on her) on top. Planes and MAIA pay nothing
+function shotCash(g, w, e, err) {
+  if (e.isPlane || e.isSat || w.air) return 0;
+  const sure = clamp(1 - err / Math.max(30, w.dmgR), 0, 1);
+  if (!sure) return 0;
+  const dmg = w.dmg * Math.max(1, w.salvo || 1);
+  if (e.isMob) return sure * e.bounty * Math.min(1, dmg / ((e.maxHp + e.maxArmour + (e.maxShield || 0)) || 1));
+  const left = e.hp + e.armour;
+  const kill = dmg >= left ? KILL_BOUNTY + KILL_SHARE * (e.maxHp + e.maxArmour) + (e.bounty || 0) : 0;
+  return sure * (Math.min(dmg, left) * PAY_OWN * (g.awardMult || 1) + kill);
+}
+// what a hit would take off (a whole salvo, as far as it has left), counted for its gun: without it
+// the solver only weighed how close each gun lands, and a weak gun that landed a little closer won
+const DMG_PULL = 0.25;
+function shotDamage(w, e, err) {
+  if (e.isSat || w.air) return 0;
+  const sure = clamp(1 - err / Math.max(30, w.dmgR), 0, 1);
+  return sure * Math.min(w.dmg * Math.max(1, w.salvo || 1) * (w.carpet ? 1 + w.carpet.n * w.carpet.frac : 1), (e.hp || 0) + (e.armour || 0) + (e.shield || 0));
+}
+const MOB_DISLIKE = 70; // score penalty for going after a mob instead of a player (less for big bounties / with flak)
 const SAT_DISLIKE = 220; // score penalty for shooting at MAIA rather than a rival (less when it is healthy)
 
 // aim error: elevation in degrees, charge as a fraction of the weapon's maxCharge.
@@ -205,6 +228,8 @@ class CpuController {
         if (!e.isMob && !e.isSat) score += CROWD * crowd(e);
         if (e.isMob) score += MOB_DISLIKE - Math.min(150, e.bounty * 0.03) - (w.kind === 'flak' ? 120 : 0);
         if (e.isPlane) score += 60 - (w.kind === 'flak' || w.airburst ? 120 : 0) - (w.air && w.air.type === 'fighter' ? 150 : 0);
+        score -= shotDamage(w, e, s.err) * DMG_PULL; // (the harder-hitting gun, when it lands as well)
+        score -= shotCash(g, w, e, s.err) * (CASH_PULL[t.type] || CASH_PULL.normal) * (t.strategy === 'hunter' ? 2 : 1); // (what the shot would earn)
         if (!firstScore.has(e) && w === options[0]) firstScore.set(e, score);
         if (!best || score < best.score) best = { ...s, score, target: e, weapon: w };
       }

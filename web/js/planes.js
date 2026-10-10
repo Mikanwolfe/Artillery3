@@ -28,6 +28,7 @@ const TORPEDO_SPEED = 7;
 const TORPEDO_RUN = 760; // how far a torpedo runs before it goes off anyway
 const DIVE_KIN = 6; // a dive-released bomb's kinetic multiplier (it leaves the plane at the dive's speed)
 // a plane's loadout: how many dots it attacks on before it flies home to rearm
+const FIGHTER_REACH = 0.7; // how far beyond the zone a fighter goes after aircraft (of the zone + 300)
 const AIR_PASSES = { dive: 3, torpedo: 2, fighter: 6, rocket: 2, heavy: 1, fortress: 2 };
 const BOMB_GUIDE = { arm: 2, burn: 120, seek: 4, apex: false, turn: 1.6, range: 90, cone: 120, lift: 0, brake: false }; // a dive bomb's fins: a nudge, not a seeker
 // the strike zone a dot marks: a squad attacks what is in it, and nothing outside
@@ -558,16 +559,21 @@ function startAttack(g, p) {
       }
     };
   } else { // fighter: aircraft over the zone first (it turns after them), else a strafing run
-    const air = g.aaAircraft(p.owner).filter((e) => e !== p && e.alive && Math.abs(e.center().x - m.x) < Z + 300 && (!e.isPlane || e.owner !== p.owner));
+    const air = g.aaAircraft(p.owner).filter((e) => e !== p && e.alive && Math.abs(e.center().x - m.x) < (Z + 300) * FIGHTER_REACH && (!e.isPlane || e.owner !== p.owner));
     const gunDmg = w.dmg * G.mult * (w.fleet ? 0.15 : 1); // a fighter's burst (a fleet's are a fraction of its bombs)
     let k = 0, strafe = false, diving = false, prey = null;
+    p.prey = null; // (a new pass: free to pick again)
     const away = () => { p.passDone(); p.go({ x: p.x + Math.cos(p.hd) * 300, y: p.y - 160 }, { v: F.cruise, r: 90 }, () => p.rejoin()); };
     p.attack = () => {
       k++;
       if (!strafe) {
-        const e = air.find((e) => e.alive);
+        // one aircraft a pass: its own (one a squadmate isn't already after, if there is one), and
+        // once that is down, the pass is over, however many more there are
+        if (prey && !prey.alive) { away(); return; }
+        const taken = (e) => p.group.planes.some((o) => o !== p && o.alive && o.prey === e);
+        const e = prey || air.find((e) => e.alive && !taken(e)) || air.find((e) => e.alive);
         if (e && p.ord > 0 && k < 360) { // dogfight: chase it at its turn rate, guns when it is in front
-          if (e !== prey) { prey = e; p.go(() => e.center(), { v: F.top, r: 0, clear: 40 }); }
+          if (e !== prey) { prey = p.prey = e; p.go(() => e.center(), { v: F.top, r: 0, clear: 40 }); }
           const q = e.center(), dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy);
           if (k % 4 === 0 && d < 320 && Math.abs(wrapA(Math.atan2(dy, dx) - p.hd)) < 0.35) {
             p.ord--;
@@ -804,7 +810,7 @@ Object.assign(Game.prototype, {
 });
 
 // ------------------------------------------------------------------------------ the fleet
-// Zuihou's Kidō Butai: her dot is for the carriers off the coast. The camera whips out to sea past
+// Zuihou's Parallel Night (the Kidō Butai): her dot is for the carriers off the coast. The camera whips out to sea past
 // the edge of the map behind her: three carriers turn into the wind and launch their whole air
 // wing (dive bombers, torpedo bombers, fighters), which climbs away, comes back over the mark and
 // hovers there in a great formation. It strikes two of her turns later, if anything is left of it.
@@ -845,8 +851,8 @@ class FleetStrike {
     game.cam.wide = KIDO_OFF + KIDO_GAP * F.carriers + 900;
     game.cam.wideSide = side; // (only out to sea: past the far edge there is nothing)
     game.cam.follow(this.focus);
-    game.ui.notice('Kidō Butai: the carriers turn into the wind.');
-    game.events.push(`${owner.name} calls the Kidō Butai: ${kinds.length} aircraft are coming.`);
+    game.ui.notice('Parallel Night: the carriers turn into the wind.');
+    game.events.push(`${owner.name} calls the Parallel Night: ${kinds.length} aircraft are coming.`);
     this.whip = 0;
   }
 

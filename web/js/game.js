@@ -66,6 +66,10 @@ const KILL_SHARE = 1; // (all of the victim's max health and armour, on top of K
 // at PAY_OWN, everyone a PAY_SHARED cut of the round's total, and the last two standing a placement bonus
 const PAY_OWN = 2.5, PAY_SHARED = 0.25, PLACE_PAY = 600, PLACE_STEP = 150;
 const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at least this share of the best's worth
+// what a CPU earns on top of a player's pay, round pay and bounties, by difficulty (never shown:
+// the pay screen and the bounty pop-ups show the base)
+const CPU_CREDIT = { easy: 1.1, normal: 1.3, hard: 1.6 };
+const FLAK_REACH = 160; // how far a flak burst's fragments fan out to catch a squadron (+ twice its blast radius)
 const STARTER_SELL = 250; // what her starting gun or mount fetches if she sells it
 const AA_SHARE_BURNED = 0.4; // ... once planes have killed it
 const SAT_HEAL = 0.25; // share of its max health MAIA repairs once a turn cycle (every n turns)
@@ -632,7 +636,7 @@ class Game {
           if (t.vy >= 0) {
             t.vy = 0; t.jvx = 0; t.jumping = false; t.falling = false;
             this.particles.puff(t.x, t.y);
-            this.landed(t, t.leaping ? 0 : t.y - t.fallFrom); // a leap lands softly (a void still takes her)
+            this.landed(t, 0); // a jump or leap lands softly, however far down (a void still takes her)
             t.leaping = false;
           }
         }
@@ -1304,12 +1308,27 @@ class Game {
   shrapnel(p) {
     // fused on an aircraft, the burst throws a dense, fast cone of heavier fragments at it
     const air = p.fuseTarget && p.fuseTarget.alive ? p.fuseTarget.center() : null;
-    const frag = { id: 'frag', name: 'Shrapnel', kind: 'shell', dmg: p.w.dmg * (air ? 0.3 : 0.2), dmgR: 24, explR: 2, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 10, frag: true, incendiary: p.w.incendiary || 0 };
-    const n = p.w.incendiary ? 3 : (air ? 10 : 6) + Math.min(6, Math.round(p.w.dmgR / 40)); // incendiary: fewer, burning
+    const frag = { id: 'frag', name: 'Shrapnel', kind: 'shell', dmg: p.w.dmg * (air ? 0.45 : 0.2), dmgR: air ? 40 : 24, explR: 2, salvo: 1, clip: 1, disp: 0, acid: 0, sat: false, rarity: 1, maxCharge: 10, frag: true, incendiary: p.w.incendiary || 0 };
+    // fused on a plane, it fans out over every aircraft near it (its squadmates too), the fragments
+    // dealt round them, each thrown where that one will be: the whole squadron is caught
+    const flock = air ? this.aaAircraft(p.owner).filter((e) => e.alive && (e.isPlane || e.flying) && dist(e.center().x, e.center().y, p.x, p.y) < FLAK_REACH + p.w.dmgR * 2) : [];
+    const n = p.w.incendiary ? 3 : air ? Math.min(28, 10 + Math.min(6, Math.round(p.w.dmgR / 40)) + 3 * Math.max(0, flock.length - 1)) : 6 + Math.min(6, Math.round(p.w.dmgR / 40)); // incendiary: fewer, burning
     for (let i = 0; i < n; i++) {
-      // a downward cone, or a cone thrown at the aircraft, so the fragments hit it
-      const a = air ? Math.atan2(air.y - p.y, air.x - p.x) + (rng.next() - 0.5) * 0.7 : Math.PI / 2 + (rng.next() - 0.5) * 1.6;
-      const sp = air ? 8 + rng.next() * 5 : 3 + rng.next() * 5;
+      // a downward cone, or thrown at the aircraft (led by its speed), so the fragments hit them
+      let a, sp = air ? 16 + rng.next() * 4 : 3 + rng.next() * 5;
+      if (air && flock.length) { // a ballistic solution onto where it will be (low arc)
+        const e = flock[i % flock.length];
+        let q = e.center(), T = 0;
+        for (let it = 0; it < 3; it++) {
+          const tx = q.x + (e.vx || 0) * T - p.x, ty = -(q.y + (e.vy || 0) * T - p.y), v2 = sp * sp; // (y up)
+          const disc = v2 * v2 - GRAV * (GRAV * tx * tx + 2 * ty * v2);
+          if (disc < 0) { a = Math.atan2(-ty, tx); break; }
+          const th = Math.atan2(v2 - Math.sqrt(disc), GRAV * Math.abs(tx) || 1e-6);
+          a = tx >= 0 ? -th : Math.PI + th;
+          T = Math.abs(tx) / Math.max(1, sp * Math.cos(th));
+        }
+        a += (rng.next() - 0.5) * 0.08;
+      } else a = air ? Math.atan2(air.y - p.y, air.x - p.x) + (rng.next() - 0.5) * 0.7 : Math.PI / 2 + (rng.next() - 0.5) * 1.6;
       const f = new Projectile(this, frag, p.owner, p.x, p.y, Math.cos(a) * sp + p.vx * (air ? 0 : 0.2), Math.sin(a) * sp, false);
       f.age = 10;
       this.projectiles.push(f);
@@ -1337,7 +1356,8 @@ class Game {
     for (const t of this.targets()) {
       if (!t.alive) continue;
       const c = t.center();
-      const d = dist(c.x, c.y, x, y);
+      // (a hostile: from the nearest point of its body, so a hit on a long hull counts as one)
+      const d = t.isMob ? Math.hypot(Math.max(0, Math.abs(x - t.x) - t.hw), Math.max(0, t.y - t.hh - y, y - t.y)) : dist(c.x, c.y, x, y);
       let amt = d < def.dmgR ? def.dmg * (1 - d / def.dmgR) : 0;
       // what went into the hit, for the damage popup: accuracy (1 = dead centre) and each modifier
       const hit = { px: x, py: y, q: def.dmgR ? clamp(1 - d / def.dmgR, 0, 1) : 0, alt: def.alt || 0, front: def.front || 1, kin: def.kinPct || 0, sat: !!def.maia };
@@ -1434,7 +1454,7 @@ class Game {
       this.events.push(`${owner.name} destroyed ${t.name}!`);
       const pay = KILL_BOUNTY + Math.round(KILL_SHARE * (t.maxHp + t.maxArmour)) + (t.bounty || 0); // (a tougher girl pays more)
       if (t.bountyWealth) { const fee = Math.min(t.money, t.bountyWealth); t.money -= fee; t.bountyWealth = 0; if (fee) this.events.push(`${t.name} pays ¢${fee} of the bounty on her out of her own purse.`); } // (a rich girl's price, paid by her)
-      owner.money += pay;
+      owner.money += pay + this.cpuCredit(owner, pay);
       this.particles.text(t.x, t.y - 90, `+¢${pay}`, '#ffd84a', true);
       if (t.bounty) {
         this.events.push(`${owner.name} collects the ¢${t.bounty} bounty on ${t.name}.`);
@@ -1551,7 +1571,7 @@ class Game {
       const bonus = t === winner ? place : t === second ? Math.round(place / 2) : 0;
       t.roundPay = award + own + bonus;
       t.roundPayParts = { award, own, bonus };
-      t.money += t.roundPay;
+      t.money += t.roundPay + this.cpuCredit(t, t.roundPay); // (a CPU's difficulty bonus: silent, not on the pay screen)
     }
     this.lastAward = Math.round(this.tanks.reduce((s, t) => s + t.roundPay, 0) / this.tanks.length); // (what a CPU plans its savings around)
     this.awardMult += 0.08;
@@ -1609,6 +1629,7 @@ class Game {
     const cur = stat === 'hp' ? tank.maxHp : tank.maxArmour;
     return Math.max(100, Math.round((cur * 0.3 * UPGRADE_PER_POINT) / 10) * 10);
   }
+  cpuCredit(t, amt) { return t && t.isCpu ? Math.round(amt * ((CPU_CREDIT[t.type] || 1) - 1)) : 0; }
   sellValue(w) { return w.starter ? STARTER_SELL : w.cost; } // a full refund: trying a new gun should cost nothing (a starter: a little scrap)
   // what a gun costs her: a starter she sold comes back for what she got for it
   costOf(w) { return w.starter ? STARTER_SELL : w.cost; }
@@ -1679,7 +1700,7 @@ class Game {
   }
 
   // CPU shopping between rounds: keep a couple of repair kits; buy a gun only if it is a clear upgrade
-  // on its best one (selling the weakest when all four slots are full), and save up rather than
+  // on its best one (selling the weakest when all its slots are full), and save up rather than
   // settle when something much stronger is within one more round's pay (Easy doesn't plan ahead and
   // sometimes buys at random); then abilities, then Health++ / Armour++ with what's left.
   // a CPU's strategy for the coming round, from the field it faces (see CPU_STRATEGIES): each one
@@ -2020,7 +2041,7 @@ class Game {
     this.satellite.draw(ctx);
     for (const p of this.projectiles) if (p.drawBack) p.drawBack(ctx); // set pieces' backdrops, behind the hills
     this.bg.drawRidges(ctx, cam);
-    for (const p of this.projectiles) if (p.drawMid) p.drawMid(ctx); // (over the far hills: the Kidō Butai's sea)
+    for (const p of this.projectiles) if (p.drawMid) p.drawMid(ctx); // (over the far hills: the Parallel Night's sea)
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);
     this.terrain.drawTrees(ctx, cam.x, cam.x + cam.w);
