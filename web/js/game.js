@@ -2041,7 +2041,7 @@ class Game {
     this.satellite.draw(ctx);
     for (const p of this.projectiles) if (p.drawBack) p.drawBack(ctx); // set pieces' backdrops, behind the hills
     this.bg.drawRidges(ctx, cam);
-    for (const p of this.projectiles) if (p.drawMid) p.drawMid(ctx); // (over the far hills: the Kidō Butai's sea)
+    for (const p of this.projectiles) if (p.drawMid) p.drawMid(ctx); // (over the far hills: the Parallel Night's sea)
     this.drawHazardsBack(ctx, cam);
     this.terrain.draw(ctx, cam.x, cam.x + cam.w);
     this.terrain.drawTrees(ctx, cam.x, cam.x + cam.w);

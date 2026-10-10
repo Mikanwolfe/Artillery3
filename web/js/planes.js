@@ -810,7 +810,7 @@ Object.assign(Game.prototype, {
 });
 
 // ------------------------------------------------------------------------------ the fleet
-// Zuihou's Kidō Butai: her dot is for the carriers off the coast. The camera whips out to sea past
+// Zuihou's Parallel Night (the Kidō Butai): her dot is for the carriers off the coast. The camera whips out to sea past
 // the edge of the map behind her: three carriers turn into the wind and launch their whole air
 // wing (dive bombers, torpedo bombers, fighters), which climbs away, comes back over the mark and
 // hovers there in a great formation. It strikes two of her turns later, if anything is left of it.
@@ -851,8 +851,8 @@ class FleetStrike {
     game.cam.wide = KIDO_OFF + KIDO_GAP * F.carriers + 900;
     game.cam.wideSide = side; // (only out to sea: past the far edge there is nothing)
     game.cam.follow(this.focus);
-    game.ui.notice('Kidō Butai: the carriers turn into the wind.');
-    game.events.push(`${owner.name} calls the Kidō Butai: ${kinds.length} aircraft are coming.`);
+    game.ui.notice('Parallel Night: the carriers turn into the wind.');
+    game.events.push(`${owner.name} calls the Parallel Night: ${kinds.length} aircraft are coming.`);
     this.whip = 0;
   }
 
