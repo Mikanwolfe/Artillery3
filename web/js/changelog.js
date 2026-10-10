@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['9fe6af4', 'Zuihou’s final weapon, the Kidō Butai, is now the SI Parallel Night, badge Ab (Ascendant Bomber).'],
   ['a0bdb90', 'Flak bursts well short of a squadron and fans its fragments over every plane in it: a good burst from a big gun takes out the lot. CPUs go after shots that pay and hit hard. Three gun slots instead of four.'],
   ['482f00d', 'CPUs on Normal and Hard are better at keeping their war chest full.'],
   ['a2410d6', 'The Mothership Shirayuki is now an automated destroyer with five flak mounts on its deck and an escort of support drones, and shots no longer pass through its upper half. Shells that come close to a flying hostile burst by it (a near miss does less than a direct hit). Explosions no longer go silent partway through a game. Everyone has two AA slots, November three.'],
