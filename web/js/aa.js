@@ -214,7 +214,7 @@ Object.assign(Game.prototype, {
       if (m.flying && m.kind !== 'fpv' && this.planes && this.planes.length && (m.zap = (m.zap || 0) + 1) % DRONE_ZAP_EVERY === 0) { // (an FPV has no power to spare)
         const c = m.center(), R = DRONE_FIELD + m.hw;
         for (const p of this.planes) {
-          if (!p.targetable) continue;
+          if (!p.targetable || p.state !== 'attack') continue; // (only planes on an attack run: one hovering over its mark between turns, or flying in or home, is left be)
           const q = p.center();
           if (dist(q.x, q.y, c.x, c.y) > (p.prey === m ? DRONE_FIELD_BACK : R)) continue; // (and back at whatever is attacking it, out to gun range)
           this.lasers.push(new Laser(c.x + (Math.random() - 0.5) * m.hw, c.y, q.x, q.y, '#9ae0ff', 1, 6));
