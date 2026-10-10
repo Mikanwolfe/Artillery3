@@ -267,7 +267,7 @@ const WEAPONS = [
   //   heavy    one plane, one enormous guided bomb that steers onto the nearest rival in the zone (NXi)
   //   fortress a level bomber: straight across the zone at altitude, walking a stick of air.ord bombs over it
   weapon('kansen0', "SI 'Atlantis Shark' Flying Circus", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 22, dmgR: 30, explR: 2, clip: 1, rarity: 1, cost: 900,
-    air: { squads: 1, type: 'fighter', planes: 3, ord: 6, hp: 70, reload: 2 },
+    air: { squads: 1, type: 'fighter', planes: 3, ord: 6, hp: 56, reload: 2 },
     short: 'Small, toothy and very fast: shark-finned fighters that circle anything else in the sky and bite.', long: 'Fighters: they go for planes and drones near the mark first (triple damage), and strafe it when the sky is clear.' }),
   weapon('kankou97', "SI 'Carrot Rabbit' Torpedo Jet", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 120, dmgR: 70, explR: 10, clip: 1, rarity: 1, cost: 1000,
     air: { squads: 1, type: 'torpedo', planes: 2, ord: 1, hp: 65, reload: 2 },
@@ -279,7 +279,7 @@ const WEAPONS = [
     air: { squads: 2, type: 'torpedo', planes: 3, ord: 1, hp: 120, reload: 2 },
     short: 'Three torpedo jets abreast under a skull and crossbones, running in low for the loot.', long: 'Three torpedoes along the ground through the mark.' }),
   weapon('reppuu', "SI 'Bakery Doggo' Interceptor", 'air', 0, 80, { maxCharge: 90, disp: 0.7, dmg: 32, dmgR: 35, explR: 2, clip: 1, rarity: 3, cost: 4400,
-    air: { squads: 2, type: 'fighter', planes: 3, ord: 8, hp: 130, reload: 2 },
+    air: { squads: 2, type: 'fighter', planes: 3, ord: 8, hp: 104, reload: 2 },
     short: 'A loyal good girl: fetches everything with an engine out of the sky and brings it back in pieces.', long: 'Fighters with heavier guns: aircraft first, then a strafing run.' }),
   weapon('taillteann', "SI–LFS 'Taillteann' Rocket Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 86, dmgR: 55, explR: 7, clip: 1, rarity: 4, cost: 11500,
     hybrid: true, maker: 'Sengoku × Lymilark',
@@ -296,7 +296,7 @@ const WEAPONS = [
     air: { squads: 3, type: 'dive', planes: 3, ord: 2, hp: 250, reload: 3, jet: true },
     short: 'In like a comet, out before the encore. Too fast for most AA to track, and it drops two bombs a pass.', long: 'Jets: anti-aircraft fire has half the chance against them and their bombs.' }),
   weapon('shiden', "SI 'Clockwork Warden' Fighter", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 41, dmgR: 40, explR: 3, clip: 1, rarity: 6, cost: 30000,
-    air: { squads: 3, type: 'fighter', planes: 4, ord: 10, hp: 300, reload: 3 },
+    air: { squads: 3, type: 'fighter', planes: 4, ord: 10, hp: 240, reload: 3 },
     short: 'It keeps the time over the mark: the last and best of the Sengoku fighters, four a squad.', long: 'Clears the sky over the mark, then rakes it.' }),
   weapon('tifaun', "NXi × SI 'Taufaun' Strike Jet", 'air', 0, 80, { maxCharge: 110, disp: 0.4, dmg: 254, dmgR: 260, explR: 42, clip: 1, rarity: 7, cost: 150000,
     hybrid: true, maker: 'NXi × Sengoku',

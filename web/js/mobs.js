@@ -39,7 +39,8 @@ const FLAK_MOB_MULT = 2; // flak does double damage to mobs
 const MOB_BOUNTY_SCALE = 1; // (bounties are shared by the damage each player did: payMobBounty)
 const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'fpv', 'mothership']);
 const SHIELD_RESIST = 0.5; // what share of a flak or fighter hit tells on a drone's shielding
-const DRONE_FIELD = 60, DRONE_FIELD_DMG = 2; // every flying hostile's static discharge field: a plane inside it is zapped (+½ a stage, to stage 8)
+const DRONE_FIELD_BACK = 330; // how far it arcs back at a fighter that is attacking it
+const DRONE_FIELD = 150, DRONE_FIELD_DMG = 14, DRONE_FIELD_STAGE = 1; // every flying hostile's static discharge field: reaches a fighter on its gun run, and zaps it (+1 a stage, to stage 8)
 
 class Mob {
   constructor(kind, x, y, stage) {

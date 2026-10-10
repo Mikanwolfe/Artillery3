@@ -468,6 +468,7 @@ class Projectile {
     if ((this.w.kind === 'flak' || this.w.airburst || this.w.kind === 'rocket') && this.age >= 6 && !this.w.bomblet && this.airFuse(g)) { g.impact(this, { hit: 'air' }); return false; }
     const r = stepBallistic(this, g.terrain, g.wind, g.targets(), this.owner, this.guide ? g.seekables() : undefined);
     g.frontCheck(this);
+    if (!r && this.seekFuse()) { g.impact(this, { hit: 'air' }); return false; }
     if (!r && this.transform(g)) return false;
     if (!r && (this.w.kind === 'flak' || this.w.airburst) && this.fuse(g)) { g.impact(this, { hit: 'air' }); return false; }
     if (this.y < this.peak) this.peak = this.y;
@@ -608,6 +609,28 @@ class Projectile {
       this.fuseTarget = t;
       return true;
     }
+    return false;
+  }
+
+  // a seeker locked on an aircraft bursts at its closest pass, once it is within reach of the blast:
+  // a rocket that has overflown a drone goes off by it instead of turning back up and hanging
+  // under it, fighting gravity
+  seekFuse() {
+    const L = this.lock;
+    if (!this.guide || !L || !L.alive || !(L.isPlane || (L.isMob && L.flying))) { this.lockMin = undefined; return false; }
+    if (this.lockFor !== L) { this.lockFor = L; this.lockMin = Infinity; }
+    const c = L.center(), d = dist(c.x, c.y, this.x, this.y);
+    const R = Math.max(this.w.dmgR, 30) + (L.hw || 16) * 0.5;
+    // past its closest pass within the blast's reach, or stalled near it (slowed right down, it
+    // would only hang there): burst now
+    if ((d > this.lockMin && this.lockMin < R) || (Math.hypot(this.vx, this.vy) < 4 && d < R * 1.6)) {
+      // the warhead throws its fragments at it: the burst lands within a little of it
+      const k = Math.max(0, d - this.w.dmgR * 0.35) / (d || 1);
+      this.x += (c.x - this.x) * k; this.y += (c.y - this.y) * k;
+      this.fuseTarget = L;
+      return true;
+    }
+    this.lockMin = Math.min(this.lockMin, d);
     return false;
   }
 

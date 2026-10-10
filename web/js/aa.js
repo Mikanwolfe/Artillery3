@@ -60,7 +60,7 @@ const AA_BY_ID = Object.fromEntries(AA_WEAPONS.concat(AA_STARTERS).map((a) => [a
 const PD_STOP = { aegis: 0.5, ciws: 0.6, kotonapd: 0.75, gatewatch: 0.85, aa_alb: 0.35, aa_obj: 0.45, aa_nxi1: 0.5 };
 for (const a of Object.values(AA_BY_ID)) a.stop = PD_STOP[a.id] || Math.min(0.2, a.pk * 1.5);
 const AA_SHOT_DOWN = 0.2; // a missile left with this little of its damage is shot down in the air
-const DRONE_ZAP_EVERY = 20; // frames between a hostile's discharges (see stepAA)
+const DRONE_ZAP_EVERY = 12; // frames between a hostile's discharges (see stepAA)
 const AA_GRAZE = 0.25; // an anti-air burst that misses still grazes for this much
 function aaMaker(a) { return a.name.startsWith('NXi') ? 'NXi' : a.name.startsWith('LFS') ? 'Lymilark' : a.name.startsWith('Kotona') ? 'Kotona' : 'Sengoku Inc.'; }
 const AA_ROUND_SPEED = { air: 26, missile: 60 }; // world units a frame (point defence is near enough hitscan)
@@ -211,14 +211,14 @@ Object.assign(Game.prototype, {
           if (air) { gun.budget--; gun.cd = A.rof; this.aaFire(m, A, air, 'air'); }
         }
       }
-      if (m.flying && m.kind !== 'fpv' && m.stage >= 2 && this.planes && this.planes.length && (m.zap = (m.zap || 0) + 1) % DRONE_ZAP_EVERY === 0) { // (from stage 2; an FPV has no power to spare)
+      if (m.flying && m.kind !== 'fpv' && this.planes && this.planes.length && (m.zap = (m.zap || 0) + 1) % DRONE_ZAP_EVERY === 0) { // (an FPV has no power to spare)
         const c = m.center(), R = DRONE_FIELD + m.hw;
         for (const p of this.planes) {
           if (!p.targetable) continue;
           const q = p.center();
-          if (dist(q.x, q.y, c.x, c.y) > R) continue;
+          if (dist(q.x, q.y, c.x, c.y) > (p.prey === m ? DRONE_FIELD_BACK : R)) continue; // (and back at whatever is attacking it, out to gun range)
           this.lasers.push(new Laser(c.x + (Math.random() - 0.5) * m.hw, c.y, q.x, q.y, '#9ae0ff', 1, 6));
-          this.damage(p, DRONE_FIELD_DMG + Math.min(m.stage, 8) * 0.5, null, { aa: true, field: true });
+          this.damage(p, DRONE_FIELD_DMG + Math.min(m.stage, 8) * DRONE_FIELD_STAGE, null, { aa: true, field: true });
         }
       }
     }
