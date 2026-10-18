@@ -292,6 +292,19 @@ Object.assign(Game.prototype, {
       ctx.arc(c.x, c.y, A.range, 0, TAU);
       ctx.stroke();
     });
+    // and on each ring, which mount it is (up and to the side she faces, stepped so they don't overlap)
+    ctx.setLineDash([]);
+    ctx.font = `15px ${HUD_FONT}`;
+    t.aa.forEach((id, i) => {
+      const A = AA_BY_ID[id];
+      if (!A) return;
+      const a = -0.35 - i * 0.22, side = t.facing || 1;
+      const x = c.x + side * Math.cos(a) * A.range, y = c.y + Math.sin(a) * A.range;
+      const k = 1 / Math.max(0.35, (this.cam && this.cam.zoom) || 1); // (a steady size on screen, whatever the zoom)
+      ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(k, k);
+      plateText(ctx, `${A.name.replace(/^(SI|NXi|LFS|Kotona|G\.W\.) /, '')} · ${A.role === 'missile' ? 'PD' : 'AA'} ${A.range}`, 0, 4, A.role === 'missile' ? '#9ae0ff' : '#ffd878');
+      ctx.restore();
+    });
     ctx.restore();
   },
 
