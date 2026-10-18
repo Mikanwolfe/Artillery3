@@ -1251,6 +1251,8 @@ class Game {
     if (h.shieldHit) chips.push(['SHIELDING', '#9ae0ff']);
     if (h.aa) chips.push(['AA', '#e8d8a0']);
     if (h.pd) chips.push(['POINT DEFENCE', '#9ae0ff']);
+    if (h.core) chips.push([`CORE +${Math.round(h.core * 100)}%`, '#7fe0b0']);
+    if (h.coreBlock) chips.push([`CORE −${Math.round(h.coreBlock)}`, '#7fe0b0']);
     if (h.armour) chips.push(['ARMOUR', '#c8d2e4']);
     const tag = n > 1 ? `${HIT_TIERS[tier].tag} · ${n} HITS` : HIT_TIERS[tier].tag;
     const life = HIT_POPUP_LIFE + h.q + chips.length * 0.15;
@@ -1394,12 +1396,16 @@ class Game {
     if (!t.alive || amt <= 0) return;
     if (owner && owner.isMob && t.isMob) return; // hostiles never hurt each other
     if (owner && owner.isMob) owner = null; // mob attacks count as the environment
+    const OC = owner && def && coreOf(owner); // (her core boosts its kind of weapon)
+    if (OC && coreKindOf(def) === OC.coreKind) { amt *= 1 + OC.boost; if (hit) hit.core = OC.boost; }
     if (t.isPlane) { this.damagePlane(t, amt, owner, def, hit); return; }
     if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
     if (t.isSat) { this.damageSat(t, amt, owner, hit); return; }
     if (t.dummy) { this.rangeHit(t, amt, hit); return; } // the Codex's training dummy
     if (this.range && this.range.drill && t === this.tanks[0]) { this.range.through += amt; this.particles.text(t.x, t.y - 40, String(Math.round(amt)), '#ff9a8a'); this.ui.codexReadout(); return; } // (an AA drill's rocket that got through)
     if (t.shield) { amt *= SHIELD_FACTOR; if (hit) hit.shield = true; }
+    const TC = coreOf(t); // (and hers takes a little off every hit)
+    if (TC) { const cut = Math.min(TC.block, amt * CORE_BLOCK_MAX); amt -= cut; if (hit && cut >= 1) hit.coreBlock = cut; }
     if (owner && owner !== t) t.lastAttacker = owner; // CPUs retaliate against this tank
     if (hit && owner && owner !== t && this.report) this.report.bestQ = Math.max(this.report.bestQ || 0, hit.q); // best hit on a rival this shot
     // armour is a second bar on top of health that absorbs a whole hit, however big (by design):
@@ -1785,6 +1791,7 @@ class Game {
         t.aa[slot] = pick.id;
       }
     }
+    this.cpuBuyCore(t); // a core for the guns it carries (cores.js), out of its money before guns
     if (S.armour) for (let n = 0; n < S.armour; n++) { // (a fortress: health and armour levels before guns)
       const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour', cost = this.upgradeCost(t, stat);
       if (t.upgrades[stat] >= 2 || t.money < cost * 1.6) break;

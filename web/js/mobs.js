@@ -37,7 +37,7 @@ const TANK_MOVE = 150; // how far a drone tank drives in one cycle (the android:
 const PARACHUTE_VY = 2.2; // an airdropped tank's descent speed
 const FLAK_MOB_MULT = 2; // flak does double damage to mobs
 const MOB_BOUNTY_SCALE = 1; // (bounties are shared by the damage each player did: payMobBounty)
-const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'fpv', 'mothership', 'blimp']);
+const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'mothership', 'blimp']); // (not the FPV: it is fragile)
 const BLIMP_HIGH = 330; // how much higher than the drones a blimp cruises
 const BLIMP_FROM = 4; // reinforcement quality it comes in from (one at a time)
 const SHIELD_RESIST = 0.5; // what share of a flak or fighter hit tells on a drone's shielding
@@ -67,7 +67,7 @@ class Mob {
       turret: { name: 'Shore battery', hp: 150 + 30 * stage, hw: 24, hh: 22, bounty: 500 + 80 * stage },
       blimp: { name: 'Hatsuyuki blimp', hp: 200 + 45 * stage, hw: 46, hh: 30, bounty: 700 + 110 * stage },
       mothership: { name: 'Mothership Shirayuki', hp: 1500 + 300 * stage, hw: 142, hh: 88, bounty: 4000 + 600 * stage },
-      fpv: { name: 'FPV kamikaze', hp: 25 + 8 * stage, hw: 12, hh: 10, bounty: 150 + 40 * stage },
+      fpv: { name: 'FPV kamikaze', hp: 10 + 3 * stage, hw: 12, hh: 10, bounty: 150 + 40 * stage },
       carrier: { name: 'Hatsuyuki carrier', hp: 90 + 25 * stage, hw: 30, hh: 20, bounty: 350 + 70 * stage },
       dtank: { name: 'Hatsuyuki drone tank', hp: 70 + 25 * stage, armour: 30 + 12 * stage, hw: 22, hh: 20, bounty: 450 + 80 * stage },
       aatank: { name: 'Hatsuyuki AA tank', hp: 80 + 22 * stage, armour: 20 + 10 * stage, hw: 22, hh: 20, bounty: 500 + 80 * stage },

@@ -54,6 +54,9 @@ const AA_STARTERS = [
   { id: 'aa_nxi2', name: 'NXi Mk.0 Flak Mount', role: 'air', rarity: 1, cost: 0, starter: true, range: 340, rof: 7, dmg: 32, acc: 0.8, pk: 0.04, perTurn: 6,
     short: 'The other half of the Defensive Suite: proximity flak, twin-mounted, never jams.', long: 'Anti-aircraft: November’s own.' },
 ];
+// every mount reaches twice as far as it was built to, for half the damage a burst
+const AA_RANGE_MULT = 2, AA_DMG_MULT = 0.5;
+for (const a of AA_WEAPONS.concat(AA_STARTERS)) { a.range = Math.round(a.range * AA_RANGE_MULT); a.dmg = Math.round(a.dmg * AA_DMG_MULT); }
 const AA_BY_ID = Object.fromEntries(AA_WEAPONS.concat(AA_STARTERS).map((a) => [a.id, a]));
 // what share of a missile's damage each engagement takes off: point defence a lot, anti-air guns a
 // little (their pk). Two mounts multiply: 50% and 60% leave 20%.

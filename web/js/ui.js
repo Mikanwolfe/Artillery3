@@ -474,6 +474,19 @@ const UI = {
             <button data-aa="${a.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : freeSlot < 0 ? 'Slots full' : afford ? 'Buy' : 'Short ' + money(a.cost - tank.money)}</button></div></div></div>`;
         }).join('');
         $('shop-grid').querySelectorAll('[data-aa]').forEach((b) => { b.onclick = () => { g.buy(tank, 'aa', b.dataset.aa); render(); }; });
+      } else if (f === 'core') { // cores: one slot; a new one replaces hers (refunded in full)
+        const cur = coreOf(tank), refund = cur ? cur.cost : 0;
+        $('shop-grid').innerHTML = CORES.map((C) => {
+          const r = RARITY[C.rarity], owned = tank.core === C.id, afford = tank.money + refund >= C.cost;
+          return `<div class="card${owned ? ' owned-w' : ''}"><span class="badge" style="--rc:${r.ui}"><b>${r.word[0]}c</b><i>${r.word}</i></span><div class="card-body">
+            <span class="maker">Core · ${esc(C.coreLabel)}</span>
+            <h4 style="color:${r.ui}">${esc(C.name)}</h4>
+            <p>${esc(C.short)}</p>
+            <div class="stats"><span>Boost</span><span>+${Math.round(C.boost * 100)}% ${esc(C.coreLabel.toLowerCase())}</span><span>Health</span><span>+${C.hp}</span><span>Armour</span><span>+${C.armour}</span><span>Block</span><span>−${C.block} a hit</span></div>
+            <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(C.cost)}</span>
+            <button data-core="${C.id}" ${!owned && afford ? '' : 'disabled'}>${owned ? 'Fitted' : afford ? (cur ? 'Swap' : 'Buy') : 'Short ' + money(C.cost - tank.money - refund)}</button></div></div></div>`;
+        }).join('');
+        $('shop-grid').querySelectorAll('[data-core]').forEach((b) => { b.onclick = () => { g.buyCore(tank, b.dataset.core); render(); }; });
       } else $('shop-grid').innerHTML = list.map((w) => {
         const r = RARITY[w.rarity];
         const owned = tank.weapons.includes(w.id);
@@ -506,6 +519,11 @@ const UI = {
         return `<div class="owned">${this.badge(a, true)}<span>${esc(a.name)}</span>
           <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(this.game.aaSellValue(tank, id)) : 'Hers'}</button></div>`;
       }).join('');
+      const myCore = coreOf(tank);
+      $('shop-core').innerHTML = myCore
+        ? `<div class="owned"><span class="badge small" style="--rc:${RARITY[myCore.rarity].ui}"><b>${RARITY[myCore.rarity].word[0]}c</b></span><span>${esc(myCore.name)}</span><button data-sc="1" title="Sell">Sell ${money(myCore.cost)}</button></div>`
+        : '<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>No core: buy one under Core</span></div>';
+      const sc = $('shop-core').querySelector('[data-sc]'); if (sc) sc.onclick = () => { g.sellCore(tank); render(); };
       $('shop-aa').querySelectorAll('[data-sa]').forEach((b) => { b.onclick = () => { g.sellAA(tank, b.dataset.sa); render(); }; });
       $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour]].map(([id, label, cur]) => {
         const cost = g.upgradeCost(tank, id);

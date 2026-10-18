@@ -51,6 +51,7 @@ class Tank {
     this.money = 0;
     this.wins = 0;
     this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0, deck: 0 };
+    this.core = null; // a core (cores.js): health, armour, a little off every hit, and a boost to one kind of gun
     this.weapons = [this.vehicle.weapon, ...(this.vehicle.extra || [])].map((w) => w.id);
     this.kits = 0; // repair kits carried (consumable)
     // air-defence mounts (aa.js): a slot each (Zuihou two), the vehicle's own mount in the first
@@ -69,7 +70,7 @@ class Tank {
 
   get isCpu() { return this.type !== 'human'; }
   // A3 shop: Health++ / Armour++ multiply by 1.3 per level
-  get maxHp() { return Math.round(this.vehicle.hp * Math.pow(1.3, this.upgrades.hp)); }
+  get maxHp() { return Math.round(this.vehicle.hp * Math.pow(1.3, this.upgrades.hp)) + (this.core && CORE_BY_ID[this.core] ? CORE_BY_ID[this.core].hp : 0); } // (+ her core's)
   // a heal: health first, then armour with what's left over; returns how much it restored
   heal(amt) {
     const hp = Math.min(this.maxHp - this.hp, Math.max(0, amt));
@@ -79,7 +80,7 @@ class Tank {
     return Math.round(hp + ar);
   }
 
-  get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)); }
+  get maxArmour() { return Math.round(this.vehicle.armour * Math.pow(1.3, this.upgrades.armour)) + (this.core && CORE_BY_ID[this.core] ? CORE_BY_ID[this.core].armour : 0); }
   get maxFuel() { return Math.round(TANK_FUEL * (this.vehicle.fuel || 1) * (1 + 0.4 * this.upgrades.engine) * (this.upgrades.deck ? DECK_FUEL : 1)); }
   get climb() { return TANK_CLIMB + 0.5 * this.upgrades.engine; }
   get weapon() { return WEAPON_BY_ID[this.weapons[this.weaponIdx]] || WEAPON_BY_ID[this.weapons[0]]; }
