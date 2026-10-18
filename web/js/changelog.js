@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['c78363b', 'Game text rewritten in plain, simplified technical English: help, tutorial, progress, traits, abilities, upgrades, shop, Codex notes, notices and the event log. Story transmissions, taunts and weapon flavour lines are unchanged.'],
   ['981a783', 'Progression: a first visit asks if you have played before; if not, a short tutorial with G.W. Tiger. Everyone starts with G.W. Tiger in a plain duel. Rounds you clear unlock tiers: one girl at a time in roster order (Ikaros last), new hostiles and events, and more of the shop. CPUs play from the same tier. Progress card on the menu and a Progress tree. G.W. Tiger’s Morser has a bigger blast.'],
   ['3b0c1ff', 'Each air-defence range ring is labelled with its mount, PD or AA, and its range.'],
   ['9012752', 'The air-defence range rings are off by default: the AA button in the top bar turns them on (and remembers it).'],
