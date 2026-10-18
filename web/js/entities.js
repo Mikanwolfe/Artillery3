@@ -596,9 +596,12 @@ class Projectile {
       if (!t.alive || t === this.owner || !(t.isPlane || (t.isMob && t.flying))) continue;
       if (t.isPlane && t.owner === this.owner) continue;
       if (this.owner && this.owner.isMob && t.isMob) continue;
+      if (!flak && this.lock === t && t.isMob) continue; // (a seeker locked on it homes in: it bursts at its closest pass, seekFuse)
       // flak bursts well short of a plane (the bigger the gun, the further), so its fragments
       // fan out over the whole squadron; short of a drone, closer in
-      const R = (flak ? (t.isPlane ? clamp(this.w.dmgR * 0.9, 40, 120) : clamp(this.w.dmgR * 0.4, 20, 48)) : 10) + (t.hw || 16) * 0.5;
+      // a rocket airbursts on a drone (ROCKET_AIRBURST): it goes off once close, rather than
+      // homing into it and slipping past; against a plane it still has to all but hit it
+      const R = (flak ? (t.isPlane ? clamp(this.w.dmgR * 0.9, 40, 120) : clamp(this.w.dmgR * 0.4, 20, 48)) : t.isMob ? clamp(this.w.dmgR * 0.9, 30, 80) : 10) + (t.hw || 16) * 0.5;
       const c = t.center(), fx = this.x - c.x, fy = this.y - c.y;
       // first s in [0, 1] with |p + s d - c| = R
       const b = fx * dx + fy * dy, cc = fx * fx + fy * fy - R * R;

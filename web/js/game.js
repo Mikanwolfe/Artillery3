@@ -69,6 +69,7 @@ const CPU_PICK_SPREAD = 0.8; // CPUs buy at random among affordable guns at leas
 // what a CPU earns on top of a player's pay, round pay and bounties, by difficulty (never shown:
 // the pay screen and the bounty pop-ups show the base)
 const CPU_CREDIT = { easy: 1.1, normal: 1.3, hard: 1.6 };
+const ROCKET_AIRBURST = 2; // a rocket that airbursts on a drone: twice its blast radius (as flak does twice the damage)
 const FLAK_REACH = 160; // how far a flak burst's fragments fan out to catch a squadron (+ twice its blast radius)
 const STARTER_SELL = 250; // what her starting gun or mount fetches if she sells it
 const AA_SHARE_BURNED = 0.4; // ... once planes have killed it
@@ -1153,6 +1154,7 @@ class Game {
       if (r && r.hit !== 'out') this.projectiles.push(new DroneBeam(this, w, p.owner, p));
     } else {
       const bonus = this.shotBonus(p);
+      if (w.kind === 'rocket' && ((p.fuseTarget && p.fuseTarget.isMob) || (r && r.tank && r.tank.isMob && r.tank.flying))) { bonus.dmgR *= ROCKET_AIRBURST; bonus.visR = (bonus.visR || w.dmgR) * 1.4; } // (airburst on a drone: a far wider reach)
       if (p.aaCut) { bonus.dmg *= p.aaCut; bonus.visR = (bonus.visR || bonus.dmgR) * (0.4 + 0.6 * p.aaCut); } // got through the point defence, damaged (and a smaller bang)
       this.explode(p.x, p.y, { ...bonus, from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
