@@ -6,83 +6,83 @@
 
 // how each gun actually plays (shared with the armoury page): [verdict, note]
 const GUN_NOTES = {
-  morser: ['Matches', 'Two shots a turn and the widest elevation of any starter, −20° to 90°. A real all-rounder.'],
-  d76: ['Matches', 'One accurate, long-reaching shell that shrugs off most of the wind. The 45° ceiling keeps it flat-firing, so the altitude bonus is hard to earn.'],
-  nxi0: ['Matches', 'Three tight shells that land as one. Lowest worth of the starters on paper, but the tight group rarely wastes a shell.'],
-  katis: ['Matches', 'The shells barely scratch; every one calls MAIA, which does the work. Still the strongest starter per turn.'],
-  howitzer: ['Matches', 'Biggest blast of the Commons at the shortest range. The cheapest real step up from any starter.'],
-  claymore: ['Matches', 'Three small shots to walk onto a target. Weak per dollar, as a three-clip low-calibre piece should be.'],
-  lensx2: ['Matches', 'Duct-taped CLS-T drone with a 120 ceiling: brutal in direct fire, useless behind a ridge. No altitude bonus.'],
-  lance: ['Matches', 'Spread 1 and two shots a turn. The most dependable Uncommon.'],
-  coil: ['Matches', 'A machine gun as advertised: eight rounds a turn. Spread 3 means much of it misses at range.'],
-  obj261: ['Undersells', 'One shot, but it is a heavy shell with a 130 radius at range 90. The best value below ¢4,000.'],
-  type11: ['Matches', 'Flexible but light, as described: three accurate shells, each calling MAIA, with the full 0–90° arc.'],
-  lensae: ['Matches', 'Three accurate beams from a Kotona relic drone with a 150 ceiling. A lot of damage for a Rare when you can see them.'],
-  type91: ['Matches', 'Acid pools keep burning after the hit. Trimmed 10% because the acid used to double its real damage.'],
-  bc155: ['Matches', 'Five small punches a turn, exactly as written. Lowest Rare per dollar, because each autoloader shot costs value.'],
-  typ67: ['Undersells', 'Two heavy shells with a 120 radius. The best Rare per dollar.'],
-  gwt290: ['Matches', 'Radius 200 and range 100: forgiving and far-reaching. Deadly if it hits, and it usually does.'],
-  cls220: ['Matches', 'Three by three, as the joke says. The classic table’s worst outlier, now on the line.'],
-  lfs75: ['Matches', 'Three beams twice a turn from a cat-eared drone (170 ceiling). Spread 1 is loose for a laser, still a cute sting.'],
-  triple: ['Matches', 'Spread 4, as warned. The 160 radius makes up for most of it.'],
-  laser88: ['Matches', 'Six beams a turn, small blasts. The snake drone climbs to 180, so it needs a clear line more than a good arc.'],
-  laser15x: ['Matches', 'One huge beam twice a turn, spread 0.25, and the highest Legendary ceiling (220). Best per credit when there\'s a sightline.'],
-  acid220: ['Matches', 'Two-shell acid salvos three times a turn. Strong, trimmed 10% for the acid.'],
-  cls770: ['Oversells', 'Sixteen shells a turn, but spread 12 scatters them across the valley. Real hits fall well short of its worth figure.'],
-  horizon: ['Matches', 'The heaviest acid in the game. Ground it hits stays lethal for turns.'],
-  terminus: ['Matches', 'Kept at 4×3 on purpose, the one deliberate exception. Still the strongest shell gun.'],
-  flak40: ['Matches', 'Shoots down anything that buzzes: six small shells a turn at double damage to drones. Weak against vehicles.'],
-  akizuki: ['Matches', 'Airbursts over ridges and into trenches, so cover doesn’t help. The best anti-drone gun per dollar.'],
-  maya: ['Matches', 'Six big airbursts a turn. Drones fall like rain, and the carrier feels it.'],
-  sanshiki: ['Matches', 'One huge airburst with a 260 radius and a rain of fragments. Lights up the whole sky, twice a turn.'],
-  nxi105: ['Matches', 'Three inspected shells in close formation. Steady, never exciting.'],
-  nxitv: ['Matches', 'Two tight three-round bursts a turn. Short range (45) is the price of checking every round.'],
-  nxisec9: ['Matches', 'Point defence: flak with NXi’s tight grouping. Drones do not get a vote.'],
-  nxiarch7: ['Matches', 'Spread 0.4 with a heavy shell, twice. Slow to load, slower to miss.'],
-  nxiintel3: ['Matches', 'Paired beams with spread 0.4 from a 200-ceiling drone. The most precise Mythical, if nothing is in the way.'],
-  nxiaeria: ['Matches', 'Three triple turrets, nine shells a turn, radius 150. NXi’s answer to the Terminus Est.'],
-  nxivoid: ['Matches', 'Lightning from a void drone (ceiling 240) that jumps four times to the nearest thing, a fifth weaker each time. Crowds hate it; trees and poles soak it.'],
-  lfs0: ['Matches', 'Two little seekers that find whatever is nearest. Weak, but forgiving, and her traits make them sharper.'],
-  wren: ['Matches', 'The first shop rocket: two seekers a turn. Close is good enough; the seeker does the last bit.'],
-  kestrel: ['Matches', 'Two pairs of seekers a turn. Consistent, light, and happy to pick off drones.'],
-  dunbarton: ['Matches', 'Barely elevates: a flat cruise rocket that needs a gap in the terrain, then pops up over its target and dives on it.'],
-  tirchonaill: ['Matches', 'Drops seven half-strength bomblets in sequence. They don\'t seek and the wind throws them, so skim it low over the target and let the strip do the work.'],
-  emain: ['Matches', 'Splits into three seekers that each go for the nearest target, twice a turn: one target gets all three, a crowd gets spread.'],
-  avalon: ['Matches', 'Ten half-strength bomblets twice a turn. Unguided and wind-blown: the best area denial in the game, if you lay the line right.'],
-  demigod: ['Matches', 'Arcs like a rocket, stops, and charges the nearest target as a lance with ×2.5 kinetic. Armour still takes the whole hit, so it is a death sentence only once armour is gone.'],
-  kagutsuchi: ['Matches', 'Forty incendiary shells a turn with a wide spread. Small blasts, but every fragment leaves fire burning on the ground.'],
-  yukikaze: ['Matches', 'Weak warheads, as advertised: the Hatsuyuki barrage does the damage, six MAIA pulses of 3.5× a warhead at whatever the rocket locked onto, wherever the rocket itself lands, twice a turn. It seeks from the top of its arc and never airbrakes, so a high lob dives in fast for ×6 kinetic damage.'],
-  feuerlilie: ['Matches', 'A homing rocket that bursts like flak: shrapnel and double damage to drones. The easiest anti-air gun to land.'],
-  ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling): a heavy beam that leaves a boiling pool, twice a turn.'],
-  massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). Point and click, if it can see.'],
-  ragnarok: ['Final', 'G.W. Tiger only. A marker round for her platoon 22 km back (four G.W. Tigers, a Karl-Gerät, and the batteries along the ridge): two dozen rounds across the area, then the 60cm: an enormous crater, and an earthquake that hits everyone on the ground within 1,000.'],
-  zeropoint: ['Final', 'Object 15X only. A railgun probe (1,200). Past the fleet, the belt and Jupiter, the Naito MAIA Containment Satellite takes annihilation orders: the ground 520 either side of the probe is deleted outright, down through the world, and anything that falls in is gone.'],
-  verdict: ['Final', 'November only. A target dot. The fleet takes station overhead; the flagship\'s lance comes down on the mark (6,000), then the rest of the fleet rains 60 laser shots (450 each) across 600 either side of it.'],
-  constellation: ['Final', 'Innocentia only. A laser dot. MAIA opens her eye and the sky fills with MAIAs, a vast one behind them; five waves of 40 shots (320 each) hit across 650 either side of the mark, then the vast MAIA\'s beam comes down: 6,000.'],
-  morrighan: ['Final', 'Alban Eiler only. A flare; the sky over the mark splits open in five vertical tears, and 44 black rockets (600 each) rain out of them on long dark trails, seeking everything beneath.'],
-  zui0: ['Matches', 'Three dive bombers off her deck, two squads, then a turn to rearm. Slow and readable, but a target that sits still eats every bomb.'],
-  kansen0: ['Matches', 'Fighters: they clear drones and planes over the mark at triple damage and only then strafe it. Weak against a girl, superb against a swarm.'],
-  kankou97: ['Matches', 'Torpedoes run along the ground through the mark from her side: stepping sideways along their line doesn’t help, a ridge in the way does.'],
-  suisei: ['Matches', 'The Kanbaku’s jet successor with a heavier bomb, diving steep enough for a kinetic bonus. The best plane per credit below Rare.'],
-  tenzan: ['Matches', 'Three torpedoes abreast. Punishes anyone sitting in a valley.'],
-  reppuu: ['Matches', 'The anti-squadron answer: anything flying near the mark dies first.'],
-  taillteann: ['Matches', 'Seekers from overhead: a target that moved a little still gets found. The most forgiving plane.'],
-  ryusei: ['Matches', 'Three huge bombs. If they land, little survives.'],
-  kikka: ['Matches', 'Jets: AA has half the chance against them and their bombs, and each drops two.'],
-  shiden: ['Matches', 'Four fighters a squad. Clears the sky of anything.'],
-  tifaun: ['Matches', 'One armoured jet, one bomb: it steers onto the nearest rival in its zone and goes off across 260, so leave the zone by a wide margin, or shoot it down (700 health under 300 armour, AA has half the chance).'],
-  fortissimo: ['Matches', 'Level bombers: a stick of bombs walked across a wide zone, unguided. The armour soaks the first hit whatever its size, so chip it with flak before the big gun.'],
-  kidobutai: ['Final', 'Zuihou only. A laser dot for three carriers off the coast: 21 aircraft (9 dive bombers, 6 torpedo bombers, 6 fighters) climb away and strike the mark in the same turn, then hover over it; each later dot redirects the whole fleet to strike again, until their loadouts run out. It won’t launch again until this one is gone, so shooting it down buys time.'],
-  apollon: ['Final', 'Ikaros only. A laser; where it lands she reaches past the NXi fleet to an asteroid belt, marks a rock and brings it down: 6,000 across 650, in bullet time, a vast crater, and the ground melted to lava for the rest of the round (it burns anyone who starts a turn in it).'],
+  morser: ['Matches', 'Two shots a turn. It has the widest elevation of any starter, −20° to 90°. It is a good all-round gun.'],
+  d76: ['Matches', 'One accurate, long-range shell. The wind has little effect on it. Maximum elevation is 45°, so the shots stay flat and the altitude bonus is hard to get.'],
+  nxi0: ['Matches', 'Three shells in a tight group that land as one. It has the lowest worth of the starters, but few shells miss.'],
+  katis: ['Matches', 'The shells do very little damage. Each shell calls MAIA, and MAIA does the damage. It is the strongest starter per turn.'],
+  howitzer: ['Matches', 'The largest blast of the Commons, at the shortest range. It is the least expensive real upgrade from a starter.'],
+  claymore: ['Matches', 'Three small shots a turn. Use them to adjust your aim onto a target. Low value per credit, as expected for a three-shot, low-calibre gun.'],
+  lensx2: ['Matches', 'A CLS-T drone with a 120 ceiling. It does high damage in direct fire, but it cannot hit a target behind a ridge. No altitude bonus.'],
+  lance: ['Matches', 'Spread 1 and two shots a turn. It is the most reliable Uncommon.'],
+  coil: ['Matches', 'A machine gun: eight rounds a turn. Spread 3, so many rounds miss at long range.'],
+  obj261: ['Undersells', 'One shot, but it is a heavy shell with a 130 radius at range 90. It is the best value below ¢4,000.'],
+  type11: ['Matches', 'Flexible but light. Three accurate shells, and each shell calls MAIA. Full elevation arc, 0–90°.'],
+  lensae: ['Matches', 'Three accurate beams from a Kotona drone with a 150 ceiling. High damage for a Rare when the drone can see the target.'],
+  type91: ['Matches', 'The acid pools continue to burn after the hit. Its damage was reduced by 10%, because the acid doubled its real damage.'],
+  bc155: ['Matches', 'Five small hits a turn, as the description says. It is the lowest Rare per credit, because each autoloader shot costs value.'],
+  typ67: ['Undersells', 'Two heavy shells with a 120 radius. It is the best Rare per credit.'],
+  gwt290: ['Matches', 'Radius 200 and range 100. It is easy to hit with and has a long reach. It does high damage when it hits, and it usually hits.'],
+  cls220: ['Matches', 'Three by three, as the description says. It was the worst outlier in the classic table. Now it is on the fit line.'],
+  lfs75: ['Matches', 'Three beams, two times a turn, from a drone with a 170 ceiling. Spread 1 is loose for a laser, but the damage is useful.'],
+  triple: ['Matches', 'Spread 4, as the description warns. The 160 radius makes up for most of it.'],
+  laser88: ['Matches', 'Six beams a turn, with small blasts. The drone climbs to 180, so a clear line of sight is more important than a good arc.'],
+  laser15x: ['Matches', 'One large beam, two times a turn, with spread 0.25. It has the highest Legendary ceiling (220). It is the best value per credit when it has a line of sight.'],
+  acid220: ['Matches', 'Two-shell acid salvos, three times a turn. Strong. Its damage was reduced by 10% because of the acid.'],
+  cls770: ['Oversells', 'Sixteen shells a turn, but spread 12 scatters them across a wide area. Its real damage is much less than its worth figure.'],
+  horizon: ['Matches', 'The strongest acid in the game. The ground it hits stays lethal for several turns.'],
+  terminus: ['Matches', 'Kept at 4×3 on purpose. It is the only intentional exception. It is still the strongest shell gun.'],
+  flak40: ['Matches', 'Shoots down drones and aircraft: six small shells a turn, with double damage to drones. Weak against vehicles.'],
+  akizuki: ['Matches', 'Bursts in the air above ridges and in trenches, so cover does not protect the target. The best anti-drone gun per credit.'],
+  maya: ['Matches', 'Six large airbursts a turn. It destroys many drones, and the carrier also takes damage.'],
+  sanshiki: ['Matches', 'One large airburst with a 260 radius and many fragments, two times a turn.'],
+  nxi105: ['Matches', 'Three inspected shells in a tight group. Consistent results.'],
+  nxitv: ['Matches', 'Two tight three-round bursts a turn. The short range (45) is the cost of inspecting every round.'],
+  nxisec9: ['Matches', 'Point defence: flak with the tight grouping of NXi guns. It is very effective against drones.'],
+  nxiarch7: ['Matches', 'Spread 0.4 with a heavy shell, two times a turn. It loads slowly, but it rarely misses.'],
+  nxiintel3: ['Matches', 'Paired beams with spread 0.4 from a drone with a 200 ceiling. It is the most precise Mythical when it has a line of sight.'],
+  nxiaeria: ['Matches', 'Three triple turrets: nine shells a turn, radius 150. It is the NXi equivalent of the Terminus Est.'],
+  nxivoid: ['Matches', 'Lightning from a void drone (ceiling 240). The lightning jumps four times to the nearest object, and each jump does one fifth less damage. It is strong against groups. Trees and poles absorb it.'],
+  lfs0: ['Matches', 'Two small seekers that go to the nearest target. Weak, but easy to hit with. Her traits make them more accurate.'],
+  wren: ['Matches', 'The first rocket in the shop: two seekers a turn. Aim near the target, and the seeker does the rest.'],
+  kestrel: ['Matches', 'Two pairs of seekers a turn. Consistent and light. Good against drones.'],
+  dunbarton: ['Matches', 'Very low elevation. It is a flat cruise rocket that needs a gap in the terrain. Above its target, it climbs and then dives onto it.'],
+  tirchonaill: ['Matches', 'Drops seven half-strength bomblets in a line. They do not seek, and the wind moves them. Fly it low over the target and let the line of bomblets hit it.'],
+  emain: ['Matches', 'Splits into three seekers, two times a turn. Each seeker goes to the nearest target. If there is one target, all three hit it. If there is a group, they spread out.'],
+  avalon: ['Matches', 'Ten half-strength bomblets, two times a turn. They are not guided, and the wind moves them. It is the best area denial in the game if you aim the line correctly.'],
+  demigod: ['Matches', 'Flies in an arc like a rocket, stops, then charges the nearest target as a lance with ×2.5 kinetic damage. Armour still absorbs the full hit. It is lethal only after the armour is gone.'],
+  kagutsuchi: ['Matches', 'Forty incendiary shells a turn with a wide spread. The blasts are small, but each fragment starts a fire on the ground.'],
+  yukikaze: ['Matches', 'The warheads are weak, as the description says. The Hatsuyuki barrage does the damage: six MAIA pulses of 3.5× a warhead, two times a turn. The pulses hit the target that the rocket locked onto, wherever the rocket lands. It seeks from the top of its arc and never airbrakes. Fire it in a high arc to get ×6 kinetic damage.'],
+  feuerlilie: ['Matches', 'A homing rocket that bursts like flak: shrapnel, and double damage to drones. It is the easiest anti-air gun to hit with.'],
+  ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling). It fires a heavy beam that leaves a pool of acid, two times a turn.'],
+  massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). It hits where you aim if it has a line of sight.'],
+  ragnarok: ['Final', 'G.W. Tiger only. Fires a marker round for her platoon 22 km away. The platoon fires 24 rounds across the area. Then the 60cm gun fires. It makes a very large crater, and an earthquake damages everyone on the ground within 1,000.'],
+  zeropoint: ['Final', 'Object 15X only. Fires a railgun probe (1,200 damage). It goes through up to 240 of ground and cover. The Naito MAIA Containment Satellite then removes the ground 520 either side of the probe, through the full depth of the world. Anything that falls in is destroyed.'],
+  verdict: ['Final', 'November only. Fires a target dot. The fleet moves overhead. The lance of the flagship hits the mark (6,000). Then the fleet fires 60 laser shots (450 each) across 600 either side of the mark.'],
+  constellation: ['Final', 'Innocentia only. Fires a laser dot. Many MAIAs appear in the sky. Five waves of 40 shots (320 each) hit across 650 either side of the mark. Then the beam of a very large MAIA hits the mark: 6,000.'],
+  morrighan: ['Final', 'Alban Eiler only. Fires a flare. Five openings appear in the sky above the mark. 44 black rockets (600 each) come out of them and seek all targets below.'],
+  zui0: ['Matches', 'Three dive bombers from her deck, two squads, then one turn to rearm. Slow and easy to predict, but a target that does not move takes every bomb.'],
+  kansen0: ['Matches', 'Fighters. They attack drones and planes over the mark first, at triple damage, and then they strafe the mark. Weak against a girl, very strong against a swarm.'],
+  kankou97: ['Matches', 'Torpedoes move along the ground from her side, through the mark. Moving sideways along their line does not help. A ridge in their path does.'],
+  suisei: ['Matches', 'The jet successor of the Kanbaku, with a heavier bomb. It dives steeply enough to get a kinetic bonus. It is the best plane per credit below Rare.'],
+  tenzan: ['Matches', 'Three torpedoes side by side. Very effective against a target in a valley.'],
+  reppuu: ['Matches', 'Anti-squadron fighters: they destroy aircraft near the mark first.'],
+  taillteann: ['Matches', 'Seekers from above: they still find a target that moved a short distance. It is the easiest plane to hit with.'],
+  ryusei: ['Matches', 'Three very large bombs. If they hit, few targets survive.'],
+  kikka: ['Matches', 'Jets. AA has half the chance to hit them and their bombs. Each jet drops two bombs.'],
+  shiden: ['Matches', 'Four fighters a squad. It clears all aircraft from the sky.'],
+  tifaun: ['Matches', 'One armoured jet with one bomb. It steers onto the nearest rival in its zone and explodes across 260. Move far out of the zone, or shoot it down. It has 700 health and 300 armour, and AA has half the chance to hit it.'],
+  fortissimo: ['Matches', 'Level bombers. They drop a line of unguided bombs across a wide zone. The armour absorbs the first hit, whatever its size. Damage it with flak before you use the big gun.'],
+  kidobutai: ['Final', 'Zuihou only. Fires a laser dot for three carriers off the coast. 21 aircraft (9 dive bombers, 6 torpedo bombers, 6 fighters) strike the mark in the same turn, then stay above it. Each later dot sends the full fleet to strike again, until they have no ammunition. She cannot launch again until this fleet is gone, so shooting it down gives you time.'],
+  apollon: ['Final', 'Ikaros only. Fires a laser. An asteroid falls on the mark: 6,000 across 650. It makes a very large crater. The ground becomes lava for the rest of the round. Lava burns anyone who starts a turn in it.'],
 };
 const GIRL_NOTES = {
-  gwt: { plays: 'The all-rounder. A two-round autoloader makes her forgiving: a miss costs half a turn, not the whole of it. Excellent damage, a gun that lobs nearly straight up, and a steady platform that halves the spread of every gun she carries.' },
-  obj: { plays: 'The glass cannon: a thin hull behind thick, angled plating. Mark a target and her designator brings every round down on it (a rough shot is enough, as long as the arc gets near), so she rewards marking the right target; but she can’t take many hits back when she misses.' },
-  nxi: { plays: 'The battlecruiser. Most armour, least fuel. Picks a spot, comes with two air-defence mounts of her own, and can’t be one-shot.' },
-  alb: { plays: 'The rocketeer. Her seekers find the nearest thing from further out and turning harder than anyone else’s, and every rocket salvo she fires has one more rocket in it. Lighter hits, few misses.' },
-  ang: { plays: 'The guardian angel. Light armour, but grace saves her from one killing blow a round, and her wings make her the most mobile girl: half-price jumps and no fall damage, so she can take high ground no one else can. Her halo lance needs a line of sight.' },
-  zui: { plays: 'The light carrier. She marks a spot; her squadron flies over and strikes it in the same turn, then hovers there, a target, until her next dot sends it on. A full deck (one more plane a squad, and no slower lift-fan rearm) and the Type 96 on her deck make her a hard girl to bomb.' },
-  int: { plays: 'The uplink. Even the starter calls MAIA, and her strikes are bigger and forgive a near miss. Satellite guns are worth more in her hands.' },
+  gwt: { plays: 'The all-rounder. Her two-round autoloader makes her forgiving: a miss costs half a turn, not a full turn. She does high damage, and her gun can fire almost straight up. Her steady platform halves the spread of every gun she carries.' },
+  obj: { plays: 'High damage, low protection: a thin hull behind thick, angled armour plates. Mark a target, and her designator brings every round down on it. A rough shot is enough if the arc goes near the target. Choose the right target to mark. She cannot take many hits when she misses.' },
+  nxi: { plays: 'The battlecruiser. Most armour, least fuel. Choose a position for her. She has two anti-air mounts of her own, and one shot cannot kill her.' },
+  alb: { plays: 'The rocketeer. Her seekers find the nearest target from a longer distance and turn more sharply than other seekers. Each rocket salvo she fires has one more rocket. Lighter hits, but few misses.' },
+  ang: { plays: 'The guardian angel. Light armour, but grace saves her from one killing blow each round. Her wings make her the most mobile girl: jumps cost half, and she takes no fall damage. She can reach high ground that others cannot. Her halo lance needs a line of sight.' },
+  zui: { plays: 'The light carrier. She marks a position. Her squadron flies to it and strikes it in the same turn. Then it stays above that position as a target until her next dot sends it to a new one. Her full deck gives one more plane a squad and no slower lift-fan rearm. With the Type 96 on her deck, she is difficult to bomb.' },
+  int: { plays: 'The uplink. Even her starter gun calls MAIA. Her strikes are larger and are more forgiving of a near miss. Satellite guns have more value in her hands.' },
 };
 
 const RANGE_DIST = { near: 300, mid: 550, far: 850 }; // world units from the girl to the dummy
@@ -108,23 +108,23 @@ function codexMeta(w) {
   const worth = codexWorth(w);
   if (w.sig) { // a girl's final weapon: one of a kind, and the set piece does the damage (see its notes)
     const v = VEHICLES.find((x) => x.id === w.sig);
-    lines.push(['Value', `${v ? v.name : 'Her'} only: her final weapon, no peers to rank it against`]);
+    lines.push(['Value', `${v ? v.name : 'One girl'} only. This is her final weapon, so there are no other guns to compare it with`]);
   } else if (!w.starter) {
     const peers = WEAPONS.filter((x) => x.rarity === w.rarity && !x.sig);
     const per = (x) => codexWorth(x) / x.cost;
     const par = peers.reduce((a, x) => a + per(x), 0) / peers.length;
     const rank = peers.slice().sort((a, b) => per(b) - per(a)).indexOf(w) + 1;
     lines.push(['Value', `${(per(w) / par).toFixed(2)}× the ${RARITY[w.rarity].word} average per ¢ (#${rank} of ${peers.length})`]);
-  } else lines.push(['Value', 'Free starter, never reloads; sells for ¢' + STARTER_SELL + ' if she wants the slot']);
-  if (w.sig) lines.push(['Per firing turn', 'the set piece’s, see below (the marker round itself barely scratches)']);
+  } else lines.push(['Value', 'Free starter gun. It never reloads. Sell it for ¢' + STARTER_SELL + ' to free the slot']);
+  if (w.sig) lines.push(['Per firing turn', 'See the notes below. The marker round itself does almost no damage']);
   else lines.push(['Per firing turn', `${Math.round(worth)} (${w.dmg}${w.salvo > 1 ? '×' + w.salvo : ''}${w.clip > 1 ? ', ' + w.clip + ' shots' : ''})`]);
   const R = reloadOf(w);
-  if (w.air) { const S = w.air.squads || 1, P = w.fleet ? AIR_PASSES.dive : AIR_PASSES[w.air.type]; lines.push(['Tempo', `${S} squad${S > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 off a flight deck), one dot each a turn. A squad strikes its zone as soon as it gets there, and again for each later dot it is redirected by, ${P} pass${P > 1 ? 'es' : ''} in all, before flying home to rearm for ${R} turns${w.fleet ? '' : ` (${R + vtolRearm(w)} launched straight up, without a flight deck)`}`]); }
-  else if (R) lines.push(['Tempo', w.sig ? `Fires every ${R + 1} turns` : `Fires every ${R + 1} turns on its own, about ${Math.round(worth / (R + 1))} a turn; rotate it with other guns`]);
+  if (w.air) { const S = w.air.squads || 1, P = w.fleet ? AIR_PASSES.dive : AIR_PASSES[w.air.type]; lines.push(['Tempo', `${S} squad${S > 1 ? 's' : ''} of ${w.fleet ? w.fleet.dive + w.fleet.torpedo + w.fleet.fighter : w.air.planes} (+1 from a flight deck). Each squad takes one dot a turn. A squad strikes its zone when it arrives, and again each time a later dot redirects it, for ${P} pass${P > 1 ? 'es' : ''} in total. Then it flies home and rearms for ${R} turns${w.fleet ? '' : ` (${R + vtolRearm(w)} turns if it launches straight up, without a flight deck)`}`]); }
+  else if (R) lines.push(['Tempo', w.sig ? `Fires every ${R + 1} turns` : `Fires every ${R + 1} turns. Alone, it gives about ${Math.round(worth / (R + 1))} a turn. Use it in rotation with other guns`]);
   const el = Math.min(45, w.elevMax);
   const reach = (w.maxCharge * w.maxCharge * Math.sin(2 * rad(el))) / GRAV;
-  lines.push(['Reach', `${Math.round(reach).toLocaleString('en-US')} units at ${el}° (the map is ${WORLD_W.toLocaleString('en-US')})`]);
-  const cons = w.guide ? `Seeks only what is within ${w.guide.range} once past the top of its arc (otherwise flies on as a shell), fishtails, and aims up to ${Math.round(w.disp * SEEKER_SPREAD)} off` : w.disp <= 0.6 ? 'Pinpoint' : w.disp <= 1.5 ? 'Tight' : w.disp <= 3 ? 'Loose' : 'Wild';
+  lines.push(['Reach', `${Math.round(reach).toLocaleString('en-US')} units at ${el}°. The map is ${WORLD_W.toLocaleString('en-US')} units wide`]);
+  const cons = w.guide ? `Seeks targets within ${w.guide.range} after the top of its arc. If there are none, it flies on as a shell. It moves from side to side and aims up to ${Math.round(w.disp * SEEKER_SPREAD)} off` : w.disp <= 0.6 ? 'Pinpoint' : w.disp <= 1.5 ? 'Tight' : w.disp <= 3 ? 'Loose' : 'Wild';
   lines.push(['Consistency', `${cons}; spread ${w.disp}, wind ${Math.round(w.drift * 100)}%`]);
   return lines;
 }
@@ -153,7 +153,7 @@ function codexChart(sel) {
   const sx = X(sw.c), sy = Y(sw.v);
   s += `<rect x="${sx - 7}" y="${sy - 7}" width="14" height="14" fill="none" stroke="#ffffff" stroke-width="2"/><rect x="${sx - 4}" y="${sy - 4}" width="8" height="8" fill="${KIND_COL[sel.kind]}"/>`;
   const right = sx > W - 130;
-  s += `<text x="${sx + (right ? -11 : 11)}" y="${sy - 8}" text-anchor="${right ? 'end' : 'start'}" class="sel">${esc(sel.name.length > 22 ? sel.name.slice(0, 21) + '…' : sel.name)}${sel.starter ? ' (starter, at ¢500)' : ''}</text>`;
+  s += `<text x="${sx + (right ? -11 : 11)}" y="${sy - 8}" text-anchor="${right ? 'end' : 'start'}" class="sel">${esc(sel.name.length > 22 ? sel.name.slice(0, 21) + '…' : sel.name)}${sel.starter ? ' (starter, shown at ¢500)' : ''}</text>`;
   return `<svg viewBox="0 0 ${W} ${H}" class="cx-chart" role="img" aria-label="Price against worth per firing turn for every gun">${s}</svg>
     <p class="cx-legend">${Object.entries(KIND_COL).map(([k, c]) => `<span><i style="background:${c}"></i>${k}</span>`).join('')}<span><i class="fit"></i>fit</span></p>`;
 }
@@ -380,11 +380,11 @@ Object.assign(UI, {
       <div class="stats">${this.weaponStats(w)}</div>
       <dl class="cx-dl" id="cx-wmeta"></dl>
       ${gn ? `<p class="cx-meta"><span class="chip ${gn[0]}">${gn[0]}</span> ${esc(gn[1])}</p>` : ''}
-      ${w.sig || w.air ? '' : `<label class="cx-slider" title="How much a bigger blast is worth: 0 ignores the radius, 0.5 (the default) counts its square root, 1 counts it in full, 1.5 more than that"><span class="mgh">Blast radius weight</span><input type="range" id="cx-rw" min="0" max="1.5" step="0.05" value="${c.radiusWeight}"><b id="cx-rwv">${c.radiusWeight.toFixed(2)}</b></label>`}
+      ${w.sig || w.air ? '' : `<label class="cx-slider" title="Sets the value of blast radius. 0 ignores the radius. 0.5 (default) uses its square root. 1 uses the full radius. 1.5 gives it more weight."><span class="mgh">Blast radius weight</span><input type="range" id="cx-rw" min="0" max="1.5" step="0.05" value="${c.radiusWeight}"><b id="cx-rwv">${c.radiusWeight.toFixed(2)}</b></label>`}
       <div id="cx-wchart"></div>`;
     const worth = () => {
       $('cx-wmeta').innerHTML = codexMeta(w).map(([k, val]) => `<dt>${k}</dt><dd>${esc(val)}</dd>`).join('');
-      $('cx-wchart').innerHTML = w.sig ? '' : `<p class="mgh">Price against worth per firing turn (log) · click a dot</p>${codexChart(w)}`;
+      $('cx-wchart').innerHTML = w.sig ? '' : `<p class="mgh">Price against worth per firing turn (log scale). Click a dot to select that gun.</p>${codexChart(w)}`;
       $('cx-wchart').querySelectorAll('rect[data-w]').forEach((r) => { r.onclick = () => { c.wid = r.dataset.w; this.renderCodex(); this.codexRange(); }; });
     };
     worth();
@@ -411,9 +411,9 @@ Object.assign(UI, {
     $('cx-wpn').innerHTML = `<div class="cx-whead">${this.badge(a)}<div><p class="maker">${esc(aaMaker(a))} · ${a.role === 'missile' ? 'point defence' : 'anti-air'}</p><h3 style="color:${r.ui}">${esc(a.name)}</h3><p class="cost">${a.starter ? `${esc(v.name)}’s own` : money(a.cost)}</p></div></div>
       <p>${esc(a.short)} <i>${esc(a.long)}</i></p>
       <div class="stats">${this.weaponStats(a)}</div>
-      <dl class="cx-dl"><dt>Vs aircraft</dt><dd>about ${vsAir(a)} a turn at most (${a.perTurn} bursts of ${a.dmg}, ${Math.round(a.acc * 100)}% to hit, a miss grazes for ${Math.round(AA_GRAZE * 100)}%${a.splash ? `; each burst hits everything within ${a.splash}` : ''}), out to ${a.range}</dd>
-      <dt>Vs missiles</dt><dd>engages every rocket or bomb that comes within ${a.range} and takes about ${Math.round(a.stop * 100)}% off a 100-damage warhead (anywhere from half to one and a half times that; less off heavier ones, more off lighter; two mounts multiply); one left with ${Math.round(AA_SHOT_DOWN * 100)}% or less is shot down</dd></dl>
-      <p class="mgh">Test it: a squad of three ${esc(shortName(WEAPON_BY_ID[DRILL_PLANE]))} (${WEAPON_BY_ID[DRILL_PLANE].air.hp} health each) flies over her without attacking, or ${DRILL_MISSILES} rockets come in at her</p>
+      <dl class="cx-dl"><dt>Vs aircraft</dt><dd>Up to about ${vsAir(a)} a turn: ${a.perTurn} bursts of ${a.dmg}, ${Math.round(a.acc * 100)}% chance to hit. A miss does ${Math.round(AA_GRAZE * 100)}% damage.${a.splash ? ` Each burst hits all targets within ${a.splash}.` : ''} Range ${a.range}.</dd>
+      <dt>Vs missiles</dt><dd>Attacks each rocket or bomb within ${a.range}. It removes about ${Math.round(a.stop * 100)}% from a 100-damage warhead. The actual value is 0.5 to 1.5 times this. It removes less from heavier warheads and more from lighter ones. The effects of two mounts multiply. A warhead with ${Math.round(AA_SHOT_DOWN * 100)}% or less left is shot down.</dd></dl>
+      <p class="mgh">Test it. Send a squad of three ${esc(shortName(WEAPON_BY_ID[DRILL_PLANE]))} (${WEAPON_BY_ID[DRILL_PLANE].air.hp} health each) over her. They do not attack. Or fire ${DRILL_MISSILES} rockets at her.</p>
       <div class="seg" id="cx-drill"><button data-k="low">Low pass</button><button data-k="high">High pass</button><button data-k="missiles">Rocket salvo</button></div>
       <table class="cx-aa"><tr><th>Mount</th><th></th><th>Range</th><th>Air/turn</th><th>Stops</th><th>¢</th></tr>${rows}</table>`;
     $('cx-drill').querySelectorAll('button').forEach((b) => { b.onclick = () => { this.game.rangeDrill(b.dataset.k); b.blur(); }; });
