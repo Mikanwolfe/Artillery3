@@ -246,6 +246,16 @@ option { background: var(--bg); color: var(--fg); }
 .maker.ang { color: #ffe08a; }
 .maker.sgk { color: #ff8a8a; }
 .slot.passive { opacity: 0.85; border-style: dashed; cursor: default; }
+/* her core: a dedicated slot, outlined in its rarity colour (shop and rack) */
+.coreslot { display: flex; gap: 0.7em; align-items: flex-start; background: var(--bg2); border: 1px solid var(--rc, var(--line)); box-shadow: inset 3px 0 0 var(--rc, var(--line)); padding: 0.6em; margin-bottom: 0.4em; font-size: 0.84em; }
+.coreslot.empty { border-style: dashed; }
+.coreslot .cs-body { flex: 1; display: grid; gap: 0.3em; min-width: 0; }
+.coreslot h4 { font-size: 1em; margin: 0; }
+.coreslot .note { margin: 0; font-size: 0.85em; }
+.coreslot .cs-row { display: flex; gap: 0.4em; justify-content: flex-end; }
+.coreslot .cs-row button { padding: 0.3em 0.6em; font-size: 0.85em; }
+.slot.core { border-style: solid; border-color: var(--rc, var(--line)); opacity: 1; }
+.slot.core.empty { border-style: dashed; opacity: 0.6; }
 .owned.empty span { opacity: 0.6; }
 
 /* ---------------------------------------------------------------- tables, quips */

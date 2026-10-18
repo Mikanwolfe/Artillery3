@@ -559,6 +559,7 @@ function findLock(p, seek, owner) {
   let best = null, bd = range, bestRival = null, brd = range;
   for (const c of seek) {
     if (!c.alive || c === owner || (c.isPlane && c.owner === owner) || (p.taken && p.taken.includes(c))) continue;
+    if (owner && owner.isMob && (c.isMob || !c.vehicle)) continue; // (a hostile's seeker: only for the girls)
     const q = seekCenter(c);
     const dx = q.x - p.x, dy = q.y - p.y;
     const d = Math.hypot(dx, dy);

@@ -30,8 +30,11 @@ class Ctl {
 
 // Aim error multiplier by range: RANGE_ERR_BASE at point blank, +1 every RANGE_ERR_SCALE world units
 // (capped at 3x), so CPUs are deadly close up and shaky at long range.
-const RANGE_ERR_BASE = 0.35;
+const RANGE_ERR_BASE = 0.12;
 const RANGE_ERR_SCALE = 650;
+// (a power over 1: close in it is much sharper than before, far out about as loose)
+function rangeErr(range) { return clamp(RANGE_ERR_BASE + Math.pow(range / RANGE_ERR_SCALE, 1.35), RANGE_ERR_BASE, 3); }
+const FOLLOW_TIGHTEN = 0.6; // a follow-up round's aim error: at most this much of the one before
 
 // Retaliation: a CPU strongly prefers whoever last damaged it. The bonus is in the same units as
 // the solver's miss distance, so it will take a somewhat worse shot to hit back.
@@ -240,10 +243,15 @@ class CpuController {
     // aim error grows with range: sharp up close, increasingly loose across the map
     const range = Math.abs(best.target.x - t.x);
     const m = memo.get(best.target);
-    const f = clamp(RANGE_ERR_BASE + range / RANGE_ERR_SCALE, RANGE_ERR_BASE, 3) * (t.upgrades.computer ? 0.7 : 1) * LEARN[Math.min(m.shots, LEARN.length - 1)] * (best.target.isMob ? MOB_AIM : 1);
+    const f = rangeErr(range) * (t.upgrades.computer ? 0.7 : 1) * LEARN[Math.min(m.shots, LEARN.length - 1)] * (best.target.isMob ? MOB_AIM : 1);
     m.shots++;
-    best.elev = clamp(best.elev + rng.gauss() * k.se * f, w.elevMin, w.elevMax);
-    best.v = clamp(best.v * (1 + rng.gauss() * k.sc * f), w.maxCharge * 0.05, w.maxCharge);
+    let de = rng.gauss() * k.se * f, dv = rng.gauss() * k.sc * f;
+    // the rest of a clip or salvo this turn: each round lands closer than the last (it watched it)
+    const prev = t.firedThisTurn && t.aimErr && t.aimErr.turn === g.turnCount ? t.aimErr : null;
+    if (prev) { de = clamp(de, -prev.e * FOLLOW_TIGHTEN, prev.e * FOLLOW_TIGHTEN); dv = clamp(dv, -prev.v * FOLLOW_TIGHTEN, prev.v * FOLLOW_TIGHTEN); }
+    t.aimErr = { turn: g.turnCount, e: Math.abs(de), v: Math.abs(dv) };
+    best.elev = clamp(best.elev + de, w.elevMin, w.elevMax);
+    best.v = clamp(best.v * (1 + dv), w.maxCharge * 0.05, w.maxCharge);
     best.revenge = best.target === grudge;
     t.planTarget = best.target;
     t.planTurn = g.turnCount;
