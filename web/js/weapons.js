@@ -29,14 +29,14 @@ const MAKERS = { gwt: 'CLS-T trials', obj: 'KTS-T', nxi: 'NXi · November Divisi
 const MAKER_CLASS = { nxi: ' nxi', obj: ' kts', ang: ' ang', zui: ' sgk' };
 const VEHICLES = [
   {
-    id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'A sturdy Geschützwagen girl with a two-round autoloader on her back.',
+    id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'High health, light armour. Her autoloader fires two shots a turn.',
     traits: ['drill', 'geschutz'], aa: ['aa_gwt'],
     weapon: weapon('morser', 'G.W. 150mm/78 Morser', 'shell', -20, 90, {
-      dmg: 100, disp: 1.5, clip: 2, maxCharge: 50, dmgR: 50,
+      dmg: 100, disp: 1.5, clip: 2, maxCharge: 50, dmgR: 65, explR: 12,
       short: 'Extensively field-tested, a reliable and sturdy weapon with no equal.', long: 'Starting weapon for G.W. Tiger.' }),
   },
   {
-    id: 'obj', name: 'Object 15X', hp: 65, armour: 175, blurb: 'A KTS-T girl: thin hull, thick angled plating, one huge accurate shot.',
+    id: 'obj', name: 'Object 15X', hp: 65, armour: 175, blurb: 'Low health, heavy sloped armour. One large, accurate shot a turn.',
     traits: ['sloped', 'designator'], aa: ['aa_obj'],
     weapon: weapon('d76', '190mm D-76ST 15X', 'shell', 0, 45, {
       dmg: 200, disp: 0.9, maxCharge: 58, drift: 0.75, dmgR: 75,
@@ -45,14 +45,14 @@ const VEHICLES = [
   // NXi (the user's canon): November Division of the United Aurora Federation, "Built Like A
   // Battlecruiser": overbuilt, triple-redundant, slow, never fails. A rival to CLS-T.
   {
-    id: 'nxi', name: 'November', hp: 110, armour: 200, fuel: 0.7, blurb: 'An NXi battlecruiser girl: overbuilt, slow and very hard to kill.',
+    id: 'nxi', name: 'November', hp: 110, armour: 200, fuel: 0.7, blurb: 'Heavy armour, slow. Three shells a shot.',
     traits: ['redundancy', 'defsuite'], aa: ['aa_nxi1', 'aa_nxi2'],
     weapon: weapon('nxi0', "NXi Mk.0 'Bulkhead' 127mm Triple", 'shell', -5, 60, {
       salvo: 3, disp: 0.6, maxCharge: 55, dmg: 50, dmgR: 50, explR: 6,
       short: 'Triple-redundant: three shells where one would do. November Division standard issue.', long: 'Starting weapon for November.' }),
   },
   {
-    id: 'int', name: 'Innocentia', hp: 130, armour: 130, blurb: 'The uplink girl: her twin barrels call down the MAIA satellite.',
+    id: 'int', name: 'Innocentia', hp: 130, armour: 130, blurb: 'Balanced health and armour. Her two-shell gun calls MAIA satellite strikes.',
     traits: ['uplink', 'retarget'], aa: ['aa_int'],
     weapon: weapon('katis', '120mm Kati-S / Sat. Enabled.', 'shell', 0, 45, {
       dmg: 80, salvo: 2, disp: 2.1, maxCharge: 70, dmgR: 80, sat: true,
@@ -61,7 +61,7 @@ const VEHICLES = [
   // Lymilark Future Sciences (after Mabinogi): guided rockets. A knight-academy girl from the
   // Alban Eiler programme; lighter blows than a shell, but they find their way.
   {
-    id: 'alb', name: 'Alban Eiler', hp: 120, armour: 140, blurb: 'The Lymilark rocketeer: her pod of seeker rockets finds whatever is nearest.',
+    id: 'alb', name: 'Alban Eiler', hp: 120, armour: 140, blurb: 'Fires seeker rockets that go for the nearest target.',
     traits: ['firecontrol', 'telemetry'], aa: ['aa_alb'],
     weapon: weapon('lfs0', "LFS 'Eiler' 60mm Seeker Pod", 'rocket', 0, 60, {
       salvo: 2, disp: 3.0, maxCharge: 50, dmg: 50, dmgR: 45, explR: 6,
@@ -71,7 +71,7 @@ const VEHICLES = [
   // Sengoku Inc. (after KanColle's carriers): the light carrier. Her gun is a laser designator;
   // what it marks, her planes come back and hit (planes.js). Her Type 96 keeps her deck clear.
   {
-    id: 'zui', name: 'Zuihou', hp: 115, armour: 120, fuel: 0.9, blurb: 'A Sengoku light-carrier girl: she marks a spot, and her squadron is over it and hitting it moments later.',
+    id: 'zui', name: 'Zuihou', hp: 115, armour: 120, fuel: 0.9, blurb: 'Light carrier. Mark a point with her laser, and her planes attack it. She also has a twin gun.',
     traits: ['flightdeck'], aa: ['aa96'],
     // and a gun of her own for while her squadron is away
     extra: [weapon('zui1', "SI 12.7cm Twin High-Angle Gun", 'shell', -5, 80, {
@@ -80,11 +80,11 @@ const VEHICLES = [
     weapon: weapon('zui0', "SI Type 99 Kanbaku", 'air', 0, 80, {
       maxCharge: 75, disp: 0.8, dmg: 70, dmgR: 60, explR: 9, clip: 1,
       air: { squads: 1, type: 'dive', planes: 2, ord: 1, hp: 60, reload: 2 },
-      short: 'Fixed undercarriage, a lift fan in the fuselage, and the best dive-bombing crews Sengoku ever trained.', long: 'Starting weapon for Zuihou. Two squads, then a turn to rearm.' }),
+      short: 'Fixed undercarriage, a lift fan in the fuselage, and the best dive-bombing crews Sengoku ever trained.', long: 'Starting weapon for Zuihou. Two squads, then one turn to rearm.' }),
   },
-  // the secret girl (unlocked by finishing a first game): an angel who came through the gate
+  // the last girl (progression's top tier: progress.js): an angel who came through the gate
   {
-    id: 'ang', name: 'Ikaros', hp: 130, armour: 110, secret: true, blurb: 'Something came through the gate on white wings. She says she is here to help, and means it.',
+    id: 'ang', name: 'Ikaros', hp: 130, armour: 110, secret: true, blurb: 'Glides with no fall damage. Once a round, she survives a hit that would destroy her.',
     traits: ['wings', 'grace', 'affinity'], aa: ['aa_ang'],
     weapon: weapon('gloria', "'Gloria' Halo Lance", 'laser', -20, 35, {
       ceil: 110, clip: 2, maxCharge: 55, disp: 0.6, dmg: 200, explR: 4, dmgR: 40,
@@ -97,20 +97,20 @@ const VEHICLES = [
 // stepBallistic (designator), damage (redundancy), aaSlots (defsuite), startSatellite /
 // updateSatellite (uplink, retarget), jump / stepTanks / landed (wings), damage (grace).
 const TRAITS = {
-  wings: { name: 'Wings', desc: 'Her jump costs half the fuel, and she glides down: no fall damage.' },
-  grace: { name: 'Grace', desc: 'Once a round, a hit that would bring her down leaves her at 1 health instead.' },
-  affinity: { name: 'Mechanical affinity', desc: 'Machines take to her: her laser drone climbs two and a half times as high to find a line, and its beams hit 25% harder.' },
-  drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn lands a solid hit on a rival, she gets that round back.' },
-  geschutz: { name: 'Geschützwagen', desc: 'A steady gun platform: every weapon she fires has half the spread.' },
-  sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
-  designator: { name: 'Laser designator', desc: 'A laser dot goes out ahead of every shot onto her selected target (mark it with a click): her rounds steer for it on the way up and home on it on the way down.' },
-  redundancy: { name: 'Triple redundancy', desc: 'No single hit takes more than 40% of her max health.' },
-  defsuite: { name: 'Defensive Suite', desc: 'Three air-defence slots, two filled from the start: NXi point defence and flak of her own.' },
-  uplink: { name: 'Priority uplink', desc: 'MAIA strikes she calls have a 30% bigger blast.' },
-  retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA nudges its aim onto them.' },
-  firecontrol: { name: 'Lymilark fire control', desc: 'Her rockets’ seekers see 40% further and turn 30% faster.' },
-  telemetry: { name: 'Knight telemetry', desc: 'Her rocket weapons fire one more rocket in every salvo.' },
-  flightdeck: { name: 'Flight deck', desc: 'Her planes take off from her deck, not straight up: they rearm a turn or two sooner than lift-fan launches, and every squad has one more plane.' },
+  wings: { name: 'Wings', desc: 'Her jump uses half the fuel. She glides down and takes no fall damage.' },
+  grace: { name: 'Grace', desc: 'Once a round, a hit that would destroy her leaves her at 1 health.' },
+  affinity: { name: 'Mechanical affinity', desc: 'Her laser drone climbs 2.5 times as high to find a line of fire. Its beams do 25% more damage.' },
+  drill: { name: 'Autoloader drill', desc: 'If her first shot of a turn is a solid hit on a rival, she gets that shot back.' },
+  geschutz: { name: 'Geschützwagen', desc: 'All her weapons have half the spread.' },
+  sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less damage.' },
+  designator: { name: 'Laser designator', desc: 'Click to mark a target. Before each shot, a laser dot goes onto it. Her shells steer toward it as they climb and home on it as they fall.' },
+  redundancy: { name: 'Triple redundancy', desc: 'One hit cannot take more than 40% of her max health.' },
+  defsuite: { name: 'Defensive Suite', desc: 'She has three anti-air slots. Two start filled: NXi point defence and her own flak.' },
+  uplink: { name: 'Priority uplink', desc: 'MAIA strikes that she calls have a 30% larger blast.' },
+  retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA moves its aim onto that rival.' },
+  firecontrol: { name: 'Lymilark fire control', desc: 'Her rocket seekers see 40% further and turn 30% faster.' },
+  telemetry: { name: 'Knight telemetry', desc: 'Her rocket weapons fire one more rocket in each salvo.' },
+  flightdeck: { name: 'Flight deck', desc: 'Her planes launch from her deck, not straight up. They rearm one or two turns sooner than lift-fan launches. Each squad has one more plane.' },
 };
 const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
 // a gun's spread in her hands (G.W. Tiger's Geschützwagen halves it)
@@ -137,35 +137,35 @@ const WEAPONS = [
   weapon('howitzer', '152mm/22 Howitzer', 'shell', 0, 40, { dmg: 100, disp: 5, maxCharge: 40, dmgR: 120, explR: 20, rarity: 1, cost: 1220,
     short: 'A big gun with a short barrel; sacrifices range and accuracy for big boom.', long: 'A well-worn 152mm howitzer.' }),
   weapon('claymore', "90mm/109 LFS 'Claymore'", 'shell', -5, 40, { clip: 3, maxCharge: 50, disp: 1.5, dmg: 100, explR: 5, dmgR: 60, rarity: 1, cost: 1650,
-    short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the side.", long: 'A three-clip low-calibre artillery piece.' }),
+    short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the side.", long: 'A low-calibre gun. Three shots a turn.' }),
   weapon('lensx2', '75mm CLS-T Lensed x2 Laser Mount', 'laser', -25, 25, { ceil: 120, clip: 2, maxCharge: 80, disp: 0.6, dmg: 200, explR: 3, dmgR: 30, rarity: 1, cost: 1980,
-    short: 'Nothing says experimental like duct tape everywhere. Even on the lens.', long: 'Like all lasers, high damage, low consistency.' }),
+    short: 'Nothing says experimental like duct tape everywhere. Even on the lens.', long: 'Like all lasers: high damage, low accuracy.' }),
   weapon('lance', "122mm/90 LFS 'Long Lance'", 'shell', -5, 60, { drift: 0.75, clip: 2, maxCharge: 60, disp: 1, dmg: 150, explR: 8, dmgR: 80, rarity: 2, cost: 2650,
-    short: 'An older model from the Lymilark, the Long Lance boasts excellent accuracy.', long: 'A higher-accuracy piece with surprisingly high damage.' }),
+    short: 'An older model from the Lymilark, the Long Lance boasts excellent accuracy.', long: 'High accuracy and high damage.' }),
   weapon('coil', '90mm Exp. Coilgun', 'gun', -10, 40, { clip: 2, disp: 3, salvo: 4, maxCharge: 40, dmg: 80, dmgR: 55, rarity: 2, cost: 2910,
-    short: 'A high-speed coilgun developed by CLS-T. Fires four rounds at once.', long: 'Less artillery gun and more machine gun.' }),
+    short: 'A high-speed coilgun developed by CLS-T. Fires four rounds at once.', long: 'Fires like a machine gun, not like an artillery gun.' }),
   weapon('obj261', '181mm Obj. 261', 'shell', 0, 70, { maxCharge: 90, disp: 0.5, dmg: 250, dmgR: 130, explR: 20, rarity: 2, cost: 3520,
-    short: 'Retrofitted from Anti-Air to Anti-Everything. Reminds you of twintails...', long: 'Larger shell means large blast radius. Also means one shot.' }),
+    short: 'Retrofitted from Anti-Air to Anti-Everything. Reminds you of twintails...', long: 'A large shell with a large blast. One shot a turn.' }),
   weapon('type11', 'Hatsuyuki Type-11/N15', 'shell', 0, 90, { clip: 3, maxCharge: 90, disp: 0.5, dmg: 120, sat: true, dmgR: 70, explR: 10, rarity: 3, cost: 3990,
-    short: 'A relic of the Hatsuyuki Project; utilises the MAIA Satellite System', long: "Flexible but doesn't do much damage." }),
+    short: 'A relic of the Hatsuyuki Project; utilises the MAIA Satellite System', long: 'Flexible, but low damage.' }),
   weapon('lensae', '50mm x3 Kotona Lensed-AE Rifle', 'laser', -30, 30, { ceil: 150, clip: 3, maxCharge: 80, disp: 0.5, dmg: 200, explR: 2, dmgR: 50, rarity: 3, cost: 4520,
     short: 'Classified as an old-generation Light Firearm, found at a relic site.', long: "A relic from the an ancient Kotona empire. It's surprising it still works." }),
   weapon('type91', '122mm CLS-T Type-91', 'acid', -5, 50, { clip: 2, maxCharge: 50, disp: 2, dmg: 50, dmgR: 80, acid: 0.63, rarity: 3, cost: 5080,
-    short: 'Developed during the last Neko War, fires highly acidic projectiles', long: '2-Round Acid Projectiles, otherwise, somewhat mediocre.' }),
+    short: 'Developed during the last Neko War, fires highly acidic projectiles', long: 'Two acid shells a turn. Otherwise average.' }),
   weapon('bc155', 'B.C. 155/58 de Canon', 'shell', -5, 80, { clip: 5, maxCharge: 70, disp: 1, dmg: 90, dmgR: 80, rarity: 3, cost: 5010,
-    short: 'An experimental autoloading weapon. Packs small punches.', long: 'B.C. 155/58, a 5-Round Autoloading Artillery.' }),
+    short: 'An experimental autoloading weapon. Packs small punches.', long: 'An autoloader: five shots a turn.' }),
   weapon('typ67', '381mm x2 CLS-T Typ. 67', 'shell', 0, 70, { salvo: 2, maxCharge: 50, disp: 2.7, dmg: 310, dmgR: 120, explR: 25, rarity: 3, cost: 5860,
-    short: 'An experimental dual-gun turret designed for cute girls.', long: 'Fires two rounds, once -- big ones though.' }),
+    short: 'An experimental dual-gun turret designed for cute girls.', long: 'Fires two large shells in one shot.' }),
   weapon('gwt290', '290mm/64 G.W. Tiger', 'shell', -5, 90, { clip: 2, maxCharge: 100, disp: 1.5, dmg: 550, dmgR: 200, rarity: 4, cost: 8940,
-    short: 'A weapon developed from the G.W. Tiger program, a deadly weapon, if it hits.', long: 'High damage, long range, and everything in-between.' }),
+    short: 'A weapon developed from the G.W. Tiger program, a deadly weapon, if it hits.', long: 'High damage and long range.' }),
   weapon('cls220', "220mm/80 CLS-T 'Doki-Doki'", 'shell', 0, 60, { clip: 3, salvo: 3, maxCharge: 50, disp: 2.65, dmg: 360, dmgR: 120, explR: 17, rarity: 4, cost: 17150,
     short: 'A mix of sadness and sweetness with a tinge of searing iron.', long: 'Three by three they come! Are we missing one? Jus------' }),
   weapon('lfs75', "75mm 2x3 LFS 'Neko Paradise'", 'laser', -25, 25, { ceil: 170, clip: 2, salvo: 3, maxCharge: 90, disp: 1, dmg: 400, explR: 5, dmgR: 55, rarity: 4, cost: 20880,
-    short: 'Part of the next-generation design from the Neko Paradise Project.', long: 'Somewhat bad accuracy for a laser-weapon, but packs a cute sting.' }),
+    short: 'Part of the next-generation design from the Neko Paradise Project.', long: 'Low accuracy for a laser, but good damage.' }),
   weapon('triple', '460mm/18.1in Type 94 Triple Turrets', 'shell', -5, 90, { clip: 2, maxCharge: 120, salvo: 3, disp: 4, dmg: 550, dmgR: 160, explR: 22, rarity: 5, cost: 26360,
-    short: "A miniaturised version of the Yamato's triple-turrets. For cute girls.", long: 'High damage, long range, but even worse accuracy!' }),
+    short: "A miniaturised version of the Yamato's triple-turrets. For cute girls.", long: 'High damage and long range, but even lower accuracy.' }),
   weapon('laser88', "88mm x3 'Nadeko Snake' Laser Turret", 'laser', -30, 30, { ceil: 180, clip: 2, salvo: 3, maxCharge: 100, disp: 1.55, dmg: 650, dmgR: 80, explR: 10, rarity: 5, cost: 28850,
-    short: 'Twice cursed and once more, fires just as hot as the darkness near Shirahebi Shrine.', long: 'A direct hit is deadly, be careful of small-ish explosions.' }),
+    short: 'Twice cursed and once more, fires just as hot as the darkness near Shirahebi Shrine.', long: 'A direct hit does very high damage. The blast is small.' }),
   weapon('laser15x', '90mm Neko-15X Laser', 'laser', -30, 30, { ceil: 220, clip: 2, maxCharge: 100, dmg: 1150, disp: 0.25, dmgR: 90, explR: 5, sat: true, rarity: 6, cost: 39800,
     short: 'A technologically advanced laser developed from the Neko-15X project. Top Secret.', long: "'Nekomimi Cooperative' written on the plate. Cute!" }),
   weapon('acid220', "220mm 3x2 CLS-T 'KARAKARA' Acid", 'acid', 0, 60, { clip: 3, salvo: 2, maxCharge: 70, disp: 3, dmg: 250, dmgR: 100, explR: 10, acid: 2, rarity: 6, cost: 44680,
@@ -179,47 +179,47 @@ const WEAPONS = [
   // Flak (new): proximity-fused shells that burst near drones and other mobs (double damage to them)
   // and in the air just above the ground, raining shrapnel on whatever is underneath
   weapon('flak40', "40mm 'Hagoita' Twin Bofors", 'flak', 10, 90, { clip: 3, salvo: 2, maxCharge: 70, disp: 1.5, dmg: 40, dmgR: 70, explR: 3, rarity: 1, cost: 1400,
-    short: 'A twin Bofors from the Hagoita AA refit. Shoots down anything that buzzes.', long: 'Proximity-fused: bursts near drones and just above the ground.' }),
+    short: 'A twin Bofors from the Hagoita AA refit. Shoots down anything that buzzes.', long: 'Proximity fuse: it bursts near drones and just above the ground.' }),
   weapon('akizuki', "10cm/65 'Akizuki' High-Angle Battery", 'flak', 10, 90, { clip: 2, salvo: 2, maxCharge: 90, disp: 1, dmg: 120, dmgR: 110, explR: 5, rarity: 3, cost: 4800,
-    short: 'The pride of the Akizuki class: the finest anti-air gun ever put on a destroyer.', long: 'Airbursts over ridges and trenches. Murders drones.' }),
+    short: 'The pride of the Akizuki class: the finest anti-air gun ever put on a destroyer.', long: 'Bursts in the air over ridges and trenches. Very effective against drones.' }),
   weapon('maya', "127mm 'Maya Kai Ni' AA Mount", 'flak', 5, 90, { clip: 2, salvo: 3, maxCharge: 95, disp: 2, dmg: 260, dmgR: 120, explR: 6, rarity: 4, cost: 15000,
-    short: 'Bakayaro! Refitted with more anti-air guns than common sense.', long: 'A barrage of airbursts; drones fall like rain.' }),
+    short: 'Bakayaro! Refitted with more anti-air guns than common sense.', long: 'Fires many airbursts. Very effective against drones.' }),
   weapon('sanshiki', "46cm 'Sanshikidan' Type 3 Shell", 'flak', 0, 80, { clip: 2, maxCharge: 110, disp: 1.5, dmg: 900, dmgR: 260, explR: 12, rarity: 6, cost: 52000,
-    short: 'Incendiary shrapnel shells for the 46cm guns. Lights up the whole sky.', long: 'Enormous airbursts and a rain of burning fragments.' }),
+    short: 'Incendiary shrapnel shells for the 46cm guns. Lights up the whole sky.', long: 'Very large airbursts that drop burning fragments.' }),
   // Hybrids: two makers' ideas in one gun (w.maker names both; the shop has a Hybrid filter)
   weapon('yukikaze', "Hatsuyuki 'Yukikaze' Uplink Seeker", 'rocket', 10, 80, { salvo: 2, clip: 2, maxCharge: 70, disp: 3.2, dmg: 40, dmgR: 45, explR: 5, rarity: 4, cost: 13000, sat: true,
     maia: { pulses: 6, mult: 3.5, r: 120, gap: 14 }, // the Hatsuyuki barrage: each pulse does mult x the rocket's damage (Game.updateBarrage)
     hybrid: true, maker: 'Hatsuyuki × Lymilark',
     kin: 6, // it comes in hot (no airbrake): six times the usual kinetic damage for a direct hit
     guide: { arm: 6, burn: 230, seek: 999, apex: true, brake: false, turn: 7, range: 480, cone: 140, lift: 0.5 },
-    short: 'A Hatsuyuki seeker that dives on the nearest target past the top of its arc, without braking. Its call opens MAIA all the way.', long: 'The warheads barely scratch, but a fast direct hit does six times the usual kinetic damage. The Hatsuyuki barrage does the rest: MAIA spreads its wings and antenna and strikes six times at whatever the rocket locked onto, each pulse three and a half times a warhead, whatever MAIA\'s level. Twice a turn.' }),
+    short: 'A Hatsuyuki seeker that dives on the nearest target past the top of its arc, without braking. Its call opens MAIA all the way.', long: 'The warheads do little damage. A fast direct hit does six times the usual kinetic damage. Then MAIA strikes six times at the target the rocket locked onto. Each strike does 3.5 times the damage of a warhead, at any MAIA level. Two shots a turn.' }),
   weapon('feuerlilie', "G.W.–LFS 'Feuerlilie' Seeker Flak", 'rocket', 10, 85, { salvo: 2, clip: 2, maxCharge: 75, disp: 2.8, dmg: 90, dmgR: 90, explR: 4, rarity: 3, cost: 7000,
     hybrid: true, maker: 'G.W. × Lymilark', airburst: true,
     guide: { arm: 8, burn: 55, seek: 999, apex: true, turn: 4, range: 390, cone: 80, lift: 0.5 },
-    short: 'A G.W. anti-air rocket with a Lymilark seeker: it homes, then bursts like flak.', long: 'Proximity-fused airbursts with shrapnel, double damage to drones. Feuerlilie: fire lily.' }),
+    short: 'A G.W. anti-air rocket with a Lymilark seeker: it homes, then bursts like flak.', long: 'Proximity-fused airbursts with shrapnel. Double damage to drones. Feuerlilie means fire lily.' }),
   weapon('ichor', "KTS-T × CLS-T 'Ichor' Acid Lance", 'laser', -25, 30, { ceil: 170, clip: 2, maxCharge: 95, disp: 0.6, dmg: 520, dmgR: 70, explR: 6, acid: 1.2, rarity: 5, cost: 25000,
     hybrid: true, maker: 'Kotona × CLS-T',
-    short: 'A Kotona lens bolted to a CLS-T acid tank. The beam leaves the ground boiling.', long: 'A laser that lands an acid pool where it strikes, twice a turn.' }),
+    short: 'A Kotona lens bolted to a CLS-T acid tank. The beam leaves the ground boiling.', long: 'A laser that leaves an acid pool where it hits. Two shots a turn.' }),
   // CLS-T's napalm: an autocannon that hoses incendiary flak; every fragment lands burning
   weapon('kagutsuchi', "CLS-T 'Kagutsuchi' 40mm Incendiary Autocannon", 'flak', 5, 85, { salvo: 10, clip: 4, maxCharge: 85, disp: 7, dmg: 60, dmgR: 50, explR: 3, rarity: 7, cost: 135000,
     incendiary: 2.5,
-    short: 'Named for the fire god whose birth burned his mother. Forty incendiary shells a turn.', long: 'Wide spread, small bursts, and every fragment lands burning. CLS-T’s napalm.' }),
+    short: 'Named for the fire god whose birth burned his mother. Forty incendiary shells a turn.', long: 'Wide spread and small bursts. Every fragment lands burning. CLS-T’s napalm.' }),
   // NXi, November Division: the rival to CLS-T. Overbuilt and triple-verified; accurate, a little slow
   weapon('nxi105', "NXi Mk.I 'Bulkhead' 105mm", 'shell', -5, 60, { salvo: 3, disp: 0.6, maxCharge: 55, dmg: 67, dmgR: 55, explR: 7, rarity: 1, cost: 1500,
-    short: 'Overbuilt, over-tested, over-documented, and proud of it.', long: 'Three shells in close formation. Every one of them inspected.' }),
+    short: 'Overbuilt, over-tested, over-documented, and proud of it.', long: 'Three shells in a tight group. Each shell is inspected.' }),
   weapon('nxitv', "NXi 'Triple-Verify' 120mm Coilgun", 'gun', -10, 40, { clip: 2, salvo: 3, disp: 0.8, maxCharge: 45, dmg: 78, dmgR: 50, rarity: 2, cost: 3200,
-    short: 'Every round is verified three times before it leaves the barrel.', long: "Never fires a shot it hasn't checked. Twice a turn." }),
+    short: 'Every round is verified three times before it leaves the barrel.', long: 'Two shots a turn. It checks every shot before it fires.' }),
   weapon('nxisec9', "NXi SEC-9 'Veto' Point-Defence Battery", 'flak', 10, 90, { clip: 2, salvo: 3, disp: 0.8, maxCharge: 85, dmg: 90, dmgR: 100, explR: 5, rarity: 3, cost: 4600,
     short: 'SEC-9 has veto power. Drones do not get a vote.', long: 'Proximity-fused point defence for the gate.' }),
   weapon('nxiarch7', "NXi ARCH-7 'Battlecruiser' 280mm", 'shell', -5, 70, { clip: 2, disp: 0.4, maxCharge: 70, dmg: 600, dmgR: 140, explR: 20, rarity: 4, cost: 9800,
-    short: 'Built like a battlecruiser: maximum armour, maximum redundancy, maximum reliability.', long: 'Slow to load, slower to miss.' }),
+    short: 'Built like a battlecruiser: maximum armour, maximum redundancy, maximum reliability.', long: 'Slow to load. Very accurate.' }),
   weapon('nxiintel3', "NXi INTEL-3 'Gatewatch' Lance", 'laser', -25, 30, { ceil: 200, clip: 2, salvo: 2, disp: 0.4, maxCharge: 100, dmg: 670, dmgR: 70, explR: 6, rarity: 5, cost: 27500,
-    short: 'The gate is guarded at all cost. INTEL-3 sees everything that comes through it.', long: 'Paired beams, triple-verified targeting.' }),
+    short: 'The gate is guarded at all cost. INTEL-3 sees everything that comes through it.', long: 'Two beams a shot, with triple-verified aim.' }),
   weapon('nxiaeria', "NXi 'Aeria Charlotte' 406mm Royal Battery", 'shell', -5, 85, { clip: 3, salvo: 3, disp: 2, maxCharge: 110, dmg: 450, dmgR: 150, explR: 24, rarity: 6, cost: 58000,
     short: 'Commanded by Queen Aeria Charlotte herself. Every shell is worthy of royal inspection.', long: 'Three triple turrets. For the UAF.' }),
   weapon('nxivoid', "NXi November 'Void Between Stars' Arc Lance", 'laser', 0, 25, { ceil: 240, drift: 0.35, clip: 2, maxCharge: 400, disp: 0.01, dmg: 3350, dmgR: 120, explR: 30, sat: true, rarity: 7, cost: 150000,
     chain: { n: 4, range: 280, fall: 0.8 },
-    short: 'Opens a rift for an instant and lets the storm between dimensions through. It does not stay where it lands.', long: 'Lightning that arcs from its target to the next nearest thing, four times, a fifth weaker each jump. Trees and poles draw it off. We advance slowly because we advance forever.' }),
+    short: 'Opens a rift for an instant and lets the storm between dimensions through. It does not stay where it lands.', long: 'Lightning that jumps from the target to the next nearest thing, four times. Each jump is 20% weaker. Trees and poles draw it off. We advance slowly because we advance forever.' }),
   weapon('massdriver', '210mm Kinetic Mass Driver', 'laser', 0, 20, { ceil: 260, drift: 0.15, clip: 2, maxCharge: 1000, disp: 0.001, explR: 80, dmg: 10000, dmgR: 400, sat: true, rarity: 7, cost: 195420,
     short: 'A mysterious weapon by the Kotona Umbress, it fires entire titanium pillars.', long: 'Holding two rounds, it was salvaged from KTNS Hatsuyuki.' }),
   // Guided rockets (Lymilark Future Sciences). After `arm` frames in flight the seeker locks onto
@@ -234,22 +234,22 @@ const WEAPONS = [
     short: 'A pair of little seekers. They go for whatever is closest, which is usually what you wanted.', long: 'Lymilark Future Sciences, Tir Chonaill works.' }),
   weapon('kestrel', "LFS 'Kestrel' Twin Launcher", 'rocket', 0, 55, { salvo: 2, clip: 2, maxCharge: 60, disp: 2.6, dmg: 80, dmgR: 55, explR: 7, rarity: 2, cost: 3300,
     guide: { arm: 6, burn: 60, seek: 999, apex: true, turn: 3.5, range: 350, cone: 75, lift: 0.5 },
-    short: 'Two pairs a turn. The Dunbarton militia swear by it.', long: 'Seekers lock on ten frames out of the tube.' }),
+    short: 'Two pairs a turn. The Dunbarton militia swear by it.', long: 'Seekers lock on soon after launch.' }),
   weapon('dunbarton', "LFS 'Dunbarton' Long-Tube Rocket", 'rocket', -3, 12, { clip: 2, maxCharge: 95, disp: 1.0, dmg: 230, dmgR: 70, explR: 10, rarity: 3, cost: 6200,
     guide: { arm: 6, burn: 90, seek: 999, apex: true, turn: 5, range: 420, cone: 60, lift: 0.85, popup: { range: 240, frames: 16, angle: 60, height: 160 } },
-    short: 'A tube so long it can hardly elevate. It skims the ground, then pops up over its target and dives.', long: 'Flat-flying cruise rocket: find a gap in the terrain. Within about 240 of a target ahead it pulls up hard and comes down on top.' }),
+    short: 'A tube so long it can hardly elevate. It skims the ground, then pops up over its target and dives.', long: 'A cruise rocket that flies flat: find a gap in the terrain. Within about 240 of a target ahead, it climbs hard and dives onto it.' }),
   weapon('tirchonaill', "LFS 'Tir Chonaill' Carpet Rocket", 'rocket', 5, 60, { maxCharge: 70, disp: 2.0, dmg: 150, dmgR: 70, explR: 8, rarity: 4, cost: 12500,
     guide: { arm: 4, burn: 70, seek: 999, apex: true, turn: 3, range: 200, cone: 70, lift: 0.6 }, carpet: { n: 7, frac: 0.5, r: 60, at: 40, every: 3 },
-    short: 'Two-thirds of a second out it starts dropping seven bomblets, one after another.', long: 'They tumble and the wind takes them: skim it low over the target and it lays a strip.' }),
+    short: 'After two-thirds of a second, it drops seven bomblets, one after another.', long: 'The bomblets tumble and the wind moves them. Fly it low over the target to lay a strip.' }),
   weapon('emain', "LFS 'Emain Macha' Split Rocket", 'rocket', 0, 50, { clip: 2, maxCharge: 75, disp: 2.0, dmg: 300, dmgR: 80, explR: 10, rarity: 5, cost: 22000,
     guide: { arm: 4, burn: 75, seek: 999, apex: true, turn: 4.5, range: 500, cone: 80, lift: 0.6 }, split: { n: 3, at: 32, spread: 14, boost: 1.15 },
-    short: 'Breaks into three seekers half a second out, each going for whatever is closest.', long: 'They can all pile onto one target, or spread over a crowd of drones.' }),
+    short: 'After half a second, it splits into three seekers. Each goes for the nearest target.', long: 'They can all hit one target, or spread over a group of drones.' }),
   weapon('demigod', "LFS 'Demigod' Lance Rocket", 'rocket', 5, 70, { maxCharge: 80, disp: 1.2, dmg: 900, dmgR: 70, explR: 14, rarity: 7, cost: 160000,
     guide: { arm: 4, burn: 40, seek: 999, turn: 2, range: 600, cone: 80, lift: 0.5 }, lance: { at: 45, hover: 20, speed: 75, range: 1800, kin: 2.5 },
-    short: 'It arcs like any rocket. Then it stops dead in the air, becomes a lance of light, and charges.', long: 'Three-quarters of a second out it picks the nearest target in any direction and runs it through. Kinetic damage ×2.5.' }),
+    short: 'It arcs like any rocket. Then it stops dead in the air, becomes a lance of light, and charges.', long: 'After three-quarters of a second, it picks the nearest target in any direction and charges through it. Kinetic damage ×2.5.' }),
   weapon('avalon', "LFS 'Avalon Gate' Carpet Rocket", 'rocket', 0, 60, { clip: 2, maxCharge: 85, disp: 1.6, dmg: 270, dmgR: 90, explR: 12, rarity: 6, cost: 36000,
     guide: { arm: 4, burn: 85, seek: 999, apex: true, turn: 3.5, range: 220, cone: 75, lift: 0.7 }, carpet: { n: 10, frac: 0.5, r: 75, at: 50, every: 2 },
-    short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten bomblets in sequence, unguided and wind-blown.' }),
+    short: 'Named for the gate the Lymilark knights never found. Ten bomblets, twice a turn.', long: 'Lymilark Future Sciences flagship. Ten bomblets, one after another. They are unguided, and the wind moves them.' }),
   // Planes (Sengoku Inc., after KanColle's carrier aircraft; planes.js): the gun is a laser
   // designator. A weapon has air.squads squads (one early on, three or four late), its autoloader
   // rounds: each dot of a turn takes the next. One on her deck takes off (air.planes, one more from
@@ -267,10 +267,10 @@ const WEAPONS = [
   //   fortress a level bomber: straight across the zone at altitude, walking a stick of air.ord bombs over it
   weapon('kansen0', "SI 'Atlantis Shark' Flying Circus", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 22, dmgR: 30, explR: 2, clip: 1, rarity: 1, cost: 900,
     air: { squads: 1, type: 'fighter', planes: 3, ord: 6, hp: 56, reload: 2 },
-    short: 'Small, toothy and very fast: shark-finned fighters that circle anything else in the sky and bite.', long: 'Fighters: they go for planes and drones near the mark first (triple damage), and strafe it when the sky is clear.' }),
+    short: 'Small, toothy and very fast: shark-finned fighters that circle anything else in the sky and bite.', long: 'Fighters. They attack planes and drones near the mark first, for triple damage. When the sky is clear, they strafe the mark.' }),
   weapon('kankou97', "SI 'Carrot Rabbit' Torpedo Jet", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 120, dmgR: 70, explR: 10, clip: 1, rarity: 1, cost: 1000,
     air: { squads: 1, type: 'torpedo', planes: 2, ord: 1, hp: 65, reload: 2 },
-    short: 'Hops in low over the ground, lets its torpedo go, and laughs all the way home.', long: 'Torpedoes skim the ground through the mark and go off on the first thing they touch: stepping aside along their line won’t save you.' }),
+    short: 'Hops in low over the ground, lets its torpedo go, and laughs all the way home.', long: 'Torpedoes skim the ground through the mark and explode on the first thing they touch. Moving along their line does not save you.' }),
   weapon('suisei', "SI 'Tenchou Phoenix' Dive Jet", 'air', 0, 80, { maxCharge: 85, disp: 0.8, dmg: 190, dmgR: 70, explR: 11, clip: 1, rarity: 2, cost: 2400,
     air: { squads: 1, type: 'dive', planes: 2, ord: 1, hp: 90, reload: 2 },
     short: 'It bursts into flame on the way down, and somehow comes back for the next shift every time.', long: 'Two dive bombers a squad.' }),
@@ -279,37 +279,37 @@ const WEAPONS = [
     short: 'Three torpedo jets abreast under a skull and crossbones, running in low for the loot.', long: 'Three torpedoes along the ground through the mark.' }),
   weapon('reppuu', "SI 'Bakery Doggo' Interceptor", 'air', 0, 80, { maxCharge: 90, disp: 0.7, dmg: 32, dmgR: 35, explR: 2, clip: 1, rarity: 3, cost: 4400,
     air: { squads: 2, type: 'fighter', planes: 3, ord: 8, hp: 104, reload: 2 },
-    short: 'A loyal good girl: fetches everything with an engine out of the sky and brings it back in pieces.', long: 'Fighters with heavier guns: aircraft first, then a strafing run.' }),
+    short: 'A loyal good girl: fetches everything with an engine out of the sky and brings it back in pieces.', long: 'Fighters with heavier guns. They attack aircraft first, then strafe the mark.' }),
   weapon('taillteann', "SI–LFS 'Taillteann' Rocket Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 86, dmgR: 55, explR: 7, clip: 1, rarity: 4, cost: 11500,
     hybrid: true, maker: 'Sengoku × Lymilark',
     air: { squads: 2, type: 'rocket', planes: 2, ord: 3, hp: 160, reload: 2 },
     guide: { arm: 4, burn: 60, seek: 6, apex: false, turn: 4, range: 160, cone: 90, lift: 0.4 },
-    short: 'Sengoku airframes carrying Lymilark seeker pods. They fire from overhead and the seekers do the rest.', long: 'Three seekers a plane, each going for the nearest target under it: a target that moved a little still gets found.' }),
+    short: 'Sengoku airframes carrying Lymilark seeker pods. They fire from overhead and the seekers do the rest.', long: 'Each plane fires three seekers. Each seeker goes for the nearest target below it, so it finds a target that moved a little.' }),
   weapon('ryusei', "SI 'Morning Dragon' Attack Jet", 'air', 0, 80, { maxCharge: 95, disp: 0.7, dmg: 182, dmgR: 100, explR: 16, clip: 1, rarity: 5, cost: 21000,
     air: { squads: 3, type: 'dive', planes: 3, ord: 1, hp: 220, reload: 2 },
     short: 'Good morning, everyone: it comes down like a dragon with the news, carrying the big bomb.', long: 'Three heavy bombs a squad.' }),
   weapon('fortissimo', "SI 'Live Streaming Reaper' Flying Fortress", 'air', 0, 80, { maxCharge: 95, disp: 0.7, dmg: 140, dmgR: 60, explR: 8, clip: 1, rarity: 5, cost: 20000,
     air: { squads: 2, type: 'fortress', planes: 2, ord: 6, hp: 320, armour: 180, reload: 3 },
-    short: 'Four engines, two lift fans, and armour plate that shrugs off a whole burst. The reaper always collects, and she does it live.', long: 'Level bombers: they cross the zone high up and walk six bombs each across it. Unguided, and the wind takes them, but the armour takes one hit of any size.' }),
+    short: 'Four engines, two lift fans, and armour plate that shrugs off a whole burst. The reaper always collects, and she does it live.', long: 'Level bombers. They cross the zone high up, and each drops six bombs across it. The bombs are unguided, and the wind moves them. The armour stops one hit of any size.' }),
   weapon('kikka', "SI 'Comet Idol' Jet Bomber", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 156, dmgR: 85, explR: 13, clip: 1, rarity: 6, cost: 33000,
     air: { squads: 3, type: 'dive', planes: 3, ord: 2, hp: 250, reload: 3, jet: true },
-    short: 'In like a comet, out before the encore. Too fast for most AA to track, and it drops two bombs a pass.', long: 'Jets: anti-aircraft fire has half the chance against them and their bombs.' }),
+    short: 'In like a comet, out before the encore. Too fast for most AA to track, and it drops two bombs a pass.', long: 'Jets. Anti-air fire has half the chance to hit them and their bombs.' }),
   weapon('shiden', "SI 'Clockwork Warden' Fighter", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 41, dmgR: 40, explR: 3, clip: 1, rarity: 6, cost: 30000,
     air: { squads: 3, type: 'fighter', planes: 4, ord: 10, hp: 240, reload: 3 },
-    short: 'It keeps the time over the mark: the last and best of the Sengoku fighters, four a squad.', long: 'Clears the sky over the mark, then rakes it.' }),
+    short: 'It keeps the time over the mark: the last and best of the Sengoku fighters, four a squad.', long: 'Clears the sky over the mark, then strafes it.' }),
   weapon('tifaun', "NXi × SI 'Taufaun' Strike Jet", 'air', 0, 80, { maxCharge: 110, disp: 0.4, dmg: 254, dmgR: 260, explR: 42, clip: 1, rarity: 7, cost: 150000,
     hybrid: true, maker: 'NXi × Sengoku',
     air: { squads: 4, type: 'heavy', planes: 1, ord: 1, hp: 700, armour: 300, reload: 3, jet: true },
-    short: 'The UAF’s minibrieve: one Sengoku lift-fan airframe, built like a battlecruiser by the November Division, carrying one bomb. That is all it needs.', long: 'A single armoured jet with one enormous guided bomb that steers onto the nearest rival within 260 of the mark. AA has half the chance against it.' }),
+    short: 'The UAF’s minibrieve: one Sengoku lift-fan airframe, built like a battlecruiser by the November Division, carrying one bomb. That is all it needs.', long: 'One armoured jet with one very large guided bomb. The bomb steers onto the nearest rival within 260 of the mark. Anti-air has half the chance to hit it.' }),
   // Final weapons: one per girl, only in her own shop (sig), the price of the end game, and a tier
   // of their own above Godly (Parallel Night). Each has a
   // set piece of its own (finals.js).
   weapon('ragnarok', "G.W. 'Ragnarök' Battery Fire", 'shell', 5, 75, { sig: 'gwt', maxCharge: 120, disp: 0.3, drift: 0.5, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
     battery: { dmg: 900, r: 260, spread: 320, karl: { dmg: 6000, r: 380, explR: 140, quake: { r: 1200, dmg: 600 } } },
-    short: 'A marker round for her platoon off the map: four G.W. Tiger SPGs and a Karl-Gerät 60cm siege mortar.', long: 'Eight 290mm rounds across 300 either side of the mark, then the Karl\'s: a giant crater, and an earthquake that hits everyone on the ground within 900. G.W. Tiger only.' }),
+    short: 'A marker round for her platoon off the map: four G.W. Tiger SPGs and a Karl-Gerät 60cm siege mortar.', long: 'Eight 290mm shells land up to 300 either side of the mark. Then the Karl fires: a giant crater, and an earthquake that hits everyone on the ground within 1,200. G.W. Tiger only.' }),
   weapon('zeropoint', "KTS-T 'Zero Point' Probe", 'gun', -5, 30, { sig: 'obj', drift: 0.05, pierce: 240, maxCharge: 170, disp: 0, dmg: 1200, dmgR: 60, explR: 8, rarity: 8, cost: 75000,
     naito: { r: 520 },
-    short: 'A railgun probe for the Naito MAIA Containment Satellite, out past Jupiter.', long: 'Annihilation orders: the ground 520 either side of the probe is deleted, and anything that falls in is gone. Object 15X only.' }),
+    short: 'A railgun probe for the Naito MAIA Containment Satellite, out past Jupiter.', long: 'The ground 520 either side of the probe is deleted. Anything that falls in is destroyed. Object 15X only.' }),
   weapon('verdict', "NXi 'Queen's Verdict' Tachyon Lance", 'shell', 0, 80, { sig: 'nxi', drift: 0.6, maxCharge: 120, disp: 0.3, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
     orbital: { dmg: 6000, r: 260, volley: { n: 60, dmg: 450, r: 150, spread: 600 } },
     short: 'A target dot for the battlecruiser in orbit. It takes its time to line up, then it fires.', long: 'The November Division keeps the gate from above as well. November only.' }),
@@ -318,14 +318,14 @@ const WEAPONS = [
     short: 'A laser dot. MAIA opens her eye, and the whole sky fills with MAIAs.', long: 'Innocentia only.' }),
   weapon('morrighan', "LFS 'Morrighan' Rift", 'shell', 0, 85, { sig: 'alb', maxCharge: 90, disp: 0.4, dmg: 30, dmgR: 30, explR: 2, rarity: 8, cost: 75000,
     rift: { tears: 5, rockets: 44, dmg: 600, r: 90, reach: 1000 },
-    short: 'A flare, and the sky over it tears open like a wound.', long: 'Black rockets rain out of the tears on long dark trails, seeking everything beneath. Alban Eiler only.' }),
+    short: 'A flare, and the sky over it tears open like a wound.', long: 'Black rockets fall from the tears and seek every target below. Alban Eiler only.' }),
   weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 8, cost: 75000,
     meteor: { dmg: 6000, r: 650, explR: 175, size: 300, lava: 920, splash: 30 },
     short: 'Where her arrow of light lands, the sky answers: she marks an asteroid and brings it down.', long: 'Ikaros only.' }),
   weapon('kidobutai', 'SI Parallel Night', 'air', 0, 80, { sig: 'zui', badge: 'Ab', maxCharge: 100, disp: 0.4, dmg: 300, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
     air: { squads: 1, type: 'fleet', planes: 0, ord: 1, hp: 120, reload: 3 },
     fleet: { carriers: 3, dive: 9, torpedo: 6, fighter: 6 },
-    short: 'A laser dot for the carriers off the coast. Their whole air wing comes.', long: 'Zuihou only. One great squad of 21 that strikes as soon as it arrives; each later dot redirects it and it strikes again, until its loadouts are spent (dive bombers three passes, torpedo jets two, fighters six) or it is shot down. Only then can the carriers launch again.' }),
+    short: 'A laser dot for the carriers off the coast. Their whole air wing comes.', long: 'Zuihou only. One large squad of 21 planes attacks as soon as it arrives. Each later dot redirects it, and it attacks again. This continues until its loadouts are spent (dive bombers three passes, torpedo jets two, fighters six) or it is shot down. Only then can the carriers launch again.' }),
 ];
 
 // Rebalanced stats (menu: weapons "rebalanced"; "classic" keeps A3's numbers above). Every gun keeps its
@@ -433,10 +433,10 @@ function badgeText(w) {
 // with their key and spent on the next shot; Deflector switches on at once and lasts until your
 // next turn. None of them uses up the turn.
 const ABILITIES = [
-  { id: 'double', key: '1', tag: 'x2', name: 'Double Shot', cost: 1500, cd: 4, desc: 'Arm, then fire: the shot is fired twice.' },
-  { id: 'over', key: '2', tag: 'OVR', name: 'Overcharge', cost: 900, cd: 3, desc: 'Arm, then charge: the bar goes 35% further, for range and kinetic damage.' },
-  { id: 'shield', key: '3', tag: 'SHD', name: 'Deflector', cost: 1200, cd: 4, desc: 'Halves all damage you take until your next turn.' },
-  { id: 'barrier', key: '4', tag: 'BAR', name: 'Bulwark Barrier', cost: 1300, cd: 3, late: true, desc: 'Late game: raise a wall toward where you are aiming; it blocks 80% of blast damage from that side until your next turn.' },
+  { id: 'double', key: '1', tag: 'x2', name: 'Double Shot', cost: 1500, cd: 4, desc: 'Arm it, then fire. The shot fires twice.' },
+  { id: 'over', key: '2', tag: 'OVR', name: 'Overcharge', cost: 900, cd: 3, desc: 'Arm it, then charge. The power bar goes 35% further, for more range and kinetic damage.' },
+  { id: 'shield', key: '3', tag: 'SHD', name: 'Deflector', cost: 1200, cd: 4, desc: 'You take half damage until your next turn.' },
+  { id: 'barrier', key: '4', tag: 'BAR', name: 'Bulwark Barrier', cost: 1300, cd: 3, late: true, desc: 'Late game. Raise a wall toward your aim. Until your next turn, it blocks 80% of blast damage from that side.' },
 ];
 const ABILITY_BY_ID = Object.fromEntries(ABILITIES.map((a) => [a.id, a]));
 const OVERCHARGE = 1.35;

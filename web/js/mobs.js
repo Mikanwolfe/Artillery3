@@ -524,8 +524,8 @@ Object.assign(Game.prototype, {
     const c = m.center();
     if (shares.length) {
       this.particles.text(c.x, c.y - 40, shares.length > 1 ? `¢${m.bounty} shared` : `+${shares[0].replace(/^.* ¢/, '¢')}`, '#ffd84a', true);
-      this.events.push(`The ${m.name} is down${killer && !killer.isMob ? ` (${killer.name})` : ''}: its ¢${m.bounty} bounty goes ${shares.join(', ')}.`);
-      this.ui.notice(`The ${m.name} is down! ${shares.join(' · ')}`);
+      this.events.push(`The ${m.name} is destroyed${killer && !killer.isMob ? ` (${killer.name})` : ''}. Its ¢${m.bounty} bounty goes to: ${shares.join(', ')}.`);
+      this.ui.notice(`The ${m.name} is destroyed. Bounty: ${shares.join(' · ')}`);
     } else this.events.push(`The ${m.name} was destroyed.`);
   },
 
@@ -736,7 +736,7 @@ Object.assign(Game.prototype, {
   // from 3.5, carriers with drone tanks (and tanks driving in from the edge) from 4.5, and from 8 the
   // drone tanks' final form, the android (one at a time).
   reinforce(cycles) {
-    if (!this.reinforceAt || cycles < this.reinforceAt) return;
+    if (!this.reinforceAt || cycles < this.reinforceAt || !this.has('drones')) return;
     const over = cycles - this.reinforceAt;
     const q = this.stage() + 0.6 * over;
     const flyers = this.mobs.filter((m) => m.alive && m.flying && m.kind !== 'mothership').length;
@@ -748,30 +748,30 @@ Object.assign(Game.prototype, {
     for (let i = 0; i < n; i++) {
       const r = rng.next();
       let kind = 'drone';
-      if (q >= 4.5 && groundRoom > 0 && r < 0.3) kind = 'carrier';
-      else if (q >= 3.5 && r < 0.55) kind = 'fpv';
+      if (q >= 4.5 && groundRoom > 0 && r < 0.3 && this.has('ground')) kind = 'carrier';
+      else if (q >= 3.5 && r < 0.55 && this.has('fpv')) kind = 'fpv';
       else if (q >= 3 && r < 0.8) kind = 'gunner';
       const m = this.addMob(kind, edge(), q);
-      if (kind === 'carrier') { m.cargo = q >= 8 && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : 'dtank'; groundRoom--; }
-      names.push(kind === 'carrier' ? `a carrier with a ${m.cargo === 'android' ? 'android' : 'drone tank'}` : kind === 'fpv' ? 'an FPV kamikaze' : `a ${kind}`);
+      if (kind === 'carrier') { m.cargo = q >= 8 && this.has('android') && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : 'dtank'; groundRoom--; }
+      names.push(kind === 'carrier' ? `a carrier with ${m.cargo === 'android' ? 'an android' : 'a drone tank'}` : kind === 'fpv' ? 'an FPV kamikaze' : `a ${kind}`);
     }
     // from BLIMP_FROM, now and then, a blimp (one at a time)
-    if (q >= BLIMP_FROM && flyers + n < MOB_CAP && !this.mobs.some((x) => x.alive && x.kind === 'blimp') && rng.chance(0.3)) {
+    if (q >= BLIMP_FROM && this.has('blimp') && flyers + n < MOB_CAP && !this.mobs.some((x) => x.alive && x.kind === 'blimp') && rng.chance(0.3)) {
       this.addMob('blimp', edge(), q);
       names.push('a blimp');
     }
     // and from 4.5 a drone tank sometimes drives on from the edge of the map
-    if (q >= 4.5 && groundRoom > 0 && rng.chance(0.4)) {
+    if (q >= 4.5 && groundRoom > 0 && this.has('ground') && rng.chance(0.4)) {
       const left = rng.chance(0.5);
       // (an AA tank instead, half the time, once anyone has planes: it hunts squads, not girls)
       const air = q >= 5.5 && this.tanks.some((t) => t.alive && t.weapons.some((id) => WEAPON_BY_ID[id].air)) && !this.mobs.some((x) => x.alive && x.kind === 'aatank');
-      const kind = q >= 8 && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : air && rng.chance(0.35) ? 'aatank' : 'dtank';
+      const kind = q >= 8 && this.has('android') && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : air && rng.chance(0.35) ? 'aatank' : 'dtank';
       const m = this.addMob(kind, left ? -30 : WORLD_W + 30, q);
       m.facing = left ? 1 : -1;
-      names.push(`a ${{ android: 'android', aatank: 'AA tank', dtank: 'drone tank' }[m.kind]} from the ${left ? 'west' : 'east'}`);
+      names.push(`${{ android: 'an android', aatank: 'an AA tank', dtank: 'a drone tank' }[m.kind]} from the ${left ? 'west' : 'east'}`);
     }
     if (names.length) {
-      this.ui.notice(`Incoming: ${names.join(', ')}.`);
+      this.ui.notice(`Hostiles arrive: ${names.join(', ')}.`);
       this.events.push(`Hostile reinforcements: ${names.join(', ')}.`);
     }
   },

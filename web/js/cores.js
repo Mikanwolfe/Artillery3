@@ -19,7 +19,7 @@ const CORES = CORE_KINDS.flatMap(([kind, label]) => CORE_ROMAN.map((rn, i) => {
     id: `core_${kind}_${r}`, name: `${label} Core ${rn}`, coreKind: kind, coreLabel: label, rarity: r,
     cost: Math.round((700 * Math.pow(r, 1.9)) / 50) * 50,
     hp: CORE_HP * r, armour: CORE_HP * r, block: CORE_BLOCK * r, boost: CORE_BOOST * r,
-    short: `+${Math.round(CORE_BOOST * r * 100)}% damage with ${label.toLowerCase()} weapons, +${CORE_HP * r} health and armour, −${CORE_BLOCK * r} off every hit.`,
+    short: `+${Math.round(CORE_BOOST * r * 100)}% damage with ${label.toLowerCase()} weapons, +${CORE_HP * r} health and armour, −${CORE_BLOCK * r} damage from every hit.`,
   };
 }));
 const CORE_BY_ID = Object.fromEntries(CORES.map((c) => [c.id, c]));
@@ -51,7 +51,7 @@ Object.assign(Game.prototype, {
   buyCore(tank, id) {
     const C = CORE_BY_ID[id];
     const refund = coreValue(tank);
-    if (!C || tank.core === id || tank.money + refund < C.cost) { this.sfx.deny(); return false; }
+    if (!C || tank.core === id || !this.itemOk(C) || tank.money + refund < C.cost) { this.sfx.deny(); return false; }
     tank.money += refund - C.cost;
     this.equipCore(tank, id);
     tank.coreFree = false;
@@ -78,7 +78,7 @@ Object.assign(Game.prototype, {
     if (!kind) return;
     const cur = coreOf(t);
     const budget = t.money * share + coreValue(t);
-    const best = CORES.filter((c) => c.coreKind === kind[0] && c.cost <= budget).sort((a, b) => b.rarity - a.rarity)[0];
+    const best = CORES.filter((c) => c.coreKind === kind[0] && this.itemOk(c) && c.cost <= budget).sort((a, b) => b.rarity - a.rarity)[0];
     if (!best || (cur && cur.coreKind === best.coreKind && cur.rarity >= best.rarity)) return;
     if (this.buyCore(t, best.id)) this.events.push(`${t.name} fits a ${best.name}.`);
   },
