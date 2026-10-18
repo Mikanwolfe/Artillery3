@@ -32,7 +32,7 @@ const VEHICLES = [
     id: 'gwt', name: 'G.W. Tiger', hp: 150, armour: 100, blurb: 'A sturdy Geschützwagen girl with a two-round autoloader on her back.',
     traits: ['drill', 'geschutz'], aa: ['aa_gwt'],
     weapon: weapon('morser', 'G.W. 150mm/78 Morser', 'shell', -20, 90, {
-      dmg: 100, disp: 1.5, clip: 2, maxCharge: 50, dmgR: 50,
+      dmg: 100, disp: 1.5, clip: 2, maxCharge: 50, dmgR: 65, explR: 12,
       short: 'Extensively field-tested, a reliable and sturdy weapon with no equal.', long: 'Starting weapon for G.W. Tiger.' }),
   },
   {
@@ -82,7 +82,7 @@ const VEHICLES = [
       air: { squads: 1, type: 'dive', planes: 2, ord: 1, hp: 60, reload: 2 },
       short: 'Fixed undercarriage, a lift fan in the fuselage, and the best dive-bombing crews Sengoku ever trained.', long: 'Starting weapon for Zuihou. Two squads, then a turn to rearm.' }),
   },
-  // the secret girl (unlocked by finishing a first game): an angel who came through the gate
+  // the last girl (progression's top tier: progress.js): an angel who came through the gate
   {
     id: 'ang', name: 'Ikaros', hp: 130, armour: 110, secret: true, blurb: 'Something came through the gate on white wings. She says she is here to help, and means it.',
     traits: ['wings', 'grace', 'affinity'], aa: ['aa_ang'],

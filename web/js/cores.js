@@ -51,7 +51,7 @@ Object.assign(Game.prototype, {
   buyCore(tank, id) {
     const C = CORE_BY_ID[id];
     const refund = coreValue(tank);
-    if (!C || tank.core === id || tank.money + refund < C.cost) { this.sfx.deny(); return false; }
+    if (!C || tank.core === id || !this.itemOk(C) || tank.money + refund < C.cost) { this.sfx.deny(); return false; }
     tank.money += refund - C.cost;
     this.equipCore(tank, id);
     tank.coreFree = false;
@@ -78,7 +78,7 @@ Object.assign(Game.prototype, {
     if (!kind) return;
     const cur = coreOf(t);
     const budget = t.money * share + coreValue(t);
-    const best = CORES.filter((c) => c.coreKind === kind[0] && c.cost <= budget).sort((a, b) => b.rarity - a.rarity)[0];
+    const best = CORES.filter((c) => c.coreKind === kind[0] && this.itemOk(c) && c.cost <= budget).sort((a, b) => b.rarity - a.rarity)[0];
     if (!best || (cur && cur.coreKind === best.coreKind && cur.rarity >= best.rarity)) return;
     if (this.buyCore(t, best.id)) this.events.push(`${t.name} fits a ${best.name}.`);
   },

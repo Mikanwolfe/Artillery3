@@ -477,6 +477,7 @@ class Game {
     this.balance = opts.balance === 'classic' ? 'classic' : 'rebalanced';
     applyBalance(this.balance);
     this.events_on = opts.events !== false;
+    this.prog = !!opts.prog; // (progression: what this tier has unlocked, progress.js)
     this.mapChoice = BIOMES[opts.map] ? opts.map : 'random';
   }
 
@@ -528,8 +529,8 @@ class Game {
     this.updateFrontsTurn(windChanged);
     this.satellite.newTurn();
     this.satTurn();
-    if (this.turnCount > 2 && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
-    else if (this.events_on && !this.range && !this.goldenRound && this.turnCount > 3 && rng.chance(GOLDEN_CHANCE)) this.spyPlane();
+    if (this.turnCount > 2 && this.has('crates') && this.crates.filter((c) => c.alive).length < CRATE_MAX && rng.chance(CRATE_CHANCE)) this.spawnCrate();
+    else if (this.events_on && !this.range && !this.goldenRound && this.has('spy') && this.turnCount > 3 && rng.chance(GOLDEN_CHANCE)) this.spyPlane();
     t.fuel = t.maxFuel;
     t.shield = false; // a Deflector lasts until its owner's next turn
     t.barrier = null; // so does a Bulwark Barrier
@@ -1589,6 +1590,7 @@ class Game {
     if (last) this.clearSave();
     else this.saveMatch('shop');
     this.ui.showRoundEnd({ round: this.round, winner, tanks: this.tanks, award }, last);
+    this.progClear(winner); // (toward the next tier: progress.js)
     const cpus = this.tanks.filter((t) => t.isCpu);
     if (winner) {
       if (winner.isCpu) this.ui.addQuip(winner, pickTaunt(winner, 'round_win'));
@@ -1610,7 +1612,6 @@ class Game {
     this.phase = 'gameEnd';
     this.ui.showHud(false);
     this.ui.showGameEnd(st);
-    if (this.tanks.some((t) => !t.isCpu) && !this.range) this.ui.unlockSecret(); // a first game played: Ikaros comes through
     if (st[0].isCpu && st[0].wins > (st[1] ? st[1].wins : -1)) this.ui.addEndQuip(st[0], pickTaunt(st[0], 'match_win'));
   }
 
@@ -1649,7 +1650,7 @@ class Game {
   buy(tank, kind, id) {
     if (kind === 'weapon') {
       const w = WEAPON_BY_ID[id];
-      if (!w || tank.weapons.includes(id) || tank.weapons.length >= MAX_WEAPONS || tank.money < this.costOf(w) || !forVehicle(w, tank.vehicle.id) || (w.starter && !this.ownStarters(tank).includes(w))) { this.sfx.deny(); return false; }
+      if (!w || tank.weapons.includes(id) || tank.weapons.length >= MAX_WEAPONS || tank.money < this.costOf(w) || !forVehicle(w, tank.vehicle.id) || !this.itemOk(w) || (w.starter && !this.ownStarters(tank).includes(w))) { this.sfx.deny(); return false; }
       tank.money -= this.costOf(w);
       tank.weapons.push(id);
       this.sfx.buyWeapon();
@@ -1663,12 +1664,12 @@ class Game {
     } else if (kind === 'vupg') {
       const u = VEHICLE_UPGRADES.find((x) => x.id === id);
       const lvl = tank.upgrades[id] | 0;
-      if (!u || lvl >= u.costs.length || tank.money < u.costs[lvl]) { this.sfx.deny(); return false; }
+      if (!u || lvl >= u.costs.length || tank.money < u.costs[lvl] || (id === 'deck' && !this.has('deck'))) { this.sfx.deny(); return false; }
       tank.money -= u.costs[lvl];
       tank.upgrades[id] = lvl + 1;
     } else if (kind === 'aa') { // an air-defence mount into a free slot (two of the same can't share)
       const a = AA_BY_ID[id], slot = a ? aaSlotFor(tank, a.role) : -1;
-      if (!a || a.starter || slot < 0 || tank.aa.includes(id) || tank.money < a.cost) { this.sfx.deny(); return false; }
+      if (!a || a.starter || !this.itemOk(a) || slot < 0 || tank.aa.includes(id) || tank.money < a.cost) { this.sfx.deny(); return false; }
       if (tank.aa[slot]) tank.money += this.aaSellValue(tank, tank.aa[slot]); // (her own mount, swapped out: scrap)
       tank.money -= a.cost;
       tank.aa[slot] = id;
@@ -1745,7 +1746,7 @@ class Game {
     // a flight deck once it flies planes (VTOL squads rearm longer): the more of its rack is planes,
     // the keener (two or more and even Easy buys one, ahead of guns and air defence)
     const planes = t.weapons.filter((id) => WEAPON_BY_ID[id].air).length;
-    if (planes && !hasTrait(t, 'flightdeck') && !t.upgrades.deck && (t.type !== 'easy' || planes >= 2)) {
+    if (planes && this.has('deck') && !hasTrait(t, 'flightdeck') && !t.upgrades.deck && (t.type !== 'easy' || planes >= 2)) {
       const u = VEHICLE_UPGRADES.find((x) => x.id === 'deck');
       const need = planes >= 2 || S.deck ? 1 : 1.3; // (cash in hand over its price)
       if (t.money >= u.costs[0] * need) { t.money -= u.costs[0]; t.upgrades.deck = 1; }
@@ -1759,7 +1760,7 @@ class Game {
     const burned = (t.airDowned || 0) > 0;
     const mounts = () => t.aa.filter((id) => AA_BY_ID[id] && !aaOwn(t, id)).map((id) => AA_BY_ID[id]); // (bought ones)
     if (burned) {
-      const best = AA_WEAPONS.filter((a) => a.role === 'air' && !t.aa.includes(a.id) && a.cost <= t.money * AA_SHARE_BURNED).sort((a, b) => b.cost - a.cost)[0];
+      const best = AA_WEAPONS.filter((a) => a.role === 'air' && this.itemOk(a) && !t.aa.includes(a.id) && a.cost <= t.money * AA_SHARE_BURNED).sort((a, b) => b.cost - a.cost)[0];
       const air = mounts().find((a) => a.role === 'air');
       if (best && air && best.cost > air.cost * 1.5) { t.aa[t.aa.indexOf(air.id)] = null; t.money += air.cost; } // trade up
       if (best && !mounts().some((a) => a.role === 'air')) {
@@ -1785,7 +1786,7 @@ class Game {
         if (slot < 0) continue;
         const old = AA_BY_ID[t.aa[slot]];
         const refund = old ? this.aaSellValue(t, old.id) : 0;
-        const pick = AA_WEAPONS.filter((a) => a.role === role && !t.aa.includes(a.id) && a.cost <= share - spent + refund).sort((a, b) => b.cost - a.cost)[0];
+        const pick = AA_WEAPONS.filter((a) => a.role === role && this.itemOk(a) && !t.aa.includes(a.id) && a.cost <= share - spent + refund).sort((a, b) => b.cost - a.cost)[0];
         if (!pick || (old && aaPower(pick) < aaPower(old) * 1.3)) continue;
         t.money += refund; t.money -= pick.cost; spent += pick.cost - refund;
         t.aa[slot] = pick.id;
@@ -1805,7 +1806,7 @@ class Game {
       const weakest = (sellable.length ? sellable : owned).slice().sort((a, b) => worth(a) - worth(b))[0];
       const full = t.weapons.length >= MAX_WEAPONS;
       const budget = t.money + (full ? this.sellValue(weakest) : 0);
-      const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id) && forVehicle(w, t.vehicle.id)).sort((a, b) => worth(b) - worth(a));
+      const shop = WEAPONS.filter((w) => !t.weapons.includes(w.id) && forVehicle(w, t.vehicle.id) && this.itemOk(w)).sort((a, b) => worth(b) - worth(a));
       let pick = shop.find((w) => w.cost <= budget);
       if (!pick) break;
       // not too clinical: any affordable gun within CPU_PICK_SPREAD of the best one's worth will do
@@ -1839,7 +1840,7 @@ class Game {
     for (const id of wants) {
       const ab = ABILITIES.find((a) => a.id === id);
       const cost = this.abilityCost(t, ab);
-      if (t.abilities[id] < 1 && t.money - reserve >= cost * 1.5) { t.money -= cost; t.abilities[id] = 1; }
+      if (t.abilities[id] < 1 && this.abilityUnlocked(t, ab) && t.money - reserve >= cost * 1.5) { t.money -= cost; t.abilities[id] = 1; }
     }
     // vehicle upgrades: everyone wants an engine level; Normal and Hard a workshop; Hard the computer
     const vwants = t.type === 'hard' ? ['engine', 'workshop', 'computer'] : t.type === 'normal' ? ['engine', 'workshop'] : ['engine'];
@@ -1860,7 +1861,8 @@ class Game {
   // Abilities (see ABILITIES): 1 / 2 arm Double Shot / Overcharge for the next shot (press again
   // to disarm; they only recharge once fired), 3 switches the Deflector on. None takes the turn.
   // late game: the second half of a finite match, or from round 4 in infinite mode
-  abilityUnlocked(t, ab) { return !ab.late || this.isLate(); }
+  abilityUnlocked(t, ab) { return this.abilityTierOk(ab) && (!ab.late || this.isLate()); }
+  abilityTierOk(ab) { return this.has(ab.id === 'barrier' ? 'barrier' : 'abilities'); } // (progression: progress.js)
   abilityCost(t, ab) { return ab.cost; }
 
   isLate() { return this.rounds ? this.round > this.rounds / 2 : this.round >= 4; }
@@ -1940,7 +1942,7 @@ class Game {
   saveMatch(resumeAt) {
     const data = {
       v: 1, resumeAt, completed: resumeAt === 'shop' ? this.round : this.round - 1, rounds: this.rounds, awardMult: this.awardMult,
-      balance: this.balance, events: this.events_on, map: this.mapChoice,
+      balance: this.balance, events: this.events_on, map: this.mapChoice, prog: this.prog,
       tanks: this.tanks.map((t) => ({
         idx: t.idx, name: t.name, type: t.type, vehicle: t.vehicle.id, money: t.money, wins: t.wins,
         upgrades: t.upgrades, weapons: t.weapons, kits: t.kits, abilities: t.abilities, stats: t.stats, aa: t.aa,
@@ -1969,7 +1971,7 @@ class Game {
     this.turnSerial = 0;
     this.report = null;
     this.awardMult = d.awardMult || 1;
-    this.setOptions({ balance: d.balance || 'classic', events: d.events === true, map: d.map });
+    this.setOptions({ balance: d.balance || 'classic', events: d.events === true, map: d.map, prog: d.prog === true });
     this.satellite = new Satellite();
     this.tanks = d.tanks.map((s) => {
       const t = new Tank(s.idx, { name: s.name, type: s.type, vehicle: s.vehicle });
@@ -2023,6 +2025,7 @@ class Game {
     }
     this.render();
     this.ui.updateHud(this);
+    if (this.tut) this.tutTick(); // (the tutorial's coach: progress.js)
   }
 
   render() {

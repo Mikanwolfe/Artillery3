@@ -53,6 +53,8 @@
   </div>
 
   <!-- main menu: a rail on the left, the live map behind it -->
+  <div id="coach" hidden><b id="coach-title"></b><span id="coach-text"></span><button id="coach-skip" class="link">Skip tutorial</button></div>
+
   <section id="menu" class="screen left">
     <div class="side">
       <header class="brand">
@@ -63,6 +65,9 @@
       <h2 class="sec">Crew <span class="grip"></span></h2>
       <div id="players"></div>
       <button id="add-player" class="ghost">+ add player</button>
+
+      <h2 class="sec">Progress <span class="grip"></span></h2>
+      <div id="prog-card"></div>
 
       <h2 class="sec">Match <span class="grip"></span></h2>
       <div class="opts">
@@ -171,12 +176,35 @@
     </div>
   </section>
 
+  <!-- first visit: played before? (progress.js) -->
+  <section id="welcome" class="screen" hidden>
+    <div class="panel plate small welcome">
+      <p class="mgh">Welcome to</p>
+      <h2 class="big">Artillery<em>3</em></h2>
+      <p class="sub">Have you played before?</p>
+      <div class="stack">
+        <button id="wel-new" class="primary">No: show me how (2-minute tutorial)</button>
+        <button id="wel-old" class="ghost">Yes: skip the tutorial</button>
+      </div>
+      <p class="mgh foot">You start with G.W. Tiger. Clear rounds to unlock the other girls, hostiles and gear, one tier at a time. <button id="wel-all" class="link">I'm a veteran: unlock everything</button></p>
+    </div>
+  </section>
+
+  <!-- the tier tree (progress.js) -->
+  <section id="progress" class="screen" hidden>
+    <div class="panel plate wide">
+      <div class="phead"><h2>Progress</h2><span id="prog-sum" class="who"></span><button id="prog-close" class="ghost">◂ Menu</button></div>
+      <div id="prog-tree"></div>
+      <p class="mgh foot">Every round you finish counts as cleared; a round you win counts twice. <button id="prog-tut" class="link">Replay the tutorial</button> · <button id="prog-all" class="link">Unlock everything</button> · <button id="prog-reset" class="link danger">Reset progress</button></p>
+    </div>
+  </section>
+
   <!-- A3 "Select a Character" -->
   <section id="vehicles" class="screen" hidden>
     <div class="panel plate wide">
       <div class="phead"><h2>Select a character</h2><span id="veh-player" class="who"></span><button id="veh-back" class="ghost">◂ Back</button></div>
       <div id="veh-grid"></div>
-      <p class="mgh foot">Click a card, or press 1–<span id="veh-n">5</span></p>
+      <p class="mgh foot">Click a card, or press 1–<span id="veh-n">5</span><span id="veh-next"></span></p>
     </div>
   </section>
 
@@ -254,6 +282,7 @@
 <script src="js/ui.js"></script>
 <script src="js/game.js"></script>
 <script src="js/cores.js"></script>
+<script src="js/progress.js"></script>
 <script src="js/forts.js"></script>
 <script src="js/mobs.js"></script>
 <script src="js/hazards.js"></script>

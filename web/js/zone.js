@@ -20,7 +20,7 @@ Object.assign(Game.prototype, {
 
   // once a turn cycle: the fleet arrives, then marks more ground, closing on its aim point
   zoneCycle(cycles) {
-    if (this.range || cycles < ZONE_FROM) return;
+    if (this.range || cycles < ZONE_FROM || !this.has('zone')) return;
     if (!this.zone) {
       this.zone = { l: 0, r: WORLD_W, tl: 0, tr: WORLD_W, t: 0 };
       this.ui.notice('A Hatsuyuki fleet takes station overhead. Don’t end your turn under its red marks.');

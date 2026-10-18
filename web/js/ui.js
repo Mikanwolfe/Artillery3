@@ -65,7 +65,7 @@ const UI = {
     };
     this.syncLoad();
     $('re-next').onclick = () => { $('roundend').hidden = true; game.afterRoundEnd(); };
-    $('ge-again').onclick = () => { $('gameend').hidden = true; game.sfx.music('shop'); game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); this.syncLoad(); };
+    $('ge-again').onclick = () => { $('gameend').hidden = true; this.renderProgCard(); game.sfx.music('shop'); game.phase = 'menu'; $('menu').hidden = false; game.newEnvironment(); this.syncLoad(); };
     $('resume').onclick = () => game.togglePause();
     $('pause-end').onclick = () => game.endMatch();
     $('pause-turn').onclick = () => { game.togglePause(); if (game.phase === 'aim') game.input.queue.push({ endTurn: true }); };
@@ -95,6 +95,7 @@ const UI = {
     this.initTouch();
     this.rackClicks();
     this.initCodex();
+    this.initProgress();
     window.addEventListener('keydown', (e) => {
       // character select: 1-4 picks a card
       if (this.pick && !$('vehicles').hidden && /^Digit[1-9]$/.test(e.code)) {
@@ -162,14 +163,100 @@ const UI = {
     });
   },
 
-  // the girls on offer: the secret one only once she's been unlocked (by finishing a first game)
-  roster() { return VEHICLES.filter((v) => !v.secret || store.get('unlocked.' + v.id)); },
-  unlockSecret() {
-    for (const v of VEHICLES) {
-      if (!v.secret || store.get('unlocked.' + v.id)) continue;
-      store.set('unlocked.' + v.id, true);
-      this.notice(`Something has come through the gate: ${v.name} is now playable.`);
-    }
+  // the girls on offer: those her tier has unlocked, in roster order (progress.js)
+  roster() { return VEHICLES.filter((v) => PROG.girlOk(v.id)); },
+
+  // ------------------------------------------------------------ progression (progress.js)
+  initProgress() {
+    const g = this.game;
+    $('wel-new').onclick = () => { this.welcomed(); this.startTutorial(); };
+    $('wel-old').onclick = () => this.welcomed();
+    $('wel-all').onclick = () => { PROG.unlockAll(); this.welcomed(); };
+    $('prog-close').onclick = () => { $('progress').hidden = true; $('menu').hidden = false; };
+    $('prog-tut').onclick = () => { $('progress').hidden = true; this.startTutorial(); };
+    $('prog-all').onclick = () => { PROG.unlockAll(); this.renderProgress(); };
+    $('prog-reset').onclick = () => { if (confirm('Reset your progress to Tier 0?')) { PROG.reset(); this.renderProgress(); } };
+    $('coach-skip').onclick = () => g.tutEnd(false);
+    this.renderProgCard();
+    if (!PROG.data.asked && !new URLSearchParams(location.search).has('auto')) { $('menu').hidden = true; $('welcome').hidden = false; }
+  },
+  welcomed() { PROG.data.asked = true; PROG.save(); $('welcome').hidden = true; $('menu').hidden = false; this.renderProgCard(); },
+
+  // the menu's card: tier, rounds to the next, who comes next
+  renderProgCard() {
+    const i = PROG.tier(), n = PROG.next(), c = PROG.data.cleared;
+    const prev = PROG_TIERS[i].at;
+    const pct = n ? Math.round((100 * (c - prev)) / (n.at - prev)) : 100;
+    $('prog-card').innerHTML = `<div class="progcard"><div class="pc-top"><b>Tier ${i}</b><span class="mgh">${PROG.data.all ? 'everything unlocked' : `${c} round${c === 1 ? '' : 's'} cleared`}</span></div>
+      <span class="meter"><i style="width:${pct}%;--c:var(--gold)"></i></span>
+      <span class="pc-next">${n ? `Next, at ${n.at}: <b>${esc(girlName(n.girl))}</b> · ${esc(n.foes)}` : 'Every girl, hostile and gun is unlocked.'}</span>
+      <div class="pc-row"><button id="prog-open" class="ghost">Progress tree</button>${PROG.data.tut ? '' : '<button id="prog-tut2" class="ghost">Tutorial</button>'}</div></div>`;
+    $('prog-open').onclick = () => { $('menu').hidden = true; this.renderProgress(); $('progress').hidden = false; };
+    if ($('prog-tut2')) $('prog-tut2').onclick = () => this.startTutorial();
+  },
+
+  // the tier tree: each tier's girl (a silhouette until it unlocks), hostiles and gear
+  renderProgress() {
+    const now = PROG.tier(), c = PROG.data.cleared;
+    $('prog-sum').textContent = PROG.data.all ? 'Everything unlocked' : `Tier ${now} · ${c} cleared`;
+    $('prog-tree').innerHTML = PROG_TIERS.map((T, i) => {
+      const st = i <= now ? 'got' : i === now + 1 ? 'next' : 'locked';
+      return `<div class="tier ${st}"><div class="t-girl"><canvas width="84" height="100" data-g="${T.girl}"></canvas></div>
+        <div class="t-body"><span class="t-n">Tier ${i} · ${i === 0 ? 'start' : st === 'got' ? 'unlocked' : `at ${T.at} cleared`}</span><h3>${esc(girlName(T.girl))}</h3>
+        <p><b>Hostiles</b> ${esc(T.foes)}</p><p><b>Shop</b> ${esc(T.gear)}</p></div></div>`;
+    }).join('');
+    $('prog-tree').querySelectorAll('canvas').forEach((cv, i) => {
+      const g = cv.getContext('2d');
+      g.imageSmoothingEnabled = false;
+      g.scale(1.3, 1.3);
+      const v = VEHICLES.find((x) => x.id === cv.dataset.g);
+      const o = { id: v.id, x: 30, y: 70, facing: 1, color: PLAYER_COLORS[0], state: 'ok', t: 0, walking: false, flash: 0 };
+      drawGirl(g, o);
+      const a = GIRL_ART[v.id] || GIRL_ART.gwt;
+      drawGun(g, v.weapon, { x: o.x + a.pivot[0], y: o.y + a.pivot[1] }, { x: Math.cos(rad(30)), y: -Math.sin(rad(30)) }, 1, 0, shade(PLAYER_COLORS[0], -0.5), 0);
+      drawGirlMount(g, o);
+      if (i > now) { g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = '#14121c'; g.fillRect(0, 0, cv.width, cv.height); }
+    });
+  },
+
+  // the round-end screen: a tier reached, or how far to the next
+  addUnlock(i) {
+    const d = document.createElement('div');
+    d.className = 'quip lore unlock';
+    d.innerHTML = `<b>Tier ${i} unlocked</b> ${esc(tierLine(i).replace(/^Tier \d+: /, ''))}`;
+    $('re-quips').prepend(d);
+    this.notice(`Tier ${i} unlocked: ${girlName(PROG_TIERS[i].girl)} joins the roster.`);
+    this.renderProgCard();
+  },
+  addUnlockHint(left, i) {
+    const d = document.createElement('div');
+    d.className = 'quip lore';
+    d.textContent = `${left} more round${left === 1 ? '' : 's'} cleared to Tier ${i}: ${girlName(PROG_TIERS[i].girl)}.`;
+    $('re-quips').prepend(d);
+    this.renderProgCard();
+  },
+
+  // the tutorial: a two-round match, G.W. Tiger against an Easy G.W. Tiger, with the coach box
+  startTutorial() {
+    this.game.sfx.unlock();
+    const me = (this.players.find((p) => p.type === 'human') || {}).name || 'P-Chan';
+    $('menu').hidden = true;
+    this.game.startMatch([{ name: me, type: 'human', vehicle: 'gwt' }, { name: cpuName([me]), type: 'easy', vehicle: 'gwt' }], 2, { balance: 'rebalanced', events: false, map: 'forest', prog: true });
+    this.game.tutStart();
+  },
+  coach(T) {
+    const box = $('coach');
+    if (!T) { box.hidden = true; return; }
+    const S = TUTORIAL[T.i];
+    $('coach-title').textContent = `Tutorial ${T.i + 1}/${TUTORIAL.length} · ${S.title}`;
+    $('coach-text').textContent = S.text;
+    box.hidden = false;
+  },
+  tutDone() {
+    const d = document.createElement('div');
+    d.className = 'quip lore unlock';
+    d.innerHTML = '<b>Tutorial complete</b> Back on the menu, pick from the girls you have unlocked. Clear rounds to unlock the rest (Progress tree).';
+    $('ge-quips').prepend(d);
   },
 
   // A3 "Select a Character": each human picks a vehicle in turn; CPUs pick at random
@@ -184,7 +271,7 @@ const UI = {
         this.pick = null;
         $('vehicles').hidden = true;
         const o = this.opts;
-        this.game.startMatch(cfgs, +o.rounds, { balance: o.balance, events: o.events === 'on', map: o.map });
+        this.game.startMatch(cfgs, +o.rounds, { balance: o.balance, events: o.events === 'on', map: o.map, prog: true });
         return;
       }
       this.pick = c;
@@ -195,6 +282,8 @@ const UI = {
       const meter = (label, v, max, color) => `<span class="mgh">${label}</span><span class="meter"><i style="width:${Math.round(100 * Math.min(1, v / max))}%;--c:${color}"></i></span><span class="n">${v}</span>`;
       $('veh-grid').classList.toggle('many', this.roster().length > 5);
       $('veh-n').textContent = this.roster().length;
+      const nx = PROG.next();
+      $('veh-next').textContent = nx ? ` · next: ${girlName(nx.girl)} at ${nx.at} rounds cleared (${PROG.data.cleared} so far)` : '';
       $('veh-grid').innerHTML = this.roster().map((v, i) => {
         const w = v.weapon;
         const fuel = Math.round(100 * (v.fuel || 1));
@@ -467,14 +556,17 @@ const UI = {
       $('shop-title').innerHTML = `<span class="dot" style="background:${tank.color}"></span>${esc(tank.name)}<small>${esc(tank.vehicle.name)}</small>`;
       $('shop-cash').innerHTML = `<span class="mgh">Funds</span><b>${money(tank.money)}</b>`;
       const full = tank.weapons.length >= MAX_WEAPONS;
+      if (!g.shopFilterOk(this.shopFilter)) this.shopFilter = 'all';
       const f = this.shopFilter;
       $('shop-filter').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.f === f));
       const sold = g.ownStarters(tank).filter((w) => !tank.weapons.includes(w.id)); // (her own, sold: she can have them back)
-      const list = [...sold, ...WEAPONS.slice().sort((a, b) => a.cost - b.cost)].filter((w) => forVehicle(w, tank.vehicle.id)).filter((w) =>
+      // (what her tier has not unlocked yet stays out of the shop: progress.js)
+      $('shop-filter').querySelectorAll('button').forEach((b) => { b.hidden = !g.shopFilterOk(b.dataset.f); });
+      const list = [...sold, ...WEAPONS.slice().sort((a, b) => a.cost - b.cost)].filter((w) => forVehicle(w, tank.vehicle.id) && g.itemOk(w)).filter((w) =>
         f === 'all' ? true : f === 'buy' ? !tank.weapons.includes(w.id) && tank.money >= g.costOf(w) : f === 'NXi' ? makerOf(w) === 'NXi' : f === 'hybrid' ? w.hybrid : f === 'Sengoku' ? makerOf(w).includes('Sengoku') : w.kind === f);
       if (f === 'aa') { // air-defence mounts: their own slots
         const freeSlot = aaSlotFor(tank);
-        $('shop-grid').innerHTML = AA_WEAPONS.map((a) => {
+        $('shop-grid').innerHTML = AA_WEAPONS.filter((a) => g.itemOk(a)).map((a) => {
           const r = RARITY[a.rarity], owned = tank.aa.includes(a.id), afford = tank.money >= a.cost;
           const can = !owned && freeSlot >= 0 && afford;
           return `<div class="card${owned ? ' owned-w' : ''}">${this.badge(a)}<div class="card-body">
@@ -488,7 +580,7 @@ const UI = {
         $('shop-grid').querySelectorAll('[data-aa]').forEach((b) => { b.onclick = () => { g.buy(tank, 'aa', b.dataset.aa); render(); }; });
       } else if (f === 'core') { // cores: one slot; a new one replaces hers (refunded in full)
         const cur = coreOf(tank), refund = coreValue(tank);
-        $('shop-grid').innerHTML = CORES.map((C) => {
+        $('shop-grid').innerHTML = CORES.filter((C) => g.itemOk(C)).map((C) => {
           const r = RARITY[C.rarity], owned = tank.core === C.id, afford = tank.money + refund >= C.cost;
           return `<div class="card${owned ? ' owned-w' : ''}"><span class="badge" style="--rc:${r.ui}"><b>${r.word[0]}c</b><i>${r.word}</i></span><div class="card-body">
             <span class="maker">Core · ${esc(C.coreLabel)}</span>
@@ -514,6 +606,7 @@ const UI = {
           <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(cost)}</span>
           <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : full ? 'Slots full' : afford ? (w.starter ? 'Buy back' : 'Buy') : 'Short ' + money(cost - tank.money)}</button></div></div></div>`;
       }).join('') || '<div class="none">Nothing here. Try another filter.</div>';
+      if (g.prog && PROG.next()) $('shop-grid').insertAdjacentHTML('beforeend', `<div class="none lockline">More of the shop opens at Tier ${PROG.tier() + 1} (${PROG.next().at} rounds cleared): ${esc(PROG.next().gear)}</div>`);
       $('shop-count').textContent = `${tank.weapons.length}/${MAX_WEAPONS}`;
       $('shop-note').textContent = BALANCE === 'rebalanced'
         ? 'Bought guns reload for 1–3 of your turns after firing (by rarity); your starter never does. Planes fly their squads, then rearm (even a starter). Own several to fire something big every turn.'
@@ -545,7 +638,7 @@ const UI = {
         const cost = g.upgradeCost(tank, id);
         return `<div class="upg"><span>${label} <small>${cur} → ${Math.round(cur * 1.3)}</small></span>
           <button data-u="${id}" ${tank.money >= cost ? '' : 'disabled'}>${money(cost)}</button></div>`;
-      }).join('') + VEHICLE_UPGRADES.filter((u) => !u.notFor || !hasTrait(tank, u.notFor)).map((u) => {
+      }).join('') + VEHICLE_UPGRADES.filter((u) => (!u.notFor || !hasTrait(tank, u.notFor)) && (u.id !== 'deck' || g.has('deck'))).map((u) => {
         const lvl = tank.upgrades[u.id] | 0;
         const maxed = lvl >= u.costs.length;
         const cost = u.costs[lvl];
@@ -562,11 +655,11 @@ const UI = {
       $('shop-kits').querySelector('[data-k]').onclick = () => { g.buy(tank, 'kit'); render(); };
       $('shop-abil').innerHTML = ABILITIES.map((a) => {
         const owned = tank.abilities[a.id] > 0;
-        const locked = !g.abilityUnlocked(tank, a);
+        const locked = !g.abilityUnlocked(tank, a), tierLocked = !g.abilityTierOk(a);
         const cost = g.abilityCost(tank, a);
         return `<div class="upg"><span>${esc(a.name)} <small class="lvl">[${a.key}]</small><br>
         <small>${esc(a.desc)} Recharges in ${a.cd} turns.</small></span>
-        <button data-a="${a.id}" ${!owned && !locked && tank.money >= cost ? '' : 'disabled'}>${owned ? 'Owned' : locked ? 'Late game' : money(cost)}</button></div>`;
+        <button data-a="${a.id}" ${!owned && !locked && tank.money >= cost ? '' : 'disabled'}>${owned ? 'Owned' : tierLocked ? `Tier ${FEAT_TIER[a.id === 'barrier' ? 'barrier' : 'abilities']}` : locked ? 'Late game' : money(cost)}</button></div>`;
       }).join('');
       $('shop-abil').querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => { g.buy(tank, 'ability', b.dataset.a); render(); }; });
     };

@@ -400,3 +400,35 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .cx-aa td, .cx-aa th { padding: 0.15em 0.3em; border-bottom: 1px solid var(--line); }
 .cx-aa td:nth-child(n+3), .cx-aa th:nth-child(n+3) { text-align: right; }
 .cx-aa tr.on td { color: var(--bright); background: var(--bg3); }
+
+/* ---------------------------------------------------------------- progression (progress.js) */
+.progcard { background: var(--bg2); border: 1px solid var(--line); padding: 0.6em 0.75em; display: grid; gap: 0.45em; font-size: 0.86em; }
+.progcard .pc-top { display: flex; justify-content: space-between; align-items: baseline; }
+.progcard .pc-top b { color: var(--gold); font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; }
+.progcard .meter { height: 0.45em; }
+.progcard .pc-next { color: var(--dim); line-height: 1.45; font-size: 0.92em; }
+.progcard .pc-next b { color: var(--bright); font-weight: 400; }
+.progcard .pc-row { display: flex; gap: 0.4em; }
+.progcard .pc-row button { padding: 0.3em 0.8em; font-size: 0.86em; }
+#prog-tree { display: grid; grid-template-columns: repeat(auto-fill, minmax(17em, 1fr)); gap: 0.6em; }
+.tier { display: flex; gap: 0.7em; background: var(--bg2); border: 1px solid var(--line); padding: 0.5em 0.7em 0.6em 0.4em; font-size: 0.86em; }
+.tier.got { border-color: var(--gold); }
+.tier.next { border-style: dashed; border-color: var(--accent); }
+.tier.locked { opacity: 0.6; }
+.tier .t-girl canvas { width: 5.25em; height: 6.25em; image-rendering: pixelated; }
+.tier .t-body { display: grid; gap: 0.25em; align-content: start; }
+.tier .t-n { font-size: 0.78em; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); }
+.tier.got .t-n { color: var(--gold); }
+.tier.next .t-n { color: var(--accent); }
+.tier h3 { color: var(--bright); font-size: 1.1em; }
+.tier p { margin: 0; color: var(--dim); line-height: 1.4; font-size: 0.92em; }
+.tier p b { color: var(--fg); font-weight: 400; margin-right: 0.3em; }
+.welcome { max-width: 32em; }
+.welcome .foot { line-height: 1.5; }
+.quip.unlock b { color: var(--gold); font-weight: 400; margin-right: 0.4em; }
+.lockline { grid-column: 1 / -1; font-size: 0.8em; }
+#coach { position: absolute; z-index: 5; top: 8%; left: 50%; transform: translateX(-50%); width: 40%; background: var(--plate); border: 1px solid var(--gold); box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 4px var(--line); color: var(--fg); padding: 0.7em 1em 0.5em; font-size: 0.84em; line-height: 1.5; display: grid; gap: 0.3em; pointer-events: auto; }
+#coach b { color: var(--gold); font-weight: 400; font-size: 0.85em; letter-spacing: 0.18em; text-transform: uppercase; }
+#coach .link { justify-self: end; font-size: 0.85em; padding: 0; }
+@media (max-width: 700px) { #coach { width: 70%; } }
+#stage:has(#shop:not([hidden])) #coach, #stage:has(#roundend:not([hidden])) #coach { top: auto; bottom: 3%; left: 37%; width: 34%; } /* (over the shop's grid, clear of its filters and Done) */

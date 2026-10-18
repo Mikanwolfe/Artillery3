@@ -68,25 +68,27 @@ Object.assign(Game.prototype, {
     const st = this.stage();
     if (!st) return;
     const notes = [];
-    if (st >= 2) {
+    if (st >= 2 && this.has('fronts')) {
       for (let i = 0; i < this.frontTarget(); i++) this.spawnFront(true);
       notes.push(this.fronts.map((f) => `a ${this.frontName(f)} front (${FRONT_TYPES[f.kind].tip})`).join(' and '));
     }
-    if (this.round >= 2) { // several drones from round 2, more each round
+    if (this.round >= 2 && this.has('drones')) { // several drones from round 2, more each round
       const n = clamp(2 + Math.floor(st / 2), 3, 6);
-      for (let i = 0; i < n; i++) this.addMob(st >= 4 && i === n - 1 ? 'gunner' : st >= 5 && i === n - 2 ? 'fpv' : 'drone', this.mobSpot(150));
+      for (let i = 0; i < n; i++) this.addMob(st >= 4 && i === n - 1 ? 'gunner' : st >= 5 && i === n - 2 && this.has('fpv') ? 'fpv' : 'drone', this.mobSpot(150));
       this.reinforceAt = Math.max(1, 5 - Math.floor(st / 2));
       notes.push(`${n} drones, with more (and worse) after ${this.reinforceAt} cycle${this.reinforceAt > 1 ? 's' : ''}`);
     }
-    if (st >= 4) {
+    if (st >= 4 && this.has('turrets')) {
       const n = st >= 6 ? 2 : 1;
       for (let i = 0; i < n; i++) this.addMob('turret', this.mobSpot());
       notes.push(`${n} shore batter${n > 1 ? 'ies' : 'y'}`);
+    }
+    if (st >= 4 && this.has('sudden')) {
       this.fogStart = Math.max(3, 8 - Math.floor(st / 2)); // turn cycles before sudden death
       notes.push(`${this.biome.sudden.name.toLowerCase()} after ${this.fogStart} cycles`);
     }
     // the boss: the last round of a finite match, every 5th round in infinite mode
-    if ((this.rounds && this.round === this.rounds && this.rounds >= 3) || (!this.rounds && this.round >= 5 && this.round % 5 === 0)) {
+    if (this.has('boss') && ((this.rounds && this.round === this.rounds && this.rounds >= 3) || (!this.rounds && this.round >= 5 && this.round % 5 === 0))) {
       this.shipAt = 2;
       notes.push('something big on the radar');
     }
@@ -126,7 +128,7 @@ Object.assign(Game.prototype, {
 
   // every turn: fronts drift with the wind and breathe; old ones die away and new ones form
   updateFrontsTurn(windChanged) {
-    if (!this.events_on || this.stage() < 2) return;
+    if (!this.events_on || this.stage() < 2 || !this.has('fronts')) return;
     for (const f of this.fronts) {
       if (f.dying) continue;
       f.x = clamp(f.x + this.wind.x * FRONT_DRIFT, 80, WORLD_W - 80);
@@ -261,7 +263,7 @@ Object.assign(Game.prototype, {
     }
     this.reinforce(cycles);
     this.debrisDue = 0;
-    if (this.round >= 2 && cycles >= DEBRIS_FROM) {
+    if (this.round >= 2 && cycles >= DEBRIS_FROM && this.has('debris')) {
       this.debrisDue = Math.min(12, 1 + Math.floor((cycles - DEBRIS_FROM) * 1.2) + Math.floor(this.stage() / 3));
       if (!this.fleetFight) { this.fleetFight = true; this.ui.notice('The NXi fleet is fighting overhead: wreckage is coming down.'); this.events.push('Wreckage from the NXi fleet starts to fall.'); }
     }
