@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['9012752', 'The air-defence range rings are off by default: the AA button in the top bar turns them on (and remembers it).'],
   ['efb705f', 'Cores are essential: everyone starts with a Common core for her starting gun, it has its own slot in the shop and on the rack, and every core gives more health, armour and protection.'],
   ['bc2b8dd', 'Cores: a new slot in the shop (Core). Each specialises in one kind of weapon, from Common to Legendary: more damage with that kind, more health and armour, and a little off every hit you take. Air defence reaches twice as far for half the damage. FPV drones are fragile.'],
   ['e8f8d83', 'Air defence fires at drones only at set moments: on the drones’ turn, as your turn begins, and when a drone crosses a mount’s range; your mounts’ ranges show as rings on your turn. A new hostile, the blimp, cruises high and sends seeker rockets down. CPUs are sharper at close range, and each round of a clip lands closer than the last.'],
