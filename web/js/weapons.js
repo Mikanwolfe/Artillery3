@@ -234,7 +234,7 @@ const WEAPONS = [
     short: 'A pair of little seekers. They go for whatever is closest, which is usually what you wanted.', long: 'Lymilark Future Sciences, Tir Chonaill works.' }),
   weapon('kestrel', "LFS 'Kestrel' Twin Launcher", 'rocket', 0, 55, { salvo: 2, clip: 2, maxCharge: 60, disp: 2.6, dmg: 80, dmgR: 55, explR: 7, rarity: 2, cost: 3300,
     guide: { arm: 6, burn: 60, seek: 999, apex: true, turn: 3.5, range: 350, cone: 75, lift: 0.5 },
-    short: 'Two pairs a turn. The Dunbarton militia swear by it.', long: 'Seekers lock on ten frames after launch.' }),
+    short: 'Two pairs a turn. The Dunbarton militia swear by it.', long: 'Seekers lock on soon after launch.' }),
   weapon('dunbarton', "LFS 'Dunbarton' Long-Tube Rocket", 'rocket', -3, 12, { clip: 2, maxCharge: 95, disp: 1.0, dmg: 230, dmgR: 70, explR: 10, rarity: 3, cost: 6200,
     guide: { arm: 6, burn: 90, seek: 999, apex: true, turn: 5, range: 420, cone: 60, lift: 0.85, popup: { range: 240, frames: 16, angle: 60, height: 160 } },
     short: 'A tube so long it can hardly elevate. It skims the ground, then pops up over its target and dives.', long: 'A cruise rocket that flies flat: find a gap in the terrain. Within about 240 of a target ahead, it climbs hard and dives onto it.' }),
@@ -306,7 +306,7 @@ const WEAPONS = [
   // set piece of its own (finals.js).
   weapon('ragnarok', "G.W. 'Ragnarök' Battery Fire", 'shell', 5, 75, { sig: 'gwt', maxCharge: 120, disp: 0.3, drift: 0.5, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
     battery: { dmg: 900, r: 260, spread: 320, karl: { dmg: 6000, r: 380, explR: 140, quake: { r: 1200, dmg: 600 } } },
-    short: 'A marker round for her platoon off the map: four G.W. Tiger SPGs and a Karl-Gerät 60cm siege mortar.', long: 'Eight 290mm shells land up to 300 either side of the mark. Then the Karl fires: a giant crater, and an earthquake that hits everyone on the ground within 900. G.W. Tiger only.' }),
+    short: 'A marker round for her platoon off the map: four G.W. Tiger SPGs and a Karl-Gerät 60cm siege mortar.', long: 'Eight 290mm shells land up to 300 either side of the mark. Then the Karl fires: a giant crater, and an earthquake that hits everyone on the ground within 1,200. G.W. Tiger only.' }),
   weapon('zeropoint', "KTS-T 'Zero Point' Probe", 'gun', -5, 30, { sig: 'obj', drift: 0.05, pierce: 240, maxCharge: 170, disp: 0, dmg: 1200, dmgR: 60, explR: 8, rarity: 8, cost: 75000,
     naito: { r: 520 },
     short: 'A railgun probe for the Naito MAIA Containment Satellite, out past Jupiter.', long: 'The ground 520 either side of the probe is deleted. Anything that falls in is destroyed. Object 15X only.' }),

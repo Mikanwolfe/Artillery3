@@ -175,7 +175,7 @@ const UI = {
     $('prog-close').onclick = () => { $('progress').hidden = true; $('menu').hidden = false; };
     $('prog-tut').onclick = () => { $('progress').hidden = true; this.startTutorial(); };
     $('prog-all').onclick = () => { PROG.unlockAll(); this.renderProgress(); };
-    $('prog-reset').onclick = () => { if (confirm('Reset your progress to Tier 0?')) { PROG.reset(); this.renderProgress(); } };
+    $('prog-reset').onclick = () => { if (confirm('Reset progress to Tier 0?')) { PROG.reset(); this.renderProgress(); } };
     $('coach-skip').onclick = () => g.tutEnd(false);
     this.renderProgCard();
     if (!PROG.data.asked && !new URLSearchParams(location.search).has('auto')) { $('menu').hidden = true; $('welcome').hidden = false; }
@@ -187,9 +187,9 @@ const UI = {
     const i = PROG.tier(), n = PROG.next(), c = PROG.data.cleared;
     const prev = PROG_TIERS[i].at;
     const pct = n ? Math.round((100 * (c - prev)) / (n.at - prev)) : 100;
-    $('prog-card').innerHTML = `<div class="progcard"><div class="pc-top"><b>Tier ${i}</b><span class="mgh">${PROG.data.all ? 'everything unlocked' : `${c} round${c === 1 ? '' : 's'} cleared`}</span></div>
+    $('prog-card').innerHTML = `<div class="progcard"><div class="pc-top"><b>Tier ${i}</b><span class="mgh">${PROG.data.all ? 'all unlocked' : `${c} round${c === 1 ? '' : 's'} cleared`}</span></div>
       <span class="meter"><i style="width:${pct}%;--c:var(--gold)"></i></span>
-      <span class="pc-next">${n ? `Next, at ${n.at}: <b>${esc(girlName(n.girl))}</b> · ${esc(n.foes)}` : 'Every girl, hostile and gun is unlocked.'}</span>
+      <span class="pc-next">${n ? `Next tier at ${n.at} rounds: <b>${esc(girlName(n.girl))}</b>. Hostiles: ${esc(n.foes)}` : 'All girls, hostiles and items are unlocked.'}</span>
       <div class="pc-row"><button id="prog-open" class="ghost">Progress tree</button>${PROG.data.tut ? '' : '<button id="prog-tut2" class="ghost">Tutorial</button>'}</div></div>`;
     $('prog-open').onclick = () => { $('menu').hidden = true; this.renderProgress(); $('progress').hidden = false; };
     if ($('prog-tut2')) $('prog-tut2').onclick = () => this.startTutorial();
@@ -198,11 +198,11 @@ const UI = {
   // the tier tree: each tier's girl (a silhouette until it unlocks), hostiles and gear
   renderProgress() {
     const now = PROG.tier(), c = PROG.data.cleared;
-    $('prog-sum').textContent = PROG.data.all ? 'Everything unlocked' : `Tier ${now} · ${c} cleared`;
+    $('prog-sum').textContent = PROG.data.all ? 'All unlocked' : `Tier ${now} · ${c} rounds cleared`;
     $('prog-tree').innerHTML = PROG_TIERS.map((T, i) => {
       const st = i <= now ? 'got' : i === now + 1 ? 'next' : 'locked';
       return `<div class="tier ${st}"><div class="t-girl"><canvas width="84" height="100" data-g="${T.girl}"></canvas></div>
-        <div class="t-body"><span class="t-n">Tier ${i} · ${i === 0 ? 'start' : st === 'got' ? 'unlocked' : `at ${T.at} cleared`}</span><h3>${esc(girlName(T.girl))}</h3>
+        <div class="t-body"><span class="t-n">Tier ${i} · ${i === 0 ? 'start' : st === 'got' ? 'unlocked' : `at ${T.at} rounds`}</span><h3>${esc(girlName(T.girl))}</h3>
         <p><b>Hostiles</b> ${esc(T.foes)}</p><p><b>Shop</b> ${esc(T.gear)}</p></div></div>`;
     }).join('');
     $('prog-tree').querySelectorAll('canvas').forEach((cv, i) => {
@@ -225,13 +225,13 @@ const UI = {
     d.className = 'quip lore unlock';
     d.innerHTML = `<b>Tier ${i} unlocked</b> ${esc(tierLine(i).replace(/^Tier \d+: /, ''))}`;
     $('re-quips').prepend(d);
-    this.notice(`Tier ${i} unlocked: ${girlName(PROG_TIERS[i].girl)} joins the roster.`);
+    this.notice(`Tier ${i} unlocked. You can now select ${girlName(PROG_TIERS[i].girl)}.`);
     this.renderProgCard();
   },
   addUnlockHint(left, i) {
     const d = document.createElement('div');
     d.className = 'quip lore';
-    d.textContent = `${left} more round${left === 1 ? '' : 's'} cleared to Tier ${i}: ${girlName(PROG_TIERS[i].girl)}.`;
+    d.textContent = `Tier ${i} (${girlName(PROG_TIERS[i].girl)}) unlocks after ${left} more round${left === 1 ? '' : 's'}.`;
     $('re-quips').prepend(d);
     this.renderProgCard();
   },
@@ -255,7 +255,7 @@ const UI = {
   tutDone() {
     const d = document.createElement('div');
     d.className = 'quip lore unlock';
-    d.innerHTML = '<b>Tutorial complete</b> Back on the menu, pick from the girls you have unlocked. Clear rounds to unlock the rest (Progress tree).';
+    d.innerHTML = '<b>Tutorial complete</b> On the menu, select a girl you have unlocked. Finish rounds to unlock more. The Progress tree shows each tier.';
     $('ge-quips').prepend(d);
   },
 
@@ -283,7 +283,7 @@ const UI = {
       $('veh-grid').classList.toggle('many', this.roster().length > 5);
       $('veh-n').textContent = this.roster().length;
       const nx = PROG.next();
-      $('veh-next').textContent = nx ? ` · next: ${girlName(nx.girl)} at ${nx.at} rounds cleared (${PROG.data.cleared} so far)` : '';
+      $('veh-next').textContent = nx ? ` · Next: ${girlName(nx.girl)} at ${nx.at} rounds cleared (now ${PROG.data.cleared})` : '';
       $('veh-grid').innerHTML = this.roster().map((v, i) => {
         const w = v.weapon;
         const fuel = Math.round(100 * (v.fuel || 1));

@@ -55,7 +55,7 @@ const GUN_NOTES = {
   feuerlilie: ['Matches', 'A homing rocket that bursts like flak: shrapnel, and double damage to drones. It is the easiest anti-air gun to hit with.'],
   ichor: ['Matches', 'A Kotona lens drone on a CLS-T acid tank (170 ceiling). It fires a heavy beam that leaves a pool of acid, two times a turn.'],
   massdriver: ['Matches', 'Range 1000 and zero spread from a rail drone with the highest ceiling (260). It hits where you aim if it has a line of sight.'],
-  ragnarok: ['Final', 'G.W. Tiger only. Fires a marker round for her platoon 22 km away. The platoon fires 24 rounds across the area. Then the 60cm gun fires. It makes a very large crater, and an earthquake damages everyone on the ground within 1,000.'],
+  ragnarok: ['Final', 'G.W. Tiger only. Fires a marker round for her platoon 22 km away. The platoon fires 24 rounds across the area. Then the 60cm gun fires. It makes a very large crater, and an earthquake damages everyone on the ground within 1,200.'],
   zeropoint: ['Final', 'Object 15X only. Fires a railgun probe (1,200 damage). It goes through up to 240 of ground and cover. The Naito MAIA Containment Satellite then removes the ground 520 either side of the probe, through the full depth of the world. Anything that falls in is destroyed.'],
   verdict: ['Final', 'November only. Fires a target dot. The fleet moves overhead. The lance of the flagship hits the mark (6,000). Then the fleet fires 60 laser shots (450 each) across 600 either side of the mark.'],
   constellation: ['Final', 'Innocentia only. Fires a laser dot. Many MAIAs appear in the sky. Five waves of 40 shots (320 each) hit across 650 either side of the mark. Then the beam of a very large MAIA hits the mark: 6,000.'],
