@@ -16,23 +16,23 @@
 
 const AA_WEAPONS = [
   { id: 'aa96', name: 'SI Type 96 25mm Triple Mount', role: 'air', rarity: 1, cost: 900, range: 260, rof: 8, dmg: 18, acc: 0.7, pk: 0.04, perTurn: 4,
-    short: 'Three barrels, open sights, a crew that never stops cranking. Every carrier has a dozen.', long: 'Anti-aircraft: chips at planes and drones close by.' },
+    short: 'Three barrels, open sights, a crew that never stops cranking. Every carrier has a dozen.', long: 'Anti-air: light damage to planes and drones nearby.' },
   { id: 'aabofors', name: "SI 'Hagoita' 40mm Quad Bofors", role: 'air', rarity: 2, cost: 2200, range: 320, rof: 10, dmg: 34, acc: 0.75, pk: 0.05, perTurn: 5,
-    short: 'Four Bofors on one mount, from the Hagoita AA refit.', long: 'Anti-aircraft: heavier bursts, a little further out.' },
+    short: 'Four Bofors on one mount, from the Hagoita AA refit.', long: 'Anti-air: heavier bursts, at a little more range.' },
   { id: 'aegis', name: "LFS 'Aegis' Interceptor Pod", role: 'missile', rarity: 2, cost: 2600, range: 240, rof: 6, pk: 0.35, cut: 0.25, dmg: 10, acc: 0.5, perTurn: 1,
-    short: 'Lymilark builds the rockets, so Lymilark knows how to stop them. Little seekers that go for seekers.', long: 'Point defence: a fair chance to kill an incoming rocket or bomb, and dents the ones it misses.' },
+    short: 'Lymilark builds the rockets, so Lymilark knows how to stop them. Little seekers that go for seekers.', long: 'Point defence: a fair chance to destroy an incoming rocket or bomb. It damages the ones it does not destroy.' },
   { id: 'aafd94', name: 'SI Type 94 Fire Director + 10cm Twin', role: 'air', rarity: 3, cost: 4800, range: 380, rof: 9, dmg: 60, acc: 0.85, pk: 0.07, perTurn: 6,
-    short: 'A rangefinder that computes the lead, and a twin high-angle mount that listens to it.', long: 'Anti-aircraft: accurate, far-reaching, six bursts a turn.' },
+    short: 'A rangefinder that computes the lead, and a twin high-angle mount that listens to it.', long: 'Anti-air: accurate and long range. Six bursts a turn.' },
   { id: 'ciws', name: "NXi SEC-11 'Bulkhead' CIWS", role: 'missile', rarity: 3, cost: 5400, range: 260, rof: 3, pk: 0.5, cut: 0.35, dmg: 14, acc: 0.5, perTurn: 2,
-    short: 'A radar-laid gatling. Triple-verified, it says on the drum.', long: 'Point defence: an even chance against every rocket, bomblet or bomb that comes in.' },
+    short: 'A radar-laid gatling. Triple-verified, it says on the drum.', long: 'Point defence: a good chance against each incoming rocket, bomblet or bomb.' },
   { id: 'aarocket', name: 'SI 12cm 30-tube AA Rocket Launcher Kai Ni', role: 'air', rarity: 4, cost: 10000, range: 440, rof: 16, dmg: 110, acc: 0.8, pk: 0.1, perTurn: 4, splash: 60,
-    short: 'Thirty rockets in a barrage, filling the sky with fire. Squadrons hate it.', long: 'Anti-aircraft: each burst hits every aircraft within 60 of it.' },
+    short: 'Thirty rockets in a barrage, filling the sky with fire. Squadrons hate it.', long: 'Anti-air: each burst hits all aircraft within 60 of it.' },
   { id: 'kotonapd', name: 'Kotona Lensed Point-Defence Laser', role: 'missile', rarity: 5, cost: 18000, range: 300, rof: 4, pk: 0.7, cut: 0.5, dmg: 30, acc: 0.8, perTurn: 3, laser: true,
-    short: 'A Kotona lens that tracks at the speed of light. Missiles simply stop arriving.', long: 'Point defence: a beam, not a round. Most missiles never land.' },
+    short: 'A Kotona lens that tracks at the speed of light. Missiles simply stop arriving.', long: 'Point defence: it fires a beam, not a round. It stops most missiles.' },
   { id: 'akizukikai', name: "SI 'Akizuki Kai' AA Battery", role: 'air', rarity: 6, cost: 26000, range: 460, rof: 7, dmg: 160, acc: 0.9, pk: 0.12, perTurn: 8,
-    short: 'The finest anti-air battery Sengoku ever built, now with a fire director of its own.', long: 'Anti-aircraft: tears squadrons apart, eight bursts a turn.' },
+    short: 'The finest anti-air battery Sengoku ever built, now with a fire director of its own.', long: 'Anti-air: very effective against squads. Eight bursts a turn.' },
   { id: 'gatewatch', name: "NXi 'Gatewatch' Aegis Net", role: 'missile', rarity: 6, cost: 28000, range: 340, rof: 3, pk: 0.8, cut: 0.6, dmg: 30, acc: 0.6, perTurn: 3,
-    short: 'What guards the gate. Nothing gets through without a vote, and nobody votes yes.', long: 'Point defence: the best there is.' },
+    short: 'What guards the gate. Nothing gets through without a vote, and nobody votes yes.', long: 'Point defence: the best mount.' },
 ];
 // every girl comes with a mount of her own (starter: not sold in the shop, worth nothing back, and
 // swapped out by the first one she buys into its slot), from weakest to best: Ikaros, Innocentia,
@@ -40,19 +40,19 @@ const AA_WEAPONS = [
 // November (two of her own: the Defensive Suite)
 const AA_STARTERS = [
   { id: 'aa_ang', name: "'Feather' Halo Ward", role: 'air', rarity: 1, cost: 0, starter: true, range: 200, rof: 10, dmg: 10, acc: 0.55, pk: 0.02, perTurn: 2,
-    short: 'The halo flicks feathers at anything that flies too close to her. It isn’t really for fighting.', long: 'Anti-aircraft, barely: Ikaros’s own.' },
+    short: 'The halo flicks feathers at anything that flies too close to her. It isn’t really for fighting.', long: 'Weak anti-air: Ikaros’s own.' },
   { id: 'aa_int', name: 'Kati-S Coaxial Flak', role: 'air', rarity: 1, cost: 0, starter: true, range: 220, rof: 9, dmg: 14, acc: 0.6, pk: 0.03, perTurn: 3,
-    short: 'A small flak gun slaved to the twin barrels. It points where they point, roughly.', long: 'Anti-aircraft: Innocentia’s own.' },
+    short: 'A small flak gun slaved to the twin barrels. It points where they point, roughly.', long: 'Anti-air: Innocentia’s own.' },
   { id: 'aa_alb', name: "LFS 'Buckler' Micro-Interceptor", role: 'missile', rarity: 1, cost: 0, starter: true, range: 210, rof: 6, pk: 0.2, cut: 0.15, dmg: 8, acc: 0.5, perTurn: 1,
     short: 'A pocket Aegis: two tiny seekers that go for seekers.', long: 'Point defence: Alban Eiler’s own.' },
   { id: 'aa_gwt', name: 'G.W. 20mm Flakvierling', role: 'air', rarity: 1, cost: 0, starter: true, range: 250, rof: 8, dmg: 18, acc: 0.65, pk: 0.04, perTurn: 4,
-    short: 'Four 20mm barrels on the autoloader’s roof. Field-tested, of course.', long: 'Anti-aircraft: G.W. Tiger’s own.' },
+    short: 'Four 20mm barrels on the autoloader’s roof. Field-tested, of course.', long: 'Anti-air: G.W. Tiger’s own.' },
   { id: 'aa_obj', name: "KTS-T 'Shtora' Active Protection", role: 'missile', rarity: 1, cost: 0, starter: true, range: 230, rof: 5, pk: 0.3, cut: 0.2, dmg: 10, acc: 0.5, perTurn: 1,
     short: 'Dazzlers and a ring of shot charges round the turret: what comes in at her mostly doesn’t arrive whole.', long: 'Point defence: Object 15X’s own.' },
   { id: 'aa_nxi1', name: "NXi Mk.0 'Bulkhead' Point Defence", role: 'missile', rarity: 1, cost: 0, starter: true, range: 240, rof: 4, pk: 0.35, cut: 0.25, dmg: 12, acc: 0.5, perTurn: 2,
     short: 'Half of the Defensive Suite: a radar-laid gatling, triple-verified.', long: 'Point defence: November’s own.' },
   { id: 'aa_nxi2', name: 'NXi Mk.0 Flak Mount', role: 'air', rarity: 1, cost: 0, starter: true, range: 340, rof: 7, dmg: 32, acc: 0.8, pk: 0.04, perTurn: 6,
-    short: 'The other half of the Defensive Suite: proximity flak, twin-mounted, never jams.', long: 'Anti-aircraft: November’s own.' },
+    short: 'The other half of the Defensive Suite: proximity flak, twin-mounted, never jams.', long: 'Anti-air: November’s own.' },
 ];
 // every mount reaches twice as far as it was built to, for half the damage a burst
 const AA_RANGE_MULT = 2, AA_DMG_MULT = 0.5;

@@ -14,9 +14,9 @@
 <body>
 <div id="rotate">
   <div class="phone"></div>
-  <p>Turn your phone sideways</p>
+  <p>Turn your phone to landscape</p>
   <button id="rotate-full" hidden>Play fullscreen, landscape</button>
-  <button id="rotate-skip" class="ghost">Play in portrait anyway</button>
+  <button id="rotate-skip" class="ghost">Play in portrait</button>
 </div>
 <div id="stage">
   <canvas id="view" width="1024" height="576"></canvas>
@@ -112,46 +112,46 @@
     <div class="panel plate help">
       <div class="phead"><div class="seg help-tabs"><button data-tab="play" class="on">How to play</button><button data-tab="about">About</button><button data-tab="changes">Changelog</button></div><button id="help-close" class="icon" title="Close (Esc)">✕</button></div>
       <div class="tab" data-tab="play">
-      <p>Take turns: move, aim, hold <b>Space</b> to charge, release to fire. Last one standing wins the round.</p>
+      <p>Players take turns. On your turn, move and aim. Hold <b>Space</b> to charge, then release it to fire. The last player alive wins the round.</p>
       <div class="help-cols"><div>
       <table class="keys">
         <tr><td>← →</td><td>move (uses fuel)</td></tr>
-        <tr><td>↑ ↓</td><td>aim (Shift: fine)</td></tr>
+        <tr><td>↑ ↓</td><td>aim (hold Shift for fine aim)</td></tr>
         <tr><td>Space</td><td>hold to charge, release to fire</td></tr>
-        <tr><td>Q · E</td><td>switch weapon (or tap the rack)</td></tr>
-        <tr><td>S</td><td>drop off a bridge to the ground below</td></tr>
-        <tr><td>R</td><td>repair kit (uses your shot)</td></tr>
-        <tr><td>X</td><td>recall your squads (the selected plane weapon's, else all): home now, loadout unspent</td></tr>
-        <tr><td>W · L</td><td>jump (30% fuel) · leap (90%, soft landing)</td></tr>
-        <tr><td>1 2 3 4</td><td>abilities, once bought</td></tr>
+        <tr><td>Q · E</td><td>change weapon (or select it on the rack)</td></tr>
+        <tr><td>S</td><td>drop from a bridge to the ground</td></tr>
+        <tr><td>R</td><td>repair kit (uses your turn)</td></tr>
+        <tr><td>X</td><td>recall squads: they fly home with loadout unspent (the selected plane weapon's squads, or all squads)</td></tr>
+        <tr><td>W · L</td><td>jump (30% fuel) · leap (90% fuel, no fall damage)</td></tr>
+        <tr><td>1 2 3 4</td><td>abilities (after you buy them)</td></tr>
         <tr><td>Enter</td><td>end turn</td></tr>
-        <tr><td>Click</td><td>mark a target: shows the power needed</td></tr>
-        <tr><td>Drag</td><td>look around</td></tr>
+        <tr><td>Click</td><td>mark a target and show the power needed</td></tr>
+        <tr><td>Drag</td><td>move the view</td></tr>
         <tr><td>Wheel</td><td>zoom in and out</td></tr>
         <tr><td>M · N · H · Esc</td><td>mute · music · controls · pause</td></tr>
-        <tr><td>Touch</td><td>drag from her to aim · pinch to zoom · MENU to pause</td></tr>
+        <tr><td>Touch</td><td>drag from your character to aim · pinch to zoom · MENU to pause</td></tr>
       </table>
       <h3 class="sec">Hints</h3>
       <ul class="hints">
-        <li><b>Flak</b> does ×2 to drones and other hostiles</li>
-        <li>Shoot <b>MAIA</b> down: offline for two full rounds of turns</li>
-        <li>Lob high: a long fall adds up to +50%</li>
-        <li>Armour soaks a whole hit while any is left</li>
-        <li>Bought guns reload: carry several and rotate</li>
-        <li>CPUs go after whoever last hit them</li>
-        <li><b>Planes</b> strike their zone the turn they are called, then hover over it until the next call: shoot them down while they wait</li>
-        <li><b>AA</b> mounts fire on their own: point defence stops rockets, anti-air stops planes</li>
+        <li><b>Flak</b> does ×2 damage to drones and other hostiles.</li>
+        <li>Shoot <b>MAIA</b> down. It stays offline for two full cycles of turns.</li>
+        <li>Fire high: a long fall adds up to +50% damage.</li>
+        <li>While any armour is left, the armour takes the full hit.</li>
+        <li>Bought guns reload. Carry several and use them in turn.</li>
+        <li>CPUs attack the last player that hit them.</li>
+        <li><b>Planes</b> attack their zone in the turn you call them. Then they wait over it until the next call. Shoot them down while they wait.</li>
+        <li><b>AA</b> mounts fire automatically. Point defence stops rockets. Anti-air stops planes.</li>
       </ul>
       </div><div>
       <h3 class="sec">Damage numbers</h3>
       <table class="keys dmg">
-        <tr><td><span style="color:#fff27a">DIRECT HIT</span> · <span style="color:#ff9a4a">SOLID</span> · <span style="color:#ffd8b0">GLANCING</span> · <span style="color:#c8c4d4">GRAZE</span></td><td>how close to the blast's centre</td></tr>
-        <tr><td><span style="color:#f2c45a">ALT +%</span></td><td>fell from high up</td></tr>
+        <tr><td><span style="color:#fff27a">DIRECT HIT</span> · <span style="color:#ff9a4a">SOLID</span> · <span style="color:#ffd8b0">GLANCING</span> · <span style="color:#c8c4d4">GRAZE</span></td><td>distance from the blast centre</td></tr>
+        <tr><td><span style="color:#f2c45a">ALT +%</span></td><td>shot fell from high up</td></tr>
         <tr><td><span style="color:#ff9a5a">KIN +%</span></td><td>fast impact (up to +50%)</td></tr>
-        <tr><td><span style="color:#ffd84a">FRONT</span> · <span style="color:#8ab4ff">RAIN</span></td><td>weather front: harder · damped</td></tr>
+        <tr><td><span style="color:#ffd84a">FRONT</span> · <span style="color:#8ab4ff">RAIN</span></td><td>weather front: more damage · less damage</td></tr>
         <tr><td><span style="color:#ff78c8">MAIA</span></td><td>satellite strike</td></tr>
         <tr><td><span style="color:#78e6d2">BARRIER</span> · <span style="color:#96d2ff">DEFLECTOR</span> · <span style="color:#9ab0c8">SLOPED</span></td><td>damage reduced</td></tr>
-        <tr><td><span style="color:#c8f0a0">green</span></td><td>acid, over time</td></tr>
+        <tr><td><span style="color:#c8f0a0">green</span></td><td>acid damage over time</td></tr>
       </table>
       </div></div>
       </div>

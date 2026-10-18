@@ -375,7 +375,7 @@ const UI = {
     $('turn').innerHTML = `<span class="dot" style="background:${t.color}"></span>${esc(t.name)}`;
     if (g.phase === 'aim' && !t.firedThisTurn && !g.range) {
       const b = $('banner');
-      b.innerHTML = `<span>${esc(t.name)}${t.isCpu ? '' : ' · your move'}</span>`;
+      b.innerHTML = `<span>${esc(t.name)}${t.isCpu ? '' : ' · your turn'}</span>`;
       if (!t.isCpu && ++this.humanTurns === 4) $('hints').classList.add('quiet');
       b.classList.remove('show');
       void b.offsetWidth;
@@ -464,8 +464,8 @@ const UI = {
           [rearm.length, `rearming${rearm.length ? ` (${Math.min(...rearm.map((q) => q.turns))})` : ''}`]].filter(([k]) => k > 0);
         st = parts.map(([k, s]) => `${k} ${s}`).join(' · ');
       }
-      else st = on ? (w.clip > 1 ? `${w.clip} shots` : 'in hand') : 'loaded';
-      const reloadNote = w.air ? `${w.air.squads} squad${w.air.squads > 1 ? 's' : ''}, one dot each a turn: one on deck takes off, else one already out is redirected; each back or lost rearms for ${reloadOf(w) + (w.fleet || hasTrait(t, 'flightdeck') || (t.upgrades && t.upgrades.deck) ? 0 : vtolRearm(w))} turns${w.fleet || hasTrait(t, 'flightdeck') || (t.upgrades && t.upgrades.deck) ? '' : ' (lift-fan launch: a flight deck saves ' + vtolRearm(w) + ')'}` : reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
+      else st = on ? (w.clip > 1 ? `${w.clip} shots` : 'selected') : 'loaded';
+      const reloadNote = w.air ? `${w.air.squads} squad${w.air.squads > 1 ? 's' : ''}, one laser dot each a turn. A squad on deck takes off. If none is on deck, a squad that is out goes to the new dot. A squad that returns or is lost rearms for ${reloadOf(w) + (w.fleet || hasTrait(t, 'flightdeck') || (t.upgrades && t.upgrades.deck) ? 0 : vtolRearm(w))} turns${w.fleet || hasTrait(t, 'flightdeck') || (t.upgrades && t.upgrades.deck) ? '' : ' (lift-fan launch: a flight deck saves ' + vtolRearm(w) + ' turns)'}` : reloadOf(w) ? `Reloads for ${reloadOf(w)} turn${reloadOf(w) > 1 ? 's' : ''} after firing` : 'Never reloads';
       const pips = w.air ? `<span class="pips">${t.wing(w).map((q) => `<i class="${q.state === 'rearm' || q.state === 'home' ? 'r' : q.tasked ? '' : q.state === 'out' ? 'o' : 'f'}"></i>`).join('')}</span>` : on && w.clip > 1 ? `<span class="pips">${Array.from({ length: w.clip }, (_, k) => `<i class="${k < (t.firedThisTurn || w.air ? t.shotsLeft : w.clip) ? 'f' : ''}"></i>`).join('')}</span>` : '';
       return `<button class="slot w${on ? ' on' : ''}${left > 0 ? ' rl' : ''}" data-i="${i}" title="${esc(w.name)} · ${reloadNote}" ${left > 0 || !t.weaponReady(id) || (t.firedThisTurn && !on) ? 'disabled' : ''}>
         ${this.badge(w, true)}<span class="txt"><span class="nm">${esc(w.name)}</span><span class="st">${st}</span></span>${pips}
@@ -474,17 +474,17 @@ const UI = {
     const ab = ABILITIES.filter((a) => t.abilities[a.id] > 0).map((a) => {
       const armed = t.armed[a.id] || (a.id === 'shield' && t.shield) || (a.id === 'barrier' && t.barrier);
       const cd = t.cooldown[a.id];
-      const st = armed ? (a.id === 'shield' || a.id === 'barrier' ? 'up' : 'armed') : cd > 0 ? `↻ ${cd}` : 'ready';
+      const st = armed ? (a.id === 'shield' || a.id === 'barrier' ? 'active' : 'armed') : cd > 0 ? `↻ ${cd}` : 'ready';
       return `<button class="slot a${armed ? ' armed' : ''}${cd > 0 && !armed ? ' rl' : ''}" data-ab="${a.id}" title="${esc(a.name)}: ${esc(a.desc)}" ${cd > 0 && !armed ? 'disabled' : ''}>
         <span class="kb">${a.key}</span><span class="txt"><span class="nm">${esc(a.name)}</span><span class="st">${st}</span></span></button>`;
     });
     const jumpCost = Math.ceil(t.maxFuel * JUMP_FUEL);
-    ab.push(`<button class="slot a" data-jump="1" title="Jump: hop the way you face, for ${Math.round(JUMP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= jumpCost && !t.falling ? '' : 'disabled'}><span class="kb">W</span><span class="txt"><span class="nm">Jump</span><span class="st">${Math.round(JUMP_FUEL * 100)}% fuel</span></span></button>`);
+    ab.push(`<button class="slot a" data-jump="1" title="Jump: jump in the direction you face. Uses ${Math.round(JUMP_FUEL * 100)}% of a full fuel tank." ${t.fuel >= jumpCost && !t.falling ? '' : 'disabled'}><span class="kb">W</span><span class="txt"><span class="nm">Jump</span><span class="st">${Math.round(JUMP_FUEL * 100)}% fuel</span></span></button>`);
     const leapCost = Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1));
-    ab.push(`<button class="slot a" data-jump="leap" title="Leap: bound far the way you face and land softly, for ${Math.round(LEAP_FUEL * 100)}% of a full tank of fuel" ${t.fuel >= leapCost && !t.falling && !t.upgrades.deck ? '' : 'disabled'}><span class="kb">L</span><span class="txt"><span class="nm">Leap</span><span class="st">${Math.round(LEAP_FUEL * 100)}% fuel</span></span></button>`);
-    if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% of health and armour together (health first), takes your turn" ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
+    ab.push(`<button class="slot a" data-jump="leap" title="Leap: jump far in the direction you face, with no fall damage. Uses ${Math.round(LEAP_FUEL * 100)}% of a full fuel tank." ${t.fuel >= leapCost && !t.falling && !t.upgrades.deck ? '' : 'disabled'}><span class="kb">L</span><span class="txt"><span class="nm">Leap</span><span class="st">${Math.round(LEAP_FUEL * 100)}% fuel</span></span></button>`);
+    if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% of health and armour, health first. Uses your turn." ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
     const rc = g.recallable ? g.recallable(t, t.weapon.air && g.recallable(t, t.weapon).length ? t.weapon : null) : [];
-    if (rc.length) ab.push(`<button class="slot a" data-recall="1" title="Recall: ${rc.length > 1 ? 'these squads fly' : 'this squad flies'} home now, loadout unspent, instead of waiting over the zone to be shot at; rearms as usual. Doesn't use your turn"><span class="kb">X</span><span class="txt"><span class="nm">Recall</span><span class="st">${rc.length > 1 ? rc.length + ' squads' : esc(shortName(rc[0].w))}</span></span></button>`);
+    if (rc.length) ab.push(`<button class="slot a" data-recall="1" title="Recall: send ${rc.length > 1 ? 'these squads' : 'this squad'} home now, with the loadout unspent. Then rivals cannot shoot ${rc.length > 1 ? 'them' : 'it'} over the zone. ${rc.length > 1 ? 'They rearm' : 'It rearms'} as usual. Does not use your turn."><span class="kb">X</span><span class="txt"><span class="nm">Recall</span><span class="st">${rc.length > 1 ? rc.length + ' squads' : esc(shortName(rc[0].w))}</span></span></button>`);
     for (const id of t.aa || []) {
       const a = AA_BY_ID[id];
       if (a) ab.push(`<span class="slot a passive" title="${esc(a.name)}: ${esc(a.long)}"><span class="kb">AA</span><span class="txt"><span class="nm">${esc(a.name.replace(/^(SI|NXi|LFS|Kotona) /, ''))}</span><span class="st">${a.role === 'missile' ? 'point defence' : 'anti-air'} · auto</span></span></span>`);
@@ -525,8 +525,8 @@ const UI = {
     $('re-kicker').textContent = `Round ${round} complete`;
     $('re-title').innerHTML = winner
       ? `<span style="color:${winner.color}">${esc(winner.name)}</span> wins the round`
-      : 'Mutual destruction';
-    $('re-award').innerHTML = `Everyone is paid <b>${money(award)}</b>, plus their own damage to rivals and a bonus for the last two standing.`;
+      : 'No winner';
+    $('re-award').innerHTML = `Each player gets <b>${money(award)}</b>. Each player also gets credits for their damage to rivals. The last two players alive get a bonus.`;
     $('re-table').className = 'data';
     $('re-table').innerHTML = '<tr><th>Player</th><th>Character</th><th>Damage</th><th>Pay</th><th>Wins</th><th>Money</th></tr>' + tanks.map((t) => {
       const P = t.roundPayParts || { own: 0, bonus: 0 };
@@ -554,7 +554,7 @@ const UI = {
     const g = this.game;
     const render = () => {
       $('shop-title').innerHTML = `<span class="dot" style="background:${tank.color}"></span>${esc(tank.name)}<small>${esc(tank.vehicle.name)}</small>`;
-      $('shop-cash').innerHTML = `<span class="mgh">Funds</span><b>${money(tank.money)}</b>`;
+      $('shop-cash').innerHTML = `<span class="mgh">Credits</span><b>${money(tank.money)}</b>`;
       const full = tank.weapons.length >= MAX_WEAPONS;
       if (!g.shopFilterOk(this.shopFilter)) this.shopFilter = 'all';
       const f = this.shopFilter;
@@ -575,7 +575,7 @@ const UI = {
             <p title="${esc(a.long)}">${esc(a.short)}</p>
             <div class="stats">${this.weaponStats(a)}</div>
             <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(a.cost)}</span>
-            <button data-aa="${a.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : freeSlot < 0 ? 'Slots full' : afford ? 'Buy' : 'Short ' + money(a.cost - tank.money)}</button></div></div></div>`;
+            <button data-aa="${a.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : freeSlot < 0 ? 'Slots full' : afford ? 'Buy' : 'Need ' + money(a.cost - tank.money)}</button></div></div></div>`;
         }).join('');
         $('shop-grid').querySelectorAll('[data-aa]').forEach((b) => { b.onclick = () => { g.buy(tank, 'aa', b.dataset.aa); render(); }; });
       } else if (f === 'core') { // cores: one slot; a new one replaces hers (refunded in full)
@@ -588,7 +588,7 @@ const UI = {
             <p>${esc(C.short)}</p>
             <div class="stats"><span>Boost</span><span>+${Math.round(C.boost * 100)}% ${esc(C.coreLabel.toLowerCase())}</span><span>Health</span><span>+${C.hp}</span><span>Armour</span><span>+${C.armour}</span><span>Block</span><span>−${C.block} a hit</span></div>
             <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(C.cost)}</span>
-            <button data-core="${C.id}" ${!owned && afford ? '' : 'disabled'}>${owned ? 'Fitted' : afford ? (cur ? 'Swap' : 'Buy') : 'Short ' + money(C.cost - tank.money - refund)}</button></div></div></div>`;
+            <button data-core="${C.id}" ${!owned && afford ? '' : 'disabled'}>${owned ? 'Fitted' : afford ? (cur ? 'Swap' : 'Buy') : 'Need ' + money(C.cost - tank.money - refund)}</button></div></div></div>`;
         }).join('');
         $('shop-grid').querySelectorAll('[data-core]').forEach((b) => { b.onclick = () => { g.buyCore(tank, b.dataset.core); render(); }; });
       } else $('shop-grid').innerHTML = list.map((w) => {
@@ -604,12 +604,12 @@ const UI = {
           <p title="${esc(w.long)}">${esc(w.short)}</p>
           <div class="stats">${this.weaponStats(w)}</div>
           <div class="buyrow"><span class="cost${afford || owned ? '' : ' short'}">${money(cost)}</span>
-          <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : full ? 'Slots full' : afford ? (w.starter ? 'Buy back' : 'Buy') : 'Short ' + money(cost - tank.money)}</button></div></div></div>`;
+          <button data-w="${w.id}" ${can ? '' : 'disabled'}>${owned ? 'Owned' : full ? 'Slots full' : afford ? (w.starter ? 'Buy back' : 'Buy') : 'Need ' + money(cost - tank.money)}</button></div></div></div>`;
       }).join('') || '<div class="none">Nothing here. Try another filter.</div>';
-      if (g.prog && PROG.next()) $('shop-grid').insertAdjacentHTML('beforeend', `<div class="none lockline">More of the shop opens at Tier ${PROG.tier() + 1} (${PROG.next().at} rounds cleared): ${esc(PROG.next().gear)}</div>`);
+      if (g.prog && PROG.next()) $('shop-grid').insertAdjacentHTML('beforeend', `<div class="none lockline">More items unlock at Tier ${PROG.tier() + 1} (${PROG.next().at} rounds cleared): ${esc(PROG.next().gear)}</div>`);
       $('shop-count').textContent = `${tank.weapons.length}/${MAX_WEAPONS}`;
       $('shop-note').textContent = BALANCE === 'rebalanced'
-        ? 'Bought guns reload for 1–3 of your turns after firing (by rarity); your starter never does. Planes fly their squads, then rearm (even a starter). Own several to fire something big every turn.'
+        ? 'After a bought gun fires, it reloads for 1–3 of your turns (by rarity). Your starting gun never reloads. Planes fly their squads, then rearm; starting planes also rearm. Own several guns to fire a large one every turn.'
         : '';
       $('shop-note').hidden = BALANCE !== 'rebalanced';
       $('shop-owned').innerHTML = tank.weapons.map((id) => {
@@ -619,10 +619,10 @@ const UI = {
       }).join('');
       $('shop-aa').innerHTML = tank.aa.map((id, i) => {
         const a = AA_BY_ID[id];
-        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty AA slot: buy one under AA</span></div>`;
+        if (!a) return `<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>Empty AA slot: buy a mount under AA</span></div>`;
         const st = this.game.canSellAA(tank, id);
         return `<div class="owned">${this.badge(a, true)}<span>${esc(a.name)}</span>
-          <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(this.game.aaSellValue(tank, id)) : 'Hers'}</button></div>`;
+          <button data-sa="${id}" ${st ? '' : 'disabled'} title="Sell">${st ? 'Sell ' + money(this.game.aaSellValue(tank, id)) : 'Built-in'}</button></div>`;
       }).join('');
       const myCore = coreOf(tank);
       $('shop-core').innerHTML = myCore
@@ -630,7 +630,7 @@ const UI = {
           <div class="cs-body"><span class="maker">Core · ${esc(myCore.coreLabel)}</span><h4 style="color:${RARITY[myCore.rarity].ui}">${esc(myCore.name)}</h4>
           <div class="stats"><span>Boost</span><span>+${Math.round(myCore.boost * 100)}%</span><span>Block</span><span>−${myCore.block}/hit</span><span>Health</span><span>+${myCore.hp}</span><span>Armour</span><span>+${myCore.armour}</span></div>
           <div class="cs-row"><button data-cf="1">Browse cores</button><button data-sc="1" title="Sell">Sell ${money(coreValue(tank))}</button></div></div></div>`
-        : '<div class="coreslot empty"><span class="badge" style="--rc:#556"><b>—</b></span><div class="cs-body"><h4>Empty core slot</h4><p class="note">A core is essential: health, armour, a little off every hit, and more damage with its kind of gun.</p><div class="cs-row"><button data-cf="1">Browse cores</button></div></div></div>';
+        : '<div class="coreslot empty"><span class="badge" style="--rc:#556"><b>—</b></span><div class="cs-body"><h4>Empty core slot</h4><p class="note">A core gives health and armour. It reduces the damage of each hit, and it adds damage to its type of gun.</p><div class="cs-row"><button data-cf="1">Browse cores</button></div></div></div>';
       const sc = $('shop-core').querySelector('[data-sc]'); if (sc) sc.onclick = () => { g.sellCore(tank); render(); };
       $('shop-core').querySelector('[data-cf]').onclick = () => { this.shopFilter = 'core'; render(); $('shop-grid').scrollTop = 0; };
       $('shop-aa').querySelectorAll('[data-sa]').forEach((b) => { b.onclick = () => { g.sellAA(tank, b.dataset.sa); render(); }; });
@@ -650,7 +650,7 @@ const UI = {
       $('shop-owned').querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { g.sell(tank, b.dataset.s); render(); }; });
       $('shop-upg').querySelectorAll('[data-u]').forEach((b) => { b.onclick = () => { g.buy(tank, 'upgrade', b.dataset.u); render(); }; });
       $('shop-kits').innerHTML = `<div class="upg"><span>Repair kit <small class="lvl">${'■'.repeat(tank.kits)}${'□'.repeat(Math.max(0, REPAIR_MAX - tank.kits))}</small><br>
-        <small>Restores ${Math.round(REPAIR_FRAC * 100)}% of health and armour together, health first. Using one (R) takes your turn.</small></span>
+        <small>Restores ${Math.round(REPAIR_FRAC * 100)}% of health and armour, health first. Press R to use one. It uses your turn.</small></span>
         <button data-k="1" ${tank.kits < REPAIR_MAX && tank.money >= REPAIR_COST ? '' : 'disabled'}>${money(REPAIR_COST)}</button></div>`;
       $('shop-kits').querySelector('[data-k]').onclick = () => { g.buy(tank, 'kit'); render(); };
       $('shop-abil').innerHTML = ABILITIES.map((a) => {
@@ -675,7 +675,7 @@ const UI = {
     const champ = st[0];
     const tie = st[1] && st[1].wins === champ.wins;
     $('ge-quips').innerHTML = '';
-    $('ge-title').innerHTML = tie ? 'A draw' : `<span style="color:${champ.color}">${esc(champ.name)}</span> takes the match`;
+    $('ge-title').innerHTML = tie ? 'A draw' : `<span style="color:${champ.color}">${esc(champ.name)}</span> wins the match`;
     if (!tie) {
       const q = document.createElement('div');
       q.className = 'quip';
