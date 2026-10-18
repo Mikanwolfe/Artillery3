@@ -51,7 +51,8 @@ class Tank {
     this.money = 0;
     this.wins = 0;
     this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0, deck: 0 };
-    this.core = null; // a core (cores.js): health, armour, a little off every hit, and a boost to one kind of gun
+    this.core = starterCore(this.vehicle); // a core (cores.js): health, armour, a little off every hit, and a boost to one kind of gun
+    this.coreFree = !!this.core; // (her starting one: it sells for scrap)
     this.weapons = [this.vehicle.weapon, ...(this.vehicle.extra || [])].map((w) => w.id);
     this.kits = 0; // repair kits carried (consumable)
     // air-defence mounts (aa.js): a slot each (Zuihou two), the vehicle's own mount in the first

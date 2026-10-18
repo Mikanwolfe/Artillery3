@@ -346,7 +346,7 @@ const UI = {
   renderRack(g) {
     const t = g.active;
     const show = t && t.alive && (g.phase === 'aim' || g.phase === 'resolve');
-    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.wings, t.aa, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, !!t.uplink, t.uplinkTurns || 0, !!g.cpu, g.phase, BALANCE, t.fuel >= Math.ceil(t.maxFuel * JUMP_FUEL), t.fuel >= Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)), !!t.falling]) : '';
+    const sig = show ? JSON.stringify([t.name, t.weapons, t.weaponIdx, t.reload, t.wings, t.aa, t.shotsLeft, t.firedThisTurn, t.abilities, t.cooldown, t.armed, t.shield, !!t.barrier, t.kits, t.core, !!t.uplink, t.uplinkTurns || 0, !!g.cpu, g.phase, BALANCE, t.fuel >= Math.ceil(t.maxFuel * JUMP_FUEL), t.fuel >= Math.ceil(t.maxFuel * LEAP_FUEL * (hasTrait(t, 'wings') ? 0.5 : 1)), !!t.falling]) : '';
     if (sig === this.last.rack) return;
     this.last.rack = sig;
     $('rack').hidden = !show;
@@ -394,6 +394,10 @@ const UI = {
     }
     if (t.uplinkTurns > 0) ab.push(`<span class="slot a armed uplink" title="Golden uplink: the first shot of each turn calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">${t.uplinkTurns} turn${t.uplinkTurns > 1 ? 's' : ''}</span></span></span>`);
     else if (t.uplink) ab.push(`<span class="slot a armed uplink" title="Satellite uplink: your next shot calls MAIA"><span class="kb">◆</span><span class="txt"><span class="nm">MAIA uplink</span><span class="st">next shot</span></span></span>`);
+    const C = coreOf(t); // her core: its own slot on the rack
+    $('rack-c').innerHTML = C
+      ? `<span class="slot core passive" style="--rc:${RARITY[C.rarity].ui}" title="${esc(C.name)}: ${esc(C.short)}">${`<span class="badge small" style="--rc:${RARITY[C.rarity].ui}"><b>${RARITY[C.rarity].word[0]}c</b></span>`}<span class="txt"><span class="nm">${esc(C.name)}</span><span class="st">+${Math.round(C.boost * 100)}% ${esc(C.coreLabel.toLowerCase())} · −${C.block}/hit</span></span></span>`
+      : '<span class="slot core passive empty" title="No core: buy one in the shop"><span class="kb">◇</span><span class="txt"><span class="nm">No core</span><span class="st">empty slot</span></span></span>';
     $('rack-a').innerHTML = ab.join('');
     $('rack-a').hidden = !ab.length;
   },
@@ -475,7 +479,7 @@ const UI = {
         }).join('');
         $('shop-grid').querySelectorAll('[data-aa]').forEach((b) => { b.onclick = () => { g.buy(tank, 'aa', b.dataset.aa); render(); }; });
       } else if (f === 'core') { // cores: one slot; a new one replaces hers (refunded in full)
-        const cur = coreOf(tank), refund = cur ? cur.cost : 0;
+        const cur = coreOf(tank), refund = coreValue(tank);
         $('shop-grid').innerHTML = CORES.map((C) => {
           const r = RARITY[C.rarity], owned = tank.core === C.id, afford = tank.money + refund >= C.cost;
           return `<div class="card${owned ? ' owned-w' : ''}"><span class="badge" style="--rc:${r.ui}"><b>${r.word[0]}c</b><i>${r.word}</i></span><div class="card-body">
@@ -521,9 +525,13 @@ const UI = {
       }).join('');
       const myCore = coreOf(tank);
       $('shop-core').innerHTML = myCore
-        ? `<div class="owned"><span class="badge small" style="--rc:${RARITY[myCore.rarity].ui}"><b>${RARITY[myCore.rarity].word[0]}c</b></span><span>${esc(myCore.name)}</span><button data-sc="1" title="Sell">Sell ${money(myCore.cost)}</button></div>`
-        : '<div class="owned empty"><span class="badge small" style="--rc:#556"><b>—</b></span><span>No core: buy one under Core</span></div>';
+        ? `<div class="coreslot" style="--rc:${RARITY[myCore.rarity].ui}"><span class="badge" style="--rc:${RARITY[myCore.rarity].ui}"><b>${RARITY[myCore.rarity].word[0]}c</b><i>${RARITY[myCore.rarity].word}</i></span>
+          <div class="cs-body"><span class="maker">Core · ${esc(myCore.coreLabel)}</span><h4 style="color:${RARITY[myCore.rarity].ui}">${esc(myCore.name)}</h4>
+          <div class="stats"><span>Boost</span><span>+${Math.round(myCore.boost * 100)}%</span><span>Block</span><span>−${myCore.block}/hit</span><span>Health</span><span>+${myCore.hp}</span><span>Armour</span><span>+${myCore.armour}</span></div>
+          <div class="cs-row"><button data-cf="1">Browse cores</button><button data-sc="1" title="Sell">Sell ${money(coreValue(tank))}</button></div></div></div>`
+        : '<div class="coreslot empty"><span class="badge" style="--rc:#556"><b>—</b></span><div class="cs-body"><h4>Empty core slot</h4><p class="note">A core is essential: health, armour, a little off every hit, and more damage with its kind of gun.</p><div class="cs-row"><button data-cf="1">Browse cores</button></div></div></div>';
       const sc = $('shop-core').querySelector('[data-sc]'); if (sc) sc.onclick = () => { g.sellCore(tank); render(); };
+      $('shop-core').querySelector('[data-cf]').onclick = () => { this.shopFilter = 'core'; render(); $('shop-grid').scrollTop = 0; };
       $('shop-aa').querySelectorAll('[data-sa]').forEach((b) => { b.onclick = () => { g.sellAA(tank, b.dataset.sa); render(); }; });
       $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour]].map(([id, label, cur]) => {
         const cost = g.upgradeCost(tank, id);

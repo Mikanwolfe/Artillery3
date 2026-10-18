@@ -1,14 +1,15 @@
 'use strict';
-// Cores: one slot per girl (Upgrades → Core in the shop). A core adds health and armour, takes a
+// Cores: one dedicated slot per girl (Core in the shop, and on the rack in play). Everyone starts
+// with a Common core for her starting gun's kind (it sells for scrap). A core adds health and armour, takes a
 // flat amount off every hit she takes (never more than half of it), and boosts one kind of weapon:
 // artillery shells, guns, rockets, flak, lasers, acid or aircraft. Six rarities of each, Common to
-// Legendary. A bought core replaces the one she has (that one is refunded in full, like a gun).
+// Legendary. A bought core replaces the one she has (refunded in full, like a gun; her starting one for scrap).
 // Hooks: Game.damage (boost and block), Game.buy / sellCore, UI.showShop, the CPU's shopping.
 
 const CORE_KINDS = [['shell', 'Artillery'], ['gun', 'Gun'], ['rocket', 'Rocket'], ['flak', 'Flak'], ['laser', 'Laser'], ['acid', 'Acid'], ['air', 'Aviation']];
 const CORE_ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
-const CORE_HP = 12; // health and armour each, a rarity
-const CORE_BLOCK = 2; // off every hit, a rarity
+const CORE_HP = 18; // health and armour each, a rarity
+const CORE_BLOCK = 3; // off every hit, a rarity
 const CORE_BOOST = 0.05; // to its kind of weapon, a rarity
 const CORE_BLOCK_MAX = 0.5; // never more than this share of a hit
 
@@ -23,6 +24,10 @@ const CORES = CORE_KINDS.flatMap(([kind, label]) => CORE_ROMAN.map((rn, i) => {
 }));
 const CORE_BY_ID = Object.fromEntries(CORES.map((c) => [c.id, c]));
 
+// everyone starts with a Common core for her starting gun's kind (cores are essential)
+function starterCore(v) { const k = coreKindOf(v && v.weapon) || 'shell'; return CORE_BY_ID[`core_${k}_1`] ? `core_${k}_1` : 'core_shell_1'; }
+// what hers is worth back: her starting core, scrap; a bought one, in full
+function coreValue(t) { const C = coreOf(t); return !C ? 0 : t.coreFree ? STARTER_SELL : C.cost; }
 function coreOf(t) { return t && t.core ? CORE_BY_ID[t.core] || null : null; }
 // which core a hit counts for: planes' ordnance is aviation, flak's fragments are flak
 function coreKindOf(def) {
@@ -44,11 +49,12 @@ Object.assign(Game.prototype, {
   },
 
   buyCore(tank, id) {
-    const C = CORE_BY_ID[id], old = coreOf(tank);
-    const refund = old ? old.cost : 0;
+    const C = CORE_BY_ID[id];
+    const refund = coreValue(tank);
     if (!C || tank.core === id || tank.money + refund < C.cost) { this.sfx.deny(); return false; }
     tank.money += refund - C.cost;
     this.equipCore(tank, id);
+    tank.coreFree = false;
     this.sfx.buy();
     return true;
   },
@@ -56,8 +62,9 @@ Object.assign(Game.prototype, {
   sellCore(tank) {
     const old = coreOf(tank);
     if (!old) { this.sfx.deny(); return false; }
-    tank.money += old.cost;
+    tank.money += coreValue(tank);
     this.equipCore(tank, null);
+    tank.coreFree = false;
     this.sfx.sell();
     return true;
   },
@@ -70,7 +77,7 @@ Object.assign(Game.prototype, {
     const kind = Object.entries(by).sort((a, b) => b[1] - a[1])[0];
     if (!kind) return;
     const cur = coreOf(t);
-    const budget = t.money * share + (cur ? cur.cost : 0);
+    const budget = t.money * share + coreValue(t);
     const best = CORES.filter((c) => c.coreKind === kind[0] && c.cost <= budget).sort((a, b) => b.rarity - a.rarity)[0];
     if (!best || (cur && cur.coreKind === best.coreKind && cur.rarity >= best.rarity)) return;
     if (this.buyCore(t, best.id)) this.events.push(`${t.name} fits a ${best.name}.`);
