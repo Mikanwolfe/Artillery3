@@ -267,6 +267,9 @@ Object.assign(Game.prototype, {
     }
     if (this.shipAt && cycles >= this.shipAt && !this.mobs.some((m) => m.kind === 'mothership')) {
       const m = this.addMob('mothership', rng.chance(0.5) ? 160 : WORLD_W - 160);
+      // its support drones: a gunner escort around it (and a bomber), more at later stages
+      const n = Math.min(5, SHIP_ESCORTS + Math.floor(m.stage / 3));
+      for (let i = 0; i < n; i++) this.addMob(i === n - 1 ? 'drone' : 'gunner', clamp(m.x + (i - (n - 1) / 2) * 90, 40, WORLD_W - 40), m.stage);
       this.ui.notice(`The ${m.name} has arrived! ¢${m.bounty} to whoever brings it down.`);
       this.ui.dispatch('Priority transmission', STORY.boss);
       this.events.push(`The ${m.name} arrives.`);

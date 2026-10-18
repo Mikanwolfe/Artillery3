@@ -69,10 +69,10 @@ const VEHICLES = [
       short: "'Designed and Manufactured by Lymilark Future Sciences' -- on the pod, in very small letters.", long: 'Starting weapon for Alban Eiler.' }),
   },
   // Sengoku Inc. (after KanColle's carriers): the light carrier. Her gun is a laser designator;
-  // what it marks, her planes come back and hit (planes.js). Two AA mounts keep her deck clear.
+  // what it marks, her planes come back and hit (planes.js). Her Type 96 keeps her deck clear.
   {
     id: 'zui', name: 'Zuihou', hp: 115, armour: 120, fuel: 0.9, blurb: 'A Sengoku light-carrier girl: she marks a spot, and her squadron is over it and hitting it moments later.',
-    traits: ['flightdeck', 'twinaa'], aa: ['aa96'],
+    traits: ['flightdeck'], aa: ['aa96'],
     // and a gun of her own for while her squadron is away
     extra: [weapon('zui1', "SI 12.7cm Twin High-Angle Gun", 'shell', -5, 80, {
       salvo: 2, disp: 1.4, maxCharge: 60, dmg: 60, dmgR: 55, explR: 7,
@@ -94,7 +94,7 @@ const VEHICLES = [
 
 // Character traits: two passives per girl, so they play differently beyond stats and starter gun.
 // Hooks: Game.finishShot (drill), spreadOf (geschutz), explode (sloped), designation /
-// stepBallistic (designator), damage (redundancy), aaSlots (defsuite, twinaa), startSatellite /
+// stepBallistic (designator), damage (redundancy), aaSlots (defsuite), startSatellite /
 // updateSatellite (uplink, retarget), jump / stepTanks / landed (wings), damage (grace).
 const TRAITS = {
   wings: { name: 'Wings', desc: 'Her jump costs half the fuel, and she glides down: no fall damage.' },
@@ -105,13 +105,12 @@ const TRAITS = {
   sloped: { name: 'Sloped plate', desc: 'While she has armour, blasts from the side she faces do 20% less.' },
   designator: { name: 'Laser designator', desc: 'A laser dot goes out ahead of every shot onto her selected target (mark it with a click): her rounds steer for it on the way up and home on it on the way down.' },
   redundancy: { name: 'Triple redundancy', desc: 'No single hit takes more than 40% of her max health.' },
-  defsuite: { name: 'Defensive Suite', desc: 'Two air-defence slots, both filled from the start: NXi point defence and flak of her own.' },
+  defsuite: { name: 'Defensive Suite', desc: 'Three air-defence slots, two filled from the start: NXi point defence and flak of her own.' },
   uplink: { name: 'Priority uplink', desc: 'MAIA strikes she calls have a 30% bigger blast.' },
   retarget: { name: 'MAIA re-targeting', desc: 'If her shot lands near a rival, MAIA nudges its aim onto them.' },
   firecontrol: { name: 'Lymilark fire control', desc: 'Her rockets’ seekers see 40% further and turn 30% faster.' },
   telemetry: { name: 'Knight telemetry', desc: 'Her rocket weapons fire one more rocket in every salvo.' },
   flightdeck: { name: 'Flight deck', desc: 'Her planes take off from her deck, not straight up: they rearm a turn or two sooner than lift-fan launches, and every squad has one more plane.' },
-  twinaa: { name: 'Twin AA mounts', desc: 'Two air-defence slots instead of one, for two different mounts. The second is empty in round one.' },
 };
 const hasTrait = (t, id) => !!(t && t.vehicle && t.vehicle.traits && t.vehicle.traits.includes(id));
 // a gun's spread in her hands (G.W. Tiger's Geschützwagen halves it)
@@ -267,7 +266,7 @@ const WEAPONS = [
   //   heavy    one plane, one enormous guided bomb that steers onto the nearest rival in the zone (NXi)
   //   fortress a level bomber: straight across the zone at altitude, walking a stick of air.ord bombs over it
   weapon('kansen0', "SI 'Atlantis Shark' Flying Circus", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 22, dmgR: 30, explR: 2, clip: 1, rarity: 1, cost: 900,
-    air: { squads: 1, type: 'fighter', planes: 3, ord: 6, hp: 70, reload: 2 },
+    air: { squads: 1, type: 'fighter', planes: 3, ord: 6, hp: 56, reload: 2 },
     short: 'Small, toothy and very fast: shark-finned fighters that circle anything else in the sky and bite.', long: 'Fighters: they go for planes and drones near the mark first (triple damage), and strafe it when the sky is clear.' }),
   weapon('kankou97', "SI 'Carrot Rabbit' Torpedo Jet", 'air', 0, 80, { maxCharge: 80, disp: 0.9, dmg: 120, dmgR: 70, explR: 10, clip: 1, rarity: 1, cost: 1000,
     air: { squads: 1, type: 'torpedo', planes: 2, ord: 1, hp: 65, reload: 2 },
@@ -279,7 +278,7 @@ const WEAPONS = [
     air: { squads: 2, type: 'torpedo', planes: 3, ord: 1, hp: 120, reload: 2 },
     short: 'Three torpedo jets abreast under a skull and crossbones, running in low for the loot.', long: 'Three torpedoes along the ground through the mark.' }),
   weapon('reppuu', "SI 'Bakery Doggo' Interceptor", 'air', 0, 80, { maxCharge: 90, disp: 0.7, dmg: 32, dmgR: 35, explR: 2, clip: 1, rarity: 3, cost: 4400,
-    air: { squads: 2, type: 'fighter', planes: 3, ord: 8, hp: 130, reload: 2 },
+    air: { squads: 2, type: 'fighter', planes: 3, ord: 8, hp: 104, reload: 2 },
     short: 'A loyal good girl: fetches everything with an engine out of the sky and brings it back in pieces.', long: 'Fighters with heavier guns: aircraft first, then a strafing run.' }),
   weapon('taillteann', "SI–LFS 'Taillteann' Rocket Wing", 'air', 0, 80, { maxCharge: 90, disp: 0.8, dmg: 86, dmgR: 55, explR: 7, clip: 1, rarity: 4, cost: 11500,
     hybrid: true, maker: 'Sengoku × Lymilark',
@@ -296,7 +295,7 @@ const WEAPONS = [
     air: { squads: 3, type: 'dive', planes: 3, ord: 2, hp: 250, reload: 3, jet: true },
     short: 'In like a comet, out before the encore. Too fast for most AA to track, and it drops two bombs a pass.', long: 'Jets: anti-aircraft fire has half the chance against them and their bombs.' }),
   weapon('shiden', "SI 'Clockwork Warden' Fighter", 'air', 0, 80, { maxCharge: 100, disp: 0.6, dmg: 41, dmgR: 40, explR: 3, clip: 1, rarity: 6, cost: 30000,
-    air: { squads: 3, type: 'fighter', planes: 4, ord: 10, hp: 300, reload: 3 },
+    air: { squads: 3, type: 'fighter', planes: 4, ord: 10, hp: 240, reload: 3 },
     short: 'It keeps the time over the mark: the last and best of the Sengoku fighters, four a squad.', long: 'Clears the sky over the mark, then rakes it.' }),
   weapon('tifaun', "NXi × SI 'Taufaun' Strike Jet", 'air', 0, 80, { maxCharge: 110, disp: 0.4, dmg: 254, dmgR: 260, explR: 42, clip: 1, rarity: 7, cost: 150000,
     hybrid: true, maker: 'NXi × Sengoku',
@@ -323,7 +322,7 @@ const WEAPONS = [
   weapon('apollon', "'Apollon' Judgement Bow", 'laser', -20, 40, { sig: 'ang', ceil: 300, maxCharge: 90, disp: 0.3, dmg: 900, dmgR: 60, explR: 6, rarity: 8, cost: 75000,
     meteor: { dmg: 6000, r: 650, explR: 175, size: 300, lava: 920, splash: 30 },
     short: 'Where her arrow of light lands, the sky answers: she marks an asteroid and brings it down.', long: 'Ikaros only.' }),
-  weapon('kidobutai', "SI 'Kidō Butai' Strike Fleet", 'air', 0, 80, { sig: 'zui', maxCharge: 100, disp: 0.4, dmg: 300, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
+  weapon('kidobutai', 'SI Parallel Night', 'air', 0, 80, { sig: 'zui', badge: 'Ab', maxCharge: 100, disp: 0.4, dmg: 300, dmgR: 110, explR: 16, clip: 1, rarity: 8, cost: 75000,
     air: { squads: 1, type: 'fleet', planes: 0, ord: 1, hp: 120, reload: 3 },
     fleet: { carriers: 3, dive: 9, torpedo: 6, fighter: 6 },
     short: 'A laser dot for the carriers off the coast. Their whole air wing comes.', long: 'Zuihou only. One great squad of 21 that strikes as soon as it arrives; each later dot redirects it and it strikes again, until its loadouts are spent (dive bombers three passes, torpedo jets two, fighters six) or it is shot down. Only then can the carriers launch again.' }),
@@ -425,6 +424,7 @@ function shortName(w) {
 }
 
 function badgeText(w) {
+  if (w.badge) return w.badge; // (its own: the SI Parallel Night is Ab, an Ascendant Bomber)
   return RARITY[w.rarity].word[0] + (w.air ? (!w.fleet && AIR_LETTER[w.air.type]) || 'b' : KIND_LETTER[w.kind]);
 }
 
@@ -445,7 +445,7 @@ const BARRIER_BLOCK = 0.8; // share of blast damage a Bulwark Barrier stops from
 const BARRIER_COS = Math.cos(Math.PI * 0.3); // it covers +-54 degrees around its direction
 
 const WEAPON_BY_ID = Object.fromEntries(ALL_WEAPONS.map((w) => [w.id, w]));
-const MAX_WEAPONS = 4; // A3 Character._weaponCapacity
+const MAX_WEAPONS = 3; // (A3 Character._weaponCapacity was 4)
 // final weapons (w.sig) are only for their own girl
 function forVehicle(w, vid) { return !w.sig || w.sig === vid; }
 
@@ -722,10 +722,11 @@ function stepBallistic(p, terrain, wind, tanks, owner, seek = tanks) {
       if (!t.alive || (t === owner && p.age < 8)) continue;
       if (t.isMob && owner && owner.isMob) continue; // hostiles' fire passes through other hostiles
       if (t.isPlane && t.owner === owner) continue; // and a player's through her own planes
-      const hw = t.hw || TANK_W / 2 + 2; // mobs carry their own hitbox
-      const hh = t.hh || TANK_H + 2;
+      const pad = t.pad || 0; // (a flying hostile's proximity margin)
+      const hw = (t.hw || TANK_W / 2 + 2) + pad; // mobs carry their own hitbox
+      const hh = (t.hh || TANK_H + 2) + pad;
       const by = t.hitY === undefined ? t.y : t.hitY; // the satellite's box hangs around its centre
-      if (Math.abs(p.x - t.x) < hw && p.y > by - hh && p.y < by + 2) return { hit: 'tank', tank: t };
+      if (Math.abs(p.x - t.x) < hw && p.y > by - hh && p.y < by + 2 + pad) return { hit: 'tank', tank: t };
     }
   }
   p.age++;
