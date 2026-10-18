@@ -636,7 +636,7 @@ Object.assign(Game.prototype, {
     const G = this.makeGroup(t, w, mark, { deck, kinds: Array(n).fill(A.type) });
     G.squad = q;
     this.particles.text(mark.x, mark.y - 30, `${n} ${A.type === 'fighter' ? 'fighters' : 'planes'} inbound`, '#ffd0d4');
-    this.events.push(`${t.name} calls a squad of ${n} onto the mark.`);
+    this.events.push(`${t.name} sends a squad of ${n} to the target.`);
     this.projectiles.push(new AirStrike(this, [G])); // (the turn waits for it to strike)
     return G;
   },
@@ -851,8 +851,8 @@ class FleetStrike {
     game.cam.wide = KIDO_OFF + KIDO_GAP * F.carriers + 900;
     game.cam.wideSide = side; // (only out to sea: past the far edge there is nothing)
     game.cam.follow(this.focus);
-    game.ui.notice('Parallel Night: the carriers turn into the wind.');
-    game.events.push(`${owner.name} calls the Parallel Night: ${kinds.length} aircraft are coming.`);
+    game.ui.notice('Parallel Night: the carriers launch their aircraft.');
+    game.events.push(`${owner.name} calls the Parallel Night. ${kinds.length} aircraft attack.`);
     this.whip = 0;
   }
 

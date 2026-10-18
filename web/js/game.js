@@ -776,7 +776,7 @@ class Game {
     const kind = CRATE_KINDS.find((k) => (r -= k.w) < 0).id;
     this.crates.push(new Crate(rng.range(150, WORLD_W - 150), kind));
     this.events.push('A supply crate is dropping in.');
-    this.ui.notice('Supply drop incoming!');
+    this.ui.notice('A supply crate is dropping in.');
   }
 
   // the spy plane: the camera goes up to it as it crosses high over the map, and it drops a golden crate
@@ -789,7 +789,7 @@ class Game {
     this.cam.ceil = Math.min(this.cam.ceil, p.y - 600); // (lifted for the pass: the plane is way up)
     this.cam.follow(p);
     this.events.push('A spy plane passes high overhead.');
-    this.ui.notice('A spy plane overhead: it is dropping something!');
+    this.ui.notice('A spy plane is overhead. It drops a supply crate.');
     this.sfx.satPrep();
   }
 
@@ -821,7 +821,7 @@ class Game {
       desc = `armour plating (+${ar})`;
     } else {
       t.uplink = true;
-      desc = 'a MAIA uplink (next shot calls the satellite)';
+      desc = 'a MAIA uplink (your next shot calls MAIA)';
     }
     this.particles.text(c.x, c.y - 40, desc.split(' (')[0], '#ffd84a', true);
     for (let i = 0; i < 18; i++) {
@@ -1053,7 +1053,7 @@ class Game {
     // G.W. Tiger's drill: the first shot of her turn hit a rival, so she gets the round back
     const drilled = t && t.drill && this.report && (this.report.bestQ || 0) >= DRILL_QUALITY;
     if (t) t.drill = false;
-    if (drilled && t.alive) { t.shotsLeft++; this.particles.text(t.x, t.y - 90, 'Drill: round back', '#f2c45a'); }
+    if (drilled && t.alive) { t.shotsLeft++; this.particles.text(t.x, t.y - 90, 'Drill: +1 shot', '#f2c45a'); }
     this.react(this.report);
     this.report = null;
     const alive = this.tanks.filter((x) => x.alive).length;
@@ -1075,7 +1075,7 @@ class Game {
     this.satellite.lookAt(this.satSeq.target);
     this.cam.follow(this.satellite);
     this.sfx.satPrep();
-    this.events.push(`MAIA locks onto ${this.satSeq.owner.name}'s mark.`);
+    this.events.push(`MAIA locks onto the target of ${this.satSeq.owner.name}.`);
   }
 
   // Innocentia's MAIA re-targeting: a near miss gets nudged onto the closest rival
@@ -1208,7 +1208,7 @@ class Game {
       sat.downUntil = this.turnCount + down;
       this.ui.notice(`${owner ? owner.name : 'Someone'} knocked MAIA offline for ${down} turns.`);
       this.events.push('MAIA is offline.');
-    } else this.events.push(`${owner ? owner.name : 'Something'} hit MAIA (${reg.tag.toLowerCase()}): ${Math.round(sat.health * 100)}%.`);
+    } else this.events.push(`${owner ? owner.name : 'Something'} hit MAIA (${reg.tag.toLowerCase()}). MAIA health: ${Math.round(sat.health * 100)}%.`);
   }
 
   // every turn: MAIA's max health follows the average toughness of the vehicles still standing;
@@ -1444,7 +1444,7 @@ class Game {
       t.graceUsed = true;
       this.particles.text(t.x, t.y - 80, 'GRACE', '#ffe8a0', true);
       for (let i = 0; i < 16; i++) this.particles.add({ x: t.x + (Math.random() - 0.5) * 30, y: t.y - 20 - Math.random() * 30, vx: (Math.random() - 0.5) * 2, vy: -1 - Math.random() * 2, g: -0.02, drag: 0.97, life: 1.2, size: 3 + Math.random() * 3, color: i % 2 ? [255, 236, 160] : [255, 255, 255] });
-      this.events.push(`${t.name} is saved by grace.`);
+      this.events.push(`Grace saves ${t.name}.`);
     }
     if (t.hp <= 0 && def && def.ord) t.airDowned = (t.airDowned || 0) + 1; // (a CPU remembers: see autoBuy)
     if (t.hp <= 0) this.kill(t, owner);
@@ -1462,14 +1462,14 @@ class Game {
     this.shake = Math.max(this.shake, 12);
     if (owner && owner !== t) {
       owner.stats.kills++;
-      this.events.push(`${owner.name} destroyed ${t.name}!`);
+      this.events.push(`${owner.name} destroyed ${t.name}.`);
       const pay = KILL_BOUNTY + Math.round(KILL_SHARE * (t.maxHp + t.maxArmour)) + (t.bounty || 0); // (a tougher girl pays more)
-      if (t.bountyWealth) { const fee = Math.min(t.money, t.bountyWealth); t.money -= fee; t.bountyWealth = 0; if (fee) this.events.push(`${t.name} pays ¢${fee} of the bounty on her out of her own purse.`); } // (a rich girl's price, paid by her)
+      if (t.bountyWealth) { const fee = Math.min(t.money, t.bountyWealth); t.money -= fee; t.bountyWealth = 0; if (fee) this.events.push(`${t.name} pays ¢${fee} of her bounty from her own credits.`); } // (a rich girl's price, paid by her)
       owner.money += pay + this.cpuCredit(owner, pay);
       this.particles.text(t.x, t.y - 90, `+¢${pay}`, '#ffd84a', true);
       if (t.bounty) {
         this.events.push(`${owner.name} collects the ¢${t.bounty} bounty on ${t.name}.`);
-        this.ui.notice(`${owner.name} collects the ¢${t.bounty} bounty on ${t.name}!`);
+        this.ui.notice(`${owner.name} collects the ¢${t.bounty} bounty on ${t.name}.`);
       }
     } else this.events.push(owner === t ? `${t.name} destroyed themselves.` : `${t.name} was destroyed.`);
   }
@@ -1567,7 +1567,7 @@ class Game {
       winner.setPose('win');
       this.sfx.win();
       this.events.push(`${winner.name} wins round ${this.round}.`);
-    } else this.events.push(`Round ${this.round} ends in mutual destruction.`);
+    } else this.events.push(`Round ${this.round} ends. All tanks are destroyed. There is no winner.`);
     // A3 CombatGameState paid everyone 500 + half the round's damage (scaled up each round). That
     // counted raw damage, so overkill and acid floods inflated it; we count only damage that came
     // off a target (acid drip at ACID_PAY_RATE), and so count it in full to keep the same pace.
@@ -1734,7 +1734,7 @@ class Game {
     const ranked = Object.entries(score).sort((a, b) => b[1] - a[1]);
     const gut = t.type === 'easy' ? 0.6 : t.type === 'normal' ? 0.25 : 0;
     const pick = rng.chance(gut) ? rng.pick(ranked.slice(0, 3))[0] : ranked[0][0];
-    if (pick !== t.strategy) this.events.push(`${t.name} goes for ${CPU_STRATEGIES[pick].name}.`);
+    if (pick !== t.strategy) this.events.push(`${t.name} changes strategy to ${CPU_STRATEGIES[pick].name}.`);
     return pick;
   }
 
@@ -2202,7 +2202,7 @@ class Game {
     if (this.markInfo) this.drawMarkLabel(ctx, t, this.markInfo);
     // until a player has used it once: a hint that clicking the map shows the power a target needs
     else if (this.phase === 'aim' && t && !this.cpu && !this.range && !t.firedThisTurn && !store.get('markUsed')) {
-      const txt = 'Tip: click a target to see the power it needs';
+      const txt = 'Tip: Click a target to see the power that it needs.';
       ctx.font = `13px ${HUD_FONT}`;
       ctx.textAlign = 'center';
       const w = ctx.measureText(txt).width + 16;
@@ -2282,7 +2282,7 @@ class Game {
     const sy = this.cam.sy(t.mark.y);
     let txt;
     let col = HUD.fg;
-    if (info.behind) txt = info.past ? 'lower the gun: it points back over her' : info.over ? 'turn around, or aim back past vertical' : 'turn around';
+    if (info.behind) txt = info.past ? 'lower the gun: it points back over the tank' : info.over ? 'turn around, or aim past vertical' : 'turn around';
     else if (info.far || info.frac > 1) { txt = 'out of reach at this angle'; col = HUD.hot; }
     else { txt = `power ${Math.round(info.frac * 100)}%${info.blocked ? ' · blocked' : ''}`; if (info.blocked) col = HUD.hot; }
     ctx.font = `13px ${HUD_FONT}`;

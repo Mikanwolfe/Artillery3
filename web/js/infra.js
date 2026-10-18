@@ -192,7 +192,7 @@ Object.assign(Game.prototype, {
     this.projectiles.push(p);
     t.h = k;
     this.sfx.thud();
-    this.ui.notice(k ? 'The radio tower snaps!' : 'The radio tower is coming down!');
+    this.ui.notice(k ? 'The radio tower breaks!' : 'The radio tower is falling!');
   },
 
   // the broken piece has come down: it lies where it landed
@@ -265,7 +265,7 @@ Object.assign(Game.prototype, {
           const s = line.spans[k];
           if (s && s.state === 'up') { s.state = 'live'; s.until = this.turnCount + LIVE_TURNS; this.shockSpan(line, k, SHOCK_FALL); }
         }
-        this.events.push('A power line is down.');
+        this.events.push('A power line falls.');
         this.sfx.thud();
       });
     }
@@ -301,9 +301,9 @@ Object.assign(Game.prototype, {
     this.shake = Math.max(this.shake, 3 + falls.length * 0.5);
     if (falls.length > broken.length) { // more than the blast itself took: a section came down
       this.sfx.explosion(20);
-      this.ui.notice('A bridge section collapses!');
+      this.ui.notice('A bridge section is falling!');
     }
-    this.events.push(falls.length > broken.length ? 'A bridge section collapsed.' : 'The bridge deck is holed.');
+    this.events.push(falls.length > broken.length ? 'A bridge section collapsed.' : 'A blast makes a hole in the bridge deck.');
     if (b.segs.every((s) => s.gone)) T.bridges = T.bridges.filter((x) => x !== b);
   },
 

@@ -69,7 +69,7 @@ class AsteroidStrike {
     }
     game.cam.ceil = this.belt - 2500;
     game.cam.follow(this.focus);
-    game.ui.notice('The sky answers.');
+    game.ui.notice('An asteroid falls on the target.');
   }
 
   update() {
@@ -119,7 +119,7 @@ class AsteroidStrike {
       g.shake = Math.max(g.shake, 44);
       g.screenFlash = Math.max(g.screenFlash || 0, 1);
       g.sfx.explosion(80);
-      g.events.push('The ground melts.');
+      g.events.push('The impact melts the ground.');
     }
     // then time comes back, slowly at first
     if (t > ROCK.DROP + 22 && t <= ROCK.DROP + 60) g.timeScale = lerp(0.14, 1, ease((t - ROCK.DROP - 22) / 38));
@@ -364,7 +364,7 @@ class OrbitalStrike {
     }
     game.cam.ceil = this.y - 2500;
     game.cam.follow(this.focus);
-    game.ui.notice('NXi November Division fleet on station.');
+    game.ui.notice('The NXi November Division fleet is in position above the target.');
   }
 
   get emit() { return bcEmitter(this.x, this.y, 1, true); }
@@ -518,7 +518,7 @@ class MaiaArray {
       cam.setZoom(lerp(this.zoom0, 1.15, u));
     }
     if (t > ARRAY.AT && t <= ARRAY.EYE) { this.eye = ease((t - ARRAY.AT) / (ARRAY.EYE - ARRAY.AT)); f.x = sc.x; f.y = sc.y + 120; }
-    if (t === ARRAY.AT + 10) g.ui.notice('MAIA opens her eye.');
+    if (t === ARRAY.AT + 10) g.ui.notice('MAIA aims at the target.');
     if (t > ARRAY.EYE && t <= ARRAY.FILL) { // pulling back as the sky fills
       const u = ease((t - ARRAY.EYE) / (ARRAY.FILL - ARRAY.EYE));
       f.x = lerp(sc.x, this.tx, u); f.y = lerp(sc.y + 120, this.ground - 1100, u);
@@ -526,7 +526,7 @@ class MaiaArray {
       cam.setZoom(lerp(1.15, CAM_FULL, u));
     }
     if (ARRAY_BURSTS.includes(t)) { g.screenFlash = Math.max(g.screenFlash || 0, 0.55); g.sfx.satPrep(); }
-    if (t === ARRAY.FILL) g.ui.notice('Constellation online.');
+    if (t === ARRAY.FILL) g.ui.notice('The MAIA satellite array is online.');
     if (t >= ARRAY.FILL) this.opensMaia = true;
     for (const q of this.fore) {
       q.m.barrage = t >= ARRAY.FILL;
@@ -771,9 +771,9 @@ class NaitoStrike {
       g.ascent = Math.min(1, (t - N.UP) / 20); g.ascentDir = 1;
     }
     if (t === N.FADE) g.ascent = 0;
-    if (t === N.JUP) g.ui.notice('A signal from the Great Red Spot.');
-    if (t === N.SAT) g.ui.notice('Naito MAIA Containment Satellite.');
-    if (t === N.ORDERS) { g.ui.notice('Annihilation orders received.'); g.events.push('Annihilation orders received.'); g.sfx.satPrep(); }
+    if (t === N.JUP) g.ui.notice('A signal comes from the Great Red Spot.');
+    if (t === N.SAT) g.ui.notice('This is the Naito MAIA Containment Satellite.');
+    if (t === N.ORDERS) { g.ui.notice('The satellite gets the order to destroy the target.'); g.events.push('The satellite gets the order to destroy the target.'); g.sfx.satPrep(); }
     if (t === N.CUT) g.sfx.satFire();
     if (t === N.DIVE) { // back down to the battlefield, the whole of it
       cam.zmin = CAM_FULL;
@@ -804,7 +804,7 @@ class NaitoStrike {
       g.shake = Math.max(g.shake, 6);
     }
     if (t === N.HIT + N.ERASE) {
-      g.events.push('The ground is gone.');
+      g.events.push('The beam removes the ground at the target.');
       for (let i = 0; i < 40; i++) { // molten flecks off the lips
         const side = i % 2 ? 1 : -1, x = this.tx + side * (this.cut + 4);
         const a = -Math.PI / 2 + side * (0.2 + rng.next() * 0.6), sp = 1 + rng.next() * 4;
@@ -1124,7 +1124,7 @@ class BatteryStrike {
     }
     game.cam.wide = BATTERY_OFF + 2600;
     game.cam.follow(this.focus);
-    game.ui.notice('G.W. battery, fire for effect.');
+    game.ui.notice('The G.W. battery fires at the target.');
   }
 
   update() {
@@ -1291,7 +1291,7 @@ Object.assign(Game.prototype, {
     }
     this.shake = Math.max(this.shake, 30);
     this.ui.notice('The ground shakes.');
-    this.events.push('An earthquake rolls out from the impact.');
+    this.events.push('The impact causes an earthquake.');
   },
 });
 
@@ -1337,7 +1337,7 @@ class SkyTear {
       rarity: 7, maxCharge: 10, drift: 0.15, dark: true, guide: { arm: 2, burn: 0, seek: 0, turn: 5, range: cfg.reach, cone: 180, lift: 0, brake: false } };
     this.focus = { x: this.tx, y: this.ground - 200 };
     game.cam.follow(this.focus);
-    game.ui.notice('The sky tears open.');
+    game.ui.notice('Rifts open in the sky above the target.');
   }
 
   update() {

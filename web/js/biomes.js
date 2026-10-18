@@ -21,7 +21,7 @@ const BIOMES = {
     particles: { kind: 'snow', n: 70, colors: [[248, 244, 252]] },
     terrain: { rough: 0.5, disp: 320, peaks: [2, 3], h: [280, 560], w: [320, 520] },
     fronts: ['force', 'storm', 'blizzard', 'updraft'],
-    sudden: { name: 'Whiteout', color: [236, 240, 250], alpha: 0.62, start: 'Whiteout! Freezing fog is rising: get to high ground.', hurt: 'is freezing in the fog' },
+    sudden: { name: 'Whiteout', color: [236, 240, 250], alpha: 0.62, start: 'Whiteout: freezing fog rises each cycle. Move to high ground.', hurt: 'takes fog damage' },
     fort: { stone: '#8d8c95', light: '#a9a8b2', dark: '#6b6a74', cap: '#f4f5f8' },
   },
   forest: {
@@ -37,7 +37,7 @@ const BIOMES = {
     particles: { kind: 'leaves', n: 40, colors: [[214, 120, 40], [230, 170, 50], [170, 70, 40], [120, 150, 60]] },
     terrain: { rough: 0.5, disp: 300, peaks: [2, 3], h: [240, 480], w: [320, 520] },
     fronts: ['force', 'storm', 'rain', 'gale'],
-    sudden: { name: 'Flood', color: [70, 112, 132], alpha: 0.6, start: 'Flood! The river is rising: get to high ground.', hurt: 'is caught in the flood' },
+    sudden: { name: 'Flood', color: [70, 112, 132], alpha: 0.6, start: 'Flood: the water rises each cycle. Move to high ground.', hurt: 'takes flood damage' },
     fort: { stone: '#7a5a3a', light: '#94704a', dark: '#5a4028', cap: '#6a9a48' },
   },
   desert: {
@@ -53,7 +53,7 @@ const BIOMES = {
     particles: { kind: 'sand', n: 60, colors: [[214, 176, 120], [190, 150, 100]] },
     terrain: { rough: 0.44, disp: 260, peaks: [2, 3], h: [200, 400], w: [400, 620] },
     fronts: ['force', 'sandstorm', 'updraft', 'gale'],
-    sudden: { name: 'Quicksand', color: [200, 160, 104], alpha: 0.7, start: 'Quicksand! The sand is rising: get to high ground.', hurt: 'is sinking in the sand' },
+    sudden: { name: 'Quicksand', color: [200, 160, 104], alpha: 0.7, start: 'Quicksand: the sand rises each cycle. Move to high ground.', hurt: 'takes quicksand damage' },
     fort: { stone: '#c49a64', light: '#dcb47c', dark: '#9a744a', cap: '#e8c890' },
   },
   alstroemeria: {
@@ -73,7 +73,7 @@ const BIOMES = {
     particles: { kind: 'leaves', n: 50, colors: [[246, 150, 186], [252, 176, 96], [255, 222, 120], [255, 244, 250]] },
     terrain: { rough: 0.48, disp: 280, peaks: [2, 3], h: [220, 440], w: [360, 560] },
     fronts: ['force', 'storm', 'gale', 'rain'],
-    sudden: { name: 'Pollen haze', color: [244, 196, 214], alpha: 0.66, start: 'Pollen haze! It is rising from the meadow: get to high ground.', hurt: 'is choking on pollen' },
+    sudden: { name: 'Pollen haze', color: [244, 196, 214], alpha: 0.66, start: 'Pollen haze: the haze rises each cycle. Move to high ground.', hurt: 'takes pollen damage' },
     fort: { stone: '#d8d0dc', light: '#ece6ee', dark: '#b4a8ba', cap: '#f6a8c4' },
   },
   // Alstroemeria, the cooperative's core-world tundra planet, far out from a small M-dwarf, and the
@@ -95,7 +95,7 @@ const BIOMES = {
     particles: { kind: 'steam', n: 16, colors: [[236, 236, 244], [210, 214, 228]] },
     terrain: { rough: 0.44, disp: 240, peaks: [2, 3], h: [200, 420], w: [380, 560], terrace: 44 },
     fronts: ['force', 'gale', 'storm', 'updraft'],
-    sudden: { name: 'Heat cut', color: [176, 214, 240], alpha: 0.6, start: 'The exchangers have cut this district\'s heat: the cold is rising off the deck. Get to high ground.', hurt: 'is freezing as the heat goes' },
+    sudden: { name: 'Heat cut', color: [176, 214, 240], alpha: 0.6, start: 'Heat cut: the cold rises each cycle. Move to high ground.', hurt: 'takes cold damage' },
     fort: { stone: '#6a7084', light: '#868ca0', dark: '#4c5064', cap: '#c8a040' },
   },
   // AESR-L, the infra face: the ring's underside at bedrock datum. Old, industrial, warm, dark and
@@ -115,7 +115,7 @@ const BIOMES = {
     particles: { kind: 'motes', n: 40, colors: [[255, 170, 80], [255, 120, 60], [255, 210, 140]] },
     terrain: { rough: 0.6, disp: 340, peaks: [2, 3], h: [240, 500], w: [300, 480] },
     fronts: ['force', 'storm', 'updraft', 'rain'],
-    sudden: { name: 'Coolant flood', color: [40, 150, 156], alpha: 0.62, start: 'A ground main has burst: coolant is flooding the roots. Get to high ground.', hurt: 'is drowning in coolant' },
+    sudden: { name: 'Coolant flood', color: [40, 150, 156], alpha: 0.62, start: 'Coolant flood: the coolant rises each cycle. Move to high ground.', hurt: 'takes coolant damage' },
     fort: { stone: '#4a4448', light: '#62585a', dark: '#2e2a2e', cap: '#c87a3a' },
   },
   // ASTM-G, the ground: alpine, dry and cold, fractured by recent quakes, right under the
@@ -135,7 +135,7 @@ const BIOMES = {
     particles: { kind: 'snow', n: 28, colors: [[236, 240, 248]] },
     terrain: { rough: 0.56, disp: 340, peaks: [2, 4], h: [300, 600], w: [260, 440] },
     fronts: ['force', 'blizzard', 'gale', 'storm'],
-    sudden: { name: 'Range smoke', color: [140, 132, 126], alpha: 0.66, start: 'Live test on the range: smoke and fallout are rolling in. Get to high ground.', hurt: 'is choking on the range smoke' },
+    sudden: { name: 'Range smoke', color: [140, 132, 126], alpha: 0.66, start: 'Range smoke: the smoke rises each cycle. Move to high ground.', hurt: 'takes smoke damage' },
     fort: { stone: '#7e7a7c', light: '#9a9698', dark: '#5c585a', cap: '#d8dce4' },
   },
 };

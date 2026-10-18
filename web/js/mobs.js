@@ -524,8 +524,8 @@ Object.assign(Game.prototype, {
     const c = m.center();
     if (shares.length) {
       this.particles.text(c.x, c.y - 40, shares.length > 1 ? `¢${m.bounty} shared` : `+${shares[0].replace(/^.* ¢/, '¢')}`, '#ffd84a', true);
-      this.events.push(`The ${m.name} is down${killer && !killer.isMob ? ` (${killer.name})` : ''}: its ¢${m.bounty} bounty goes ${shares.join(', ')}.`);
-      this.ui.notice(`The ${m.name} is down! ${shares.join(' · ')}`);
+      this.events.push(`The ${m.name} is destroyed${killer && !killer.isMob ? ` (${killer.name})` : ''}. Its ¢${m.bounty} bounty goes to: ${shares.join(', ')}.`);
+      this.ui.notice(`The ${m.name} is destroyed. Bounty: ${shares.join(' · ')}`);
     } else this.events.push(`The ${m.name} was destroyed.`);
   },
 
@@ -753,7 +753,7 @@ Object.assign(Game.prototype, {
       else if (q >= 3 && r < 0.8) kind = 'gunner';
       const m = this.addMob(kind, edge(), q);
       if (kind === 'carrier') { m.cargo = q >= 8 && this.has('android') && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : 'dtank'; groundRoom--; }
-      names.push(kind === 'carrier' ? `a carrier with a ${m.cargo === 'android' ? 'android' : 'drone tank'}` : kind === 'fpv' ? 'an FPV kamikaze' : `a ${kind}`);
+      names.push(kind === 'carrier' ? `a carrier with ${m.cargo === 'android' ? 'an android' : 'a drone tank'}` : kind === 'fpv' ? 'an FPV kamikaze' : `a ${kind}`);
     }
     // from BLIMP_FROM, now and then, a blimp (one at a time)
     if (q >= BLIMP_FROM && this.has('blimp') && flyers + n < MOB_CAP && !this.mobs.some((x) => x.alive && x.kind === 'blimp') && rng.chance(0.3)) {
@@ -768,10 +768,10 @@ Object.assign(Game.prototype, {
       const kind = q >= 8 && this.has('android') && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : air && rng.chance(0.35) ? 'aatank' : 'dtank';
       const m = this.addMob(kind, left ? -30 : WORLD_W + 30, q);
       m.facing = left ? 1 : -1;
-      names.push(`a ${{ android: 'android', aatank: 'AA tank', dtank: 'drone tank' }[m.kind]} from the ${left ? 'west' : 'east'}`);
+      names.push(`${{ android: 'an android', aatank: 'an AA tank', dtank: 'a drone tank' }[m.kind]} from the ${left ? 'west' : 'east'}`);
     }
     if (names.length) {
-      this.ui.notice(`Incoming: ${names.join(', ')}.`);
+      this.ui.notice(`Hostiles arrive: ${names.join(', ')}.`);
       this.events.push(`Hostile reinforcements: ${names.join(', ')}.`);
     }
   },

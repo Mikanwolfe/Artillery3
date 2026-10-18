@@ -85,7 +85,7 @@ Object.assign(Game.prototype, {
         if (G.capHp <= 0) this.shatterCap(G, g);
       }
       if (G.stemHp <= 0) {
-        if (G.state === 'up') { G.state = 'falling'; G.vy = 0; this.sfx.thud(); this.ui.notice(`The ${giantName(G)} is coming down!`); }
+        if (G.state === 'up') { G.state = 'falling'; G.vy = 0; this.sfx.thud(); this.ui.notice(`The ${giantName(G)} is falling!`); }
         else { G.state = 'gone'; for (let i = 0; i < 10; i++) this.particles.puff(G.x, g - Math.random() * G.stemH, giantCols(G).stem); }
       }
     }
@@ -99,7 +99,7 @@ Object.assign(Game.prototype, {
     for (let i = 0; i < 40; i++) {
       this.particles.add({ x: lerp(c.x0, c.x1, Math.random()), y: lerp(c.y0, c.y1, Math.random()), vx: (Math.random() - 0.5) * 5, vy: -Math.random() * 3, g: 0.15, drag: 0.97, life: 1 + Math.random(), size: 4 + Math.random() * 5, color: col });
     }
-    this.events.push(`The ${giantName(G)}'s ${G.kind === 'mushroom' ? 'cap' : 'canopy'} is shot away.`);
+    this.events.push(`A shot destroys the ${G.kind === 'mushroom' ? 'cap' : 'canopy'} of the ${giantName(G)}.`);
   },
 
   // a falling top drops, and crushes whatever is under it when it lands
@@ -125,7 +125,7 @@ Object.assign(Game.prototype, {
       for (let x = c.x0; x < c.x1; x += 10) this.particles.puff(x, T.hAt(clamp(x, 0, WORLD_W - 1)), giantCols(G).cap);
       this.shake = Math.max(this.shake, 9);
       this.sfx.explosion(30);
-      this.events.push(`The ${giantName(G)} came down.`);
+      this.events.push(`The ${giantName(G)} fell.`);
     }
   },
 
@@ -267,8 +267,8 @@ Object.assign(Game.prototype, {
     this.shake = Math.max(this.shake, 10);
     this.sfx.explosion(45);
     this.bg.coldSnap = true;
-    this.ui.notice('The AHU is down. The warmth is going: snow is coming.');
-    this.events.push('The old-world AHU was destroyed. The meadow goes cold.');
+    this.ui.notice('The AHU is destroyed. The heat stops and snow starts to fall.');
+    this.events.push('The old-world AHU is destroyed. The meadow becomes cold.');
   },
 
   // the cold settles over a few seconds once the AHU is gone

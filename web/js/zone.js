@@ -23,8 +23,8 @@ Object.assign(Game.prototype, {
     if (this.range || cycles < ZONE_FROM || !this.has('zone')) return;
     if (!this.zone) {
       this.zone = { l: 0, r: WORLD_W, tl: 0, tr: WORLD_W, t: 0 };
-      this.ui.notice('A Hatsuyuki fleet takes station overhead. Don’t end your turn under its red marks.');
-      this.events.push('A Hatsuyuki fleet arrives and starts marking the edges of the field.');
+      this.ui.notice('A Hatsuyuki fleet is overhead. Do not end your turn in its red zone.');
+      this.events.push('A Hatsuyuki fleet arrives. It marks the edges of the field red.');
     }
     const z = this.zone, w = z.tr - z.tl;
     if (w <= ZONE_MIN + 1) return;
@@ -33,7 +33,7 @@ Object.assign(Game.prototype, {
     const dl = a - z.tl, dr = z.tr - a;
     z.tl += (step * dl) / (dl + dr);
     z.tr -= (step * dr) / (dl + dr);
-    this.events.push('The Hatsuyuki fleet marks more ground.');
+    this.events.push('The red zone of the Hatsuyuki fleet gets larger.');
   },
 
   // is x in the marked area?
@@ -55,7 +55,7 @@ Object.assign(Game.prototype, {
     for (let i = 0; i < 4; i++) this.particles.explosion(t.x + rng.range(-30, 30), t.y - rng.range(0, 20), 50, 'shell');
     this.shake = Math.max(this.shake, 8);
     this.sfx.explosion(35);
-    this.events.push(`The Hatsuyuki fleet fires on ${t.name} in its target area.`);
+    this.events.push(`The Hatsuyuki fleet fires on ${t.name} in the red zone.`);
     this.damage(t, amt, null, false, null, { q: 0.75, alt: 0, kin: 0, front: 1, zone: true });
   },
 
