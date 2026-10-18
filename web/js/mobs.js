@@ -37,7 +37,9 @@ const TANK_MOVE = 150; // how far a drone tank drives in one cycle (the android:
 const PARACHUTE_VY = 2.2; // an airdropped tank's descent speed
 const FLAK_MOB_MULT = 2; // flak does double damage to mobs
 const MOB_BOUNTY_SCALE = 1; // (bounties are shared by the damage each player did: payMobBounty)
-const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'fpv', 'mothership']);
+const DRONE_SHIELDED = new Set(['drone', 'gunner', 'carrier', 'fpv', 'mothership', 'blimp']);
+const BLIMP_HIGH = 330; // how much higher than the drones a blimp cruises
+const BLIMP_FROM = 4; // reinforcement quality it comes in from (one at a time)
 const SHIELD_RESIST = 0.5; // what share of a flak or fighter hit tells on a drone's shielding
 const MOB_PAD = 16, MOB_PAD_SHIP = 20; // (see Mob: a flying hostile's proximity margin)
 const SHIP_AA = [[-96, -58], [-44, -66], [8, -70], [58, -66], [104, -58]]; // the mothership's AA mounts, from its anchor
@@ -63,6 +65,7 @@ class Mob {
       drone: { name: 'Hatsuyuki drone', hp: 50 + 20 * stage, hw: 18, hh: 16, bounty: 250 + 60 * stage },
       gunner: { name: 'Hatsuyuki gunner', hp: 45 + 18 * stage, hw: 18, hh: 16, bounty: 300 + 70 * stage },
       turret: { name: 'Shore battery', hp: 150 + 30 * stage, hw: 24, hh: 22, bounty: 500 + 80 * stage },
+      blimp: { name: 'Hatsuyuki blimp', hp: 200 + 45 * stage, hw: 46, hh: 30, bounty: 700 + 110 * stage },
       mothership: { name: 'Mothership Shirayuki', hp: 1500 + 300 * stage, hw: 142, hh: 88, bounty: 4000 + 600 * stage },
       fpv: { name: 'FPV kamikaze', hp: 25 + 8 * stage, hw: 12, hh: 10, bounty: 150 + 40 * stage },
       carrier: { name: 'Hatsuyuki carrier', hp: 90 + 25 * stage, hw: 30, hh: 20, bounty: 350 + 70 * stage },
@@ -133,6 +136,11 @@ class Mob {
       // a quad tips into its direction of travel: nose down to go, level to hover
       const want = this.dest && !this.arrived() ? clamp(this.aim.x * 0.55 + Math.max(0, this.aim.y) * 0.2 * Math.sign(this.aim.x || 1), -0.75, 0.75) : 0;
       this.pitch = (this.pitch || 0) + (want - (this.pitch || 0)) * 0.15;
+      return;
+    }
+    if (this.kind === 'blimp') { // slow, and high over the drones
+      if (this.dest) { const dx = this.dest.x - this.x; this.x += clamp(dx, -1.4, 1.4); if (Math.abs(dx) > 1) this.facing = Math.sign(dx); }
+      this.y += (Mob.hoverY(game.terrain, this.x) - BLIMP_HIGH + Math.sin(this.t / 60) * 5 - this.y) * 0.03;
       return;
     }
     if (this.kind === 'mothership') {
@@ -256,6 +264,8 @@ class Mob {
         ctx.fillStyle = blink ? 'rgb(120,220,255)' : 'rgb(50,110,140)'; ctx.fillRect(x - 2, y - 30, 4, 3); // (its radar)
       }
       ctx.restore();
+    } else if (this.kind === 'blimp') {
+      this.drawBlimp(ctx, x, y, c, blink);
     } else if (this.kind === 'android') {
       if (this.drop) this.drawChute(ctx, x, y - 50);
       this.drawAndroid(ctx, x, y);
@@ -275,6 +285,21 @@ class Mob {
     } else {
       this.drawShip(ctx, x, y, c, blink);
     }
+  }
+
+  // a Hatsuyuki blimp: a long grey envelope with ribs, tail fins, a gondola slung underneath with
+  // pink sensor lights, and a rocket pod either side of it
+  drawBlimp(ctx, x, y, c, blink) {
+    const f = this.facing || 1, R = (lx, ty, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x + (f > 0 ? lx : -lx - w)), Math.round(y + ty), w, h); };
+    const top = y - 30;
+    R(-40, top + 4, 80, 14, c('#6a6878')); R(-34, top, 68, 4, c('#7c7a8a')); R(-34, top + 18, 68, 4, c('#55536a')); // envelope
+    R(40, top + 6, 6, 10, c('#6a6878')); R(46, top + 9, 3, 4, c('#6a6878')); // nose
+    for (let i = -24; i <= 28; i += 13) R(i, top + 2, 2, 18, c('#58566a')); // ribs
+    R(-50, top - 4, 12, 8, c('#4a4858')); R(-50, top + 18, 12, 8, c('#4a4858')); R(-48, top + 9, 10, 4, c('#4a4858')); // tail fins
+    R(-12, top + 22, 26, 6, c('#3c3c48')); // gondola
+    R(-8, top + 24, 4, 2, blink ? '#ff78c8' : '#a03070'); R(6, top + 24, 4, 2, blink ? '#a03070' : '#ff78c8');
+    R(-22, top + 21, 8, 5, c('#2a2a34')); R(18, top + 21, 8, 5, c('#2a2a34')); // rocket pods
+    R(-56, top + 10, 4, 2, `rgba(255,180,90,${0.4 + Math.random() * 0.4})`); // engine
   }
 
   // a parachute canopy and its lines over an airdropped unit
@@ -387,7 +412,7 @@ class Mob {
       ctx.fillText(`${this.name} · ${Math.ceil(this.hp)}`, Math.round(sx), Math.round(sy - 113));
       return;
     }
-    const top = { turret: 40, android: 70, dtank: 40, aatank: 46, carrier: 40, fpv: 26 }[this.kind] || 34;
+    const top = { blimp: 40, turret: 40, android: 70, dtank: 40, aatank: 46, carrier: 40, fpv: 26 }[this.kind] || 34;
     const arm = this.maxArmour > 0 || this.shield > 0;
     ctx.fillStyle = HUD.plate;
     ctx.fillRect(Math.round(sx - 26), Math.round(sy - top - 8 - (arm ? 6 : 0)), 52, 8 + (arm ? 6 : 0));
@@ -414,6 +439,7 @@ function mobWeapon(kind, st) {
   if (kind === 'fpv') return { ...base, id: 'mobfpv', name: 'FPV charge', dmg: 50 + 12 * st, dmgR: 70, explR: 9 };
   if (kind === 'tankshell') return { ...base, id: 'mobtank', name: 'Drone tank shell', dmg: 24 + 8 * st, dmgR: 70, explR: 9 };
   if (kind === 'android') return { ...base, id: 'mobandroid', name: 'Android salvo', dmg: 30 + 7 * st, dmgR: 75, explR: 10 };
+  if (kind === 'blimprocket') return { ...base, kind: 'rocket', id: 'mobseeker', name: 'Blimp seeker', dmg: 20 + 6 * st, dmgR: 55, explR: 7, drift: 0.3, guide: { arm: 8, burn: 0, seek: 8, apex: false, turn: 3.5, range: 520, cone: 120, lift: 0 } };
   return { ...base, id: 'shipbomb', name: 'Mothership bomb', dmg: 50 + 15 * st, dmgR: 85, explR: 12 };
 }
 
@@ -453,7 +479,7 @@ Object.assign(Game.prototype, {
   // q: its quality (the stage its health, armour and damage scale with); reinforcements come in better
   addMob(kind, x, q = this.stage()) {
     const st = clamp(Math.round(q), 1, 12); // (a long round keeps getting worse, up to a point)
-    const y = Mob.GROUND.has(kind) ? this.terrain.hAt(clamp(x, 0, WORLD_W - 1)) : kind === 'mothership' ? Mob.shipY(this.terrain) : Mob.hoverY(this.terrain, x) - (kind === 'fpv' ? FPV_HIGH : 0);
+    const y = Mob.GROUND.has(kind) ? this.terrain.hAt(clamp(x, 0, WORLD_W - 1)) : kind === 'mothership' ? Mob.shipY(this.terrain) : Mob.hoverY(this.terrain, x) - (kind === 'fpv' ? FPV_HIGH : kind === 'blimp' ? BLIMP_HIGH : 0);
     const m = new Mob(kind, x, y, st);
     if (kind === 'fpv') m.entering = true; // (see planMobs: in first, then the attack)
     this.mobs.push(m);
@@ -577,6 +603,8 @@ Object.assign(Game.prototype, {
         const want = m.victim.x + (k ? (k % 2 ? 1 : -1) * 60 * Math.ceil(k / 2) : rng.range(-20, 20));
         const stopShort = m.kind === 'gunner' ? 160 * Math.sign(m.x - m.victim.x || 1) : 0; // gunners hang back a little
         m.dest = { x: clamp(m.x + clamp(want + stopShort - m.x, -MOB_MOVE, MOB_MOVE), 20, WORLD_W - 20) };
+      } else if (m.kind === 'blimp') { // it drifts toward a spot over its vehicle
+        m.dest = { x: clamp(m.x + clamp(m.victim.x - m.x, -MOB_MOVE * 0.6, MOB_MOVE * 0.6), 60, WORLD_W - 60) };
       } else if (m.kind === 'mothership') {
         const lead = victims.slice().sort((a, b) => b.wins - a.wins || b.hp - a.hp)[0];
         m.dest = { x: clamp(m.x + clamp(lead.x - m.x, -160, 160), 140, WORLD_W - 140) };
@@ -653,6 +681,17 @@ Object.assign(Game.prototype, {
         this.projectiles.push(new Projectile(this, mobWeapon('battery', st), m, s.x, s.y, s.vx, s.vy, false));
         this.particles.muzzle(s.x, s.y, { x: Math.sign(s.vx), y: -0.7 });
         shots++;
+      } else if (m.kind === 'blimp') { // a pair of seekers (three from stage 5) sent down from its pods
+        const n = st >= 5 ? 3 : 2;
+        for (let i = 0; i < n; i++) {
+          const side = i % 2 ? 1 : -1;
+          const p = new Projectile(this, mobWeapon('blimprocket', st), m, m.x + side * 20, m.y - 6, (v.x - m.x) / 60 + side * 1.5, 3, false);
+          p.delay = i * 12;
+          p.prefer = 'rival';
+          this.projectiles.push(p);
+          shots++;
+        }
+        this.events.push(`A blimp fires seekers at ${v.name}.`);
       } else if (m.kind === 'mothership') {
         shots += this.shipAttack(m, st);
       }
@@ -715,6 +754,11 @@ Object.assign(Game.prototype, {
       const m = this.addMob(kind, edge(), q);
       if (kind === 'carrier') { m.cargo = q >= 8 && !this.mobs.some((x) => x.alive && (x.kind === 'android' || x.cargo === 'android')) ? 'android' : 'dtank'; groundRoom--; }
       names.push(kind === 'carrier' ? `a carrier with a ${m.cargo === 'android' ? 'android' : 'drone tank'}` : kind === 'fpv' ? 'an FPV kamikaze' : `a ${kind}`);
+    }
+    // from BLIMP_FROM, now and then, a blimp (one at a time)
+    if (q >= BLIMP_FROM && flyers + n < MOB_CAP && !this.mobs.some((x) => x.alive && x.kind === 'blimp') && rng.chance(0.3)) {
+      this.addMob('blimp', edge(), q);
+      names.push('a blimp');
     }
     // and from 4.5 a drone tank sometimes drives on from the edge of the map
     if (q >= 4.5 && groundRoom > 0 && rng.chance(0.4)) {

@@ -181,6 +181,7 @@ Object.assign(Game.prototype, {
         // (focus fire: the one in range with the least left, so a squad loses planes, not paint)
         let air = null, bs = Infinity;
         for (const e of this.aaAircraft(t)) {
+          if (e.isMob && this.phase !== 'hazard') continue; // (drones: on their own turn, or as they cross the range, aaDroneEdges)
           const q = e.center(), d = dist(q.x, q.y, c.x, c.y);
           if (d >= A.range) continue;
           const sc = (e.hp || 0) + (e.armour || 0) + d * 0.05;
@@ -222,6 +223,73 @@ Object.assign(Game.prototype, {
         }
       }
     }
+  },
+
+  // AA against drones comes at set moments only, not all the time: through the hostiles' own turn
+  // (stepAA), one burst a mount at the start of her own turn (aaTurnVolley), and one each time a
+  // drone crosses into or out of a mount's range, whatever is going on (here, every frame)
+  aaDroneEdges() {
+    if (this.phase === 'menu' || !this.tanks || !this.mobs || !this.mobs.length) return;
+    for (const t of this.tanks) {
+      if (!t.alive || !t.aa || !t.aa.some(Boolean)) continue;
+      const c = t.center();
+      const sets = t.aaIn || (t.aaIn = []);
+      t.aa.forEach((id, i) => {
+        const A = AA_BY_ID[id];
+        if (!A) { sets[i] = null; return; }
+        const now = new Set(this.mobs.filter((m) => m.alive && m.flying && dist(m.center().x, m.center().y, c.x, c.y) < A.range));
+        const was = sets[i];
+        sets[i] = now;
+        if (!was) return; // (first look: nothing has crossed yet)
+        const gun = t.aaGuns && t.aaGuns[i];
+        for (const m of this.mobs) {
+          if (!m.alive || !m.flying || now.has(m) === was.has(m)) continue;
+          if (gun && gun.budget <= 0) break;
+          if (gun) gun.budget--;
+          this.aaFire(t, A, m, 'air');
+        }
+      });
+    }
+  },
+
+  // her turn begins: each mount fires one burst at the drone in its range with the least left
+  aaTurnVolley(t) {
+    if (!t || !t.alive || !t.aa || !this.mobs || !this.mobs.length) return;
+    const c = t.center();
+    t.aa.forEach((id, i) => {
+      const A = AA_BY_ID[id];
+      if (!A) return;
+      let best = null, bs = Infinity;
+      for (const m of this.mobs) {
+        if (!m.alive || !m.flying) continue;
+        const q = m.center(), d = dist(q.x, q.y, c.x, c.y);
+        if (d >= A.range) continue;
+        const sc = m.hp + (m.armour || 0) + d * 0.05;
+        if (sc < bs) { bs = sc; best = m; }
+      }
+      if (!best) return;
+      const gun = t.aaGuns && t.aaGuns[i];
+      if (gun) { if (gun.budget <= 0) return; gun.budget--; }
+      this.aaFire(t, A, best, 'air');
+    });
+  },
+
+  // the active girl's mounts: a faint ring at each one's reach
+  drawAARanges(ctx, t) {
+    if (!t || !t.alive || !t.aa) return;
+    const c = t.center();
+    ctx.save();
+    ctx.lineWidth = 1.5;
+    t.aa.forEach((id, i) => {
+      const A = AA_BY_ID[id];
+      if (!A) return;
+      ctx.strokeStyle = A.role === 'missile' ? 'rgba(154,224,255,0.35)' : 'rgba(255,216,120,0.35)';
+      ctx.setLineDash(i % 2 ? [3, 7] : [10, 6]);
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, A.range, 0, TAU);
+      ctx.stroke();
+    });
+    ctx.restore();
   },
 
   aaAircraft(t) {

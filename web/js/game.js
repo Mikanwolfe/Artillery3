@@ -515,6 +515,7 @@ class Game {
     this.active = t;
     t.turnsTaken = (t.turnsTaken || 0) + 1;
     this.aaNewTurn();
+    if (!this.range) this.aaTurnVolley(t); // (her mounts' burst at drones in range, as her turn begins)
     this.sfx.newTurn();
     this.turnSerial++;
     this.turnCount++;
@@ -595,6 +596,7 @@ class Game {
     this.stepCold();
     this.stepDrones();
     this.stepPlanes();
+    this.aaDroneEdges(); // (AA at a drone crossing a mount's range: any time)
     this.stepAA();
     this.updateAA();
     this.updateHazards();
@@ -2073,6 +2075,7 @@ class Game {
     this.drawTraces(ctx);
     for (const p of this.projectiles) p.draw(ctx);
     for (const l of this.lasers) l.draw(ctx);
+    if (this.phase === 'aim' && this.active && !this.cinematic) this.drawAARanges(ctx, this.active); // (her mounts' reach)
     this.drawHazardsFront(ctx, cam);
     this.particles.draw(ctx);
 
