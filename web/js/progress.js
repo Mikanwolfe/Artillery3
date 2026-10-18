@@ -10,19 +10,19 @@
 
 const PROG_TIERS = [
   { at: 0, girl: 'gwt', rarity: 2, core: 2, kinds: ['shell', 'gun'], feats: [],
-    foes: 'A straight duel: no hostiles, no weather.', gear: 'Common and Uncommon shells and guns, cores I–II, health, armour, repair kits and vehicle upgrades.' },
+    foes: 'None. Players only.', gear: 'Common and Uncommon shells and guns. Cores I–II. Health, armour, repair kits, vehicle upgrades.' },
   { at: 2, girl: 'obj', rarity: 3, core: 2, kinds: ['laser'], feats: ['crates', 'forts', 'fronts', 'abilities'],
-    foes: 'Supply crates, neutral forts and weather fronts.', gear: 'Lasers, Rare guns, and the abilities: Double Shot, Overcharge, Deflector.' },
+    foes: 'Supply crates. Forts. Weather fronts.', gear: 'Lasers. Rare guns. Abilities: Double Shot, Overcharge, Deflector.' },
   { at: 4, girl: 'nxi', rarity: 4, core: 3, kinds: [], feats: ['drones', 'debris', 'aa'],
-    foes: 'Drones and gunners, and wreckage from the NXi fleet fighting overhead.', gear: 'Air-defence mounts, Epic guns, cores III.' },
+    foes: 'Drones. Gunners. Falling debris.', gear: 'Air-defence mounts. Epic guns. Cores III.' },
   { at: 7, girl: 'int', rarity: 5, core: 4, kinds: ['acid', 'flak'], feats: ['turrets', 'sudden', 'spy'],
-    foes: 'Shore batteries, sudden death and the spy plane.', gear: 'Acid and flak, Mythical guns, cores IV.' },
+    foes: 'Shore batteries. Sudden death. Spy plane.', gear: 'Acid. Flak. Mythical guns. Cores IV.' },
   { at: 10, girl: 'alb', rarity: 6, core: 5, kinds: ['rocket'], feats: ['fpv', 'zone', 'barrier'],
-    foes: 'FPV kamikazes and the Hatsuyuki fleet’s closing zone.', gear: 'Rockets, Legendary guns, the Bulwark Barrier, cores V.' },
+    foes: 'FPV drones. Closing zone.', gear: 'Rockets. Legendary guns. Bulwark Barrier. Cores V.' },
   { at: 14, girl: 'zui', rarity: 7, core: 6, kinds: ['air'], feats: ['blimp', 'ground', 'deck'],
-    foes: 'Blimps, drone carriers, drone tanks and AA tanks.', gear: 'Aircraft and the flight deck, Godly guns, cores VI.' },
+    foes: 'Blimps. Drone carriers. Drone tanks. AA tanks.', gear: 'Aircraft. Flight deck. Godly guns. Cores VI.' },
   { at: 18, girl: 'ang', rarity: 8, core: 6, kinds: [], feats: ['boss', 'android'],
-    foes: 'The mothership Shirayuki and its escort, and the android.', gear: 'Parallel Night: each girl’s final weapon.' },
+    foes: 'Mothership Shirayuki. Android.', gear: 'Parallel Night final weapons.' },
 ];
 const PROG_TOP = PROG_TIERS.length - 1;
 const FEAT_TIER = {};
@@ -56,7 +56,7 @@ const PROG = {
   unlockAll() { this.data.all = true; this.save(); },
 };
 const girlName = (id) => (VEHICLES.find((v) => v.id === id) || {}).name || id;
-function tierLine(i) { const T = PROG_TIERS[i]; return `Tier ${i}: ${girlName(T.girl)} joins. ${T.foes} ${T.gear}`; }
+function tierLine(i) { const T = PROG_TIERS[i]; return `Tier ${i}: ${girlName(T.girl)} unlocked. Hostiles: ${T.foes} Shop: ${T.gear}`; }
 
 Object.assign(Game.prototype, {
   // the tier this match plays at (everything, outside progression)
@@ -92,21 +92,21 @@ Object.assign(Game.prototype, {
 // aiming, firing, the autoloader, the rival's turn, the shop, and then lets them win round two.
 // Each step has a check run every frame (Game.frame -> tutTick) that moves it on.
 const TUTORIAL = [
-  { title: 'Drive', text: 'This is G.W. Tiger. Drive with ← and →. Moving burns fuel (the bar under her); it refills every turn.',
+  { title: 'Move', text: 'Press ← or → to move. Moving uses fuel. Fuel refills at the start of each turn.',
     done: (g, t, s) => Math.abs(t.x - s.x) > 30 },
-  { title: 'Aim', text: 'Raise and lower her gun with ↑ and ↓. Your rival is the other girl: aim her way.',
+  { title: 'Aim', text: 'Press ↑ or ↓ to change the gun angle. Aim at your rival.',
     done: (g, t, s) => Math.abs(t.elev - s.elev) >= 8 },
-  { title: 'Fire', text: 'Hold Space to charge, let go to fire: a longer charge throws the shell further. Watch the wind arrow at the top; it pushes shells about.',
+  { title: 'Fire', text: 'Hold Space to charge. Release Space to fire. More charge gives more range. Wind moves the shell; check the wind arrow at the top.',
     done: (g, t) => t.firedThisTurn },
-  { title: 'Autoloader', text: 'Her autoloader holds two rounds a turn: adjust from where the first landed, then fire again. (Land the first squarely on a rival and she gets that round back.)',
+  { title: 'Second shot', text: 'G.W. Tiger fires two shots each turn. Correct your aim from the first impact. Fire again. If the first shot hits a rival, you get it back.',
     done: (g, t) => g.active !== t || (g.phase === 'aim' && t.shotsLeft <= 0) },
-  { title: 'Their turn', text: 'Turns go round the table. Everything you hit pays credits at the end of the round; finishing a rival pays more.',
+  { title: 'Rival turn', text: 'Now your rival fires. You get credits at the end of each round for the damage you do. A kill gives more.',
     done: (g, t, s) => g.active === t && g.phase === 'aim' && t.turnsTaken > s.turns },
-  { title: 'Finish it', text: 'Bring her down. Enter ends your turn early; H lists every control. A miss tells you which way to adjust.',
+  { title: 'Destroy', text: 'Destroy your rival. Press Enter to end your turn early. Press H to see all controls.',
     done: (g) => g.phase === 'roundEnd' || g.phase === 'shop' },
-  { title: 'The shop', text: 'Between rounds: the shop. Bought guns hit harder, but sit out a turn or two after firing; your starter never does. Your core (top right) adds health, armour and damage. Done when you are ready.',
+  { title: 'Shop', text: 'This is the shop. Bought guns do more damage. After a bought gun fires, it reloads for 1–3 turns. Your starting gun does not reload. The core (top right) adds health, armour and damage. Click Done to continue.',
     done: (g) => g.phase !== 'shop' && g.phase !== 'roundEnd' && g.round >= 2 },
-  { title: 'Round two', text: 'This one is yours to win. Every round you clear counts toward the next tier: new girls, new hostiles, more of the shop.',
+  { title: 'Round 2', text: 'Win this round. Each round you finish counts toward the next tier. A tier unlocks a girl, hostiles and shop items.',
     done: (g) => g.phase === 'gameEnd' },
 ];
 
