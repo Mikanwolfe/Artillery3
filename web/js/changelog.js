@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['12dbe54', 'Rockets airburst on drones: one that comes close goes off rather than slipping past, with twice its blast radius, so near misses count and tight groups get caught.'],
   ['9fe6af4', 'Zuihou’s final weapon, the Kidō Butai, is now the SI Parallel Night, badge Ab (Ascendant Bomber).'],
   ['a0bdb90', 'Flak bursts well short of a squadron and fans its fragments over every plane in it: a good burst from a big gun takes out the lot. CPUs go after shots that pay and hit hard. Three gun slots instead of four.'],
   ['482f00d', 'CPUs on Normal and Hard are better at keeping their war chest full.'],
