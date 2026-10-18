@@ -2082,7 +2082,7 @@ class Game {
     this.drawTraces(ctx);
     for (const p of this.projectiles) p.draw(ctx);
     for (const l of this.lasers) l.draw(ctx);
-    if (this.phase === 'aim' && this.active && !this.cinematic) this.drawAARanges(ctx, this.active); // (her mounts' reach)
+    if (this.showAARange && this.phase === 'aim' && this.active && !this.cinematic) this.drawAARanges(ctx, this.active); // (her mounts' reach)
     this.drawHazardsFront(ctx, cam);
     this.particles.draw(ctx);
 

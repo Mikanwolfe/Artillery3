@@ -73,6 +73,14 @@ const UI = {
     $('btn-pause').onclick = () => game.togglePause();
     $('btn-mute').onclick = () => game.toggleMute();
     $('btn-music').onclick = () => game.toggleMusic();
+    // the air-defence range rings: off by default (remembered in this browser)
+    try { game.showAARange = localStorage.getItem('a3.aaRange') === '1'; } catch (e) { game.showAARange = false; }
+    $('btn-aa').classList.toggle('off', !game.showAARange);
+    $('btn-aa').onclick = () => {
+      game.showAARange = !game.showAARange;
+      $('btn-aa').classList.toggle('off', !game.showAARange);
+      try { localStorage.setItem('a3.aaRange', game.showAARange ? '1' : '0'); } catch (e) { /* (private window: just this session) */ }
+    };
     // A3 UI_Button: a hover blip over buttons and a confirm click (shop buttons have their own sounds)
     const stage = $('stage');
     stage.addEventListener('pointerover', (e) => {
