@@ -178,6 +178,7 @@ class Input {
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
       case 'KeyX': if (down && !e.repeat) this.queue.push({ recall: true }); break;
+      case 'KeyB': if (down && !e.repeat) this.queue.push({ barrage: true }); break;
       case 'KeyW': case 'KeyJ': if (down && !e.repeat) this.queue.push({ jump: true }); break;
       case 'KeyL': if (down && !e.repeat) this.queue.push({ jump: 'leap' }); break;
       case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': {
@@ -519,6 +520,7 @@ class Game {
     t.turnsTaken = (t.turnsTaken || 0) + 1;
     this.aaNewTurn();
     if (!this.range) this.aaTurnVolley(t); // (her mounts' burst at drones in range, as her turn begins)
+    t.barrage = false; // (a Barrage lasts until her next turn)
     this.sfx.newTurn();
     this.turnSerial++;
     this.turnCount++;
@@ -907,6 +909,8 @@ class Game {
         } else if (a.repair) {
           this.useRepair(t);
           return;
+        } else if (a.barrage) { // B: give up the shot, air defence at full tilt
+          if (this.useBarrage(t)) return;
         } else if (a.recall) { // X: her squads home (the selected plane weapon's, else all of them)
           this.recallSquads(t, t.weapon.air && this.recallable(t, t.weapon).length ? t.weapon : null);
         } else if (a.ability) {

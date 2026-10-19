@@ -258,6 +258,16 @@ class CpuController {
     return best;
   }
 
+  // how many aircraft (drones, rivals' planes) are within her anti-air's reach
+  barrageWorth(t) {
+    const g = this.game;
+    if (!t.aa || !g.aaAircraft) return false;
+    const reach = Math.max(0, ...t.aa.map((id) => (AA_BY_ID[id] && AA_BY_ID[id].role === 'air' ? AA_BY_ID[id].range : 0)));
+    if (!reach) return false;
+    const c = t.center();
+    return g.aaAircraft(t).filter((e) => { const q = e.center(); return dist(q.x, q.y, c.x, c.y) < reach; }).length >= 3;
+  }
+
   update(dt) {
     const t = this.tank;
     const c = this.ctl;
@@ -272,6 +282,8 @@ class CpuController {
           this.game.useRepair(t);
           return;
         }
+        // swarmed from the air (three or more drones or enemy planes in her mounts' reach): Barrage instead of a shot
+        if (!t.firedThisTurn && this.barrageWorth(t) && rng.chance(0.5) && this.game.useBarrage(t)) { this.state = 'done'; return; }
         // standing under a live wire, or under a deck that will catch its shots: drive clear first
         if (!this.cleared && t.fuel > 10) {
           this.cleared = true;
