@@ -54,8 +54,8 @@ const AA_STARTERS = [
   { id: 'aa_nxi2', name: 'NXi Mk.0 Flak Mount', role: 'air', rarity: 1, cost: 0, starter: true, range: 340, rof: 7, dmg: 32, acc: 0.8, pk: 0.04, perTurn: 6,
     short: 'The other half of the Defensive Suite: proximity flak, twin-mounted, never jams.', long: 'Anti-air: November’s own.' },
 ];
-// every mount reaches twice as far as it was built to, for half the damage a burst
-const AA_RANGE_MULT = 2, AA_DMG_MULT = 0.5;
+// every mount reaches twice as far as it was built to, at its full damage a burst
+const AA_RANGE_MULT = 2, AA_DMG_MULT = 1;
 for (const a of AA_WEAPONS.concat(AA_STARTERS)) { a.range = Math.round(a.range * AA_RANGE_MULT); a.dmg = Math.round(a.dmg * AA_DMG_MULT); }
 const AA_BY_ID = Object.fromEntries(AA_WEAPONS.concat(AA_STARTERS).map((a) => [a.id, a]));
 // what share of a missile's damage each engagement takes off: point defence a lot, anti-air guns a
@@ -65,6 +65,9 @@ for (const a of Object.values(AA_BY_ID)) a.stop = PD_STOP[a.id] || Math.min(0.2,
 const AA_SHOT_DOWN = 0.2; // a missile left with this little of its damage is shot down in the air
 const DRONE_ZAP_EVERY = 12; // frames between a hostile's discharges (see stepAA)
 const AA_GRAZE = 0.25; // an anti-air burst that misses still grazes for this much
+const AA_GROUND_REACH = 0.4, AA_GROUND_DMG = 0.5; // anti-air also fires on ground hostiles this close (share of its range), for this share of its damage
+const PD_SHELL_CUT = 0.15; // point defence takes this share of its figure off a shell (it never stops one)
+const BARRAGE_BUDGET = 3, BARRAGE_ROF = 0.5; // Barrage: this many times the bursts, this much faster, until her next turn
 function aaMaker(a) { return a.name.startsWith('NXi') ? 'NXi' : a.name.startsWith('LFS') ? 'Lymilark' : a.name.startsWith('Kotona') ? 'Kotona' : 'Sengoku Inc.'; }
 const AA_ROUND_SPEED = { air: 26, missile: 60 }; // world units a frame (point defence is near enough hitscan)
 // planes launched straight up on their lift fans (no flight deck) take longer to turn round: their
@@ -90,6 +93,12 @@ function aaInterceptable(p) {
   const w = p.w;
   return !!w && (w.kind === 'rocket' || w.bomblet || w.ord || w.id === 'mobbomb' || w.id === 'shipbomb');
 }
+// shells: only point defence engages them, and only takes a little off (see PD_SHELL_CUT)
+function aaShell(p) { const w = p.w; return !!w && w.kind === 'shell' && !w.ord && !w.bomblet; }
+// her round's air-defence tally, for the round-end screen (players only)
+function aaTally(t, k, n = 1) { if (t && !t.isMob && t.aaStats) t.aaStats[k] += n; }
+// what is left of a target, all bars together
+function aaLeft(e) { return Math.max(0, e.hp || 0) + (e.armour || 0) + (e.shield || 0); }
 // how each mount looks on her back (girl units, before her scale): flak guns as a row of barrels,
 // rocket launchers as a box of tubes, point defence as a gatling under a radome, a pod, or a lens
 const AA_LOOK = {
@@ -154,7 +163,7 @@ function aaTough(w) {
 Object.assign(Game.prototype, {
   // every mount's rounds against aircraft come back each turn
   aaNewTurn() {
-    for (const t of this.tanks) t.aaGuns = (t.aa || []).map((id) => ({ cd: 0, budget: id ? AA_BY_ID[id].perTurn : 0 }));
+    for (const t of this.tanks) t.aaGuns = (t.aa || []).map((id) => ({ cd: 0, budget: id ? AA_BY_ID[id].perTurn * (t.barrage ? BARRAGE_BUDGET : 1) : 0 }));
     for (const m of this.mobs || []) if (m.aaMount) m.aaGun = { cd: 0, budget: m.aaMount.perTurn };
   },
 
@@ -162,6 +171,7 @@ Object.assign(Game.prototype, {
   stepAA() {
     if (this.phase === 'aim' || this.phase === 'menu' || !this.tanks) return;
     const shots = this.projectiles.filter((p) => p instanceof Projectile && !p.dead && aaInterceptable(p));
+    const shells = this.projectiles.filter((p) => p instanceof Projectile && !p.dead && aaShell(p));
     for (const t of this.tanks) {
       if (!t.alive || !t.aa || !t.aa.some(Boolean)) continue;
       if (!t.aaGuns || t.aaGuns.length !== t.aa.length) t.aaGuns = t.aa.map((id) => ({ cd: 0, budget: id ? AA_BY_ID[id].perTurn : 0 }));
@@ -172,7 +182,7 @@ Object.assign(Game.prototype, {
         const key = t.idx * 4 + i;
         // every missile or bomb within range, once each (all of them: point defence never runs dry)
         let fired = false;
-        for (const p of shots) {
+        for (const p of A.role === 'missile' ? shots.concat(shells) : shots) {
           if (p.owner === t || (p.aaSeen && p.aaSeen.has(key)) || dist(p.x, p.y, c.x, c.y) >= A.range) continue;
           (p.aaSeen || (p.aaSeen = new Set())).add(key);
           this.aaFire(t, A, p, 'shot');
@@ -184,15 +194,20 @@ Object.assign(Game.prototype, {
         // (focus fire: the one in range with the least left, so a squad loses planes, not paint)
         let air = null, bs = Infinity;
         for (const e of this.aaAircraft(t)) {
-          if (e.isMob && this.phase !== 'hazard') continue; // (drones: on their own turn, or as they cross the range, aaDroneEdges)
+          if (e.isMob && this.phase !== 'hazard' && !t.barrage) continue; // (drones: on their own turn, or as they cross the range, aaDroneEdges; all the time in a Barrage)
           const q = e.center(), d = dist(q.x, q.y, c.x, c.y);
           if (d >= A.range) continue;
           const sc = (e.hp || 0) + (e.armour || 0) + d * 0.05;
           if (sc < bs) { bs = sc; air = e; }
         }
+        if (!air && A.role === 'air' && (this.phase === 'hazard' || t.barrage)) { // nothing in the air: a ground hostile close by
+          air = this.aaGroundTarget(t, A);
+          if (air) { gun.budget--; gun.cd = Math.round(A.rof * (t.barrage ? BARRAGE_ROF : 1)); this.aaFire(t, A, air, 'ground'); }
+          return;
+        }
         if (!air) return;
         gun.budget--;
-        gun.cd = A.rof;
+        gun.cd = Math.round(A.rof * (t.barrage ? BARRAGE_ROF : 1));
         this.aaFire(t, A, air, 'air');
       });
     }
@@ -270,11 +285,46 @@ Object.assign(Game.prototype, {
         const sc = m.hp + (m.armour || 0) + d * 0.05;
         if (sc < bs) { bs = sc; best = m; }
       }
-      if (!best) return;
+      const ground = !best && A.role === 'air' ? this.aaGroundTarget(t, A) : null;
+      if (!best && !ground) return;
       const gun = t.aaGuns && t.aaGuns[i];
       if (gun) { if (gun.budget <= 0) return; gun.budget--; }
-      this.aaFire(t, A, best, 'air');
+      this.aaFire(t, A, best || ground, best ? 'air' : 'ground');
     });
+  },
+
+  // anti-air's ground role: the ground hostile closest to her, if it is near enough
+  aaGroundTarget(t, A) {
+    const c = t.center(), reach = A.range * AA_GROUND_REACH;
+    let best = null, bd = reach;
+    for (const m of this.mobs || []) {
+      if (!m.alive || m.flying) continue;
+      const q = m.center(), d = dist(q.x, q.y, c.x, c.y);
+      if (d < bd) { bd = d; best = m; }
+    }
+    return best;
+  },
+
+  // Barrage (B): she gives up her shot, and her mounts fire three times the bursts, twice as fast,
+  // at anything in range (drones and close ground hostiles too, not only on their turn) until her next turn
+  useBarrage(t) {
+    if (this.phase !== 'aim' || t !== this.active || t.firedThisTurn || !t.aa || !t.aa.some(Boolean)) { this.sfx.deny(); return false; }
+    t.barrage = true;
+    t.aaGuns = t.aa.map((id) => ({ cd: 0, budget: id ? AA_BY_ID[id].perTurn * BARRAGE_BUDGET : 0 }));
+    this.particles.text(t.x, t.y - 50, 'BARRAGE', '#ffd878', true);
+    this.sfx.click();
+    this.events.push(`${t.name} sets her air defence to Barrage until her next turn.`);
+    // giving up the shot is the turn (as a repair kit is)
+    this.charging = false;
+    t.charge = 0;
+    t.shotsLeft = 0;
+    t.firedThisTurn = true;
+    this.salvo = null;
+    this.report = null;
+    this.phase = 'resolve';
+    this.resolveSteps = 0;
+    this.quiet = 0;
+    return true;
   },
 
   // the active girl's mounts: a faint ring at each one's reach
@@ -363,12 +413,14 @@ Object.assign(Game.prototype, {
     }
     if (r.kind === 'shot') {
       if (tg.dead || !this.projectiles.includes(tg)) return; // gone (point defence doesn't miss: see the top)
-      const was = tg.aaCut || 1;
-      tg.aaCut = was * (1 - aaKill(A, tg)); // (the hit takes its share of the damage off)
+      const was = tg.aaCut || 1, shell = !aaInterceptable(tg);
+      tg.aaCut = was * (1 - (shell ? Math.min(0.5, A.stop * PD_SHELL_CUT * (0.5 + rng.next())) : aaKill(A, tg))); // (the hit takes its share of the damage off; a shell only a little)
       const off = (tg.w.dmg || 0) * (was - tg.aaCut); // (what it took off the warhead, shown like any hit)
       if (off >= 1) this.hitPopup(tg.x, tg.y - 20, off, { q: clamp(1 - tg.aaCut, 0, 1), alt: 0, kin: 0, front: 1, pd: true });
+      aaTally(r.owner, 'cut', off);
       tg.aaHit = true; // (it trails smoke from here)
-      if (tg.aaCut <= AA_SHOT_DOWN) { // little left of it: down it goes
+      if (!shell && tg.aaCut <= AA_SHOT_DOWN) { // little left of it: down it goes
+        aaTally(r.owner, 'stops');
         tg.dead = true;
         this.particles.explosion(tg.x, tg.y, 26, 'shell');
         this.particles.text(tg.x, tg.y - 20, 'INTERCEPTED', A.role === 'missile' ? '#9ae0ff' : '#e8d8a0');
@@ -378,13 +430,24 @@ Object.assign(Game.prototype, {
       }
       return;
     }
+    if (r.kind === 'ground') { // a close ground hostile: no splash, a share of the damage
+      if (!tg.alive) return;
+      const b = aaLeft(tg);
+      this.damage(tg, A.dmg * AA_GROUND_DMG * (rng.next() > A.acc ? AA_GRAZE : 1), r.owner, { aa: true });
+      aaTally(r.owner, 'dmg', b - aaLeft(tg));
+      if (!tg.alive) aaTally(r.owner, 'down');
+      return;
+    }
     // aircraft
     const hits = A.splash ? this.aaAircraft(r.owner).filter((e) => { const q = e.center(); return dist(q.x, q.y, r.x, r.y) < A.splash; }) : [tg];
     for (const e of hits) {
       if (!e.alive) continue;
       const q = e.center();
       if (dist(q.x, q.y, r.x, r.y) > (A.splash || 40) + (e.hw || 12)) continue;
+      const b = aaLeft(e);
       this.damage(e, A.dmg * (rng.next() > A.acc ? AA_GRAZE : 1), r.owner, { aa: true }); // (a miss still grazes)
+      aaTally(r.owner, 'dmg', b - aaLeft(e));
+      if (!e.alive) aaTally(r.owner, 'down');
     }
   },
 

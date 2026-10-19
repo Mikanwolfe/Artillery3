@@ -309,7 +309,7 @@ const WEAPONS = [
     short: 'A marker round for her platoon off the map: four G.W. Tiger SPGs and a Karl-Gerät 60cm siege mortar.', long: 'Eight 290mm shells land up to 300 either side of the mark. Then the Karl fires: a giant crater, and an earthquake that hits everyone on the ground within 1,200. G.W. Tiger only.' }),
   weapon('zeropoint', "KTS-T 'Zero Point' Probe", 'gun', -5, 30, { sig: 'obj', drift: 0.05, pierce: 240, maxCharge: 170, disp: 0, dmg: 1200, dmgR: 60, explR: 8, rarity: 8, cost: 75000,
     naito: { r: 520 },
-    short: 'A railgun probe for the Naito MAIA Containment Satellite, out past Jupiter.', long: 'The ground 520 either side of the probe is deleted. Anything that falls in is destroyed. Object 15X only.' }),
+    short: 'A railgun probe for the Naito MAIA Containment Satellite, out past Jupiter.', long: 'The ground 520 either side of the probe is deleted, with any bridges and towers on it. The beam hits everything in it for 99999 damage, many times. Anything that falls in is destroyed. Object 15X only.' }),
   weapon('verdict', "NXi 'Queen's Verdict' Tachyon Lance", 'shell', 0, 80, { sig: 'nxi', drift: 0.6, maxCharge: 120, disp: 0.3, dmg: 20, dmgR: 20, explR: 2, rarity: 8, cost: 75000,
     orbital: { dmg: 6000, r: 260, volley: { n: 60, dmg: 450, r: 150, spread: 600 } },
     short: 'A target dot for the battlecruiser in orbit. It takes its time to line up, then it fires.', long: 'The November Division keeps the gate from above as well. November only.' }),

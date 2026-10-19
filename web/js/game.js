@@ -178,6 +178,7 @@ class Input {
       case 'KeyQ': if (down && !e.repeat) this.queue.push({ cycle: -1 }); break;
       case 'KeyR': if (down && !e.repeat) this.queue.push({ repair: true }); break;
       case 'KeyX': if (down && !e.repeat) this.queue.push({ recall: true }); break;
+      case 'KeyB': if (down && !e.repeat) this.queue.push({ barrage: true }); break;
       case 'KeyW': case 'KeyJ': if (down && !e.repeat) this.queue.push({ jump: true }); break;
       case 'KeyL': if (down && !e.repeat) this.queue.push({ jump: 'leap' }); break;
       case 'Digit1': case 'Digit2': case 'Digit3': case 'Digit4': {
@@ -456,9 +457,11 @@ class Game {
     this.roundDamage = 0;
     this.deathOrder = [];
     this.resetZone();
-    // A3 cycles players in order; the starting player rotates each round
+    // A3 cycles players in order; the starting player rotates each round, and the last round's winner goes last
     this.saveMatch('round');
     this.order = this.tanks.map((_, i) => (i + this.round - 1) % this.tanks.length);
+    const lw = this.round > 1 ? this.lastWinner : -1;
+    if (lw >= 0 && lw < this.tanks.length) this.order = this.order.filter((i) => i !== lw).concat(lw);
     this.turnPtr = -1;
     const tier = satelliteTier(this.round, this.rounds);
     if (tier > this.satellite.tier) {
@@ -519,6 +522,7 @@ class Game {
     t.turnsTaken = (t.turnsTaken || 0) + 1;
     this.aaNewTurn();
     if (!this.range) this.aaTurnVolley(t); // (her mounts' burst at drones in range, as her turn begins)
+    t.barrage = false; // (a Barrage lasts until her next turn)
     this.sfx.newTurn();
     this.turnSerial++;
     this.turnCount++;
@@ -907,6 +911,8 @@ class Game {
         } else if (a.repair) {
           this.useRepair(t);
           return;
+        } else if (a.barrage) { // B: give up the shot, air defence at full tilt
+          if (this.useBarrage(t)) return;
         } else if (a.recall) { // X: her squads home (the selected plane weapon's, else all of them)
           this.recallSquads(t, t.weapon.air && this.recallable(t, t.weapon).length ? t.weapon : null);
         } else if (a.ability) {
@@ -1565,6 +1571,7 @@ class Game {
     if (this.range) { this.resetRange(); return; } // the Codex range has no rounds: she died out there, start it over
     this.phase = 'roundEnd';
     const winner = this.tanks.find((t) => t.alive) || null;
+    this.lastWinner = winner ? this.tanks.indexOf(winner) : -1; // (she goes last next round)
     if (winner) {
       winner.wins++;
       winner.setPose('win');
@@ -1945,7 +1952,7 @@ class Game {
   saveMatch(resumeAt) {
     const data = {
       v: 1, resumeAt, completed: resumeAt === 'shop' ? this.round : this.round - 1, rounds: this.rounds, awardMult: this.awardMult,
-      balance: this.balance, events: this.events_on, map: this.mapChoice, prog: this.prog,
+      balance: this.balance, events: this.events_on, map: this.mapChoice, prog: this.prog, lastWinner: this.lastWinner ?? -1,
       tanks: this.tanks.map((t) => ({
         idx: t.idx, name: t.name, type: t.type, vehicle: t.vehicle.id, money: t.money, wins: t.wins,
         upgrades: t.upgrades, weapons: t.weapons, kits: t.kits, abilities: t.abilities, stats: t.stats, aa: t.aa,
@@ -1974,6 +1981,7 @@ class Game {
     this.turnSerial = 0;
     this.report = null;
     this.awardMult = d.awardMult || 1;
+    this.lastWinner = d.lastWinner ?? -1;
     this.setOptions({ balance: d.balance || 'classic', events: d.events === true, map: d.map, prog: d.prog === true });
     this.satellite = new Satellite();
     this.tanks = d.tanks.map((s) => {

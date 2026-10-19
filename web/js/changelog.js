@@ -4,6 +4,12 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['dfb0b06', 'Zero Point: the Naito MAIA beam now destroys everything inside it, bridges and radio towers included.'],
+  ['8518105', 'The winner of a round takes the last turn in the next round.'],
+  ['a44637a', 'Air defence: the round-end screen shows what it did. Planes shot down pay a small bounty. Anti-air also fires at ground hostiles close by. Point defence takes a little off shells. New: Barrage (B) skips your shot to make your air defence fire much more until your next turn.'],
+  ['1c4376a', 'Fixed: blimps were drawn far below where they really are.'],
+  ['ae1ca7c', 'Air defence does twice the damage.'],
+  ['5303b9f', 'Tutorial map changed: open ground between you and your rival.'],
   ['cd41a02', 'Tutorial: round 1 has no wind. Round 2 has wind, and a new step explains the wind arrow.'],
   ['5d7f0d6', 'The tutorial starts with a camera tour on a set map. It shows your rival and you, then a fort, a big tree and a radio tower. A shell hits each one. Then the camera zooms out over the map. Press Enter to skip the tour.'],
   ['c78363b', 'Game text rewritten in plain, simplified technical English: help, tutorial, progress, traits, abilities, upgrades, shop, Codex notes, notices and the event log. Story transmissions, taunts and weapon flavour lines are unchanged.'],

@@ -440,6 +440,7 @@ const UI = {
       else if (b.dataset.ab) g.input.queue.push({ ability: b.dataset.ab });
       else if (b.dataset.rep) g.input.queue.push({ repair: true });
       else if (b.dataset.recall) g.input.queue.push({ recall: true });
+      else if (b.dataset.barrage) g.input.queue.push({ barrage: true });
       else if (b.dataset.jump) g.input.queue.push({ jump: b.dataset.jump === 'leap' ? 'leap' : true });
     };
   },
@@ -489,6 +490,7 @@ const UI = {
     if (t.kits > 0) ab.push(`<button class="slot a" data-rep="1" title="Repair kit: restores ${Math.round(REPAIR_FRAC * 100)}% of health and armour, health first. Uses your turn." ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">R</span><span class="txt"><span class="nm">Repair kit</span><span class="st">× ${t.kits}</span></span></button>`);
     const rc = g.recallable ? g.recallable(t, t.weapon.air && g.recallable(t, t.weapon).length ? t.weapon : null) : [];
     if (rc.length) ab.push(`<button class="slot a" data-recall="1" title="Recall: send ${rc.length > 1 ? 'these squads' : 'this squad'} home now, with the loadout unspent. Then rivals cannot shoot ${rc.length > 1 ? 'them' : 'it'} over the zone. ${rc.length > 1 ? 'They rearm' : 'It rearms'} as usual. Does not use your turn."><span class="kb">X</span><span class="txt"><span class="nm">Recall</span><span class="st">${rc.length > 1 ? rc.length + ' squads' : esc(shortName(rc[0].w))}</span></span></button>`);
+    if ((t.aa || []).some(Boolean)) ab.push(`<button class="slot a${t.barrage ? ' armed' : ''}" data-barrage="1" title="Barrage: skip your shot. Until your next turn your air defence fires ${BARRAGE_BUDGET} times as many bursts, faster, at anything in range: planes, drones, and ground hostiles close by. Uses your turn." ${t.firedThisTurn ? 'disabled' : ''}><span class="kb">B</span><span class="txt"><span class="nm">Barrage</span><span class="st">${t.barrage ? 'active' : 'uses turn'}</span></span></button>`);
     for (const id of t.aa || []) {
       const a = AA_BY_ID[id];
       if (a) ab.push(`<span class="slot a passive" title="${esc(a.name)}: ${esc(a.long)}"><span class="kb">AA</span><span class="txt"><span class="nm">${esc(a.name.replace(/^(SI|NXi|LFS|Kotona) /, ''))}</span><span class="st">${a.role === 'missile' ? 'point defence' : 'anti-air'} · auto</span></span></span>`);
@@ -537,6 +539,17 @@ const UI = {
       return `<tr class="${t === winner ? 'win' : ''}"><td><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</td>
        <td>${esc(t.vehicle.name)}</td><td>${Math.round(t.roundDealt)}</td><td title="base ${money(award)} · own damage ${money(P.own)} · placement ${money(P.bonus)}">${money(t.roundPay || award)}</td><td>${t.wins}</td><td>${money(t.money)}</td></tr>`;
     }).join('');
+    // what each player's air defence did this round
+    const aa = tanks.filter((t) => t.aaStats && (t.aaStats.down || t.aaStats.dmg >= 1 || t.aaStats.cut >= 1)).map((t) => {
+      const S = t.aaStats, parts = [];
+      if (S.down) parts.push(`${S.down} shot down`);
+      if (S.dmg >= 1) parts.push(`${Math.round(S.dmg)} damage`);
+      if (S.stops) parts.push(`${S.stops} missile${S.stops > 1 ? 's' : ''} stopped`);
+      if (S.cut >= 1) parts.push(`${Math.round(S.cut)} damage blocked`);
+      return `<div><span class="dot" style="background:${t.color}"></span>${esc(t.name)}: ${parts.join(' · ')}</div>`;
+    });
+    $('re-aa').innerHTML = aa.length ? `<p class="mgh">Air defence</p>${aa.join('')}` : '';
+    $('re-aa').hidden = !aa.length;
     $('re-quips').innerHTML = '';
     $('re-next').textContent = last ? 'Final results ▸' : 'To the shop ▸';
     $('re-end').hidden = last;

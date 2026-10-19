@@ -656,6 +656,7 @@ function drawMaiaEye(ctx, cx, cy, o, k) {
 // thinning to mist. Anything that falls in is gone (Terrain.erase, Game.landed).
 // Screen-space scenes (Jupiter, the satellite) are drawn over everything by drawScreen.
 const NAITO = { TO_MAIA: 20, UP: 50, SPACE: 150, FADE: 168, JUP: 172, STIR: 205, RISE: 262, RED: 290, SAT: 300, ORDERS: 352, CHARGE: 372, CUT: 432, DIVE: 476, HIT: 512, ERASE: 14, END: 650 };
+const NAITO_DMG = 99999, NAITO_HITS_AFTER = 30; // each hit of the beam, every other frame while it cuts (armour, Deflectors and November's cap are all far short of it); it keeps on for NAITO_HITS_AFTER frames once the cut is full
 const NAITO_SKY = 9000; // how far the climb goes before the fade
 let _jupiter = null;
 // Jupiter, painted once into a small offscreen canvas of chunky pixels: banded, limb-darkened,
@@ -801,7 +802,25 @@ class NaitoStrike {
       }
       this.cut = r;
       for (const c of g.crates) if (c.alive && Math.abs(c.x - this.tx) < r) c.alive = false;
+      for (const B of (g.terrain.bridges || []).slice()) { // bridges over the cut go too, deck and columns
+        B.cols = B.cols.filter((x) => Math.abs(x - this.tx) >= r);
+        const gone = [];
+        B.segs.forEach((S, i) => { if (!S.gone && Math.abs(B.x0 + (i + 0.5) * BRIDGE_SEG - this.tx) < r) gone.push(i); });
+        if (gone.length) g.breakBridge(B, gone);
+      }
+      for (const T of g.terrain.towers || []) if (T.h && Math.abs(T.x - this.tx) < r) T.h = 0; // and radio towers (deleted with the ground under them)
       g.shake = Math.max(g.shake, 6);
+    }
+    if (t > N.HIT && t <= N.HIT + N.ERASE + NAITO_HITS_AFTER && (t - N.HIT) % 2 === 0) { // and everything in the beam takes 99999, again and again
+      const caught = this.caught || (this.caught = new Map()); // (what it has caught: it keeps on at where they were, dead or not)
+      for (const e of [...g.tanks, ...(g.mobs || []), ...(g.planes || [])]) {
+        if (e.alive && Math.abs(e.x - this.tx) <= Math.max(this.cut, this.cfg.r * 0.2) + (e.hw || 14) && !caught.has(e)) caught.set(e, e.center ? e.center() : { x: e.x, y: e.y });
+      }
+      for (let [e, at] of caught) {
+        if (e.alive) caught.set(e, at = e.center ? e.center() : { x: e.x, y: e.y });
+        for (let k = 0; k < 2; k++) g.particles.text(at.x + (Math.random() - 0.5) * 220, at.y - 20 - Math.random() * 220, String(NAITO_DMG), k ? '#ffd0e4' : '#ff4a8a', true);
+        if (e.alive) g.damage(e, NAITO_DMG, this.owner, true);
+      }
     }
     if (t === N.HIT + N.ERASE) {
       g.events.push('The beam removes the ground at the target.');

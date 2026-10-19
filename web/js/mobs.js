@@ -291,7 +291,7 @@ class Mob {
   // pink sensor lights, and a rocket pod either side of it
   drawBlimp(ctx, x, y, c, blink) {
     const f = this.facing || 1, R = (lx, ty, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x + (f > 0 ? lx : -lx - w)), Math.round(y + ty), w, h); };
-    const top = y - 30;
+    const top = -30; // (R adds y)
     R(-40, top + 4, 80, 14, c('#6a6878')); R(-34, top, 68, 4, c('#7c7a8a')); R(-34, top + 18, 68, 4, c('#55536a')); // envelope
     R(40, top + 6, 6, 10, c('#6a6878')); R(46, top + 9, 3, 4, c('#6a6878')); // nose
     for (let i = -24; i <= 28; i += 13) R(i, top + 2, 2, 18, c('#58566a')); // ribs

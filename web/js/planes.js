@@ -23,6 +23,7 @@ const PLANE_HH = 16;
 const PLANE_STAGGER = 14; // frames between take-offs
 const PLANE_HOVER = 420; // how high a squad waits over the ground near its mark (above the short-range AA)
 const PLANE_GAP = 44; // between planes in a squad's line
+function planeBounty(w) { return 60 + 40 * (w.rarity || 1); } // what shooting one of its planes down pays (¢100 a Common to ¢380 a Godly)
 const AIR_ANGLE = { dive: 80, heavy: 75, fortress: 86, fighter: 50, rocket: 40, torpedo: 25 }; // where it waits and attacks from: degrees over the horizon
 const TORPEDO_SPEED = 7;
 const TORPEDO_RUN = 760; // how far a torpedo runs before it goes off anyway
@@ -755,8 +756,13 @@ Object.assign(Game.prototype, {
     p.hp -= amt;
     this.hitPopup(p.sx, p.sy - 26, amt, hit, p);
     if (p.hp > 0) return;
-    p.alive = false; // (no bounty: they're somebody's planes)
+    p.alive = false;
     const c = p.center();
+    if (owner && !owner.isMob && owner !== p.owner && !p.w.fleet) { // a small bounty for a plane brought down (not for an ultimate's fleet)
+      const pay = planeBounty(p.w);
+      owner.money += pay + this.cpuCredit(owner, pay);
+      this.particles.text(c.x, c.y - 30, `+¢${pay}`, '#ffd84a');
+    }
     this.particles.explosion(c.x, c.y, 50, 'shell');
     for (let i = 0; i < 8; i++) this.particles.add({ x: c.x, y: c.y, vx: (Math.random() - 0.5) * 4, vy: -Math.random() * 3, g: 0.25, drag: 0.98, life: 1.2 + Math.random(), size: 3 + Math.random() * 4, color: i % 2 ? [60, 60, 64] : [255, 160, 80] });
     this.sfx.explosion(14);
