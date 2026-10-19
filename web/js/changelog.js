@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['ae1ca7c', 'Air defence does twice the damage.'],
   ['5303b9f', 'Tutorial map changed: open ground between you and your rival.'],
   ['cd41a02', 'Tutorial: round 1 has no wind. Round 2 has wind, and a new step explains the wind arrow.'],
   ['5d7f0d6', 'The tutorial starts with a camera tour on a set map. It shows your rival and you, then a fort, a big tree and a radio tower. A shell hits each one. Then the camera zooms out over the map. Press Enter to skip the tour.'],
