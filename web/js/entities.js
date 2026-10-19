@@ -50,7 +50,7 @@ class Tank {
     this.color = PLAYER_COLORS[idx % PLAYER_COLORS.length];
     this.money = 0;
     this.wins = 0;
-    this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0, deck: 0 };
+    this.upgrades = { hp: 0, armour: 0, fire: 0, engine: 0, computer: 0, workshop: 0, deck: 0 };
     this.core = starterCore(this.vehicle); // a core (cores.js): health, armour, a little off every hit, and a boost to one kind of gun
     this.coreFree = !!this.core; // (her starting one: it sells for scrap)
     this.weapons = [this.vehicle.weapon, ...(this.vehicle.extra || [])].map((w) => w.id);

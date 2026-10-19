@@ -651,9 +651,11 @@ const UI = {
       const sc = $('shop-core').querySelector('[data-sc]'); if (sc) sc.onclick = () => { g.sellCore(tank); render(); };
       $('shop-core').querySelector('[data-cf]').onclick = () => { this.shopFilter = 'core'; render(); $('shop-grid').scrollTop = 0; };
       $('shop-aa').querySelectorAll('[data-sa]').forEach((b) => { b.onclick = () => { g.sellAA(tank, b.dataset.sa); render(); }; });
-      $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour]].map(([id, label, cur]) => {
+      const fp = (l) => `${Math.round((Math.pow(FIRE_STEP, l) - 1) * 100)}%`, fl = tank.upgrades.fire | 0;
+      $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour], ['fire', 'Firepower', null]].map(([id, label, cur]) => {
         const cost = g.upgradeCost(tank, id);
-        return `<div class="upg"><span>${label} <small>${cur} → ${Math.round(cur * 1.3)}</small></span>
+        const now = id === 'fire' ? `+${fp(fl)} → +${fp(fl + 1)} damage` : `${cur} → ${Math.round(cur * 1.3)}`;
+        return `<div class="upg"><span>${label} <small>${now}</small>${id === 'fire' ? '<br><small>Every weapon you fire. No limit.</small>' : ''}</span>
           <button data-u="${id}" ${tank.money >= cost ? '' : 'disabled'}>${money(cost)}</button></div>`;
       }).join('') + VEHICLE_UPGRADES.filter((u) => (!u.notFor || !hasTrait(tank, u.notFor)) && (u.id !== 'deck' || g.has('deck'))).map((u) => {
         const lvl = tank.upgrades[u.id] | 0;
