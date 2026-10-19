@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['8c7e4fc', 'When you are out of a round, the CPUs aim much better, so the round ends sooner.'],
   ['2bcc9da', 'New: chainguns, from Common to Legendary. They fire a long stream of small rounds. Tracers: the stream moves onto the enemy nearest where it lands.'],
   ['14b6cca', 'Tutorial: the opening tour waits for you. Press Space to go to the next part.'],
   ['84655b7', 'MAIA keeps up: its strikes grow as the players get tougher, and in endless matches it keeps gaining levels.'],
