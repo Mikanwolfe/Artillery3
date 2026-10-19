@@ -174,6 +174,7 @@ const UI = {
     $('wel-old').onclick = () => this.welcomed();
     $('wel-all').onclick = () => { PROG.unlockAll(); this.welcomed(); };
     $('prog-close').onclick = () => { $('progress').hidden = true; $('menu').hidden = false; };
+    $('ach-close').onclick = () => { $('achieve').hidden = true; $('menu').hidden = false; this.renderProgCard(); };
     $('prog-tut').onclick = () => { $('progress').hidden = true; this.startTutorial(); };
     $('prog-all').onclick = () => { PROG.unlockAll(); this.renderProgress(); };
     $('prog-reset').onclick = () => { if (confirm('Reset progress to Tier 0?')) { PROG.reset(); this.renderProgress(); } };
@@ -191,8 +192,9 @@ const UI = {
     $('prog-card').innerHTML = `<div class="progcard"><div class="pc-top"><b>Tier ${i}</b><span class="mgh">${PROG.data.all ? 'all unlocked' : `${c} round${c === 1 ? '' : 's'} cleared`}</span></div>
       <span class="meter"><i style="width:${pct}%;--c:var(--gold)"></i></span>
       <span class="pc-next">${n ? `Next tier at ${n.at} rounds: <b>${esc(girlName(n.girl))}</b>. Hostiles: ${esc(n.foes)}` : 'All girls, hostiles and items are unlocked.'}</span>
-      <div class="pc-row"><button id="prog-open" class="ghost">Progress tree</button>${PROG.data.tut ? '' : '<button id="prog-tut2" class="ghost">Tutorial</button>'}</div></div>`;
+      <div class="pc-row"><button id="prog-open" class="ghost">Progress tree</button><button id="ach-open" class="ghost">Achievements ${ACH.total()}/${ACHIEVEMENTS.length}</button>${PROG.data.tut ? '' : '<button id="prog-tut2" class="ghost">Tutorial</button>'}</div></div>`;
     $('prog-open').onclick = () => { $('menu').hidden = true; this.renderProgress(); $('progress').hidden = false; };
+    $('ach-open').onclick = () => this.openAchievements();
     if ($('prog-tut2')) $('prog-tut2').onclick = () => this.startTutorial();
   },
 
@@ -651,9 +653,11 @@ const UI = {
       const sc = $('shop-core').querySelector('[data-sc]'); if (sc) sc.onclick = () => { g.sellCore(tank); render(); };
       $('shop-core').querySelector('[data-cf]').onclick = () => { this.shopFilter = 'core'; render(); $('shop-grid').scrollTop = 0; };
       $('shop-aa').querySelectorAll('[data-sa]').forEach((b) => { b.onclick = () => { g.sellAA(tank, b.dataset.sa); render(); }; });
-      $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour]].map(([id, label, cur]) => {
+      const fp = (l) => `${Math.round((Math.pow(FIRE_STEP, l) - 1) * 100)}%`, fl = tank.upgrades.fire | 0;
+      $('shop-upg').innerHTML = [['hp', 'Health', tank.maxHp], ['armour', 'Armour', tank.maxArmour], ['fire', 'Firepower', null]].map(([id, label, cur]) => {
         const cost = g.upgradeCost(tank, id);
-        return `<div class="upg"><span>${label} <small>${cur} → ${Math.round(cur * 1.3)}</small></span>
+        const now = id === 'fire' ? `+${fp(fl)} → +${fp(fl + 1)} damage` : `${cur} → ${Math.round(cur * 1.3)}`;
+        return `<div class="upg"><span>${label} <small>${now}</small>${id === 'fire' ? '<br><small>Every weapon you fire. No limit.</small>' : ''}</span>
           <button data-u="${id}" ${tank.money >= cost ? '' : 'disabled'}>${money(cost)}</button></div>`;
       }).join('') + VEHICLE_UPGRADES.filter((u) => (!u.notFor || !hasTrait(tank, u.notFor)) && (u.id !== 'deck' || g.has('deck'))).map((u) => {
         const lvl = tank.upgrades[u.id] | 0;

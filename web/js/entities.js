@@ -50,7 +50,7 @@ class Tank {
     this.color = PLAYER_COLORS[idx % PLAYER_COLORS.length];
     this.money = 0;
     this.wins = 0;
-    this.upgrades = { hp: 0, armour: 0, engine: 0, computer: 0, workshop: 0, deck: 0 };
+    this.upgrades = { hp: 0, armour: 0, fire: 0, engine: 0, computer: 0, workshop: 0, deck: 0 };
     this.core = starterCore(this.vehicle); // a core (cores.js): health, armour, a little off every hit, and a boost to one kind of gun
     this.coreFree = !!this.core; // (her starting one: it sells for scrap)
     this.weapons = [this.vehicle.weapon, ...(this.vehicle.extra || [])].map((w) => w.id);
@@ -137,6 +137,7 @@ class Tank {
     this.wings = {}; // plane weapon id -> its squads (wing())
     this.turnsTaken = 0; // own turns this round (a squad strikes on a later one)
     this.aaGuns = null;
+    this.achLow = false; // her health went under 10% this round (achievements.js: Rebirth)
     this.barrage = false; // Barrage (aa.js): her mounts at full tilt until her next turn
     this.aaStats = { down: 0, dmg: 0, cut: 0, stops: 0 }; // her air defence this round (the round-end screen)
     this.barrier = null; // Bulwark Barrier direction (unit vector), until the next turn

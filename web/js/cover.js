@@ -85,7 +85,7 @@ Object.assign(Game.prototype, {
         if (G.capHp <= 0) this.shatterCap(G, g);
       }
       if (G.stemHp <= 0) {
-        if (G.state === 'up') { G.state = 'falling'; G.vy = 0; this.sfx.thud(); this.ui.notice(`The ${giantName(G)} is falling!`); }
+        if (G.state === 'up') { G.state = 'falling'; G.vy = 0; this.ach('timber'); this.sfx.thud(); this.ui.notice(`The ${giantName(G)} is falling!`); }
         else { G.state = 'gone'; for (let i = 0; i < 10; i++) this.particles.puff(G.x, g - Math.random() * G.stemH, giantCols(G).stem); }
       }
     }

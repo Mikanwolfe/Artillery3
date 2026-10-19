@@ -4,6 +4,8 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['7ec8d43', 'Achievements: 37 to earn, from your first round won to one for each Legendary. See them from the menu.'],
+  ['3bcdd03', 'New shop upgrade: Firepower, more damage with every weapon, with no limit. The map gets tougher as the strongest player gets stronger: smaller craters, and tougher forts, bridges, towers and trees.'],
   ['dfb0b06', 'Zero Point: the Naito MAIA beam now destroys everything inside it, bridges and radio towers included.'],
   ['8518105', 'The winner of a round takes the last turn in the next round.'],
   ['a44637a', 'Air defence: the round-end screen shows what it did. Planes shot down pay a small bounty. Anti-air also fires at ground hostiles close by. Point defence takes a little off shells. New: Barrage (B) skips your shot to make your air defence fire much more until your next turn.'],

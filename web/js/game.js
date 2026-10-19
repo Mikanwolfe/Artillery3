@@ -22,6 +22,10 @@ const AIM_GUIDE_WIND = false; // true = the guide also bends with the wind (much
 const WIND_SCALE = 0.06;
 const WIND_FULL = 0.5 * WIND_SCALE; // game.wind's magnitude at A3's strongest wind
 const UPGRADE_PER_POINT = 6; // rebalanced Health++ / Armour++: $ per point of health or armour
+const FIRE_STEP = 1.25, FIRE_COST = 1200; // Firepower++: each level x1.25 damage with every weapon she fires, no cap; the price rises x1.3 a level
+// the map toughens with the players: blasts on ground and structures count for less the stronger the
+// strongest girl is (health + armour, against the strongest of this match's girls as they started)
+const MAP_CRATER_MIN = 0.3; // craters shrink with the square root of it, to no less than this
 // Repair kits: bought in the shop, used with R instead of firing that turn
 const REPAIR_COST = 450;
 const WINGS_GLIDE = 3; // Ikaros's fall speed cap (world units a frame)
@@ -423,6 +427,7 @@ class Game {
     this.awardMult = 1;
     this.satellite = new Satellite();
     this.tanks = configs.map((c, i) => new Tank(i, c));
+    this.mapBase = Math.max(...this.tanks.map((t) => t.maxHp + t.maxArmour)); // (the map's toughness starts at 1: mapToughness)
     this.rounds = rounds;
     this.round = 0;
     this.events = [];
@@ -683,6 +688,7 @@ class Game {
   landed(t, drop) {
     if (t.y >= WORLD_BOTTOM) { // down into a void (15X's Zero Point): gone
       this.events.push(`${t.name} fell into the void.`);
+      if (this.terrain.voidOwner && this.terrain.voidOwner !== t) this.ach('void', this.terrain.voidOwner);
       this.damage(t, (t.hp + t.armour) * 10 + 1000, this.terrain.voidOwner && this.terrain.voidOwner !== t ? this.terrain.voidOwner : null);
       return;
     }
@@ -803,6 +809,7 @@ class Game {
   claimCrate(c, t) {
     if (!c.alive || !t) return;
     c.alive = false;
+    this.ach('poem', t);
     let desc;
     if (c.kind === 'golden') { // one of three, each well worth the detour
       const r = rng.int(0, 2);
@@ -1078,6 +1085,7 @@ class Game {
       this.satTarget = null;
       return;
     }
+    this.ach('maia', this.satTarget.owner);
     this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, lock: this.satTarget.lock || null, w: this.satTarget.w || null };
     this.retarget(this.satSeq);
     this.satTarget = null;
@@ -1351,13 +1359,23 @@ class Game {
     }
   }
 
+  // how much tougher the map is than at the start: the strongest girl's health and armour now, against the strongest at the start
+  mapToughness() {
+    const base = this.mapBase || Math.max(...this.tanks.map((t) => t.vehicle.hp + t.vehicle.armour));
+    return Math.max(1, Math.max(...this.tanks.map((t) => t.maxHp + t.maxArmour)) / base);
+  }
+
   explode(x, y, def, owner, palette = 'shell') {
     if (this.report) this.report.blasts.push({ x, y });
-    if (y > this.terrain.hAt(x) - (def.explR || 10) * 4 - 20) this.terrain.crater(x, def.explR || 10); // airbursts don't dig
-    if (this.terrain.forts.length) this.blastForts(x, y, def);
-    this.blastInfra(x, y, def);
-    this.blastGiants(x, y, def);
-    this.blastAhu(x, y, def);
+    // the map: smaller craters, and structures (forts, bridges, towers, trees) take 1/k of the blast
+    const k = this.range ? 1 : this.mapToughness();
+    const sdef = k > 1 ? { ...def, dmg: ((def.dmg * 0.5 + 40) / k - 40) * 2 } : def; // (structures take (dmg/2 + 40) a blast)
+    const crR = (def.explR || 10) * Math.max(MAP_CRATER_MIN, 1 / Math.sqrt(k));
+    if (y > this.terrain.hAt(x) - (def.explR || 10) * 4 - 20) this.terrain.crater(x, crR); // airbursts don't dig
+    if (this.terrain.forts.length) this.blastForts(x, y, sdef);
+    this.blastInfra(x, y, sdef);
+    this.blastGiants(x, y, sdef);
+    this.blastAhu(x, y, sdef);
     if (y > this.terrain.hAt(x) - 30) this.terrain.scorch(x, Math.max(14, def.dmgR * 0.3), 0.2); // a faint scorch, ground hits only
     // a blast that catches a supply crate claims it for whoever fired
     for (const c of this.crates) {
@@ -1395,7 +1413,7 @@ class Game {
       }
       if (amt > 0) this.damage(t, amt, owner, false, def, hit);
     }
-    this.startSlide(x, def.explR || 10);
+    this.startSlide(x, crR);
     this.particles.explosion(x, y, def.visR || def.dmgR, palette); // visR: set pieces look bigger than they hit
     this.sfx.explosion(Math.min(60, (def.explR || 10) + def.dmgR * 0.1));
     this.shake = Math.max(this.shake, Math.min(14, 2 + def.dmgR * 0.05));
@@ -1408,6 +1426,8 @@ class Game {
     if (owner && owner.isMob) owner = null; // mob attacks count as the environment
     const OC = owner && def && coreOf(owner); // (her core boosts its kind of weapon)
     if (OC && coreKindOf(def) === OC.coreKind) { amt *= 1 + OC.boost; if (hit) hit.core = OC.boost; }
+    if (owner && def && owner.upgrades && owner.upgrades.fire) amt *= Math.pow(FIRE_STEP, owner.upgrades.fire); // her Firepower levels
+    this.achHit(t, amt, owner, def, hit); // (achievements.js)
     if (t.isPlane) { this.damagePlane(t, amt, owner, def, hit); return; }
     if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
     if (t.isSat) { this.damageSat(t, amt, owner, hit); return; }
@@ -1428,6 +1448,7 @@ class Game {
       if (hasTrait(t, 'redundancy') && amt > t.maxHp * 0.4) { amt = t.maxHp * 0.4; if (hit) hit.capped = true; } // November: triple redundancy
       taken = Math.min(amt, t.hp);
       t.hp -= amt;
+      if (t.hp > 0 && t.hp < t.maxHp * 0.1) t.achLow = true; // (Rebirth: won from below 10%)
     }
     t.flash = 1;
     if (!quiet && amt > 3) t.setPose('hit');
@@ -1572,6 +1593,7 @@ class Game {
     this.phase = 'roundEnd';
     const winner = this.tanks.find((t) => t.alive) || null;
     this.lastWinner = winner ? this.tanks.indexOf(winner) : -1; // (she goes last next round)
+    this.achRound(winner);
     if (winner) {
       winner.wins++;
       winner.setPose('win');
@@ -1622,6 +1644,7 @@ class Game {
     this.phase = 'gameEnd';
     this.ui.showHud(false);
     this.ui.showGameEnd(st);
+    if (st[0].wins > (st[1] ? st[1].wins : -1)) this.ach('match', st[0]);
     if (st[0].isCpu && st[0].wins > (st[1] ? st[1].wins : -1)) this.ui.addEndQuip(st[0], pickTaunt(st[0], 'match_win'));
   }
 
@@ -1645,7 +1668,8 @@ class Game {
   // Rebalanced: a flat UPGRADE_PER_POINT for every point gained, so defence grows in step with
   // spending, as offence does with the rebalanced weapon prices.
   upgradeCost(tank, stat) {
-    const level = tank.upgrades[stat];
+    const level = tank.upgrades[stat] | 0;
+    if (stat === 'fire') return Math.round((FIRE_COST * Math.pow(1.3, level)) / 10) * 10;
     if (BALANCE === 'classic') return Math.floor(Math.pow(1.9, level * 0.9) * 40) + 300;
     const cur = stat === 'hp' ? tank.maxHp : tank.maxArmour;
     return Math.max(100, Math.round((cur * 0.3 * UPGRADE_PER_POINT) / 10) * 10);
@@ -1692,6 +1716,8 @@ class Game {
       if (tank.money < cost) { this.sfx.deny(); return false; }
       tank.money -= cost;
       tank.upgrades[id]++;
+      if (id === 'fire' && tank.upgrades.fire >= ACH_TUNING) this.ach('tuning', tank);
+      if (tank.maxHp > ACH_DEMIGOD) this.ach('demigod', tank);
     }
     this.sfx.buy();
     return true;
@@ -1859,8 +1885,9 @@ class Game {
       const lvl = t.upgrades[id] | 0;
       if (lvl < 1 && t.money - reserve >= u.costs[lvl] * 1.5) { t.money -= u.costs[lvl]; t.upgrades[id] = lvl + 1; }
     }
-    for (let n = 0; n < 6; n++) {
-      const stat = t.upgrades.hp <= t.upgrades.armour ? 'hp' : 'armour';
+    for (let n = 0; n < 9; n++) { // health, armour and firepower in turn, while the money lasts
+      const lv = (id) => t.upgrades[id] | 0;
+      const stat = lv('fire') < Math.min(lv('hp'), lv('armour')) ? 'fire' : lv('hp') <= lv('armour') ? 'hp' : 'armour';
       const cost = this.upgradeCost(t, stat);
       if (t.money - reserve < cost) break;
       t.money -= cost;
@@ -1933,6 +1960,7 @@ class Game {
     }
     this.sfx.repair();
     this.events.push(`${t.name} used a repair kit (+${got}).`);
+    this.ach('rest', t);
     if (t.isCpu && Math.random() < 0.6) this.banter(t, 'repair');
     // using the kit is the turn
     this.charging = false;
@@ -1952,7 +1980,7 @@ class Game {
   saveMatch(resumeAt) {
     const data = {
       v: 1, resumeAt, completed: resumeAt === 'shop' ? this.round : this.round - 1, rounds: this.rounds, awardMult: this.awardMult,
-      balance: this.balance, events: this.events_on, map: this.mapChoice, prog: this.prog, lastWinner: this.lastWinner ?? -1,
+      balance: this.balance, events: this.events_on, map: this.mapChoice, prog: this.prog, lastWinner: this.lastWinner ?? -1, mapBase: this.mapBase,
       tanks: this.tanks.map((t) => ({
         idx: t.idx, name: t.name, type: t.type, vehicle: t.vehicle.id, money: t.money, wins: t.wins,
         upgrades: t.upgrades, weapons: t.weapons, kits: t.kits, abilities: t.abilities, stats: t.stats, aa: t.aa,
@@ -1982,13 +2010,14 @@ class Game {
     this.report = null;
     this.awardMult = d.awardMult || 1;
     this.lastWinner = d.lastWinner ?? -1;
+    this.mapBase = d.mapBase || 0;
     this.setOptions({ balance: d.balance || 'classic', events: d.events === true, map: d.map, prog: d.prog === true });
     this.satellite = new Satellite();
     this.tanks = d.tanks.map((s) => {
       const t = new Tank(s.idx, { name: s.name, type: s.type, vehicle: s.vehicle });
       t.money = s.money | 0;
       t.wins = s.wins | 0;
-      t.upgrades = { hp: s.upgrades?.hp | 0, armour: s.upgrades?.armour | 0 };
+      t.upgrades = { hp: s.upgrades?.hp | 0, armour: s.upgrades?.armour | 0, fire: s.upgrades?.fire | 0 };
       for (const u of VEHICLE_UPGRADES) t.upgrades[u.id] = clamp(s.upgrades?.[u.id] | 0, 0, u.costs.length);
       const ws = (s.weapons || []).filter((id) => WEAPON_BY_ID[id]).slice(0, MAX_WEAPONS);
       t.weapons = ws.length ? ws : [t.vehicle.weapon, ...(t.vehicle.extra || [])].map((w) => w.id);

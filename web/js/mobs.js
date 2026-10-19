@@ -511,6 +511,7 @@ Object.assign(Game.prototype, {
   // its bounty, to each player in proportion to how much of it she took off (do 30% of the work,
   // get 30% of the bounty; what the hazards and its own kind did pays nobody)
   payMobBounty(m, killer) {
+    if (killer && !killer.isMob) this.achCount('mobs', 1, killer);
     const pool = m.maxHp + m.maxArmour + (m.maxShield || 0) || 1;
     const shares = [];
     for (const [t, d] of m.dmgBy || []) {
