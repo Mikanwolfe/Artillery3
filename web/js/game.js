@@ -409,7 +409,8 @@ class Game {
   // opts: { balance: 'rebalanced' | 'classic', events: bool }
   startMatch(configs, rounds, opts = {}) {
     // each match runs on its own seed (the page's ?seed for the first), shown on the pause screen
-    if (this.seedUsed || this.seed === undefined) this.seed = Math.floor(Math.random() * 1e6);
+    if (opts.seed !== undefined) this.seed = opts.seed; // (a set map: the tutorial)
+    else if (this.seedUsed || this.seed === undefined) this.seed = Math.floor(Math.random() * 1e6);
     this.seedUsed = true;
     rng.seed(this.seed);
     const label = document.getElementById('pause-seed');
@@ -604,6 +605,7 @@ class Game {
     if (this.phase === 'aim') this.updateAim();
     else if (this.phase === 'resolve') this.updateResolve();
     else if (this.phase === 'hazard') this.updateHazard();
+    else if (this.phase === 'intro') this.updateIntro(); // (the tutorial's camera tour: progress.js)
     this.lasers = this.lasers.filter((l) => l.update());
     this.updateTraces();
     for (const c of this.crates) if (c.alive) c.update(this);
