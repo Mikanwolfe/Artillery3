@@ -149,7 +149,8 @@ Object.assign(Game.prototype, {
 // Before the first lesson the camera shows the field: the rival, then her, both facing each other,
 // a fort and a big tree (a shell hits each), a radio tower (a shell at its base brings it down),
 // then it pulls back over the whole map, centred on her. A set map (TUT_SEED on TUT_MAP), so it is
-// the same every time. Enter skips it. Game.step runs updateIntro while phase is 'intro'.
+// the same every time. Each caption waits for Space (or a click on it), so there is time to read.
+// Game.step runs updateIntro while phase is 'intro'.
 const TUT_SEED = 79; // (gentle ground between them, no hill or tree in the way)
 const TUT_MAP = 'forest';
 const INTRO_FLIGHT = 75; // frames a demonstration shell is in the air
@@ -200,10 +201,23 @@ Object.assign(Game.prototype, {
   updateIntro() {
     const I = this.intro;
     if (!I) { this.phase = 'aim'; return; }
+    // Space (a fresh press) or a click on the caption moves on from a caption
+    const sp = this.input.ctl.charge;
+    if (sp && !I.space) I.go = true;
+    I.space = sp;
+    if (I.hold) {
+      this.projectiles = this.projectiles.filter((p) => p.update());
+      this.input.queue.length = 0;
+      if (!I.go) return;
+      I.hold = false;
+      const nx = I.beats.find((b) => b.at >= I.f); // (straight on to the next beat: the caption was the wait)
+      if (nx) I.f = nx.at;
+    }
+    I.go = false;
     for (const b of I.beats) {
       if (b.at !== I.f) continue;
-      if (b.end) { this.introEnd(); return; }
-      if (b.title) this.ui.coachShow(`Tutorial · ${b.title}`, `${b.text} (Enter: skip)`);
+      if (b.end) { if (sp) return; this.introEnd(); return; } // (once Space is let go: it would start her first shot)
+      if (b.title) { this.ui.coachShow(`Tutorial · ${b.title}`, `${b.text} (Space: next)`); I.hold = true; }
       if (b.focus) this.cam.follow(b.focus);
       if (b.zoom) this.cam.zoomTo = clamp(b.zoom, camZoomMin(), CAM_ZOOM_MAX);
       if (b.fire) this.introShot(b.fire);

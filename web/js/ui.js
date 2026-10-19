@@ -103,7 +103,6 @@ const UI = {
         if (el) { el.click(); e.preventDefault(); }
         return;
       }
-      if (e.code === 'Enter' && this.game.phase === 'intro') { this.game.introEnd(); e.preventDefault(); return; } // (skip the tutorial's tour)
       if (e.code !== 'Enter' || /^(INPUT|SELECT|TEXTAREA|SUMMARY)$/.test(e.target.tagName)) return;
       for (const id of ['re-next', 'shop-done', 'ge-again']) {
         const b = $(id);
@@ -178,7 +177,8 @@ const UI = {
     $('prog-tut').onclick = () => { $('progress').hidden = true; this.startTutorial(); };
     $('prog-all').onclick = () => { PROG.unlockAll(); this.renderProgress(); };
     $('prog-reset').onclick = () => { if (confirm('Reset progress to Tier 0?')) { PROG.reset(); this.renderProgress(); } };
-    $('coach-skip').onclick = () => g.tutEnd(false);
+    $('coach-skip').onclick = (e) => { e.stopPropagation(); g.tutEnd(false); };
+    $('coach').onclick = () => { if (g.phase === 'intro' && g.intro) g.intro.go = true; }; // (the tour's captions: a click moves on, like Space)
     this.renderProgCard();
     if (!PROG.data.asked && !new URLSearchParams(location.search).has('auto')) { $('menu').hidden = true; $('welcome').hidden = false; }
   },
