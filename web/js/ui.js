@@ -103,6 +103,7 @@ const UI = {
         if (el) { el.click(); e.preventDefault(); }
         return;
       }
+      if (e.code === 'Enter' && this.game.phase === 'intro') { this.game.introEnd(); e.preventDefault(); return; } // (skip the tutorial's tour)
       if (e.code !== 'Enter' || /^(INPUT|SELECT|TEXTAREA|SUMMARY)$/.test(e.target.tagName)) return;
       for (const id of ['re-next', 'shop-done', 'ge-again']) {
         const b = $(id);
@@ -241,16 +242,19 @@ const UI = {
     this.game.sfx.unlock();
     const me = (this.players.find((p) => p.type === 'human') || {}).name || 'P-Chan';
     $('menu').hidden = true;
-    this.game.startMatch([{ name: me, type: 'human', vehicle: 'gwt' }, { name: cpuName([me]), type: 'easy', vehicle: 'gwt' }], 2, { balance: 'rebalanced', events: false, map: 'forest', prog: true });
+    this.game.startMatch([{ name: me, type: 'human', vehicle: 'gwt' }, { name: cpuName([me]), type: 'easy', vehicle: 'gwt' }], 2, { balance: 'rebalanced', events: false, map: TUT_MAP, seed: TUT_SEED, prog: true });
     this.game.tutStart();
   },
   coach(T) {
     const box = $('coach');
     if (!T) { box.hidden = true; return; }
     const S = TUTORIAL[T.i];
-    $('coach-title').textContent = `Tutorial ${T.i + 1}/${TUTORIAL.length} · ${S.title}`;
-    $('coach-text').textContent = S.text;
-    box.hidden = false;
+    this.coachShow(`Tutorial ${T.i + 1}/${TUTORIAL.length} · ${S.title}`, S.text);
+  },
+  coachShow(title, text) {
+    $('coach-title').textContent = title;
+    $('coach-text').textContent = text;
+    $('coach').hidden = false;
   },
   tutDone() {
     const d = document.createElement('div');

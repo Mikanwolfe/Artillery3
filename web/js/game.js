@@ -409,7 +409,8 @@ class Game {
   // opts: { balance: 'rebalanced' | 'classic', events: bool }
   startMatch(configs, rounds, opts = {}) {
     // each match runs on its own seed (the page's ?seed for the first), shown on the pause screen
-    if (this.seedUsed || this.seed === undefined) this.seed = Math.floor(Math.random() * 1e6);
+    if (opts.seed !== undefined) this.seed = opts.seed; // (a set map: the tutorial)
+    else if (this.seedUsed || this.seed === undefined) this.seed = Math.floor(Math.random() * 1e6);
     this.seedUsed = true;
     rng.seed(this.seed);
     const label = document.getElementById('pause-seed');
@@ -503,6 +504,7 @@ class Game {
     if (d > 225) d += 90;
     this.windDir = rad(d);
     this.windMag = 0.5 * rng.next();
+    if (this.tut) this.windMag = this.round < 2 ? 0 : Math.max(this.windMag, 0.25); // (the tutorial: calm in round 1, a clear wind in round 2)
     this.wind = { x: Math.cos(this.windDir) * this.windMag * WIND_SCALE, y: Math.sin(this.windDir) * this.windMag * WIND_SCALE };
   }
 
@@ -604,6 +606,7 @@ class Game {
     if (this.phase === 'aim') this.updateAim();
     else if (this.phase === 'resolve') this.updateResolve();
     else if (this.phase === 'hazard') this.updateHazard();
+    else if (this.phase === 'intro') this.updateIntro(); // (the tutorial's camera tour: progress.js)
     this.lasers = this.lasers.filter((l) => l.update());
     this.updateTraces();
     for (const c of this.crates) if (c.alive) c.update(this);

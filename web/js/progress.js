@@ -96,7 +96,7 @@ const TUTORIAL = [
     done: (g, t, s) => Math.abs(t.x - s.x) > 30 },
   { title: 'Aim', text: 'Press ↑ or ↓ to change the gun angle. Aim at your rival.',
     done: (g, t, s) => Math.abs(t.elev - s.elev) >= 8 },
-  { title: 'Fire', text: 'Hold Space to charge. Release Space to fire. More charge gives more range. Wind moves the shell; check the wind arrow at the top.',
+  { title: 'Fire', text: 'Hold Space to charge. Release Space to fire. More charge gives more range. There is no wind in this round.',
     done: (g, t) => t.firedThisTurn },
   { title: 'Second shot', text: 'G.W. Tiger fires two shots each turn. Correct your aim from the first impact. Fire again. If the first shot hits a rival, you get it back.',
     done: (g, t) => g.active !== t || (g.phase === 'aim' && t.shotsLeft <= 0) },
@@ -106,12 +106,14 @@ const TUTORIAL = [
     done: (g) => g.phase === 'roundEnd' || g.phase === 'shop' },
   { title: 'Shop', text: 'This is the shop. Bought guns do more damage. After a bought gun fires, it reloads for 1–3 turns. Your starting gun does not reload. The core (top right) adds health, armour and damage. Click Done to continue.',
     done: (g) => g.phase !== 'shop' && g.phase !== 'roundEnd' && g.round >= 2 },
+  { title: 'Wind', text: 'This round has wind. The arrow at the top shows its direction and strength. Wind pushes your shells. Aim to correct for it, then fire.',
+    done: (g, t) => g.round >= 2 && t.firedThisTurn },
   { title: 'Round 2', text: 'Win this round. Each round you finish counts toward the next tier. A tier unlocks a girl, hostiles and shop items.',
     done: (g) => g.phase === 'gameEnd' },
 ];
 
 Object.assign(Game.prototype, {
-  tutStart() { this.tut = { i: 0, s: null }; this.ui.coach(this.tut); },
+  tutStart() { this.tut = { i: 0, s: null }; this.setWind(); this.windMarker = this.windDir; this.ui.coach(this.tut); this.introStart(); }, // (round 1: no wind)
   tutTick() {
     const T = this.tut;
     if (!T) return;
@@ -134,9 +136,99 @@ Object.assign(Game.prototype, {
   },
   tutEnd(finished) {
     this.tut = null;
+    if (this.phase === 'intro') this.introEnd();
     PROG.data.tut = true;
     PROG.save();
     this.ui.coach(null);
     if (finished) this.ui.tutDone();
+  },
+});
+
+// ------------------------------------------------------------ the tutorial's opening tour
+// Before the first lesson the camera shows the field: the rival, then her, both facing each other,
+// a fort and a big tree (a shell hits each), a radio tower (a shell at its base brings it down),
+// then it pulls back over the whole map, centred on her. A set map (TUT_SEED on TUT_MAP), so it is
+// the same every time. Enter skips it. Game.step runs updateIntro while phase is 'intro'.
+const TUT_SEED = 20; // (calm wind; a big oak between them)
+const TUT_MAP = 'forest';
+const INTRO_FLIGHT = 75; // frames a demonstration shell is in the air
+
+Object.assign(Game.prototype, {
+  introStart() {
+    const me = this.tanks.find((t) => !t.isCpu), cpu = this.tanks.find((t) => t.isCpu);
+    if (!me || !cpu) return;
+    const T = this.terrain, mid = (me.x + cpu.x) / 2;
+    me.facing = Math.sign(cpu.x - me.x) || 1;
+    cpu.facing = -me.facing;
+    // a fort to shoot at, out past the rival (forts are off in the tutorial's events-off match)
+    const fx = clamp(cpu.x + Math.sign(cpu.x - me.x) * 420, 300, WORLD_W - 300);
+    T.forts.push(new Fort(fx, T, this.biome.fort));
+    const fort = T.forts[T.forts.length - 1];
+    const fortAt = { x: fort.x0 + (fort.cols * FORT_CELL) / 2, y: T.hAt(fort.x0 + (fort.cols * FORT_CELL) / 2) };
+    const giant = (T.giants || []).find((G) => G.state === 'up');
+    // and a radio tower (they only stand from round 2 on): on the highest flat ground clear of the rest
+    if (!(T.towers || []).length) this.placeTowers([me.x, cpu.x, fx, fx - 100, fx + 100].concat((T.giants || []).flatMap((G) => [G.x - 150, G.x, G.x + 150])), T.material, 1, 260);
+    const tower = (T.towers || []).slice().sort((a, b) => Math.abs(a.x - mid) - Math.abs(b.x - mid))[0];
+    const at = (x, dy = 0) => ({ x, y: T.hAt(x) - dy });
+    const fit = clamp(VIEW_W / (Math.abs(me.x - cpu.x) + 600), camZoomMin(), 1.2);
+    const B = [];
+    let f = 0;
+    const beat = (len, o) => { B.push({ at: f, ...o }); f += len; };
+    beat(150, { title: 'Your rival', text: 'This is your rival. She is a CPU player.', focus: at(cpu.x, 60), zoom: 1.5 });
+    beat(150, { title: 'You', text: 'This is you: G.W. Tiger. You face your rival.', focus: at(me.x, 60), zoom: 1.5 });
+    beat(180, { title: 'Turns', text: 'You and your rival take turns to fire. The last player alive wins the round.', focus: at(mid, 120), zoom: fit });
+    beat(60, { title: 'Destructibles', text: 'Shells destroy ground and structures. A fort gives cover until shells break it.', focus: { x: fortAt.x, y: fortAt.y - 80 }, zoom: 1.2 });
+    beat(150, { fire: { x: fortAt.x, y: fortAt.y - 40 } });
+    if (giant) {
+      beat(60, { title: 'Destructibles', text: 'A big tree gives cover. Hit its trunk and the tree falls.', focus: at(giant.x, 140), zoom: 1.1 });
+      beat(190, { fire: { ...at(giant.x, 20), dx: 480, dy: 140, n: 40 } }); // (low from the side, under the canopy)
+    }
+    if (tower) {
+      beat(60, { title: 'Radio tower', text: 'Hit a radio tower at its base and it falls. Do not stand near it.', focus: at(tower.x, 120), zoom: 0.75 });
+      beat(240, { fire: { ...at(tower.x + 12, 0), dx: 420, dy: 300, n: 50 } }); // (a low arc: a high one meets MAIA)
+    }
+    beat(200, { title: 'The map', text: 'This is the full map. Use the mouse wheel to zoom. Drag to look around.', focus: at(me.x, 200), zoom: camZoomMin() });
+    beat(0, { end: true });
+    this.intro = { f: 0, beats: B, shooter: cpu };
+    $('banner').classList.remove('show'); // (her turn's banner waits for the tour to end)
+    this.phase = 'intro';
+    this.charging = false;
+    this.report = { shooter: cpu, blasts: [], dmg: new Map(), fall: new Map(), kills: [] };
+  },
+
+  updateIntro() {
+    const I = this.intro;
+    if (!I) { this.phase = 'aim'; return; }
+    for (const b of I.beats) {
+      if (b.at !== I.f) continue;
+      if (b.end) { this.introEnd(); return; }
+      if (b.title) this.ui.coachShow(`Tutorial · ${b.title}`, `${b.text} (Enter: skip)`);
+      if (b.focus) this.cam.follow(b.focus);
+      if (b.zoom) this.cam.zoomTo = clamp(b.zoom, camZoomMin(), CAM_ZOOM_MAX);
+      if (b.fire) this.introShot(b.fire);
+    }
+    I.f++;
+    this.projectiles = this.projectiles.filter((p) => p.update());
+    this.input.queue.length = 0;
+  },
+
+  // a demonstration shell, from high up off to one side, onto (x, y) in INTRO_FLIGHT frames (no wind)
+  // (hard enough to bring down a tree or a tower in one: these are far from both girls)
+  introShot(to) {
+    const w = { ...WEAPON_BY_ID.morser, drift: 0, dmg: 800, dmgR: 70, explR: 24 };
+    const n = to.n || INTRO_FLIGHT, sx = to.x - (to.dx || 380), sy = to.y - (to.dy || 560);
+    this.projectiles.push(new Projectile(this, w, this.intro.shooter, sx, sy, (to.x - sx) / n, (to.y - sy - 0.5 * GRAV * n * n) / n, true));
+    this.sfx.shot(w);
+  },
+
+  introEnd() {
+    if (!this.intro) return;
+    this.intro = null;
+    this.projectiles.length = 0;
+    this.report = null;
+    this.cam.zoomTo = 1;
+    this.phase = 'aim';
+    this.startAim();
+    if (this.tut) this.ui.coach(this.tut);
   },
 });
