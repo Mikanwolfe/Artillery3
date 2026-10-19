@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['8518105', 'The winner of a round takes the last turn in the next round.'],
   ['a44637a', 'Air defence: the round-end screen shows what it did. Planes shot down pay a small bounty. Anti-air also fires at ground hostiles close by. Point defence takes a little off shells. New: Barrage (B) skips your shot to make your air defence fire much more until your next turn.'],
   ['1c4376a', 'Fixed: blimps were drawn far below where they really are.'],
   ['ae1ca7c', 'Air defence does twice the damage.'],
