@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['cd41a02', 'Tutorial: round 1 has no wind. Round 2 has wind, and a new step explains the wind arrow.'],
   ['5d7f0d6', 'The tutorial starts with a camera tour on a set map. It shows your rival and you, then a fort, a big tree and a radio tower. A shell hits each one. Then the camera zooms out over the map. Press Enter to skip the tour.'],
   ['c78363b', 'Game text rewritten in plain, simplified technical English: help, tutorial, progress, traits, abilities, upgrades, shop, Codex notes, notices and the event log. Story transmissions, taunts and weapon flavour lines are unchanged.'],
   ['981a783', 'Progression: a first visit asks if you have played before; if not, a short tutorial with G.W. Tiger. Everyone starts with G.W. Tiger in a plain duel. Rounds you clear unlock tiers: one girl at a time in roster order (Ikaros last), new hostiles and events, and more of the shop. CPUs play from the same tier. Progress card on the menu and a Progress tree. G.W. Tiger’s Morser has a bigger blast.'],
