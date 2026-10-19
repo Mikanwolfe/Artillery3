@@ -758,6 +758,7 @@ Object.assign(Game.prototype, {
     if (p.hp > 0) return;
     p.alive = false;
     const c = p.center();
+    if (owner && !owner.isMob && owner !== p.owner) this.achCount('planes', 1, owner);
     if (owner && !owner.isMob && owner !== p.owner && !p.w.fleet) { // a small bounty for a plane brought down (not for an ultimate's fleet)
       const pay = planeBounty(p.w);
       owner.money += pay + this.cpuCredit(owner, pay);

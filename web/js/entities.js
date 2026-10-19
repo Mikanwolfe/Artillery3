@@ -137,6 +137,7 @@ class Tank {
     this.wings = {}; // plane weapon id -> its squads (wing())
     this.turnsTaken = 0; // own turns this round (a squad strikes on a later one)
     this.aaGuns = null;
+    this.achLow = false; // her health went under 10% this round (achievements.js: Rebirth)
     this.barrage = false; // Barrage (aa.js): her mounts at full tilt until her next turn
     this.aaStats = { down: 0, dmg: 0, cut: 0, stops: 0 }; // her air defence this round (the round-end screen)
     this.barrier = null; // Bulwark Barrier direction (unit vector), until the next turn

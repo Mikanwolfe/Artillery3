@@ -688,6 +688,7 @@ class Game {
   landed(t, drop) {
     if (t.y >= WORLD_BOTTOM) { // down into a void (15X's Zero Point): gone
       this.events.push(`${t.name} fell into the void.`);
+      if (this.terrain.voidOwner && this.terrain.voidOwner !== t) this.ach('void', this.terrain.voidOwner);
       this.damage(t, (t.hp + t.armour) * 10 + 1000, this.terrain.voidOwner && this.terrain.voidOwner !== t ? this.terrain.voidOwner : null);
       return;
     }
@@ -808,6 +809,7 @@ class Game {
   claimCrate(c, t) {
     if (!c.alive || !t) return;
     c.alive = false;
+    this.ach('poem', t);
     let desc;
     if (c.kind === 'golden') { // one of three, each well worth the detour
       const r = rng.int(0, 2);
@@ -1083,6 +1085,7 @@ class Game {
       this.satTarget = null;
       return;
     }
+    this.ach('maia', this.satTarget.owner);
     this.satSeq = { t: 0, target: this.satTarget, owner: this.satTarget.owner, barrage: this.satTarget.barrage || null, lock: this.satTarget.lock || null, w: this.satTarget.w || null };
     this.retarget(this.satSeq);
     this.satTarget = null;
@@ -1424,6 +1427,7 @@ class Game {
     const OC = owner && def && coreOf(owner); // (her core boosts its kind of weapon)
     if (OC && coreKindOf(def) === OC.coreKind) { amt *= 1 + OC.boost; if (hit) hit.core = OC.boost; }
     if (owner && def && owner.upgrades && owner.upgrades.fire) amt *= Math.pow(FIRE_STEP, owner.upgrades.fire); // her Firepower levels
+    this.achHit(t, amt, owner, def, hit); // (achievements.js)
     if (t.isPlane) { this.damagePlane(t, amt, owner, def, hit); return; }
     if (t.isMob) { this.damageMob(t, amt, owner, def, hit); return; }
     if (t.isSat) { this.damageSat(t, amt, owner, hit); return; }
@@ -1444,6 +1448,7 @@ class Game {
       if (hasTrait(t, 'redundancy') && amt > t.maxHp * 0.4) { amt = t.maxHp * 0.4; if (hit) hit.capped = true; } // November: triple redundancy
       taken = Math.min(amt, t.hp);
       t.hp -= amt;
+      if (t.hp > 0 && t.hp < t.maxHp * 0.1) t.achLow = true; // (Rebirth: won from below 10%)
     }
     t.flash = 1;
     if (!quiet && amt > 3) t.setPose('hit');
@@ -1588,6 +1593,7 @@ class Game {
     this.phase = 'roundEnd';
     const winner = this.tanks.find((t) => t.alive) || null;
     this.lastWinner = winner ? this.tanks.indexOf(winner) : -1; // (she goes last next round)
+    this.achRound(winner);
     if (winner) {
       winner.wins++;
       winner.setPose('win');
@@ -1638,6 +1644,7 @@ class Game {
     this.phase = 'gameEnd';
     this.ui.showHud(false);
     this.ui.showGameEnd(st);
+    if (st[0].wins > (st[1] ? st[1].wins : -1)) this.ach('match', st[0]);
     if (st[0].isCpu && st[0].wins > (st[1] ? st[1].wins : -1)) this.ui.addEndQuip(st[0], pickTaunt(st[0], 'match_win'));
   }
 
@@ -1709,6 +1716,8 @@ class Game {
       if (tank.money < cost) { this.sfx.deny(); return false; }
       tank.money -= cost;
       tank.upgrades[id]++;
+      if (id === 'fire' && tank.upgrades.fire >= ACH_TUNING) this.ach('tuning', tank);
+      if (tank.maxHp > ACH_DEMIGOD) this.ach('demigod', tank);
     }
     this.sfx.buy();
     return true;
@@ -1951,6 +1960,7 @@ class Game {
     }
     this.sfx.repair();
     this.events.push(`${t.name} used a repair kit (+${got}).`);
+    this.ach('rest', t);
     if (t.isCpu && Math.random() < 0.6) this.banter(t, 'repair');
     // using the kit is the turn
     this.charging = false;

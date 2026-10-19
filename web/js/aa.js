@@ -310,6 +310,7 @@ Object.assign(Game.prototype, {
   useBarrage(t) {
     if (this.phase !== 'aim' || t !== this.active || t.firedThisTurn || !t.aa || !t.aa.some(Boolean)) { this.sfx.deny(); return false; }
     t.barrage = true;
+    this.ach('danmaku', t);
     t.aaGuns = t.aa.map((id) => ({ cd: 0, budget: id ? AA_BY_ID[id].perTurn * BARRAGE_BUDGET : 0 }));
     this.particles.text(t.x, t.y - 50, 'BARRAGE', '#ffd878', true);
     this.sfx.click();

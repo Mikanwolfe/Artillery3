@@ -191,6 +191,7 @@ Object.assign(Game.prototype, {
     p.tw = t;
     this.projectiles.push(p);
     t.h = k;
+    this.ach('tower');
     this.sfx.thud();
     this.ui.notice(k ? 'The radio tower breaks!' : 'The radio tower is falling!');
   },

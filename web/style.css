@@ -435,3 +435,18 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 #coach .link { justify-self: end; font-size: 0.85em; padding: 0; }
 @media (max-width: 700px) { #coach { width: 70%; } }
 #stage:has(#shop:not([hidden])) #coach, #stage:has(#roundend:not([hidden])) #coach { top: auto; bottom: 3%; left: 37%; width: 34%; } /* (over the shop's grid, clear of its filters and Done) */
+
+/* achievements (achievements.js) */
+#ach-toasts { position: fixed; top: 1.2em; left: 50%; transform: translateX(-50%); display: grid; gap: 0.4em; z-index: 60; pointer-events: none; }
+.achtoast { background: var(--plate); border: 1px solid var(--gold); border-left: 4px solid var(--gold); padding: 0.5em 1em; display: grid; gap: 0.15em; min-width: 18em; max-width: min(28em, 90vw); animation: achin 5.2s forwards; box-shadow: 0 0.3em 1.2em rgba(0,0,0,.4); }
+.achtoast .mgh { color: var(--gold); margin: 0; }
+.achtoast b { color: var(--bright); font-weight: 400; font-size: 1.1em; }
+.achtoast small { color: var(--dim); }
+@keyframes achin { 0% { opacity: 0; transform: translateY(-0.6em); } 6%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+#ach-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(15em, 1fr)); gap: 0.45em; max-height: 68vh; overflow-y: auto; }
+.ach { background: var(--bg2); border: 1px solid var(--line); padding: 0.5em 0.7em; display: grid; gap: 0.2em; opacity: 0.5; font-size: 0.88em; }
+.ach b { font-weight: 400; color: var(--fg); }
+.ach span { color: var(--dim); line-height: 1.4; }
+.ach i { font-style: normal; font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.ach.got { opacity: 1; border-color: var(--gold); }
+.ach.got b { color: var(--gold); }

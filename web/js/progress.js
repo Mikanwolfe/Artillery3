@@ -136,6 +136,7 @@ Object.assign(Game.prototype, {
   },
   tutEnd(finished) {
     this.tut = null;
+    if (finished) this.ach('erinn', this.tanks.find((t) => !t.isCpu));
     if (this.phase === 'intro') this.introEnd();
     PROG.data.tut = true;
     PROG.save();

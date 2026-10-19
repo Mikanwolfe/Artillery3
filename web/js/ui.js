@@ -174,6 +174,7 @@ const UI = {
     $('wel-old').onclick = () => this.welcomed();
     $('wel-all').onclick = () => { PROG.unlockAll(); this.welcomed(); };
     $('prog-close').onclick = () => { $('progress').hidden = true; $('menu').hidden = false; };
+    $('ach-close').onclick = () => { $('achieve').hidden = true; $('menu').hidden = false; this.renderProgCard(); };
     $('prog-tut').onclick = () => { $('progress').hidden = true; this.startTutorial(); };
     $('prog-all').onclick = () => { PROG.unlockAll(); this.renderProgress(); };
     $('prog-reset').onclick = () => { if (confirm('Reset progress to Tier 0?')) { PROG.reset(); this.renderProgress(); } };
@@ -191,8 +192,9 @@ const UI = {
     $('prog-card').innerHTML = `<div class="progcard"><div class="pc-top"><b>Tier ${i}</b><span class="mgh">${PROG.data.all ? 'all unlocked' : `${c} round${c === 1 ? '' : 's'} cleared`}</span></div>
       <span class="meter"><i style="width:${pct}%;--c:var(--gold)"></i></span>
       <span class="pc-next">${n ? `Next tier at ${n.at} rounds: <b>${esc(girlName(n.girl))}</b>. Hostiles: ${esc(n.foes)}` : 'All girls, hostiles and items are unlocked.'}</span>
-      <div class="pc-row"><button id="prog-open" class="ghost">Progress tree</button>${PROG.data.tut ? '' : '<button id="prog-tut2" class="ghost">Tutorial</button>'}</div></div>`;
+      <div class="pc-row"><button id="prog-open" class="ghost">Progress tree</button><button id="ach-open" class="ghost">Achievements ${ACH.total()}/${ACHIEVEMENTS.length}</button>${PROG.data.tut ? '' : '<button id="prog-tut2" class="ghost">Tutorial</button>'}</div></div>`;
     $('prog-open').onclick = () => { $('menu').hidden = true; this.renderProgress(); $('progress').hidden = false; };
+    $('ach-open').onclick = () => this.openAchievements();
     if ($('prog-tut2')) $('prog-tut2').onclick = () => this.startTutorial();
   },
 
