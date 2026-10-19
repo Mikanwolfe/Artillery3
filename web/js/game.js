@@ -504,6 +504,7 @@ class Game {
     if (d > 225) d += 90;
     this.windDir = rad(d);
     this.windMag = 0.5 * rng.next();
+    if (this.tut) this.windMag = this.round < 2 ? 0 : Math.max(this.windMag, 0.25); // (the tutorial: calm in round 1, a clear wind in round 2)
     this.wind = { x: Math.cos(this.windDir) * this.windMag * WIND_SCALE, y: Math.sin(this.windDir) * this.windMag * WIND_SCALE };
   }
 

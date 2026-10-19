@@ -96,7 +96,7 @@ const TUTORIAL = [
     done: (g, t, s) => Math.abs(t.x - s.x) > 30 },
   { title: 'Aim', text: 'Press ↑ or ↓ to change the gun angle. Aim at your rival.',
     done: (g, t, s) => Math.abs(t.elev - s.elev) >= 8 },
-  { title: 'Fire', text: 'Hold Space to charge. Release Space to fire. More charge gives more range. Wind moves the shell; check the wind arrow at the top.',
+  { title: 'Fire', text: 'Hold Space to charge. Release Space to fire. More charge gives more range. There is no wind in this round.',
     done: (g, t) => t.firedThisTurn },
   { title: 'Second shot', text: 'G.W. Tiger fires two shots each turn. Correct your aim from the first impact. Fire again. If the first shot hits a rival, you get it back.',
     done: (g, t) => g.active !== t || (g.phase === 'aim' && t.shotsLeft <= 0) },
@@ -106,12 +106,14 @@ const TUTORIAL = [
     done: (g) => g.phase === 'roundEnd' || g.phase === 'shop' },
   { title: 'Shop', text: 'This is the shop. Bought guns do more damage. After a bought gun fires, it reloads for 1–3 turns. Your starting gun does not reload. The core (top right) adds health, armour and damage. Click Done to continue.',
     done: (g) => g.phase !== 'shop' && g.phase !== 'roundEnd' && g.round >= 2 },
+  { title: 'Wind', text: 'This round has wind. The arrow at the top shows its direction and strength. Wind pushes your shells. Aim to correct for it, then fire.',
+    done: (g, t) => g.round >= 2 && t.firedThisTurn },
   { title: 'Round 2', text: 'Win this round. Each round you finish counts toward the next tier. A tier unlocks a girl, hostiles and shop items.',
     done: (g) => g.phase === 'gameEnd' },
 ];
 
 Object.assign(Game.prototype, {
-  tutStart() { this.tut = { i: 0, s: null }; this.ui.coach(this.tut); this.introStart(); },
+  tutStart() { this.tut = { i: 0, s: null }; this.setWind(); this.windMarker = this.windDir; this.ui.coach(this.tut); this.introStart(); }, // (round 1: no wind)
   tutTick() {
     const T = this.tut;
     if (!T) return;
