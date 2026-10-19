@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['1c4376a', 'Fixed: blimps were drawn far below where they really are.'],
   ['ae1ca7c', 'Air defence does twice the damage.'],
   ['5303b9f', 'Tutorial map changed: open ground between you and your rival.'],
   ['cd41a02', 'Tutorial: round 1 has no wind. Round 2 has wind, and a new step explains the wind arrow.'],
