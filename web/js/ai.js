@@ -50,6 +50,8 @@ const AI_WINDOW_MS = 16; // ...measured by the clock: a slow frame runs several 
 const aiClock = { win: -Infinity, spent: 0 };
 const DODGE = { easy: 0.35, normal: 0.75, hard: 0.95 }; // chance it drives out from under a drone
 const MOB_AIM = 0.6; // aim error against hostiles (they hold still, and CPUs practise on them)
+const CPU_ONLY_AIM = 0.2; // aim and wind error once no human is left alive: the round plays out quickly
+const cpuOnly = (g) => !g.range && !g.tanks.some((t) => t.alive && !t.isCpu);
 // money: what a shot would earn counts toward it (score per ¢), the shrewder the CPU the more
 const CASH_PULL = { easy: 0.02, normal: 0.05, hard: 0.08 };
 // roughly what a hit with w on e earns, scaled by how close the solution lands: a hostile pays its
@@ -164,7 +166,7 @@ class CpuController {
     this.tank = tank;
     this.ctl = new Ctl();
     this.state = 'think';
-    this.timer = (tank.firedThisTurn ? 0.3 : 0.8) + rng.next() * 0.4;
+    this.timer = ((tank.firedThisTurn ? 0.3 : 0.8) + rng.next() * 0.4) * (cpuOnly(game) ? 0.5 : 1); // (no human left: less dawdling)
     this.plan = null;
     this.moved = tank.firedThisTurn;
   }
@@ -223,7 +225,7 @@ class CpuController {
         if (e.isPlane && (w.air ? w.air.type !== 'fighter' : false)) continue; // (bombers don't hunt planes)
         const m = learn(e);
         const k = Math.min(m.shots, LEARN.length - 1);
-        const wf = 1 + m.werr * LEARN[k] / LEARN[0]; // the wind as it judges it, closer each shot
+        const wf = 1 + m.werr * (cpuOnly(g) ? CPU_ONLY_AIM : 1) * LEARN[k] / LEARN[0]; // the wind as it judges it, closer each shot
         const s = yield* solveShotGen(g, t, w, e, { x: g.wind.x * wf, y: g.wind.y * wf }, LOB_TRUST[k]);
         let score = s.score - (e.isSat ? 0 : (e.maxHp + e.maxArmour - e.hp - e.armour) * 0.1) - (e.bounty || 0) * BOUNTY_PULL * (t.strategy === 'hunter' ? 2.5 : 1); // (a bounty hunter goes for them)
         if (e.isSat) score += SAT_DISLIKE - sat.health * 60;
@@ -243,7 +245,7 @@ class CpuController {
     // aim error grows with range: sharp up close, increasingly loose across the map
     const range = Math.abs(best.target.x - t.x);
     const m = memo.get(best.target);
-    const f = rangeErr(range) * (t.upgrades.computer ? 0.7 : 1) * LEARN[Math.min(m.shots, LEARN.length - 1)] * (best.target.isMob ? MOB_AIM : 1);
+    const f = rangeErr(range) * (t.upgrades.computer ? 0.7 : 1) * LEARN[Math.min(m.shots, LEARN.length - 1)] * (best.target.isMob ? MOB_AIM : 1) * (cpuOnly(g) ? CPU_ONLY_AIM : 1);
     m.shots++;
     let de = rng.gauss() * k.se * f, dv = rng.gauss() * k.sc * f;
     // the rest of a clip or salvo this turn: each round lands closer than the last (it watched it)
