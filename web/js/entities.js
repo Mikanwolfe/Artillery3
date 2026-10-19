@@ -660,6 +660,14 @@ class Projectile {
   draw(ctx) {
     if (this.delay > 0) return;
     if (this.w.tower) { this.game.drawTowerFall(ctx, this, (this.game.terrain.material || MATERIALS.steel).pole); return; }
+    if (this.w.tracer) { // a chaingun round: a small slug; every third a tracer, a glowing streak back along its path
+      const sp = Math.hypot(this.vx, this.vy) || 1, ux = this.vx / sp, uy = this.vy / sp;
+      if (this.tracer) {
+        for (let k = 0; k < 6; k++) { ctx.fillStyle = `rgba(255,${220 - k * 22},${120 - k * 18},${0.95 - k * 0.14})`; sq(ctx, this.x - ux * k * 5, this.y - uy * k * 5, 4 - k * 0.4); }
+        ctx.fillStyle = 'rgba(255,200,90,0.25)'; sq(ctx, this.x, this.y, 10);
+      } else { ctx.fillStyle = 'rgb(214,190,120)'; sq(ctx, this.x, this.y, 3); ctx.fillStyle = 'rgba(214,190,120,0.4)'; sq(ctx, this.x - ux * 4, this.y - uy * 4, 2); }
+      return;
+    }
     const sk = shellSkin(this.w);
     const col = sk.body;
     for (let i = 0; i < this.trail.length; i += 2) {
