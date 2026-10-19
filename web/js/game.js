@@ -1145,7 +1145,7 @@ class Game {
       this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, k % 2 ? '#bfe8ff' : '#fffff0', 14, 40));
       this.sfx.satFire();
       const r = b.r * (hasTrait(s.owner, 'uplink') ? 1.3 : 1);
-      const dmg = b.mult * s.w.dmg; // a multiple of the rocket's own damage: the same whatever MAIA's level or health
+      const dmg = b.mult * s.w.dmg * (this.satellite.power || 1); // a multiple of the rocket's own damage, whatever MAIA's level or health (but it grows with the strongest girl, as MAIA does)
       this.explode(tg.x, tg.y, { maia: true, dmg, dmgR: r, explR: 8, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
       this.cam.follow({ x: s.target.x, y: s.target.y });
     }
@@ -1232,6 +1232,7 @@ class Game {
   // once a turn cycle (every n turns, n players standing) it repairs SAT_HEAL of that
   satTurn(fresh = false) {
     const sat = this.satellite;
+    sat.power = this.range ? 1 : this.mapToughness(); // (its strikes grow with the strongest girl)
     const alive = this.tanks.filter((t) => t.alive);
     if (!alive.length) return;
     const max = alive.reduce((a, t) => a + t.maxHp + t.maxArmour, 0) / alive.length;

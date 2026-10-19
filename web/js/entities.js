@@ -805,12 +805,19 @@ const SAT_TIERS = [null,
   { dmg: 247, dmgR: 210, explR: 22 },
 ];
 const SAT_TURN_GAIN = 0.5; // A3 Constants.SatelliteDamageIncPerTurn
+// past level 3 there is no cap: each level x1.4 damage, a little more reach and crater
+const SAT_LEVEL_DMG = 1.4, SAT_LEVEL_R = 20, SAT_LEVEL_EXPL = 2;
+function satStats(tier) {
+  if (tier <= 3) return SAT_TIERS[Math.max(1, tier)];
+  const T = SAT_TIERS[3], n = tier - 3;
+  return { dmg: T.dmg * Math.pow(SAT_LEVEL_DMG, n), dmgR: Math.min(360, T.dmgR + SAT_LEVEL_R * n), explR: Math.min(40, T.explR + SAT_LEVEL_EXPL * n) };
+}
 
-// which tier is active for a given round: thirds of the match (infinite mode, rounds = 0: level 2
-// from round 3, level 3 from round 6)
+// which level is active for a given round: thirds of the match, so level 3 in its last third; an
+// endless match (rounds = 0) goes up a level every 3 rounds with no cap (level 2 from round 3)
 function satelliteTier(round, rounds) {
-  if (!rounds) return round >= 6 ? 3 : round >= 3 ? 2 : 1;
-  return clamp(1 + Math.floor(((round - 1) * 3) / Math.max(1, rounds)), 1, 3);
+  if (!rounds) return 1 + Math.floor(round / 3);
+  return Math.max(1, 1 + Math.floor(((round - 1) * 3) / Math.max(1, rounds)));
 }
 
 // MAIA's own look, and the variants a sky full of them is drawn from: blends of what the game
@@ -891,9 +898,11 @@ class Satellite {
     this.turns = 0;
   }
 
-  get damage() { return (SAT_TIERS[this.tier].dmg + SAT_TURN_GAIN * this.turns) * this.health; }
-  get dmgR() { return SAT_TIERS[this.tier].dmgR; }
-  get explR() { return SAT_TIERS[this.tier].explR; }
+  // power (Game.satTurn): the strongest girl's health and armour against the start of the match (mapToughness),
+  // so a strike stays a threat as the girls get tougher
+  get damage() { return (satStats(this.tier).dmg + SAT_TURN_GAIN * this.turns) * this.health * (this.power || 1); }
+  get dmgR() { return satStats(this.tier).dmgR; }
+  get explR() { return satStats(this.tier).explR; }
   get level() { return this.tier; }
   newTurn() { this.turns++; }
   lookAt(pt) { this.angleDest = Math.atan2(pt.y - this.y, pt.x - this.x); }
@@ -1045,7 +1054,7 @@ class Satellite {
     // emitter barrel and lens (heavier at higher tiers)
     for (let i = 0; i < 6; i++) dot(40 + i * 11, 0, 16 - i + (tier - 1) * 2, accent);
     if (tier >= 2) { dot(60, -10, 5, light); dot(60, 10, 5, light); }
-    dot(104, 0, 12 + (tier - 1) * 3, tier >= 3 ? gold : main);
+    dot(104, 0, 12 + (Math.min(tier, 5) - 1) * 3, tier >= 3 ? gold : main);
     if (V.lenses === 3) for (const s of [-1, 1]) { for (let i = 0; i < 4; i++) dot(44 + i * 10, s * 22, 9 - i, accent); dot(86, s * 22, 9, light); } // a triple emitter
     // charging: sparks spiral into the lens and the tip whitens
     if (this.charge > 0) {
