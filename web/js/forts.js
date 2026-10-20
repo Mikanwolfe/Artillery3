@@ -164,6 +164,13 @@ Object.assign(Game.prototype, {
     return g;
   },
 
+  // the slope (dy/dx) of what she stands on, so she sits level on a bridge deck or fort top rather
+  // than tilting with the ground under it (a side that drops away, off the end of a deck, reads flat)
+  standSlope(t) {
+    const side = (dx) => { const h = this.groundAt(t.x + dx, t.y); return Math.abs(h - t.y) > 40 ? t.y : h; };
+    return clamp((side(18) - side(-18)) / 36, -1.2, 1.2);
+  },
+
   fortBlocks(x, y) {
     for (const f of this.terrain.forts) if (f.blocks(x - TANK_W / 2, x + TANK_W / 2, y - TANK_H, y - 2)) return true;
     return false;

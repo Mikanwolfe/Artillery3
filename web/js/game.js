@@ -639,7 +639,7 @@ class Game {
   stepTanks() {
     this.stepSlides();
     for (const t of this.tanks) {
-      t.tilt += (groundSlope(this.terrain, t.x) - t.tilt) * 0.2;
+      t.tilt += ((t.jumping ? groundSlope(this.terrain, t.x) : this.standSlope(t)) - t.tilt) * 0.2;
       if (!t.alive) { t.y = this.groundAt(t.x, t.y); continue; } // wrecks settle into new craters
       if (t.jumping) { // a hop (W): its own arc, landing only on the way down
         const nx = t.x + t.jvx;
