@@ -493,6 +493,12 @@ class Game {
     this.mapChoice = BIOMES[opts.map] ? opts.map : 'random';
   }
 
+  // the weapons balance, switched from the pause menu mid-match
+  setBalance(mode) {
+    this.balance = mode === 'classic' ? 'classic' : 'rebalanced';
+    applyBalance(this.balance);
+  }
+
   placeTanks() {
     const n = this.tanks.length;
     const slot = (WORLD_W - 200) / n;

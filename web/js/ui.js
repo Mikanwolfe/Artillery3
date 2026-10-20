@@ -43,6 +43,7 @@ const UI = {
     };
     // segmented controls for the match options
     Object.assign(this.opts, store.get('opts') || {});
+    this.opts.map = 'random'; // (no map choice any more: the HUD names the map instead)
     document.querySelectorAll('#menu .seg').forEach((seg) => {
       const key = seg.dataset.opt;
       const sync = () => seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === this.opts[key]));
@@ -57,6 +58,10 @@ const UI = {
     $('btn-keys').onclick = () => this.toggleHelp();
     document.querySelectorAll('#help .help-tabs button').forEach((b) => { b.onclick = () => this.helpTab(b.dataset.tab); });
     $('pause-keys').onclick = () => this.toggleHelp(true);
+    // the weapons balance lives in the pause menu: it applies at once, and to the next match
+    $('pause-balance').querySelectorAll('button').forEach((b) => {
+      b.onclick = () => { this.opts.balance = b.dataset.v; store.set('opts', this.opts); game.setBalance(b.dataset.v); this.syncPauseBalance(); game.sfx.hover(); };
+    });
     $('veh-back').onclick = () => { $('vehicles').hidden = true; $('menu').hidden = false; this.pick = null; };
     $('start').onclick = () => this.selectVehicles();
     $('load').onclick = () => {
@@ -96,6 +101,7 @@ const UI = {
     this.rackClicks();
     this.initCodex();
     this.initProgress();
+    this.initInspect();
     window.addEventListener('keydown', (e) => {
       // character select: 1-4 picks a card
       if (this.pick && !$('vehicles').hidden && /^Digit[1-9]$/.test(e.code)) {
@@ -374,6 +380,10 @@ const UI = {
     const g = this.game;
     $('pause').hidden = !on;
     $('pause-turn').hidden = !(g.phase === 'aim' && g.active && !g.active.isCpu && !g.cpu); // (Enter on a keyboard)
+    if (on) this.syncPauseBalance();
+  },
+  syncPauseBalance() {
+    $('pause-balance').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === this.game.balance));
   },
 
   turn(t) {
@@ -394,7 +404,7 @@ const UI = {
     const d = Game.readSave();
     const b = $('load');
     b.hidden = !d;
-    if (d) b.textContent = `load (round ${d.completed + 1}${d.rounds ? '/' + d.rounds : ''}: ${d.tanks.map((t) => t.name).join(', ')})`;
+    if (d) b.textContent = `Resume · round ${d.completed + 1}${d.rounds ? '/' + d.rounds : ''}`;
   },
 
   // a story transmission card (fades by itself)
@@ -512,6 +522,7 @@ const UI = {
     this.renderRack(g);
     const r = `Round ${g.round}${g.rounds ? '/' + g.rounds : ''}`;
     if (this.last.r !== r) { this.last.r = r; $('roundinfo').textContent = r.replace('Round', 'Rnd'); }
+    this.syncMapChip(g);
   },
 
   initTouch() {

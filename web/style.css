@@ -450,3 +450,16 @@ table.data tr.win td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .ach i { font-style: normal; font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .ach.got { opacity: 1; border-color: var(--gold); }
 .ach.got b { color: var(--gold); }
+
+/* hover help: the map chip and structures on the battlefield (inspect.js) */
+#mapinfo { pointer-events: auto; cursor: help; text-transform: none; letter-spacing: 0.04em; }
+#tip { position: absolute; z-index: 30; max-width: 22em; padding: 0.55em 0.75em; background: var(--plate); border: 1px solid var(--line); pointer-events: none; font-size: 0.82em; line-height: 1.35; display: flex; flex-direction: column; gap: 0.25em; }
+#tip[hidden] { display: none; }
+#tip b { color: var(--fg); letter-spacing: 0.06em; }
+#tip span { color: var(--dim); }
+#tip small { color: var(--gold); }
+/* the menu's resume button: a small one beside Start */
+#load { flex: none; font-size: 0.78em; padding: 0.4em 0.8em; align-self: center; }
+/* the pause menu's weapons option */
+.pause-opt { display: flex; align-items: center; justify-content: space-between; gap: 0.8em; }
+.pause-opt .seg button { padding: 0.45em 0.8em; }
