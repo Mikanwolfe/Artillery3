@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['2ac907c', 'On a bridge deck or a fort, a vehicle now tilts with the surface she is standing on. Her elevation range used to follow the slope of the ground under the bridge.'],
   ['8c7e4fc', 'When you are out of a round, the CPUs aim much better, so the round ends sooner.'],
   ['2bcc9da', 'New: chainguns, from Common to Legendary. They fire a long stream of small rounds. Tracers: the stream moves onto the enemy nearest where it lands.'],
   ['14b6cca', 'Tutorial: the opening tour waits for you. Press Space to go to the next part.'],
