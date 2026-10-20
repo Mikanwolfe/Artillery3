@@ -46,6 +46,7 @@ const ACHIEVEMENTS = [
   { id: 'leg_nxiaeria', name: 'By Royal Decree', desc: "Do damage with the 'Aeria Charlotte' Royal Battery.", leg: 'nxiaeria' },
   { id: 'leg_avalon', name: 'The Gate Opens', desc: "Do damage with the 'Avalon Gate' Carpet Rocket.", leg: 'avalon' },
   { id: 'leg_kikka', name: 'Comet Debut', desc: "Do damage with the 'Comet Idol' Jet Bomber.", leg: 'kikka' },
+  { id: 'leg_thunder', name: 'BRRRRRT', desc: "Do damage with the 'Thundercloud' Rotary Battery.", leg: 'thunder' },
   { id: 'leg_shiden', name: 'Clockwork Precision', desc: "Do damage with the 'Clockwork Warden' Fighter.", leg: 'shiden' },
 ];
 const ACH_BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));

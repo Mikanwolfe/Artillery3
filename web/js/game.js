@@ -13,6 +13,9 @@ const CAM_ZOOM_EASE = 6; // the wheel zoom closes 1/6 of the way to its target e
 const LABEL_ANCHOR = 60; // HUD labels hang this far (world units at zoom 1) above a vehicle's feet
 const CAM_EASE = 10; // A3 Constants.CameraEaseSpeed: camera moves 1/10 of the gap per frame
 const SALVO_DELAY = 15;
+// chaingun Tracers: each round, the stream's angle moves this share of the way toward the angle that lands on
+// the target (the enemy nearest where the first round lands), by at most TRACER_MAX radians a round
+const TRACER_GAIN = 0.15, TRACER_MAX = 0.012;
 const TREE_RAM_DMG = 6; // + 3 per tree size: driving through a tree knocks it down but hurts // A3 ProjectileFactory._firingDelay (frames between salvo rounds)
 // Aim guide (human players): a dotted line along the barrel that fades out; while Space is held it
 // becomes the predicted arc for the current charge, still fading after a set distance.
@@ -490,6 +493,12 @@ class Game {
     this.mapChoice = BIOMES[opts.map] ? opts.map : 'random';
   }
 
+  // the weapons balance, switched from the pause menu mid-match
+  setBalance(mode) {
+    this.balance = mode === 'classic' ? 'classic' : 'rebalanced';
+    applyBalance(this.balance);
+  }
+
   placeTanks() {
     const n = this.tanks.length;
     const slot = (WORLD_W - 200) / n;
@@ -636,7 +645,7 @@ class Game {
   stepTanks() {
     this.stepSlides();
     for (const t of this.tanks) {
-      t.tilt += (groundSlope(this.terrain, t.x) - t.tilt) * 0.2;
+      t.tilt += ((t.jumping ? groundSlope(this.terrain, t.x) : this.standSlope(t)) - t.tilt) * 0.2;
       if (!t.alive) { t.y = this.groundAt(t.x, t.y); continue; } // wrecks settle into new craters
       if (t.jumping) { // a hop (W): its own arc, landing only on the way down
         const nx = t.x + t.jvx;
@@ -1007,6 +1016,7 @@ class Game {
     const m = t.muzzle();
     // dispersion: random jitter on each round's velocity (A3 RandomPoint2D, made symmetric)
     const sp = spreadOf(s.w, t);
+    if (s.w.tracer) this.tracerWalk(s, m);
     const vx = s.vx + (rng.next() - 0.5) * sp;
     const vy = s.vy + (rng.next() - 0.5) * sp;
     const p = new Projectile(this, s.w, t, m.x, m.y, vx, vy, s.first);
@@ -1023,11 +1033,55 @@ class Game {
     }
     this.particles.muzzle(m.x, m.y, t.aimVec(), s.w);
     t.recoil = 1; // every round kicks the barrel back
-    if (!s.first) this.sfx.shot(s.w);
+    if (s.w.tracer) { p.tracer = s.left % 3 === 0; if (s.left % 2) this.sfx.shot(s.w); } // (every third round a tracer; half the rounds heard)
+    else if (!s.first) this.sfx.shot(s.w);
     s.first = false;
     s.left--;
-    s.timer = SALVO_DELAY;
+    s.timer = s.w.rof || SALVO_DELAY;
     this.projectiles.push(p);
+  }
+
+  // Tracers: the gunner watches where the stream lands and walks it onto the enemy nearest that spot
+  // (picked from the first round's fall). Each round: where would this angle land, and which way
+  // does a small change move it; then turn part of the way
+  tracerWalk(s, m) {
+    const t = s.t, w = s.w, wind = this.wind;
+    const speed = Math.hypot(s.vx, s.vy);
+    if (speed < 1) return;
+    const land = (a) => simulateShot(this.terrain, wind, this.targets(), t, m.x, m.y, Math.cos(a) * speed, Math.sin(a) * speed, w.drift, w, []);
+    const a0 = Math.atan2(s.vy, s.vx);
+    if (s.first) { // the target: the enemy nearest where the stream starts to land
+      const L = land(a0);
+      let best = null, bd = Infinity;
+      for (const e of this.targets()) {
+        if (!e.alive || e === t || e.isPlane || e.isSat || (e.dummy && !this.range)) continue;
+        const d = Math.abs(e.x - L.x);
+        if (d < bd) { bd = d; best = e; }
+      }
+      s.tracerTo = best;
+      return;
+    }
+    const e = s.tracerTo;
+    if (!e || !e.alive) return;
+    // where the arc comes down through the target's height (open air: smooth, where the ground's
+    // hills and decks would make the fall jump about)
+    const ty = e.center().y;
+    const cross = (a) => {
+      const p = { x: m.x, y: m.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, drift: w.drift };
+      for (let i = 0; i < 900; i++) {
+        const A = windAccel(p, wind);
+        p.vx += A.x; p.vy += GRAV + A.y; p.x += p.vx; p.y += p.vy;
+        if (p.vy > 0 && p.y >= ty) return p.x;
+      }
+      return null;
+    };
+    const x0 = cross(a0), x1 = cross(a0 + 0.01);
+    if (x0 === null || x1 === null) return;
+    const slope = (x1 - x0) / 0.01; // how far the fall moves a radian
+    if (Math.abs(slope) < 50) return;
+    const da = clamp(((e.x - x0) / slope) * TRACER_GAIN, -TRACER_MAX, TRACER_MAX);
+    s.vx = Math.cos(a0 + da) * speed;
+    s.vy = Math.sin(a0 + da) * speed;
   }
 
   updateResolve() {
@@ -1145,7 +1199,7 @@ class Game {
       this.lasers.push(new Laser(lens.x, lens.y, tg.x, tg.y, k % 2 ? '#bfe8ff' : '#fffff0', 14, 40));
       this.sfx.satFire();
       const r = b.r * (hasTrait(s.owner, 'uplink') ? 1.3 : 1);
-      const dmg = b.mult * s.w.dmg; // a multiple of the rocket's own damage: the same whatever MAIA's level or health
+      const dmg = b.mult * s.w.dmg * (this.satellite.power || 1); // a multiple of the rocket's own damage, whatever MAIA's level or health (but it grows with the strongest girl, as MAIA does)
       this.explode(tg.x, tg.y, { maia: true, dmg, dmgR: r, explR: 8, from: { x: lens.x - tg.x, y: lens.y - tg.y } }, s.owner, 'laser');
       this.cam.follow({ x: s.target.x, y: s.target.y });
     }
@@ -1176,7 +1230,8 @@ class Game {
       const bonus = this.shotBonus(p);
       if (w.kind === 'rocket' && ((p.fuseTarget && p.fuseTarget.isMob) || (r && r.tank && r.tank.isMob && r.tank.flying))) { bonus.dmgR *= ROCKET_AIRBURST; bonus.visR = (bonus.visR || w.dmgR) * 1.4; } // (airburst on a drone: a far wider reach)
       if (p.aaCut) { bonus.dmg *= p.aaCut; bonus.visR = (bonus.visR || bonus.dmgR) * (0.4 + 0.6 * p.aaCut); } // got through the point defence, damaged (and a smaller bang)
-      this.explode(p.x, p.y, { ...bonus, from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
+      const at = w.tracer && r && r.tank ? r.tank.center() : p; // (a chaingun round that strikes a body counts from its centre: its blast is too small to reach it from the edge)
+      this.explode(at.x, at.y, { ...bonus, from: { x: -p.vx, y: -p.vy } }, p.owner, w.kind === 'acid' ? 'acid' : 'shell');
       if (w.kind === 'acid') {
         for (let i = 0; i < 30; i++) {
           const a = -Math.PI * (0.1 + 0.8 * rng.next());
@@ -1232,6 +1287,7 @@ class Game {
   // once a turn cycle (every n turns, n players standing) it repairs SAT_HEAL of that
   satTurn(fresh = false) {
     const sat = this.satellite;
+    sat.power = this.range ? 1 : this.mapToughness(); // (its strikes grow with the strongest girl)
     const alive = this.tanks.filter((t) => t.alive);
     if (!alive.length) return;
     const max = alive.reduce((a, t) => a + t.maxHp + t.maxArmour, 0) / alive.length;
