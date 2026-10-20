@@ -4,6 +4,7 @@
 // line in a follow-up commit that cites the change's commit.
 const CHANGELOG_REPO = 'https://github.com/Mikanwolfe/Artillery3/commit/';
 const CHANGELOG = [
+  ['8c5a5c0', 'The menu no longer has a map choice: the map is random, and its name is in the top bar. Hover the name for its lore, weather and sudden death. With a mouse, hover a tree, giant, the AHU, a bridge, power line, radio tower, fort or crate to see what it does, how it breaks and its health. Weapons (Rebalanced or Classic) moved to the pause menu and applies at once. The Resume button is smaller and no longer lists names.'],
   ['2ac907c', 'On a bridge deck or a fort, a vehicle now tilts with the surface she is standing on. Her elevation range used to follow the slope of the ground under the bridge.'],
   ['8c7e4fc', 'When you are out of a round, the CPUs aim much better, so the round ends sooner.'],
   ['2bcc9da', 'New: chainguns, from Common to Legendary. They fire a long stream of small rounds. Tracers: the stream moves onto the enemy nearest where it lands.'],
