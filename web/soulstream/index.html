@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Soulstream II</title>
+<meta name="description" content="Soulstream II: an ASCII arena RPG. A remake of Wolfe Lumi's batch-file game, rebuilt for the browser as an endless climb.">
+<meta name="theme-color" content="#0d0c14">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar" hidden>
+    <span class="brand">SOULSTREAM <b>II</b></span>
+    <span class="tb-item" id="tb-floor"></span>
+    <span class="tb-item" id="tb-stratum"></span>
+    <span class="grow"></span>
+    <span class="tb-item sc" id="tb-sc" title="Soul Coins"></span>
+    <span class="tb-item xp" id="tb-xp" title="Experience"></span>
+    <button class="icon" id="tb-sound" title="Sound (M)">♪</button>
+    <button class="icon" id="tb-menu" title="Menu (Esc)">≡</button>
+  </header>
+
+  <!-- title -->
+  <section id="scr-title" class="screen">
+    <canvas id="title-cv"></canvas>
+    <nav id="title-menu" class="title-menu"></nav>
+    <div class="title-foot"><span>Soulstream II (C) Wolfe Lumi</span><span id="ver"></span></div>
+  </section>
+
+  <!-- new game -->
+  <section id="scr-new" class="screen" hidden>
+    <div class="panel wide">
+      <div class="sec">New soul<span class="grip"></span></div>
+      <div class="row gap">
+        <label class="field"><span class="mgh">Name</span><input id="ng-name" maxlength="16" autocomplete="off" spellcheck="false"></label>
+        <button id="ng-roll" class="ghost" title="A name from the original's list">Roll</button>
+        <label class="check"><input type="checkbox" id="ng-hard"><span>Hardcore: one life. Death ends the run.</span></label>
+      </div>
+      <div class="sec">Birthright: you are a descendant of<span class="grip"></span></div>
+      <p class="sub">The original's twelve starting abilities. Each raises two things, lowers two, and adds a trait. Press its letter to pick it.</p>
+      <div id="ng-abilities" class="grid ab-grid"></div>
+      <div class="row end gap">
+        <button id="ng-back" class="ghost">Back</button>
+        <button id="ng-go" class="primary">Enter the stream</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- the Sanctum (hub) -->
+  <section id="scr-hub" class="screen" hidden>
+    <aside id="hub-char" class="panel"></aside>
+    <div id="hub-main" class="panel">
+      <nav id="hub-tabs" class="tabs"></nav>
+      <div id="hub-body"></div>
+    </div>
+  </section>
+
+  <!-- battle -->
+  <section id="scr-battle" class="screen" hidden>
+    <div id="arena-wrap"><canvas id="arena-cv"></canvas></div>
+    <div id="battle-ui">
+      <div id="skillbar"></div>
+      <div id="battle-log" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <div id="modal" hidden><div class="modal-card" id="modal-card"></div></div>
+  <div id="tip" hidden></div>
+  <div id="toasts"></div>
+</div>
+
+<script src="js/version.js"></script>
+<script src="js/util.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/skills.js"></script>
+<script src="js/classes.js"></script>
+<script src="js/items.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/state.js"></script>
+<script src="js/art/players.js"></script>
+<script src="js/art/original.js"></script>
+<script src="js/art/s1_s2.js"></script>
+<script src="js/art/s3_s4.js"></script>
+<script src="js/art/s5_s6.js"></script>
+<script src="js/art/s7_s8.js"></script>
+<script src="js/art/s9_s10.js"></script>
+<script src="js/term.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/achievements.js"></script>
+<script src="js/changelog.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/hub.js"></script>
+<script src="js/fight.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
