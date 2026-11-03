@@ -224,3 +224,22 @@ table.board tr.me td { color: var(--accent); }
 }
 @media (max-height: 560px) { #battle-log { max-height: 5em; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation-duration: 0.01s; animation-delay: 3s; } }
+/* short screens (phones held sideways): the console gets every pixel it can */
+@media (max-height: 520px) {
+  body.in-battle #topbar { display: none !important; }
+  #battle-ui { grid-template-columns: 1fr; padding: 0.3em; }
+  #battle-log { display: none; }
+  #skillbar { grid-template-columns: repeat(6, 1fr); gap: 0.2em; }
+  .sk { padding: 0.25em 0.35em; }
+  .sk .s, .sk .badge { display: none; }
+  #arena-wrap { padding-top: 0.2em; }
+}
+@media (orientation: portrait) and (max-width: 600px) {
+  #skillbar { grid-template-columns: repeat(3, 1fr); }
+  .sk .badge { display: none; }
+}
+@media (max-width: 600px) {
+  #tb-stratum, #topbar .brand b { display: none; }
+  #topbar { gap: 0.7em; padding: 0.4em 0.6em; }
+}
+@media (max-width: 430px) { #topbar .brand { display: none; } }

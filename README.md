@@ -4,6 +4,10 @@
 
 --
 
+### Also here: Soulstream II
+
+[`web/soulstream/`](web/soulstream/) is a browser rebuild of Soulstream II, a 2014 batch-file ASCII RPG, as an endless PVE arena. It uses this repo's web stack, font and rank/badge system. It is published next to the game at `/soulstream/`. See its [README](web/soulstream/README.md) and [BALANCE.md](web/soulstream/BALANCE.md).
+
 ### Update: web rewrite
 
 The C# / SwinGame version below no longer builds, so there is now a playable rewrite in [`web/`](web/): plain HTML canvas + vanilla JS, no build step or dependencies. The assets are the original's sounds and music (`web/sounds`, transcoded to MP3 from `Resources/sounds`; firing and hits are synthesised, as A3 had no samples for them; charging is silent, and the menu hover blip and button click are the originals reversed and filtered) and Cascadia Mono (SIL OFL, `web/fonts`). The UI follows the NXi / NEKOX//NET design system's rules (one monospace face, square corners, uppercase micro-labels, hatched meters, engraved plates) in its own ink-and-lilac palette; the weapon badges keep A3's rarity colours, lifted a little to read on dark panels.

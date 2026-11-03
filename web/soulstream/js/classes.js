@@ -67,9 +67,9 @@ const CLASSES = {
     awaken: { title: 'Valkyrie', ult: 'gods', hpMult: 1.45, mpMult: 1.25, stats: { wil: 20, str: 10 }, mods: { prot: 0.06 } },
   },
   luminous: {
-    name: 'Luminous', role: 'Demigod class', art: 'pl_luminous', unlockFloor: 41, price: { sc: 40000, xp: 32000 },
+    name: 'Luminous', role: 'Demigod class', art: 'pl_luminous', unlockFloor: 41, price: { sc: 22000, xp: 18000 },
     blurb: 'Through the hidden power of the goddesses Morrighan and Neamhain, nothing is impossible. The strongest attacks of any class and the best defence penetration, on low health and wild balance.',
-    hp: 110, mp: 140, def: 4, dfp: 24, bal: 20, crit: 15, stats: { str: 8, dex: 8, int: 8, luk: 8, wil: 8 }, mods: { critMult: 0.3 },
+    hp: 160, mp: 160, def: 6, dfp: 24, bal: 20, crit: 15, stats: { str: 8, dex: 8, int: 8, luk: 8, wil: 8 }, mods: { critMult: 0.3 },
     skills: ['wow', 'dkl', 'wor', 'wit', 'arc'],
     awaken: { title: 'Demigod', ult: 'wol', hpMult: 1.4, mpMult: 1.4, stats: { str: 12, dex: 12, int: 12, luk: 12, wil: 12 }, mods: { dmgPct: 0.15 } },
   },

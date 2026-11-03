@@ -386,7 +386,7 @@ class Battle {
     if (!it) return null;
     const m = it.move;
     if (it.charge) return { kind: 'charge', name: m.name, turns: it.wind, est: this.estimate(m), text: `${m.name} in ${it.wind}` };
-    if (m.kind === 'charge') return { kind: 'charge', name: m.name, est: this.estimate(m.then), text: `${m.name}: ${m.then.name} is coming` };
+    if (m.kind === 'charge') return { kind: 'charge', name: m.name, est: this.estimate(m.then), text: m.name === m.then.name ? `${m.name} is coming` : `${m.name}: ${m.then.name} is coming` };
     if (['hit', 'multi', 'drain', 'mpburn'].includes(m.kind)) return { kind: 'attack', name: m.name, est: this.estimate(m), hits: this.hitsOf(m) };
     return { kind: m.kind, name: m.name };
   }

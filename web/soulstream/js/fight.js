@@ -11,6 +11,7 @@ const Fight = {
     this.used = new Set();
     this.active = true;
     UI.show('battle');
+    document.body.classList.add('in-battle');
     const T = this.T = new Term($('arena-cv'));
     const A = this.A = new Arena(T);
     this.fit();
@@ -51,7 +52,8 @@ const Fight = {
     const W = wrap.clientWidth - 12;
     const cols = W >= 820 ? 100 : 72;
     const rows = 32;
-    const availH = Math.max(240, innerHeight - ($('topbar').offsetHeight || 40) - (innerWidth < 900 ? 230 : 190));
+    const short = innerHeight <= 520;
+    const availH = Math.max(200, innerHeight - (short ? 0 : ($('topbar').offsetHeight || 40)) - (short ? 92 : innerWidth < 900 ? 230 : 190));
     const cw = Math.min(W / cols, availH / (rows * 1.98));
     T.setSize(cols, rows);
     $('arena-cv').style.width = (cw * cols) + 'px';
@@ -61,6 +63,7 @@ const Fight = {
   },
   stop() {
     this.active = false;
+    document.body.classList.remove('in-battle');
     cancelAnimationFrame(this.raf);
     window.removeEventListener('resize', this._fit);
   },
@@ -71,7 +74,7 @@ const Fight = {
     if (!b) return;
     const st = b.stats(), e = b.e;
     const G = A.GROUND;
-    const W = T.cols >= 90 ? 30 : 24;
+    const W = T.cols >= 90 ? 30 : 15;
     const bar = (x, y, label, v, max, col, w = W) => {
       const n = Math.max(0, Math.round(w * clamp(v / Math.max(1, max), 0, 1)));
       T.text(x, y, label, DIM);
@@ -99,7 +102,7 @@ const Fight = {
     for (const [t, c] of tags) { if (x + t.length > ex - 2) { line++; x = px; } if (line > T.rows - 1) break; T.text(x, line, t, c); x += t.length + 2; }
     // enemy block
     T.text(ex, G + 2, `- ${e.name}`.slice(0, T.cols - ex - 1), e.boss ? '#ff5a7a' : '#ffb0a0', { bold: true });
-    bar(ex, G + 3, 'HP', this.disp.show.ehp, e.hpMax, e.boss ? '#ff5a7a' : '#ff8a6a', T.cols - ex - 24 > 10 ? Math.min(W, T.cols - ex - 22) : 10);
+    bar(ex, G + 3, 'HP', this.disp.show.ehp, e.hpMax, e.boss ? '#ff5a7a' : '#ff8a6a', Math.min(W, T.cols - ex - 20));
     line = G + 4; x = ex;
     const etags = [];
     if (this.disp.esh > 0) etags.push([`shield ${fmt(this.disp.esh)}`, '#ffd866']);

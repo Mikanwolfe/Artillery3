@@ -29,7 +29,7 @@ function floorScale(f) {
 const ENEMY_HP = 60;        // a template with hp 1 at floor 1
 const ENEMY_HP_EXP = 0.92;  // enemy health grows a little slower than the floor scale
 const ENEMY_DMG = 10;       // a move with pow 1 at floor 1, before defence
-const ENEMY_DMG_EXP = 0.86; // enemy damage grows slower than enemy health
+const ENEMY_DMG_EXP = 0.84; // enemy damage grows slower than enemy health
 const ENEMY_DEF = (f) => 3 + 1.1 * Math.pow(f, 0.92);
 const ENEMY_DFP = (f) => 1 + 0.55 * Math.pow(f, 0.92);
 const ENEMY_ACC = (f) => 18 + 2.0 * f;
@@ -40,7 +40,7 @@ const KIND_REWARD = { regular: 1, elite: 2.6, boss: 6 };
 const AFFIX_REWARD = 0.22;  // per affix
 
 // ---------------------------------------------------------------------------------------- combat
-const ENRAGE_ROUND = 20, ENRAGE_STEP = 0.15; // past round 20 a foe hits 15% harder every round (no stalemates)
+const ENRAGE_ROUND = 18, ENRAGE_STEP = 0.2; // past round 18 a foe hits 20% harder every round (no stalemates)
 const HIT_MIN = 15, HIT_MAX = 95;     // the original clamped accuracy to 15-95
 const HIT_SPREAD = 30;                // accuracy vs avoidance swing, in points
 const CRIT_CAP = 50;                  // the original's ssii.crl: crit chance never above 50%

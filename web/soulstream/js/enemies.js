@@ -89,7 +89,7 @@ const ENEMIES = {
   mimic: { hp: 1.1, def: 1.4, dmg: 1.2, moves: [
     hit('Chomp', 1.3, { eff: [E('bleed', 0.6, 2, { pow: 0.08 })] }), multi('Gold Spray', 4, 0.3), hit('Lid Slam', 1.0, { cd: 3, eff: [E('stun', 0.3, 1)] }) ],
     passive: { gilded: 1.5 } },
-  archon: { boss: true, hp: 2.8, dmg: 1.2, avd: 1.2, type: 'mag', moves: [shield('Arcane Ward', 0.2)],
+  archon: { boss: true, hp: 2.6, dmg: 1.15, avd: 1.2, type: 'mag', moves: [shield('Arcane Ward', 0.2)],
     passive: { cycle: { every: 2, sets: [
       { name: 'Fire', color: '#ff7a4d', moves: [hit('Inferno', 1.3, { eff: [E('burn', 1, 3, { pow: 0.07 })] })] },
       { name: 'Frost', color: '#7fe3ff', moves: [hit('Glacial Lance', 1.2, { eff: [E('chill', 1, 2), E('stun', 0.1, 1)] })] },
@@ -143,27 +143,27 @@ const ENEMIES = {
     hit('Ice Axe', 1.2, { eff: [E('chill', 0.6, 2)] }), charge('Raises the Glacier', { name: 'Avalanche', pow: 3.0, eff: [E('stun', 0.3, 1)] }), buff('Rime Armour', { defPct: 0.6 }, 3) ] },
   sanddjinn: { hp: 1.2, avd: 1.4, type: 'mag', moves: [
     hit('Sandblast', 0.9, { eff: [E('blind', 0.5, 2)] }), multi('Scimitar Whirl', 3, 0.45, { type: 'phys' }), shield('Dune Shroud', 0.2) ] },
-  phoenix: { boss: true, hp: 3.0, dmg: 1.2, type: 'mag', moves: [
+  phoenix: { boss: true, hp: 2.7, dmg: 1.15, type: 'mag', moves: [
     hit('Searing Talons', 1.1, { eff: [E('burn', 1, 3, { pow: 0.06 })] }), multi('Firestorm Wings', 3, 0.5, { eff: [E('burn', 0.4, 3, { pow: 0.06 })] }),
     charge('Gathers the Sun', { name: 'Solar Flare', pow: 3.2, eff: [E('blind', 1, 2)] }, { cd: 4 }) ],
     passive: { rebirth: 0.4, rebirthMsg: 'The Phoenix rises from the ashes.' } },
 
   // ============================================================ 7 The Otherworld
-  sidhe: { hp: 1.1, avd: 1.4, acc: 1.3, dmg: 1.25, moves: [
+  sidhe: { hp: 1.1, avd: 1.2, acc: 1.2, dmg: 1.2, moves: [
     hit('Riposte', 1.0), multi('Flurry', 3, 0.45), debuff('Glamour', [E('blind', 1, 2)]) ] },
-  cusith: { hp: 1.3, dmg: 1.3, moves: [
+  cusith: { hp: 1.3, dmg: 1.2, moves: [
     hit('Spectral Bite', 1.1, { eff: [E('bleed', 0.5, 2, { pow: 0.08 })] }), debuff('Three Barks', [E('weaken', 1, 2), E('vuln', 1, 2)]), charge('Lowers Its Head', { name: 'Pounce', pow: 2.4, eff: [E('stun', 0.3, 1)] }) ] },
-  nuckelavee: { hp: 1.5, dmg: 1.3, moves: [
+  nuckelavee: { hp: 1.4, dmg: 1.2, moves: [
     debuff('Rotting Breath', [E('poison', 1, 3, { pow: 0.04, stacks: 3 }), E('weaken', 1, 2)]), multi('Flaying Arms', 2, 0.8, { eff: [E('bleed', 0.5, 2, { pow: 0.08 })] }), hit('Plague Gallop', 1.4) ] },
   leanan: { hp: 1.0, avd: 1.2, type: 'mag', moves: [
     hit('Siren Song', 1.0, { kind: 'drain', lifesteal: 0.8 }), hit("Muse's Price", 0.7, { kind: 'mpburn', mpBurn: 0.3, cd: 2 }), debuff('Enthrall', [E('stun', 0.3, 1), E('silence', 1, 2)], { cd: 4 }) ] },
-  wildhunt: { hp: 1.4, dmg: 1.35, acc: 1.2, moves: [
+  wildhunt: { hp: 1.3, dmg: 1.25, acc: 1.1, moves: [
     hit('Hunting Spear', 1.2, { pierce: 60 }), buff('Horn of the Hunt', { dmgPct: 0.4 }, 3), multi('The Chase', 3, 0.5) ] },
-  morrigan: { boss: true, hp: 4.0, dmg: 1.3, type: 'hyb', moves: [
+  morrigan: { boss: true, hp: 3.3, dmg: 1.2, type: 'hyb', moves: [
     debuff('Crow Curse', [E('weaken', 1, 3), E('vuln', 1, 3)], { cd: 4 }), hit('Fate-Spear', 1.2), multi('Carrion', 4, 0.3) ],
     phases: [
       { below: 0.66, msg: 'Badb falls silent. Macha takes up the spear.', name: 'Macha', set: [
-        hit('War Spear', 1.6, { pierce: 80 }), buff('Battle Fury', { dmgPct: 0.5 }, 3), charge("Sovereign's Due", { name: "Sovereign's Due", pow: 3.4 }) ] },
+        hit('War Spear', 1.3, { pierce: 80 }), buff('Battle Fury', { dmgPct: 0.3 }, 3), charge("Sovereign's Due", { name: "Sovereign's Due", pow: 2.8 }) ] },
       { below: 0.33, msg: 'Macha yields to Nemain, and Nemain is frenzy.', name: 'Nemain', set: [
         multi('Frenzy', 5, 0.4, { lifesteal: 0.3, w: 3 }), debuff('Madness', [E('blind', 1, 2), E('weaken', 1, 2)]) ] },
     ] },
@@ -171,17 +171,17 @@ const ENEMIES = {
   // ============================================================ 8 The Celestial Host
   cherub: { hp: 1.3, dmg: 1.3, moves: [
     multi('Four Faces', 4, 0.4), hit('Wheel of Fire', 1.0, { type: 'mag', eff: [E('burn', 1, 3, { pow: 0.06 })] }), buff('Guard the Gate', { prot: 0.4 }, 2) ] },
-  ophanim: { hp: 1.1, avd: 1.8, type: 'mag', moves: [
+  ophanim: { hp: 1.1, avd: 1.5, type: 'mag', moves: [
     debuff('Thousand Eyes', [E('blind', 1, 3)]), multi('Turning Wheels', 3, 0.5), hit('Gaze of Heaven', 1.3) ] },
-  seraph: { hp: 1.2, dmg: 1.4, type: 'mag', moves: [
+  seraph: { hp: 1.2, dmg: 1.3, type: 'mag', moves: [
     hit('The Burning One', 1.2, { eff: [E('burn', 0.8, 3, { pow: 0.06 })] }), buff('Six Wings', { avdPct: 0.4, defPct: 0.4 }, 2), charge('Seraphic Hymn', { name: 'Seraphic Hymn', pow: 3.0, eff: [E('burn', 1, 3, { pow: 0.06 })] }) ] },
   dominion: { hp: 1.5, def: 1.6, dmg: 1.3, moves: [
     hit('Judgement', 1.2), debuff('Weigh the Soul', [E('vuln', 1, 3)]), hit('Sword of Order', 1.6, { pierce: 100, cd: 2 }) ] },
-  grigori: { hp: 1.3, dmg: 1.4, moves: [
+  grigori: { hp: 1.3, dmg: 1.3, moves: [
     debuff('Forbidden Knowledge', [E('silence', 1, 2), E('weaken', 1, 2)], { cd: 4 }), multi('Broken Chains', 2, 0.9), heal('Lament', 0.2) ] },
   twinmoons: { boss: true, hp: 5.0, dmg: 1.4, avd: 1.2, type: 'hyb', moves: [],
     passive: { cycle: { every: 2, sets: [
-      { name: 'Eweca, the Pale Moon', color: '#cfe8ff', moves: [hit('Moonlight Lance', 1.3, { type: 'mag' }), heal('Tidal Calm', 0.1, { hpBelow: 0.9, cd: 2 }), debuff('Lunar Frost', [E('chill', 1, 2), E('silence', 0.5, 1)])] },
+      { name: 'Eweca, the Pale Moon', color: '#cfe8ff', moves: [hit('Moonlight Lance', 1.3, { type: 'mag' }), heal('Tidal Calm', 0.06, { hpBelow: 0.9, cd: 3 }), debuff('Lunar Frost', [E('chill', 1, 2), E('silence', 0.5, 1)])] },
       { name: 'Laceda, the Red Moon', color: '#ff5a5a', moves: [hit('Crimson Cero', 1.4, { type: 'phys' }), multi('Lunar Scythe', 2, 0.9, { type: 'phys' }), charge('Blood Moon Rising', { name: 'Blood Moon', pow: 3.2, type: 'phys' })] },
     ] } } },
 
@@ -249,7 +249,7 @@ const AFFIXES = {
   ascended: { name: 'Ascended', desc: 'Returned from the source, stronger with every cycle.', ascended: true },
 };
 for (const [id, a] of Object.entries(AFFIXES)) a.id = id;
-const BOSS_HP = 0.9, BOSS_DMG = 0.9; // global boss trim, tuned with tools/sim.mjs
+const BOSS_HP = 0.9, BOSS_DMG = 0.8; // global boss trim, tuned with tools/sim.mjs
 const AFFIX_POOL = Object.keys(AFFIXES).filter((k) => k !== 'ascended');
 
 // --------------------------------------------------------------------------------- floor plan
@@ -297,7 +297,7 @@ function makeEnemy(f, opts = {}, r = rng) {
   if (info.beyond) affixes.unshift('ascended');
 
   const S = floorScale(f);
-  let hpMult = (t.hp || 1) * (kind === 'elite' ? 1.5 : 1) * (t.boss ? BOSS_HP : 1), dmgMult = (t.dmg || 1) * (kind === 'elite' ? 1.15 : 1) * (t.boss ? BOSS_DMG : 1);
+  let hpMult = (t.hp || 1) * (kind === 'elite' ? 1.5 : 1) * (t.boss ? BOSS_HP : 1), dmgMult = (t.dmg || 1) * (kind === 'elite' ? 1.05 : 1) * (t.boss ? BOSS_DMG : 1);
   let defMult = t.def || 1, avdMult = t.avd || 1, accMult = t.acc || 1, defAdd = 0;
   let reward = KIND_REWARD[kind] * (1 + AFFIX_REWARD * affixes.length);
   for (const id of affixes) {

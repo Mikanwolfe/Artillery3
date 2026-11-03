@@ -77,14 +77,17 @@ function choose(b) {
     if (usable.includes('fsh')) return { type: 'skill', id: 'fsh' };
     if (intent.turns === 1 || incoming > 0.9) return { type: 'guard' };
   }
-  if (incoming >= 1 && intent.kind === 'attack' && hp2 < 0.6) {
-    const heal = ['fhl', 'hea'].find((h) => usable.includes(h));
-    if (heal) return { type: 'skill', id: heal };
-    return { type: 'guard' };
-  }
-  if (hp2 < 0.4) {
-    const heal = ['fhl', 'hea'].find((h) => usable.includes(h));
-    if (heal) return { type: 'skill', id: heal };
+  // the best attack now, and whether it can finish the foe
+  const ref0 = { def: b.e.def, avd: b.e.avd, dfp: b.e.dfp };
+  let best0 = null, best0V = 0;
+  for (const id of usable) { const v = attackValue(save, st, id, ref0, true); if (v > best0V) { best0V = v; best0 = id; } }
+  const canFinish = best0 && b.e.hp + b.e.shield <= best0V * 1.3;
+  const healId = ['fhl', 'hea'].find((h) => usable.includes(h));
+  const healAmt = healId ? st.hpMax * (SKILLS[healId].heal + SKILLS[healId].healRank * save.ranks[healId]) : 0;
+  const incomingAbs = intent && intent.est ? intent.est : 0;
+  if (!canFinish && hp2 < 0.45) {
+    if (healId && healAmt > incomingAbs * 0.8) return { type: 'skill', id: healId };
+    if (incoming >= 0.8) return { type: 'guard' };
   }
   // buffs at the start of long fights
   const ref = { def: b.e.def, avd: b.e.avd, dfp: b.e.dfp };
@@ -100,10 +103,17 @@ function choose(b) {
   }
   return best ? { type: 'skill', id: best } : { type: 'guard' };
 }
+const TRACE = args.trace ? String(args.trace).split(',') : null;
 function fight(save, mode) {
   const b = startFight(save, mode);
   let guard = 0;
-  while (!b.over && guard++ < 200) b.act(choose(b));
+  const tr = TRACE && TRACE.includes(b.e.id) && !(TRACE._done = (TRACE._done || 0) + 0);
+  if (tr) { const st = computeStats(save); console.log(`--- ${b.e.name} f${b.e.floor} hp ${b.e.hpMax} | you hp ${b.p.hp}/${st.hpMax} mp ${b.p.mp}/${st.mpMax} def ${st.def}`); }
+  while (!b.over && guard++ < 200) {
+    const a = choose(b);
+    const evs = b.act(a);
+    if (tr) console.log(`R${b.round - 1} ${a.type === 'skill' ? a.id : a.type}: ` + evs.filter((e) => ['act', 'dmg', 'miss', 'heal', 'status', 'phase', 'revive', 'msg'].includes(e.t)).map((e) => e.t === 'act' ? `[${e.who}:${e.name}]` : e.t === 'dmg' ? `${e.to}-${e.amount}${e.kind && e.kind !== 'hit' ? '(' + e.kind + ')' : ''}` : e.t === 'miss' ? `miss>${e.to}` : e.t === 'heal' ? `${e.to}+${e.amount}` : e.t === 'status' ? `${e.to}:${e.text}` : `{${e.text}}`).join(' ') + `  => you ${b.p.hp} mp ${b.p.mp} | foe ${b.e.hp}`);
+  }
   if (!b.over) b.over = 'lose';
   return { b, res: finishFight(save, b) };
 }
@@ -121,6 +131,10 @@ function shop(save) {
   }
   if (save.classes[CLASS] && save.best >= AWAKEN_FLOOR - 1 && !save.awakened[CLASS]) { if (awaken(save)) return; }
   if (save.best >= EMBODIMENT_FLOOR - 1 && !save.embodiment) { if (embody(save, CLASS === 'falias' ? 'macha' : 'morrighan')) { /* saving */ } }
+  // keep Heal ranked alongside the attacks (the greedy model doesn't value sustain)
+  for (const h of ['hea', 'fhl']) {
+    while (save.ranks[h] >= 0 && classAllows(save, h) && save.ranks[h] < Math.min(14, Math.floor(save.best / 6))) { if (rankUp(save, h)) break; }
+  }
   // keep potions stocked (cheap, so first)
   for (let i = 0; i < 2; i++) buyPotion(save, 'hp');
   // greedy: best power gain per unit of currency
@@ -221,6 +235,11 @@ for (let i = 0; i < RUNS; i++) {
   console.log(`   end: HP ${r.st.hpMax} MP ${r.st.mpMax} STR ${r.st.str} DEX ${r.st.dex} INT ${r.st.int} DEF ${r.st.def} DFP ${r.st.dfp} | ranks ${Object.entries(r.save.ranks).filter(([, v]) => v >= 0).map(([k, v]) => k + ':' + v).join(' ')}`);
   console.log(`   masteries ${JSON.stringify(r.save.mastery)} gear ${r.save.equip.filter(Boolean).map((x) => x.rarity[0] + x.lvl).join(',')} perks ${JSON.stringify(r.save.perks)}`);
 }
+// aggregate: win rate and rounds by stratum and kind, over every run
+const agg = {};
+for (const r of results) for (const [k, x] of Object.entries(r.rounds)) { const a = (agg[k] = agg[k] || { n: 0, w: 0, r: 0 }); a.n += x.n; a.w += x.w; a.r += x.r; }
+console.log('\nall runs, rounds (win%) by stratum:');
+for (const kind of ['regular', 'elite', 'boss']) console.log(`  ${kind.padEnd(7)} ` + [...Array(10).keys()].filter((i) => agg[i + ':' + kind]).map((i) => { const x = agg[i + ':' + kind]; return `${i + 1}:${(x.r / x.n).toFixed(1)}(${Math.round(100 * x.w / x.n)})`; }).join(' '));
 const avg = (k) => (results.reduce((x, r) => x + (r.reach[k] ?? NaN), 0) / results.length);
 console.log('\naverage fights to reach: ' + MILESTONES.map((m) => `${m}:${isNaN(avg(m)) ? '-' : avg(m).toFixed(0)}`).join(' '));
 console.log('average best floor: ' + (results.reduce((x, r) => x + r.best, 0) / results.length).toFixed(1));
