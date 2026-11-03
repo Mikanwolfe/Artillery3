@@ -370,8 +370,33 @@ function embody(save, id) {
   return null;
 }
 
+// ---------------------------------------------------------------------------------- reference characters
+// A character built up for a floor, the way a steady player would be there: used by the Codex's range
+// and the ?test URL parameter. rank: skill rank for every skill (default: one rank per 7 floors).
+function buildTestSave(f, cls = 'eweca', ability = 'mage', o = {}) {
+  f = Math.max(1, f);
+  const s = newSave(o.name || 'Tester', ability, { seed: 1 });
+  s.test = true; // never saved, never on the leaderboard, earns no achievements
+  s.best = f - 1; s.floor = f; s.sc = 5000 * f; s.xp = 5000 * f;
+  for (const k of PRIMARY) s.trained[k] = Math.round(f * 5.5);
+  s.mastery = { hp: Math.round(f / 3), df: Math.round(f / 4) };
+  if (cls !== 'adventurer') { s.classes[cls] = true; s.cls = cls; }
+  if ((f > 60 || o.awaken) && cls !== 'adventurer') s.awakened[cls] = true;
+  const rank = o.rank != null ? o.rank : Math.min(14, Math.floor(f / 7));
+  for (const id of Object.keys(SKILLS)) {
+    const sk = SKILLS[id];
+    const ok = o.allSkills ? (sk.cls === 'adventurer' || sk.cls === cls) : skillAvailable(s, id) && classAllows(s, id);
+    if (ok) s.ranks[id] = rank;
+  }
+  s.keys = Object.keys(SKILLS).filter((id) => s.ranks[id] >= 0 && classAllows(s, id) && SKILLS[id].bd).sort((a, b) => SKILLS[b].bd * SKILLS[b].hits - SKILLS[a].bd * SKILLS[a].hits).slice(0, 6).concat(['hea', 'res']);
+  if (o.gear !== false) s.equip = [makeItem(f, { slot: 'weapon', boost: 1 }), makeItem(f, { boost: 1, slot: 'acc' }), makeItem(f, { boost: 1, slot: 'acc' }), makeItem(f, { boost: 1, slot: 'acc' })];
+  s.quick = [makePotion('hp', f, 3), makePotion(f > 30 ? 'elixir' : 'mp', f, 2)];
+  refreshShop(s);
+  return s;
+}
+
 // ---------------------------------------------------------------------------------- persistence
-function saveGame(save) { store.set(SAVE_KEY, save); }
+function saveGame(save) { if (!save.test) store.set(SAVE_KEY, save); }
 function loadGame() {
   const s = store.get(SAVE_KEY);
   if (!s || s.v !== SAVE_VERSION) return null;
@@ -396,6 +421,7 @@ const LEGENDS = [
   { name: 'Wilson', floor: 41, legend: true }, { name: 'xAzureElectro', floor: 33, legend: true }, { name: 'Srbninja', floor: 25, legend: true },
 ];
 function recordRun(save, note) {
+  if (save.test) return;
   const lb = store.get('ss2.board', []);
   const i = lb.findIndex((r) => r.seed === save.seed);
   const row = { name: save.name, title: titleOf(save), floor: save.best, seed: save.seed, hardcore: save.hardcore, note: note || '', when: Date.now() };

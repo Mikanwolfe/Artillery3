@@ -66,6 +66,21 @@
     </div>
   </section>
 
+  <!-- the Codex: browse skills and weapons, test them on a training dummy -->
+  <section id="scr-codex" class="screen" hidden>
+    <aside id="cx-panel" class="panel"></aside>
+    <div id="cx-stage">
+      <div class="cx-top"><span class="mgh">Codex · training range</span><span class="grow"></span><button id="cx-back" class="ghost">Back <kbd>Esc</kbd></button></div>
+      <canvas id="cx-cv"></canvas>
+      <div id="cx-readout" class="cx-readout"></div>
+      <div class="row gap" style="justify-content:center">
+        <button id="cx-fire" class="primary">Fire</button>
+        <button id="cx-ten">10 turns <kbd>T</kbd></button>
+        <button id="cx-reset" class="ghost">Reset tally</button>
+      </div>
+    </div>
+  </section>
+
   <div id="modal" hidden><div class="modal-card" id="modal-card"></div></div>
   <div id="tip" hidden></div>
   <div id="toasts"></div>
@@ -87,13 +102,16 @@
 <script src="js/art/s5_s6.js"></script>
 <script src="js/art/s7_s8.js"></script>
 <script src="js/art/s9_s10.js"></script>
+<script src="js/art/dummy.js"></script>
 <script src="js/term.js"></script>
+<script src="js/terminal.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/achievements.js"></script>
 <script src="js/changelog.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/hub.js"></script>
 <script src="js/fight.js"></script>
+<script src="js/codex.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

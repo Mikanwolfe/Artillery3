@@ -53,6 +53,7 @@ const UI = {
     }
     if (k === 'M') { $('tb-sound').click(); return; }
     if (this.screen === 'battle') { if (Fight.onKey(k)) e.preventDefault(); return; }
+    if (this.screen === 'codex') { if (Codex.onKey(k)) e.preventDefault(); return; }
     if (k === 'Escape' && this.screen !== 'title') { this.menu(); e.preventDefault(); return; }
     const btn = document.querySelector(`#scr-${this.screen} [data-key="${CSS.escape(k)}"]`);
     if (btn && !btn.disabled && btn.offsetParent) { btn.click(); e.preventDefault(); }
@@ -101,7 +102,7 @@ const UI = {
       const flush = () => { if (run) out += cur ? `<span style="color:${cur.c}${cur.d ? ';opacity:.5' : ''}">${esc(run)}</span>` : esc(run); run = ''; };
       for (let c = 0; c < line.length; c++) {
         const m = (mask && mask[r] && mask[r][c]) || '.';
-        const style = line[c] === ' ' ? null : { c: o.tint || pal[m] || a.color, d: m === 'd' };
+        const style = line[c] === ' ' ? null : { c: m === 'd' ? DIM_INK : (o.tint || pal[m] || a.color), d: false };
         if (!cur || !style || cur.c !== style.c || cur.d !== style.d) { flush(); cur = style; }
         run += line[c];
       }
@@ -113,7 +114,7 @@ const UI = {
   badge(thing, small = false) {
     const b = badgeOf(thing);
     const R = RARITY_BY_ID[b.rarity];
-    return `<span class="badge${small ? ' small' : ''}${b.rarity === 'luminous' || b.rarity === 'godly' ? ' glow' : ''}" style="--rc:${R.color}"><b>${esc(b.text)}</b>${small ? '' : `<i>${R.name}</i>`}</span>`;
+    return `<span class="badge${small ? ' small' : ''}" style="--rc:${R.color}" title="${R.name}"><b>${esc(b.text)}</b></span>`;
   },
   rarityName(id) { const R = RARITY_BY_ID[id]; return `<span style="color:${R.color}">${R.name}</span>`; },
   itemTip(it) {
@@ -155,6 +156,7 @@ const UI = {
       has && ['C', 'Continue', () => { Hub.open(); }],
       ['N', 'New game', () => this.newGame()],
       ['L', 'Leaderboard', () => this.leaderboard()],
+      ['X', 'Codex', () => Codex.open()],
       ['A', 'Achievements', () => this.achievements()],
       ['H', 'Help', () => this.help()],
       ['B', 'About', () => this.about()],
@@ -209,6 +211,7 @@ const UI = {
         <button data-a="resume" data-key="Escape">Resume</button>
         <button data-a="help" data-key="H">Help</button>
         <button data-a="speed">Animation speed: ${FX.speed}x</button>
+        ${!inFight ? '<button data-a="codex" data-key="X">Codex</button>' : ''}
         <button data-a="ach">Achievements (${ACH.count()}/${ACHIEVEMENTS.length})</button>
         <button data-a="board">Leaderboard</button>
         ${inFight ? `<button data-a="abandon" class="danger">${Fight.b && Fight.b.mode === 'train' ? 'Leave training' : 'Abandon the fight (counts as a death)'}</button>` : ''}
@@ -221,6 +224,7 @@ const UI = {
         if (a === 'resume') this.closeModal();
         if (a === 'help') this.help();
         if (a === 'ach') this.achievements();
+        if (a === 'codex') { this.closeModal(); Codex.open(); }
         if (a === 'board') this.leaderboard();
         if (a === 'speed') { FX.speed = FX.speed >= 4 ? 1 : FX.speed * 2; store.set('ss2.speed', FX.speed); this.menu(); }
         if (a === 'abandon') { this.closeModal(); Fight.abandon(); }
@@ -294,7 +298,7 @@ const Title = {
     const T = new Term(cv);
     const fit = () => {
       const w = cv.clientWidth, h = cv.clientHeight;
-      const cols = w > 900 ? 110 : w > 600 ? 96 : 64;
+      const cols = w > 900 ? 100 : w > 600 ? 80 : 56;
       T.setSize(cols, 10);
       T.resize(w);
       T.setSize(cols, Math.max(20, Math.floor(h / T.ch)));
@@ -303,50 +307,35 @@ const Title = {
     fit();
     this.fit = fit;
     window.addEventListener('resize', fit);
-    const flow = [];
-    for (let i = 0; i < 70; i++) flow.push({ x: Math.random() * 120, y: Math.random(), v: 4 + Math.random() * 10, c: '~-=.'[i % 4] });
     let last = performance.now(), t = 0;
     const intro = !this.seen;
     this.seen = true;
-    const colors = ['#7fe3ff', '#c3b0ff', '#f2c45a', '#7fe08a', '#ff9ad5'];
-    const introC = colors[Math.floor(Math.random() * colors.length)]; // the original coloured its intro at random
+    // the original picked a random console colour for its intro (`color 0%funct.return%`)
+    const introC = consoleColor(['#13a10e', '#3a96dd', '#c50f1f', '#881798', '#c19c00', '#16c60c', '#61d6d6', '#e74856', '#b4009e', '#f9f1a5'][Math.floor(Math.random() * 10)]);
+    const ver = typeof SS_VERSION !== 'undefined' ? SS_VERSION : 'dev';
     const loop = (now) => {
       const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
       T.clear();
-      const midY = Math.floor(T.rows * 0.36);
-      // the stream
-      for (const f of flow) {
-        f.x += f.v * dt; if (f.x > T.cols + 2) { f.x = -2; f.y = Math.random(); }
-        const y = Math.round(midY + 5 + Math.sin(f.x / 8 + t) * 2 + (f.y - 0.5) * 4);
-        T.put(f.x, y, f.c, '#3f6f8a', { a: 0.6 });
-      }
-      if (intro && t < 2.2) {
-        const a = Math.min(1, t * 2, (2.2 - t) * 2);
-        T.ctext(T.cols / 2, midY - 2, 'Wolfe Lumi', introC, { a });
-        T.ctext(T.cols / 2, midY, 'Presents', introC, { a });
-        T.ctext(T.cols / 2, midY + 2, 'Soulstream II', introC, { a, bold: true });
+      const midY = Math.floor(T.rows * 0.3);
+      if (intro && t < 2.4) {
+        T.ctext(T.cols / 2, midY, 'Wolfe Lumi', introC);
+        T.ctext(T.cols / 2, midY + 2, 'Presents', introC);
+        T.ctext(T.cols / 2, midY + 4, 'Soulstream II', introC);
       } else {
-        const a = intro ? Math.min(1, (t - 2.2) * 2) : 1;
-        const logo = ART.logo;
-        if (logo && artRows(logo).w <= T.cols - 2) {
-          const r = artRows(logo);
-          T.art(logo, Math.round(T.cols / 2 - r.w / 2), Math.max(1, midY - r.h), { a, glow: 0.8 });
-        } else T.ctext(T.cols / 2, midY - 2, 'S O U L S T R E A M   I I', '#7fe3ff', { a, bold: true });
-        const sig = ART.sigil;
-        if (sig && T.cols >= 96) {
-          const r = artRows(sig);
-          T.art(sig, 3, T.rows - r.h - 3, { a: a * 0.35 });
-          T.art(sig, T.cols - r.w - 3, T.rows - r.h - 3, { a: a * 0.35 });
-        }
+        const rule = '-'.repeat(T.cols);
+        T.text(0, midY - 3, rule, DIM);
+        T.ctext(T.cols / 2, midY - 1, 'S o u l s t r e a m   I I', '#f2f2f2', { bold: true });
+        T.ctext(T.cols / 2, midY + 1, `${ver}  -  the arena`, DIM);
+        T.text(0, midY + 3, rule, DIM);
+        if (Math.floor(t * 2) % 2) T.text(1, T.rows - 2, '_', '#cccccc'); // the cursor
       }
       T.render();
       this.raf = requestAnimationFrame(loop);
     };
     cancelAnimationFrame(this.raf);
     this.raf = requestAnimationFrame(loop);
-    $('title-menu').style.opacity = intro ? 0 : 1;
-    $('title-menu').style.transition = 'opacity .6s';
-    if (intro) setTimeout(() => { $('title-menu').style.opacity = 1; }, 2300);
+    $('title-menu').style.visibility = intro ? 'hidden' : 'visible';
+    if (intro) setTimeout(() => { $('title-menu').style.visibility = 'visible'; }, 2500);
   },
   stop() { cancelAnimationFrame(this.raf); if (this.fit) window.removeEventListener('resize', this.fit); },
 };

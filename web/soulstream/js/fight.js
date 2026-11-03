@@ -357,7 +357,7 @@ const Fight = {
     } else if (b.mode === 'climb') ACH.grant('death');
     Hub.checkAch();
     recordRun(s);
-    if (res.hardcoreDeath) store.del(SAVE_KEY); else saveGame(s);
+    if (res.hardcoreDeath && !s.test) store.del(SAVE_KEY); else saveGame(s);
     setTimeout(() => this.results(res), 400);
   },
   results(res) {

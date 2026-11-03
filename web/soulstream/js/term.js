@@ -3,9 +3,9 @@
 // colour and motion. The arena scene (backdrop, the two fighters, their bars and the effects of every
 // skill) lives here; the menus are HTML (ui.js).
 
-const BG = '#0d0c14';
-const INK = '#e4def2';
-const DIM = '#7a7490';
+const BG = '#0c0c0c';
+const INK = '#cccccc';
+const DIM = '#767676';
 
 class Term {
   constructor(canvas) {
@@ -40,7 +40,7 @@ class Term {
   put(x, y, ch, color, o = {}) {
     x = Math.round(x); y = Math.round(y);
     if (y < 0 || y >= this.rows || x < 0 || x >= this.cols || ch === ' ' || ch == null) return;
-    this.buf[y][x] = { ch, color, a: o.a == null ? 1 : o.a, glow: o.glow || 0, bold: o.bold };
+    this.buf[y][x] = { ch, color: typeof consoleColor === 'function' ? consoleColor(color) : color, a: o.a == null ? 1 : o.a, bold: o.bold };
   }
   erase(x, y) { x = Math.round(x); y = Math.round(y); if (y >= 0 && y < this.rows && x >= 0 && x < this.cols) this.buf[y][x] = null; }
   text(x, y, s, color, o = {}) { for (let i = 0; i < s.length; i++) this.put(x + i, y, s[i], color, o); }
@@ -56,8 +56,8 @@ class Term {
         const ch = line[c];
         if (ch === ' ') continue;
         const m = (mask && mask[r] && mask[r][c]) || '.';
-        let color = o.tint || pal[m] || a.color;
-        let alpha = (m === 'd' ? 0.5 : 1) * (o.a == null ? 1 : o.a);
+        let color = m === 'd' ? DIM_INK : (o.tint || pal[m] || a.color);
+        let alpha = o.a == null ? 1 : o.a;
         if (o.flash) color = o.flash;
         this.put(x + c, y + r, ch, color, { a: alpha, glow: (m === 'a' || m === 'b' || m === 'h') ? (o.glow ?? 0.6) : 0 });
       }
@@ -69,7 +69,7 @@ class Term {
     ctx.fillStyle = BG;
     ctx.fillRect(0, 0, this.cv.width / d, this.cv.height / d);
     let sx = 0, sy = 0;
-    if (this.shakeT > 0) { sx = (Math.random() - 0.5) * this.shakeA * this.cw; sy = (Math.random() - 0.5) * this.shakeA * this.ch * 0.5; }
+    // (a terminal doesn't shake)
     ctx.textBaseline = 'middle';
     const fontN = `${this.fs}px 'Cascadia Mono', ui-monospace, monospace`;
     const fontB = `700 ${this.fs}px 'Cascadia Mono', ui-monospace, monospace`;
@@ -85,18 +85,12 @@ class Term {
         if (f !== curFont) { ctx.font = f; curFont = f; }
         ctx.globalAlpha = c.a;
         ctx.fillStyle = c.color;
-        if (c.glow) { ctx.shadowColor = c.color; ctx.shadowBlur = 6 * c.glow; } else ctx.shadowBlur = 0;
         ctx.fillText(c.ch, sx + x * this.cw, sy + (y + 0.5) * this.ch);
       }
     }
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
-    if (this.flashT > 0) {
-      ctx.globalAlpha = Math.min(0.35, this.flashT * 2);
-      ctx.fillStyle = this.flashC;
-      ctx.fillRect(0, 0, this.cv.width / d, this.cv.height / d);
-      ctx.globalAlpha = 1;
-    }
+    // (no screen flashes either)
   }
 }
 
@@ -148,7 +142,7 @@ class Arena {
   draw(hud) {
     const T = this.term;
     T.clear();
-    if (this.backdrop) this.backdrop(T, this.time, this.GROUND);
+    // (no scenery: the original's arena was two signs on a black screen)
     // fighters
     for (const k of ['p', 'e']) {
       const f = this.fighters[k];
@@ -157,11 +151,10 @@ class Arena {
       const bob = Math.round(Math.sin(this.time * (k === 'p' ? 1.6 : 1.3) + (k === 'p' ? 0 : 1)) * 0.5 + 0.5) === 1 && f.a > 0.99 ? 0 : 0;
       const left = (k === 'p' ? this.px : this.ex - r.w) + Math.round(f.dx);
       const top = this.GROUND - r.h + Math.round(f.dy) - bob;
-      if (f.aura) this.drawAura(left, top, r, f.aura);
       T.art(f.art, left, top, { a: f.a, flash: f.flash > 0 ? '#ffffff' : null, tint: f.tint });
     }
     // ground
-    for (let x = 0; x < T.cols; x++) T.put(x, this.GROUND, (x + Math.floor(this.time * 0)) % 7 === 0 ? '_' : '_', '#3a3550', { a: 0.9 });
+    for (let x = 0; x < T.cols; x++) T.put(x, this.GROUND, '-', DIM);
     // effects
     for (const l of this.lines) T.put(l.x, l.y, l.ch, l.color, { a: Math.min(1, l.life / (l.fade || 0.15)), glow: l.glow ?? 1 });
     for (const p of this.parts) T.put(p.x, p.y, p.ch, p.color, { a: Math.min(1, p.life / (p.fade || 0.3)), glow: p.glow ?? 0.8 });
@@ -203,6 +196,7 @@ class Arena {
     this.floats.push({ x: c.x + (o.dx || 0) + (Math.random() - 0.5) * 4, y: c.top - 1 - jitter, text, color, life: o.life || 1.3, big: o.big, vy: o.vy });
   }
   burst(x, y, chars, color, n = 10, speed = 10, life = 0.5) {
+    n = Math.min(n, 4); // sparing: a few glyphs, not a firework
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const s = speed * (0.4 + Math.random() * 0.8);
@@ -210,12 +204,14 @@ class Arena {
     }
   }
   rise(who, chars, color, n = 12, life = 1.0) {
+    n = Math.min(n, 6);
     const c = this.center(who);
     for (let i = 0; i < n; i++) {
       this.parts.push({ x: c.left + Math.random() * c.w, y: c.top + c.h * (0.4 + Math.random() * 0.6), vx: 0, vy: -4 - Math.random() * 4, ch: chars[i % chars.length], color, life: life * (0.5 + Math.random() * 0.7), fade: 0.4 });
     }
   }
   rain(who, chars, color, n = 14, life = 0.8) {
+    n = Math.min(n, 8);
     const c = this.center(who);
     for (let i = 0; i < n; i++) {
       this.parts.push({ x: c.left + Math.random() * c.w, y: c.top - 4 - Math.random() * 4, vx: 0, vy: 14 + Math.random() * 8, ch: chars[i % chars.length], color, life: life * (0.6 + Math.random() * 0.5) });

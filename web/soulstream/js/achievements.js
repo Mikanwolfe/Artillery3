@@ -51,6 +51,7 @@ const ACH = {
   has(id) { return !!this.data.got[id]; },
   grant(id) {
     if (!ACH_BY_ID[id] || this.has(id)) return false;
+    if (typeof UI !== 'undefined' && UI.save && UI.save.test) return false; // test characters earn nothing
     this.data.got[id] = Date.now();
     store.set('ss2.ach', this.data);
     if (typeof UI !== 'undefined') UI.toast(ACH_BY_ID[id].name, ACH_BY_ID[id].desc, 'Achievement');

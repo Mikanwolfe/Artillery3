@@ -50,8 +50,7 @@ const Hub = {
     const row = (k, v, k2, v2) => `<span class="k">${k}</span><span class="v">${v}</span><span class="k">${k2 || ''}</span><span class="v">${v2 ?? ''}</span>`;
     const perks = Object.entries(s.perks).map(([id, r]) => `<span class="pill gold" data-tip="<b>${PERKS[id].name} ${toRoman(r)}</b><br>${esc(PERKS[id].desc)}">${PERKS[id].name} ${toRoman(r)}</span>`).join('');
     $('hub-char').innerHTML = `
-      ${UI.artHTML(ART[cls.art])}
-      <div class="charname">${esc(s.name)} ${s.hardcore ? '<span class="pill hot">Hardcore</span>' : ''}</div>
+      <div class="charname">+ ${esc(s.name)} ${s.hardcore ? '<span class="pill hot">Hardcore</span>' : ''}</div>
       <div class="chartitle">${esc(titleOf(s))}</div>
       <div class="sec">Stats<span class="grip"></span></div>
       <div class="statgrid">
@@ -135,10 +134,9 @@ const Hub = {
     return `
       ${s.pendingPerk ? `<div class="perk-banner">A perk waits for you. <button class="mini" data-do="perk">Choose</button></div>` : ''}
       <div class="next-fight">
-        ${UI.artHTML(ART.shrine)}
         <div>
           <div class="mgh">Next</div>
-          <h3 style="font-size:1.4em;color:var(--bright);margin:0.2em 0">Floor ${s.floor}</h3>
+          <h3 style="color:var(--bright);margin:0.2em 0">Floor ${s.floor}</h3>
           <div style="color:${info.stratum.color}">${esc(stratumName(info))}</div>
           <div style="margin-top:0.4em">${kind}</div>
           <p class="note" style="margin-top:0.8em">${esc(info.stratum.intro)}</p>
@@ -230,7 +228,7 @@ const Hub = {
       else if (owned) act = `<button class="mini" data-do="switchclass" data-id="${C.id}">Walk as ${C.name}</button>`;
       else if (!open) act = `<span class="pill">clear floor ${C.unlockFloor - 1}</span>`;
       else act = `<span class="price"><span class="sc">${fmt(C.price.sc)} SC</span> <span class="xp">${fmt(C.price.xp)} XP</span></span> <button class="mini" data-do="buyclass" data-id="${C.id}" ${s.sc < C.price.sc || s.xp < C.price.xp ? 'disabled' : ''}>Take the blessing</button>`;
-      html += `<div class="card${s.cls === C.id ? ' sel' : ''}${!open && !owned ? ' dis' : ''}">${UI.artHTML(ART[C.art], { style: 'font-size:0.6em' })}<div class="card-body"><h4>${C.name} <span class="dim">${C.role}</span></h4>
+      html += `<div class="card${!open && !owned ? ' dis' : ''}"><div class="card-body"><h4>${s.cls === C.id ? '> ' : ''}${C.name} <span class="dim">${C.role}</span></h4>
         <p>${esc(C.blurb)}</p><p class="dim">HP ${C.hp} · MP ${C.mp} · DEF ${C.def} · DFP ${C.dfp} · BAL ${C.bal} · ${stats}</p>
         <p class="dim">Skills: ${C.skills.map((id) => SKILLS[id].name).join(', ')}</p><div class="acts">${act}</div></div></div>`;
     }
@@ -260,8 +258,8 @@ const Hub = {
   tab_emporium() {
     const s = this.s;
     const subs = [['armoury', 'Armoury'], ['potions', 'Potion Store'], ['enchant', 'Enchanting Room'], ['stream', 'Soulstream']];
-    let html = `<div class="split" style="grid-template-columns:auto 1fr;align-items:start"><div>${UI.artHTML(ART.origsword, { style: 'font-size:0.62em' })}</div><div>
-      <h3 style="letter-spacing:0.6em;color:var(--bright)">THE EMPORIUM</h3>
+    let html = `<div class="split" style="grid-template-columns:auto 1fr;align-items:start"><div>${UI.artHTML(ART.origsword, { style: 'font-size:0.8em' })}</div><div>
+      <h3 style="color:var(--bright)">T  H  E     E  M  P  O  R  I  U  M</h3>
       <p class="sub">Soul Coins <b class="sc">${fmt(s.sc)}</b> · Experience <b class="xp">${fmt(s.xp)}</b> · Bag ${s.bag.filter(Boolean).length}/${BAG_SIZE}</p>
       <nav class="tabs subtabs">${subs.map(([id, l]) => `<button class="${this.sub === id ? 'on' : ''}" data-do="sub" data-sub="${id}">${l}</button>`).join('')}</nav>`;
     if (this.sub === 'armoury') {
